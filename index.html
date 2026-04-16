@@ -3218,6 +3218,7 @@ function saveStepState() {
     walkCount,
     horizonCount,
   }));
+  pushAllToSupabase();
 }
 
 function updateStepUI() {
@@ -3724,6 +3725,7 @@ function saveSession() {
     sessionLog[today].push(entry);
   }
   localStorage.setItem(SESSION_KEY, JSON.stringify(sessionLog));
+  pushAllToSupabase();
 
   // Queue any newly-selected Asana tasks for completion
   selectedAsanaTasks.forEach(t => markAsanaTaskComplete(t.gid, t.name));
@@ -4721,6 +4723,7 @@ function saveEntry() {
     savedAt: new Date().toISOString()
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+  pushAllToSupabase();
 
   // Sync hidden form fields for any legacy code that reads them
   document.getElementById('chk-sanctuary').checked  = sanctuary;
@@ -5021,6 +5024,7 @@ function confirmIntent() {
   };
   ledgerEntries[today].push(entry);
   localStorage.setItem(LEDGER_KEY, JSON.stringify(ledgerEntries));
+  pushAllToSupabase();
 
   renderLedgerPanel();
   autoCheckLedger();
@@ -5394,6 +5398,7 @@ function saveBreathRound() {
   };
   breathLog[today].push(entry);
   localStorage.setItem(BREATH_KEY, JSON.stringify(breathLog));
+  pushAllToSupabase();
   // Update done-state summary (inline + fullscreen)
   const todayRounds = breathLog[today].length;
   const summaryText = `Round ${todayRounds} logged · ${todayRounds * 64}s of stillness today`;
@@ -5520,6 +5525,7 @@ function saveDistraction() {
     ts:      Date.now(),
   });
   localStorage.setItem(DISTRACT_KEY, JSON.stringify(distractLog));
+  pushAllToSupabase();
   closeDistractionModal();
   renderDistractionPanel();
   renderDistractionAnalysis();
@@ -5797,6 +5803,7 @@ function getWaterToday() {
 
 function saveWaterToday(oz) {
   localStorage.setItem(WATER_KEY, JSON.stringify({ date: todayStr(), oz }));
+  pushAllToSupabase();
 }
 
 function ozToL(oz)  { return oz / 33.814; }
@@ -6985,6 +6992,7 @@ function tbSaveDay(date, blocks) {
   if (!tbBlocks || Array.isArray(tbBlocks)) tbBlocks = {};
   tbBlocks[date] = blocks;
   localStorage.setItem(TB_KEY, JSON.stringify(tbBlocks));
+  pushAllToSupabase();
 }
 
 function tbTodayBlocks() {
@@ -8335,6 +8343,7 @@ function getMorningSetup() {
 }
 function saveMorningSetup(data) {
   localStorage.setItem(MS_KEY, JSON.stringify(data));
+  pushAllToSupabase();
 }
 
 function openMorningSetup() {
