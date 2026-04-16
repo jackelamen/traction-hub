@@ -2667,30 +2667,44 @@ async function refreshAsanaTasks() {
   });
 
   try {
-    // 1. Get the user's workspace GID
-    const meRes = await fetch('https://app.asana.com/api/1.0/users/me?opt_fields=workspaces', {
+    // 1. Get the user GID and workspace GID
+    const meRes = await fetch('https://app.asana.com/api/1.0/users/me?opt_fields=gid,workspaces', {
       headers: { 'Authorization': `Bearer ${pat}`, 'Accept': 'application/json' }
     });
     if (!meRes.ok) throw new Error(`Auth failed (${meRes.status}). Check your PAT.`);
     const meData = await meRes.json();
+    const userGid = meData.data.gid;
     const workspaceGid = meData.data.workspaces[0]?.gid;
     if (!workspaceGid) throw new Error('No workspace found on this account.');
 
-    // 2. Fetch all incomplete tasks assigned to me
-    const tasksRes = await fetch(
-      `https://app.asana.com/api/1.0/tasks?assignee=me&workspace=${workspaceGid}&completed_since=now&opt_fields=gid,name,due_on,memberships.project.name&limit=100`,
+    // 2. Get the user's "My Tasks" list GID for this workspace
+    const utlRes = await fetch(
+      `https://app.asana.com/api/1.0/users/${userGid}/user_task_list?workspace=${workspaceGid}&opt_fields=gid`,
       { headers: { 'Authorization': `Bearer ${pat}`, 'Accept': 'application/json' } }
     );
-    if (!tasksRes.ok) throw new Error(`Failed to fetch tasks (${tasksRes.status}).`);
-    const tasksData = await tasksRes.json();
+    if (!utlRes.ok) throw new Error(`Could not get My Tasks list (${utlRes.status}).`);
+    const utlData = await utlRes.json();
+    const utlGid = utlData.data.gid;
 
-    // 3. Rebuild ASANA_TASKS in place
-    const fresh = tasksData.data.map(t => ({
+    // 3. Paginate through ALL incomplete tasks in My Tasks
+    let allTasks = [];
+    let offset = '';
+    do {
+      const url = `https://app.asana.com/api/1.0/user_task_lists/${utlGid}/tasks?completed_since=now&opt_fields=gid,name,due_on,memberships.project.name&limit=100${offset ? '&offset=' + offset : ''}`;
+      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${pat}`, 'Accept': 'application/json' } });
+      if (!res.ok) throw new Error(`Failed to fetch tasks (${res.status}).`);
+      const data = await res.json();
+      allTasks = allTasks.concat(data.data);
+      offset = data.next_page?.offset || '';
+    } while (offset);
+
+    // 4. Rebuild ASANA_TASKS in place
+    const fresh = allTasks.map(t => ({
       gid:     t.gid,
       name:    t.name,
-      project: t.memberships?.[0]?.project?.name || 'Asana',
-      due:     t.due_on ? new Date(t.due_on).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : ''
-    }));
+      project: t.memberships?.[0]?.project?.name || 'My Tasks',
+      due:     t.due_on ? new Date(t.due_on + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' }) : ''
+    })).filter(t => t.name && !t.name.startsWith('\u200b')); // strip Asana section headers
 
     // Replace contents of the existing ASANA_TASKS array
     ASANA_TASKS.length = 0;
