@@ -303,6 +303,7 @@
   }
   .distract-entry-anim { animation: distractSlide 0.22s ease forwards; }
   @keyframes pulse-ring { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .animate-pulse-icon { animation: pulse-ring 2s ease-in-out infinite; }
   .intent-reminder { transform: translateY(-16px); opacity: 0; transition: all 0.38s cubic-bezier(.34,1.4,.64,1); pointer-events: none; }
   .intent-reminder.show { transform: translateY(0); opacity: 1; pointer-events: all; }
@@ -1388,6 +1389,12 @@
             <svg width="14" height="14" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="8" r="7" fill="#F06A4D"/><circle cx="7" cy="23" r="7" fill="#F06A4D"/><circle cx="25" cy="23" r="7" fill="#F06A4D"/></svg>
           </div>
           <span class="text-sm font-bold text-on-surface">Asana Tasks</span>
+          <button onclick="refreshAsanaTasks()" id="tb-asana-refresh-btn" title="Refresh from Asana"
+            class="ml-auto flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold transition-colors"
+            style="background:#fef2ee;color:#F06A4D;border:1px solid #fcd9ce">
+            <span class="material-symbols-outlined" style="font-size:13px" id="tb-asana-refresh-icon">refresh</span>
+            Refresh
+          </button>
         </div>
         <div class="relative">
           <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-sm" style="color:#d1d5db">search</span>
@@ -1961,11 +1968,17 @@
 
         <!-- Asana task picker (multi-checkbox) -->
         <div id="asana-task-panel">
-          <div class="relative mb-2">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none">search</span>
-            <input id="asana-search" type="text" placeholder="Search tasks..."
-              oninput="filterAsanaTasks(this.value)"
-              class="w-full bg-surface-container rounded-xl border border-outline-variant/20 pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all"/>
+          <div class="flex items-center gap-2 mb-2">
+            <div class="relative flex-1">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none">search</span>
+              <input id="asana-search" type="text" placeholder="Search tasks..."
+                oninput="filterAsanaTasks(this.value)"
+                class="w-full bg-surface-container rounded-xl border border-outline-variant/20 pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all"/>
+            </div>
+            <button onclick="refreshAsanaTasks()" id="modal-asana-refresh-btn" title="Refresh from Asana"
+              class="flex-shrink-0 flex items-center gap-1 px-2.5 py-2.5 rounded-xl text-[11px] font-bold transition-colors bg-surface-container border border-outline-variant/20 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high">
+              <span class="material-symbols-outlined text-sm" id="modal-asana-refresh-icon">refresh</span>
+            </button>
           </div>
           <div id="asana-task-list" class="max-h-44 overflow-y-auto space-y-0.5 rounded-xl border border-outline-variant/15 bg-surface-container-lowest p-1">
             <!-- Populated by JS -->
@@ -2623,6 +2636,99 @@ const ASANA_TASKS = [
   { gid:'1213414521833849', name:'Find reliable VN partner', project:'S7 Internal Tasks', due:'' },
   { gid:'1213414521833919', name:'Get JGL to do a trial of ELink Pro', project:'Inspien', due:'' },
 ];
+
+// ── Asana Live Refresh ───────────────────────────────────────────
+const ASANA_PAT_KEY = '30day-asana-pat-v1';
+
+function getAsanaPAT() {
+  return localStorage.getItem(ASANA_PAT_KEY) || '';
+}
+
+async function refreshAsanaTasks() {
+  let pat = getAsanaPAT();
+
+  // Prompt for PAT if not stored
+  if (!pat) {
+    pat = prompt(
+      'Enter your Asana Personal Access Token (PAT).\n\n' +
+      'Get one at: app.asana.com/0/my-apps\n\n' +
+      'It will be saved locally and never sent anywhere except Asana.'
+    );
+    if (!pat) return;
+    localStorage.setItem(ASANA_PAT_KEY, pat.trim());
+    pat = pat.trim();
+  }
+
+  // Spin the refresh icons
+  const icons = ['tb-asana-refresh-icon', 'modal-asana-refresh-icon'];
+  icons.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.animation = 'spin 1s linear infinite';
+  });
+
+  try {
+    // 1. Get the user's workspace GID
+    const meRes = await fetch('https://app.asana.com/api/1.0/users/me?opt_fields=workspaces', {
+      headers: { 'Authorization': `Bearer ${pat}`, 'Accept': 'application/json' }
+    });
+    if (!meRes.ok) throw new Error(`Auth failed (${meRes.status}). Check your PAT.`);
+    const meData = await meRes.json();
+    const workspaceGid = meData.data.workspaces[0]?.gid;
+    if (!workspaceGid) throw new Error('No workspace found on this account.');
+
+    // 2. Fetch all incomplete tasks assigned to me
+    const tasksRes = await fetch(
+      `https://app.asana.com/api/1.0/tasks?assignee=me&workspace=${workspaceGid}&completed_since=now&opt_fields=gid,name,due_on,memberships.project.name&limit=100`,
+      { headers: { 'Authorization': `Bearer ${pat}`, 'Accept': 'application/json' } }
+    );
+    if (!tasksRes.ok) throw new Error(`Failed to fetch tasks (${tasksRes.status}).`);
+    const tasksData = await tasksRes.json();
+
+    // 3. Rebuild ASANA_TASKS in place
+    const fresh = tasksData.data.map(t => ({
+      gid:     t.gid,
+      name:    t.name,
+      project: t.memberships?.[0]?.project?.name || 'Asana',
+      due:     t.due_on ? new Date(t.due_on).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : ''
+    }));
+
+    // Replace contents of the existing ASANA_TASKS array
+    ASANA_TASKS.length = 0;
+    fresh.forEach(t => ASANA_TASKS.push(t));
+
+    // 4. Re-render every panel that uses ASANA_TASKS
+    renderTBAsanaPanel(document.getElementById('tb-asana-search')?.value || '');
+    filterAsanaTasks(document.getElementById('asana-search')?.value || '');
+    renderTBInlineAsana(document.getElementById('tb-inline-asana-search')?.value || '');
+
+    // Flash success
+    icons.forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) { btn.style.animation = ''; btn.textContent = 'check_circle'; }
+    });
+    setTimeout(() => {
+      icons.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = 'refresh';
+      });
+    }, 2000);
+
+  } catch(err) {
+    icons.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.style.animation = ''; el.textContent = 'error'; }
+    });
+    setTimeout(() => {
+      icons.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = 'refresh';
+      });
+    }, 3000);
+    // If auth failed, clear the stored PAT so they can re-enter
+    if (err.message.includes('Auth failed')) localStorage.removeItem(ASANA_PAT_KEY);
+    alert('Asana refresh failed: ' + err.message);
+  }
+}
 
 // ── Rating from score ───────────────────────────────────────────
 function scoreToRating(score) {
