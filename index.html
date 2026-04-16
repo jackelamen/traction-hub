@@ -8747,12 +8747,42 @@ function bootApp() {
   checkAutoMorningSetup();
 }
 
+// Pull fresh data from Supabase and re-render everything (used for live cross-device sync)
+async function pullAndRefresh() {
+  await syncFromSupabase();
+  // Re-hydrate all in-memory state from the freshly updated localStorage
+  logs          = JSON.parse(localStorage.getItem(STORAGE_KEY)   || '{}');
+  sessionLog    = JSON.parse(localStorage.getItem(SESSION_KEY)   || '{}');
+  breathLog     = JSON.parse(localStorage.getItem(BREATH_KEY)    || '{}');
+  distractLog   = JSON.parse(localStorage.getItem(DISTRACT_KEY)  || '{}');
+  ledgerEntries = JSON.parse(localStorage.getItem(LEDGER_KEY)    || '{}');
+  tbBlocks      = JSON.parse(localStorage.getItem(TB_KEY)        || '{}');
+  try { dayTypes = JSON.parse(localStorage.getItem(DAY_TYPES_KEY) || '{}'); } catch(e) { dayTypes = {}; }
+  // Re-render all panels
+  renderAll();
+  renderSidebarTB();
+  renderMainTB();
+  renderLedgerPanel();
+  autoCheckLedger();
+  renderSessionsPanel();
+  renderBreathLog();
+  renderDistractionPanel();
+  updateDistractionBadge();
+  updatePillarDots();
+  updateStepUI();
+  updateWaterUI();
+  renderMorningSummaryBanner();
+  renderCarryoverBanner();
+}
+
 // Hydrate from Supabase first, then boot
 syncFromSupabase().finally(() => {
   bootApp();
   _sbBootComplete = true; // now allow writes to trigger uploads
-  // Periodic safety-net sync every 60 seconds
+  // Push local state to cloud every 60s (safety net)
   setInterval(pushAllToSupabase, 60000);
+  // Pull fresh data from cloud every 30s (cross-device sync)
+  setInterval(pullAndRefresh, 30000);
 });
 </script>
 </body>
