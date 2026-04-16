@@ -2635,8 +2635,9 @@ const SB_USER_ID = 'jack_traction_hub_v1';
 function getSbUserId() { return SB_USER_ID; }
 
 
-// Keep a direct reference to the original localStorage.setItem
+// Keep a direct reference to the original localStorage.setItem (used during boot hydration)
 const _lsSet = localStorage.setItem.bind(localStorage);
+let _sbBootComplete = false; // don't push during initial hydration
 
 // Push ALL current localStorage keys to Supabase in one batch
 async function pushAllToSupabase() {
@@ -2670,16 +2671,19 @@ async function pushAllToSupabase() {
   }
 }
 
-// Also patch setItem so individual writes trigger a debounced push
-const _sbPushDebounced = (() => {
-  let t;
-  return () => { clearTimeout(t); t = setTimeout(pushAllToSupabase, 2000); };
+// Throttle: fire immediately, then ignore calls for 3 seconds
+const _sbPushThrottled = (() => {
+  let busy = false;
+  return () => {
+    if (busy) return;
+    busy = true;
+    pushAllToSupabase().finally(() => { busy = false; });
+  };
 })();
 
-const _lsSetOrig = localStorage.setItem.bind(localStorage);
 localStorage.setItem = function(key, value) {
-  _lsSetOrig(key, value);
-  if (!NO_SYNC_KEYS.has(key)) _sbPushDebounced();
+  _lsSet(key, value);
+  if (_sbBootComplete && !NO_SYNC_KEYS.has(key)) _sbPushThrottled();
 };
 
 // On page load: pull all data from Supabase into localStorage, then boot the app
@@ -2713,6 +2717,7 @@ const ASANA_TASKS = [
   { gid:'1213998137748614', name:'Comment on LinkedIn Daily for 15 minutes', project:'S7 Internal Tasks', due:'Apr 13' },
   { gid:'1213957907668793', name:'Order S7 Business Cards', project:'S7 Internal Tasks', due:'Apr 13' },
   { gid:'1213975267729088', name:'KTO Project Meeting / CrowdCom,S7, FAME', project:'S7 Internal Tasks', due:'Apr 15' },
+  { gid:'1214075670889490', name:'Answer Michael about my monthly fee for Innsbruck', project:'Innsbruck/Brand EE', due:'Apr 16' },
   { gid:'1214063569524143', name:'Go through LinkedIn Jobs to see who\'s hiring for E-commerce positions in KR', project:'Innsbruck/Brand EE', due:'Apr 16' },
   { gid:'1213414521833909', name:'Brainstorm an S7 Service around iKala', project:'iKala', due:'Apr 24' },
   { gid:'1213414521833911', name:'Research overseas Sales Agencies for use of iKala', project:'iKala', due:'Apr 24' },
@@ -8736,6 +8741,7 @@ function bootApp() {
 // Hydrate from Supabase first, then boot
 syncFromSupabase().finally(() => {
   bootApp();
+  _sbBootComplete = true; // now allow writes to trigger uploads
   // Periodic safety-net sync every 60 seconds
   setInterval(pushAllToSupabase, 60000);
 });
