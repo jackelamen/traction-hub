@@ -2622,16 +2622,13 @@ const TIMER_KEY    = '30day-timer-v1';
 const SB_URL    = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
 const SB_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
 
-// All keys that should be synced to Supabase
-const SYNC_KEYS = [
-  '30day-traction-v2', '30day-sessions-v1', '30day-breath-v1',
-  '30day-distract-v1', '30day-ledger-v1',  '30day-blocks-v1',
-  '30day-steps-v1',    '30day-water-v1',    '30day-tomorrow-v1',
-  '30day-tracks-v1',   '30day-tags-v1',     '30day-playlists-v1',
-  '30day-music-v1',    '30day-asana-pending-v1', 'notion-page-map-v1',
-  'notion-token-v1',   'morning-setup-v1',  '30day-day-types-v1',
-  '30day-steps-only-v1', '30day-asana-pat-v1'
-];
+// Keys that are purely ephemeral and should NOT be synced
+const NO_SYNC_KEYS = new Set([
+  'traction-device-id',   // old device ID, no longer used
+  'morning-setup-done',   // sessionStorage flag, not relevant cross-device
+]);
+
+// Everything else gets synced — no allowlist needed
 
 // Fixed user ID — single user app, same ID on every device
 const SB_USER_ID = 'jack_traction_hub_v1';
@@ -2639,7 +2636,7 @@ function getSbUserId() { return SB_USER_ID; }
 
 // Write a key to Supabase (fire-and-forget, non-blocking)
 async function sbSet(key, valueStr) {
-  if (!SYNC_KEYS.includes(key)) return;
+  if (NO_SYNC_KEYS.has(key)) return;
   let parsed;
   try { parsed = JSON.parse(valueStr); } catch(e) { parsed = valueStr; }
   try {
@@ -8662,6 +8659,7 @@ function importAllData(event) {
       let count = 0;
       // Write to localStorage AND push each key to Supabase
       for (const [k, v] of Object.entries(data)) {
+        if (NO_SYNC_KEYS.has(k)) continue;
         const str = typeof v === 'string' ? v : JSON.stringify(v);
         _lsSet(k, str);           // local
         await sbSet(k, str);      // remote
