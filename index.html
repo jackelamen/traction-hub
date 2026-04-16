@@ -2618,6 +2618,76 @@ const SESSION_KEY  = '30day-sessions-v1';
 const BREATH_KEY   = '30day-breath-v1';
 const TIMER_KEY    = '30day-timer-v1';
 
+// ── Supabase Sync ────────────────────────────────────────────────
+const SB_URL    = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
+const SB_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
+
+// All keys that should be synced to Supabase
+const SYNC_KEYS = [
+  '30day-traction-v2', '30day-sessions-v1', '30day-breath-v1',
+  '30day-distract-v1', '30day-ledger-v1',  '30day-blocks-v1',
+  '30day-steps-v1',    '30day-water-v1',    '30day-tomorrow-v1',
+  '30day-tracks-v1',   '30day-tags-v1',     '30day-playlists-v1',
+  '30day-music-v1',    '30day-asana-pending-v1', 'notion-page-map-v1',
+  'notion-token-v1',   'morning-setup-v1',  '30day-day-types-v1',
+  '30day-steps-only-v1', '30day-asana-pat-v1'
+];
+
+// Stable device ID — generated once, lives in localStorage permanently
+function getSbUserId() {
+  let id = localStorage.getItem('traction-device-id');
+  if (!id) {
+    id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('traction-device-id', id);
+  }
+  return id;
+}
+
+// Write a key to Supabase (fire-and-forget, non-blocking)
+async function sbSet(key, valueStr) {
+  if (!SYNC_KEYS.includes(key)) return;
+  let parsed;
+  try { parsed = JSON.parse(valueStr); } catch(e) { parsed = valueStr; }
+  try {
+    await fetch(`${SB_URL}/rest/v1/traction_data`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': `Bearer ${SB_ANON}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ user_id: getSbUserId(), key, value: parsed, updated_at: new Date().toISOString() })
+    });
+  } catch(e) { /* offline — localStorage already has it */ }
+}
+
+// Patch localStorage.setItem to also sync to Supabase
+const _lsSet = localStorage.setItem.bind(localStorage);
+localStorage.setItem = function(key, value) {
+  _lsSet(key, value);
+  sbSet(key, value);
+};
+
+// On page load: pull all data from Supabase into localStorage, then boot the app
+async function syncFromSupabase() {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/traction_data?user_id=eq.${getSbUserId()}&select=key,value`,
+      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` } }
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    rows.forEach(({ key, value }) => {
+      const str = typeof value === 'string' ? value : JSON.stringify(value);
+      _lsSet(key, str); // write directly, bypassing the patched setItem to avoid re-uploading
+    });
+  } catch(e) { /* offline — use whatever is in localStorage */ }
+}
+
+// Boot flag — app init waits for Supabase hydration
+window.__sbReady = false;
+
 // ── Asana Tasks (baked in at generation time) ───────────────────
 const ASANA_TASKS = [
   { gid:'1213644788594032', name:'Finalize S7 Corporate Deck', project:'S7 Internal Tasks', due:'Mar 31' },
@@ -8610,25 +8680,37 @@ function importAllData(event) {
   reader.readAsText(file);
 }
 
-if (!timerRestore()) updateTimerUI(); // restore persisted state or show default
-loadStepState();
-tbLoad();
-updateStepUI();
-updateWaterUI();
-renderAll();
-renderSidebarTB();
-renderMainTB();
-prefillForm();
-renderLedgerPanel();
-autoCheckLedger();
-renderSessionsPanel();
-renderBreathLog();
-renderDistractionPanel();
-updateDistractionBadge();
-updatePillarDots();
-renderMorningSummaryBanner();
-renderCarryoverBanner();
-checkAutoMorningSetup();
+function bootApp() {
+  // Re-read all state from localStorage (now hydrated from Supabase)
+  logs        = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  sessionLog  = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
+  breathLog   = JSON.parse(localStorage.getItem(BREATH_KEY)  || '{}');
+  distractLog = JSON.parse(localStorage.getItem(DISTRACT_KEY) || '{}');
+  ledgerEntries = JSON.parse(localStorage.getItem(LEDGER_KEY) || '{}');
+
+  if (!timerRestore()) updateTimerUI();
+  loadStepState();
+  tbLoad();
+  updateStepUI();
+  updateWaterUI();
+  renderAll();
+  renderSidebarTB();
+  renderMainTB();
+  prefillForm();
+  renderLedgerPanel();
+  autoCheckLedger();
+  renderSessionsPanel();
+  renderBreathLog();
+  renderDistractionPanel();
+  updateDistractionBadge();
+  updatePillarDots();
+  renderMorningSummaryBanner();
+  renderCarryoverBanner();
+  checkAutoMorningSetup();
+}
+
+// Hydrate from Supabase first, then boot
+syncFromSupabase().finally(() => bootApp());
 </script>
 </body>
 </html>
