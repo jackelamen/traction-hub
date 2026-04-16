@@ -2664,20 +2664,23 @@ localStorage.setItem = function(key, value) {
 async function syncFromSupabase() {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/traction_data?user_id=eq.${getSbUserId()}&select=key,value`,
-      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` } }
+      `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&select=key,value`,
+      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' } }
     );
-    if (!res.ok) return;
+    if (!res.ok) {
+      console.warn('[Supabase] syncFromSupabase failed:', res.status, await res.text());
+      return;
+    }
     const rows = await res.json();
+    console.log('[Supabase] loaded', rows.length, 'keys from cloud');
     rows.forEach(({ key, value }) => {
       const str = typeof value === 'string' ? value : JSON.stringify(value);
-      _lsSet(key, str); // write directly, bypassing the patched setItem to avoid re-uploading
+      _lsSet(key, str); // bypass patched setItem to avoid re-uploading
     });
-  } catch(e) { /* offline — use whatever is in localStorage */ }
+  } catch(e) {
+    console.warn('[Supabase] syncFromSupabase error:', e);
+  }
 }
-
-// Boot flag — app init waits for Supabase hydration
-window.__sbReady = false;
 
 // ── Asana Tasks (baked in at generation time) ───────────────────
 const ASANA_TASKS = [
@@ -8676,12 +8679,15 @@ function importAllData(event) {
 }
 
 function bootApp() {
-  // Re-read all state from localStorage (now hydrated from Supabase)
-  logs        = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-  sessionLog  = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
-  breathLog   = JSON.parse(localStorage.getItem(BREATH_KEY)  || '{}');
-  distractLog = JSON.parse(localStorage.getItem(DISTRACT_KEY) || '{}');
-  ledgerEntries = JSON.parse(localStorage.getItem(LEDGER_KEY) || '{}');
+  // Re-read ALL state variables from localStorage now that Supabase has hydrated it
+  logs          = JSON.parse(localStorage.getItem(STORAGE_KEY)   || '{}');
+  sessionLog    = JSON.parse(localStorage.getItem(SESSION_KEY)   || '{}');
+  breathLog     = JSON.parse(localStorage.getItem(BREATH_KEY)    || '{}');
+  distractLog   = JSON.parse(localStorage.getItem(DISTRACT_KEY)  || '{}');
+  ledgerEntries = JSON.parse(localStorage.getItem(LEDGER_KEY)    || '{}');
+  tbBlocks      = JSON.parse(localStorage.getItem(TB_KEY)        || '{}');
+  try { dayTypes = JSON.parse(localStorage.getItem(DAY_TYPES_KEY) || '{}'); } catch(e) { dayTypes = {}; }
+  STEP_GOAL     = parseInt(localStorage.getItem(STEP_GOAL_KEY)   || '10000');
 
   if (!timerRestore()) updateTimerUI();
   loadStepState();
