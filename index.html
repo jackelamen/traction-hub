@@ -2633,15 +2633,9 @@ const SYNC_KEYS = [
   '30day-steps-only-v1', '30day-asana-pat-v1'
 ];
 
-// Stable device ID — generated once, lives in localStorage permanently
-function getSbUserId() {
-  let id = localStorage.getItem('traction-device-id');
-  if (!id) {
-    id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    localStorage.setItem('traction-device-id', id);
-  }
-  return id;
-}
+// Fixed user ID — single user app, same ID on every device
+const SB_USER_ID = 'jack_traction_hub_v1';
+function getSbUserId() { return SB_USER_ID; }
 
 // Write a key to Supabase (fire-and-forget, non-blocking)
 async function sbSet(key, valueStr) {
@@ -8662,16 +8656,19 @@ function importAllData(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     try {
       const data = JSON.parse(e.target.result);
       let count = 0;
-      Object.entries(data).forEach(([k, v]) => {
-        localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+      // Write to localStorage AND push each key to Supabase
+      for (const [k, v] of Object.entries(data)) {
+        const str = typeof v === 'string' ? v : JSON.stringify(v);
+        _lsSet(k, str);           // local
+        await sbSet(k, str);      // remote
         count++;
-      });
+      }
       event.target.value = '';
-      alert(`Import complete! ${count} data keys restored.\n\nThe page will now reload to apply your data.`);
+      alert(`Import complete! ${count} data keys restored and synced to cloud.\n\nThe page will now reload.`);
       location.reload();
     } catch(err) {
       alert('Import failed: the file does not appear to be valid JSON.\n\n' + err.message);
