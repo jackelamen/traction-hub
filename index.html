@@ -2634,11 +2634,21 @@ const NO_SYNC_KEYS = new Set([
 const SB_USER_ID = 'jack_traction_hub_v1';
 function getSbUserId() { return SB_USER_ID; }
 
-// Write a key to Supabase (fire-and-forget, non-blocking)
-async function sbSet(key, valueStr) {
-  if (NO_SYNC_KEYS.has(key)) return;
-  let parsed;
-  try { parsed = JSON.parse(valueStr); } catch(e) { parsed = valueStr; }
+
+// Keep a direct reference to the original localStorage.setItem
+const _lsSet = localStorage.setItem.bind(localStorage);
+
+// Push ALL current localStorage keys to Supabase in one batch
+async function pushAllToSupabase() {
+  const rows = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (NO_SYNC_KEYS.has(key)) continue;
+    let parsed;
+    try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
+    rows.push({ user_id: getSbUserId(), key, value: parsed, updated_at: new Date().toISOString() });
+  }
+  if (!rows.length) return;
   try {
     await fetch(`${SB_URL}/rest/v1/traction_data`, {
       method: 'POST',
@@ -2648,16 +2658,24 @@ async function sbSet(key, valueStr) {
         'Content-Type': 'application/json',
         'Prefer': 'resolution=merge-duplicates'
       },
-      body: JSON.stringify({ user_id: getSbUserId(), key, value: parsed, updated_at: new Date().toISOString() })
+      body: JSON.stringify(rows)
     });
-  } catch(e) { /* offline — localStorage already has it */ }
+    console.log('[Supabase] pushed', rows.length, 'keys to cloud');
+  } catch(e) {
+    console.warn('[Supabase] push failed:', e);
+  }
 }
 
-// Patch localStorage.setItem to also sync to Supabase
-const _lsSet = localStorage.setItem.bind(localStorage);
+// Also patch setItem so individual writes trigger a debounced push
+const _sbPushDebounced = (() => {
+  let t;
+  return () => { clearTimeout(t); t = setTimeout(pushAllToSupabase, 2000); };
+})();
+
+const _lsSetOrig = localStorage.setItem.bind(localStorage);
 localStorage.setItem = function(key, value) {
-  _lsSet(key, value);
-  sbSet(key, value);
+  _lsSetOrig(key, value);
+  if (!NO_SYNC_KEYS.has(key)) _sbPushDebounced();
 };
 
 // On page load: pull all data from Supabase into localStorage, then boot the app
@@ -8660,14 +8678,15 @@ function importAllData(event) {
     try {
       const data = JSON.parse(e.target.result);
       let count = 0;
-      // Write to localStorage AND push each key to Supabase
+      // Write everything to localStorage first
       for (const [k, v] of Object.entries(data)) {
         if (NO_SYNC_KEYS.has(k)) continue;
         const str = typeof v === 'string' ? v : JSON.stringify(v);
-        _lsSet(k, str);           // local
-        await sbSet(k, str);      // remote
+        _lsSet(k, str);
         count++;
       }
+      // Then push the entire localStorage batch to Supabase
+      await pushAllToSupabase();
       event.target.value = '';
       alert(`Import complete! ${count} data keys restored and synced to cloud.\n\nThe page will now reload.`);
       location.reload();
@@ -8711,7 +8730,11 @@ function bootApp() {
 }
 
 // Hydrate from Supabase first, then boot
-syncFromSupabase().finally(() => bootApp());
+syncFromSupabase().finally(() => {
+  bootApp();
+  // Periodic safety-net sync every 60 seconds
+  setInterval(pushAllToSupabase, 60000);
+});
 </script>
 </body>
 </html>
