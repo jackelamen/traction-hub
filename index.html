@@ -1759,7 +1759,7 @@
   <!-- "More" tray -->
   <div id="mobile-more-tray" class="hidden absolute bottom-full left-0 right-0 rounded-t-2xl shadow-xl px-4 pt-4 pb-3" style="background:#fff;border-top:1px solid #f0f0f5">
     <div class="grid grid-cols-4 gap-3 mb-3">
-      <button onclick="saveBreathRound();renderBreathLog();closeMobileMore();showToast('Breath round logged ✓')" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+      <button onclick="closeMobileMore();expandBoxBreath()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
         <span class="material-symbols-outlined text-xl" style="color:#4f46e5">air</span>
         <span class="text-[10px] font-bold text-on-surface-variant">Breathe</span>
       </button>
@@ -1771,7 +1771,7 @@
         <span class="material-symbols-outlined text-xl" style="color:#ef4444">report</span>
         <span class="text-[10px] font-bold text-on-surface-variant">Distract</span>
       </button>
-      <button onclick="toggleTimer();closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+      <button onclick="closeMobileMore();scrollToTimer();setTimeout(toggleTimer,400)" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
         <span class="material-symbols-outlined text-xl" style="color:#f97316">timer</span>
         <span class="text-[10px] font-bold text-on-surface-variant">Timer</span>
       </button>
@@ -1783,11 +1783,11 @@
         <span class="material-symbols-outlined text-xl" style="color:#6b7280">history</span>
         <span class="text-[10px] font-bold text-on-surface-variant">History</span>
       </button>
-      <button onclick="syncToNotion(todayStr());closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+      <button onclick="closeMobileMore();syncToNotion(todayStr())" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
         <span class="material-symbols-outlined text-xl" style="color:#6366f1">cloud_sync</span>
         <span class="text-[10px] font-bold text-on-surface-variant">Notion</span>
       </button>
-      <button onclick="refreshAsanaTasks();closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+      <button onclick="closeMobileMore();refreshAsanaTasks()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
         <svg width="20" height="20" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="8" r="7" fill="#F06A4D"/><circle cx="7" cy="23" r="7" fill="#F06A4D"/><circle cx="25" cy="23" r="7" fill="#F06A4D"/></svg>
         <span class="text-[10px] font-bold text-on-surface-variant">Asana</span>
       </button>
@@ -5017,6 +5017,10 @@ function closeEncouragement() {
 function scrollToLog()     { openEodModal(); }
 function scrollToHeatmap() { document.getElementById('heatmap-section').scrollIntoView({ behavior:'smooth', block:'start' }); }
 function scrollToHistory() { document.getElementById('history-section').scrollIntoView({ behavior:'smooth', block:'start' }); }
+function scrollToTimer()   {
+  const el = document.getElementById('timer-toggle-btn');
+  if (el) el.closest('section, .card')?.scrollIntoView({ behavior:'smooth', block:'center' });
+}
 
 // ── Mobile nav helpers ────────────────────────────────────────
 function mobileNavTo(page) {
