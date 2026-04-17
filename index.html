@@ -357,6 +357,11 @@
       <span class="flex-1">Time Blocks</span>
       <span id="nav-tb-badge" class="hidden text-[9px] font-black bg-indigo-500 text-white px-1.5 py-0.5 rounded-full leading-none"></span>
     </button>
+    <button onclick="showPage('weekly')" id="nav-weekly"
+      class="nav-page-btn nav-item">
+      <span class="material-symbols-outlined nav-icon">auto_awesome</span>
+      <span class="flex-1">Weekly Hub</span>
+    </button>
     <button onclick="openLedgerModal()" class="nav-item">
       <span class="material-symbols-outlined nav-icon">edit_square</span>
       <span>Ledger of Intent</span>
@@ -591,7 +596,7 @@
       </div>
 
       <!-- Bottom strip — 3 columns: Intention | Gratitude | Priorities -->
-      <div class="relative grid grid-cols-1 md:grid-cols-3" style="border-top:1px solid rgba(255,255,255,0.08)">
+      <div class="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style="border-top:1px solid rgba(255,255,255,0.08)">
 
         <!-- Intention -->
         <div class="px-5 md:px-7 py-4 md:py-5 md:border-r" style="border-color:rgba(255,255,255,0.08)" id="hero-intention-row">
@@ -637,6 +642,11 @@
           <div id="ms-banner-priorities" class="flex flex-col gap-1.5">
             <p class="text-xs italic" style="color:rgba(255,255,255,0.25)">Set during morning setup</p>
           </div>
+        </div>
+
+        <!-- Weekly Intention -->
+        <div class="px-5 md:px-7 py-4 md:py-5 border-t lg:border-t-0 lg:border-l" style="border-color:rgba(255,255,255,0.08)" id="hero-weekly-intention">
+          <!-- Rendered by renderWeeklyIntentionHero() -->
         </div>
 
       </div>
@@ -1414,6 +1424,123 @@
   </div>
 </div><!-- /page-timeblocks -->
 
+<!-- ════ PAGE: WEEKLY ════ -->
+<div id="page-weekly" class="hidden p-5 md:p-7 pb-28 md:pb-12">
+
+  <!-- Page header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-extrabold text-on-surface tracking-tight">Weekly Hub</h1>
+    <p class="text-sm text-on-surface-variant mt-0.5">Intention, review, and wins — your week in full.</p>
+  </div>
+
+  <!-- Top grid: Intention + current week summary -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+
+    <!-- Weekly Intention Card -->
+    <div class="card overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between bg-surface-container-low">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-accent text-base">flag</span>
+          <span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Weekly Intention</span>
+        </div>
+        <span id="wi-week-label" class="text-[10px] font-bold text-on-surface-variant/50"></span>
+      </div>
+      <div class="p-5">
+        <div id="wi-display" class="hidden">
+          <p class="text-base font-semibold text-on-surface leading-snug mb-3" id="wi-text"></p>
+          <button onclick="openWeeklyIntentionEdit()" class="text-xs font-bold text-accent hover:underline">Edit intention</button>
+        </div>
+        <div id="wi-empty" class="hidden text-center py-4">
+          <p class="text-sm text-on-surface-variant mb-3">No intention set for this week yet.</p>
+          <button onclick="openWeeklyIntentionEdit()" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white" style="background:#4f46e5">Set This Week's Intention</button>
+        </div>
+        <div id="wi-edit" class="hidden">
+          <textarea id="wi-input" rows="3" placeholder="What must be true by Friday for this to be a great week?"
+            class="w-full bg-surface-container border-none rounded-xl p-3 text-sm text-on-surface resize-none focus:ring-2 focus:ring-accent/30 transition-all mb-3"></textarea>
+          <div class="flex gap-2">
+            <button onclick="saveWeeklyIntention()" class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style="background:#4f46e5">Save</button>
+            <button onclick="cancelWeeklyIntentionEdit()" class="px-4 py-2.5 rounded-xl text-sm font-bold text-on-surface-variant border border-outline-variant/20 hover:bg-surface-container transition-colors">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Review Card -->
+    <div class="card overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between bg-surface-container-low">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-emerald-500 text-base">rate_review</span>
+          <span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Weekly Review</span>
+        </div>
+        <button onclick="openWeeklyReview()" id="wr-open-btn"
+          class="text-[10px] font-bold text-accent hover:underline flex items-center gap-1">
+          <span class="material-symbols-outlined text-sm">add</span>Write Review
+        </button>
+      </div>
+      <div class="p-5">
+        <div id="wr-this-week" class="hidden">
+          <div class="space-y-3">
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-500 mb-1">What worked</p>
+              <p class="text-sm text-on-surface leading-relaxed" id="wr-display-worked"></p>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-red-400 mb-1">What didn't</p>
+              <p class="text-sm text-on-surface leading-relaxed" id="wr-display-didnt"></p>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-accent mb-1">One commitment next week</p>
+              <p class="text-sm text-on-surface leading-relaxed" id="wr-display-commit"></p>
+            </div>
+            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+              <span class="text-[10px] text-on-surface-variant/50" id="wr-display-date"></span>
+              <button onclick="openWeeklyReview()" class="text-[10px] font-bold text-accent hover:underline">Edit</button>
+            </div>
+          </div>
+        </div>
+        <div id="wr-empty" class="text-center py-4">
+          <span class="material-symbols-outlined text-on-surface-variant/20 text-4xl block mb-2">rate_review</span>
+          <p class="text-sm text-on-surface-variant mb-3">No review for this week yet.</p>
+          <button onclick="openWeeklyReview()" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors">Start Review</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /top grid -->
+
+  <!-- Win Wall -->
+  <div class="card overflow-hidden mb-6">
+    <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between bg-surface-container-low">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-amber-400 text-base">emoji_events</span>
+        <span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Win Wall</span>
+        <span id="win-wall-count" class="text-[10px] font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full hidden"></span>
+      </div>
+      <button onclick="openAddWin()" class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-opacity hover:opacity-90" style="background:linear-gradient(135deg,#f59e0b,#f97316)">
+        <span class="material-symbols-outlined text-sm">add</span>Log a Win
+      </button>
+    </div>
+    <div id="win-wall-grid" class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+    <div id="win-wall-empty" class="hidden py-12 px-6 text-center">
+      <div class="text-5xl mb-3">🏆</div>
+      <p class="text-base font-bold text-on-surface mb-1">Your Win Wall is empty</p>
+      <p class="text-sm text-on-surface-variant mb-4">Log your wins — big or small. This is your record of momentum.</p>
+      <button onclick="openAddWin()" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white" style="background:linear-gradient(135deg,#f59e0b,#f97316)">Log Your First Win</button>
+    </div>
+  </div>
+
+  <!-- Past Reviews log -->
+  <div class="card overflow-hidden">
+    <div class="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2 bg-surface-container-low">
+      <span class="material-symbols-outlined text-on-surface-variant text-base">history</span>
+      <span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Review History</span>
+    </div>
+    <div id="wr-history-list" class="divide-y divide-gray-100"></div>
+    <div id="wr-history-empty" class="hidden py-8 text-center text-sm text-on-surface-variant/50">No past reviews yet.</div>
+  </div>
+
+</div><!-- /page-weekly -->
+
 </main>
 
 <!-- ═══════════════════════ TIME BLOCK MODALS (top-level, work from any page) ═══════════════════════ -->
@@ -1760,6 +1887,107 @@
   </div>
 </div>
 
+<!-- ═══════════════════════ WEEKLY REVIEW MODAL ═══════════════════════ -->
+<div id="wr-backdrop" class="eod-backdrop fixed inset-0 z-[95] flex items-center justify-center p-4">
+  <div class="eod-modal bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col" style="max-height:90vh">
+    <div class="px-6 py-5 flex-shrink-0" style="background:linear-gradient(135deg,#064e3b,#065f46);border-bottom:1px solid rgba(255,255,255,0.08)">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(52,211,153,0.2)">
+            <span class="material-symbols-outlined text-emerald-300 text-base">rate_review</span>
+          </div>
+          <div>
+            <h2 class="font-bold text-white text-base leading-tight">Weekly Review</h2>
+            <p class="text-[11px] text-white/40" id="wr-modal-week-label"></p>
+          </div>
+        </div>
+        <button onclick="closeWeeklyReview()" class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.1)">
+          <span class="material-symbols-outlined text-sm text-white/60">close</span>
+        </button>
+      </div>
+    </div>
+    <div class="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+      <div>
+        <label class="block text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2">✓ What worked this week?</label>
+        <textarea id="wr-input-worked" rows="3" placeholder="What went well? What are you proud of?"
+          class="w-full bg-surface-container border-none rounded-xl p-3 text-sm text-on-surface resize-none focus:ring-2 focus:ring-emerald-400/30 transition-all"></textarea>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-red-500 uppercase tracking-widest mb-2">✗ What didn't work?</label>
+        <textarea id="wr-input-didnt" rows="3" placeholder="What held you back? What would you do differently?"
+          class="w-full bg-surface-container border-none rounded-xl p-3 text-sm text-on-surface resize-none focus:ring-2 focus:ring-red-400/30 transition-all"></textarea>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-accent uppercase tracking-widest mb-2">→ One commitment for next week</label>
+        <textarea id="wr-input-commit" rows="2" placeholder="One specific thing you commit to doing differently or better."
+          class="w-full bg-surface-container border-none rounded-xl p-3 text-sm text-on-surface resize-none focus:ring-2 focus:ring-accent/30 transition-all"></textarea>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">★ Rate this week (1–5)</label>
+        <div class="flex gap-2" id="wr-rating-btns">
+          <button onclick="setWRRating(1)" data-r="1" class="wr-rating-btn flex-1 py-2 rounded-xl text-sm font-bold border border-outline-variant/20 hover:bg-surface-container transition-colors">1</button>
+          <button onclick="setWRRating(2)" data-r="2" class="wr-rating-btn flex-1 py-2 rounded-xl text-sm font-bold border border-outline-variant/20 hover:bg-surface-container transition-colors">2</button>
+          <button onclick="setWRRating(3)" data-r="3" class="wr-rating-btn flex-1 py-2 rounded-xl text-sm font-bold border border-outline-variant/20 hover:bg-surface-container transition-colors">3</button>
+          <button onclick="setWRRating(4)" data-r="4" class="wr-rating-btn flex-1 py-2 rounded-xl text-sm font-bold border border-outline-variant/20 hover:bg-surface-container transition-colors">4</button>
+          <button onclick="setWRRating(5)" data-r="5" class="wr-rating-btn flex-1 py-2 rounded-xl text-sm font-bold border border-outline-variant/20 hover:bg-surface-container transition-colors">5</button>
+        </div>
+      </div>
+    </div>
+    <div class="px-6 py-4 flex gap-3 flex-shrink-0 border-t border-gray-100">
+      <button onclick="closeWeeklyReview()" class="flex-1 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
+      <button onclick="saveWeeklyReview()" class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors">Save Review</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ ADD WIN MODAL ═══════════════════════ -->
+<div id="win-backdrop" class="eod-backdrop fixed inset-0 z-[95] flex items-center justify-center p-4">
+  <div class="eod-modal bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+    <div class="px-6 py-5" style="background:linear-gradient(135deg,#78350f,#92400e);border-bottom:1px solid rgba(255,255,255,0.08)">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(251,191,36,0.2)">
+            <span class="material-symbols-outlined text-amber-300 text-base">emoji_events</span>
+          </div>
+          <div>
+            <h2 class="font-bold text-white text-base">Log a Win</h2>
+            <p class="text-[11px] text-white/40">Celebrate your momentum</p>
+          </div>
+        </div>
+        <button onclick="closeAddWin()" class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.1)">
+          <span class="material-symbols-outlined text-sm text-white/60">close</span>
+        </button>
+      </div>
+    </div>
+    <div class="p-6 space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">The Win</label>
+        <input id="win-title-input" type="text" placeholder="What did you accomplish?"
+          class="w-full bg-surface-container border-none rounded-xl p-3 text-sm text-on-surface focus:ring-2 focus:ring-amber-400/30 transition-all"/>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Why it matters (optional)</label>
+        <textarea id="win-note-input" rows="2" placeholder="Why is this significant to you?"
+          class="w-full bg-surface-container border-none rounded-xl p-3 text-sm text-on-surface resize-none focus:ring-2 focus:ring-amber-400/30 transition-all"></textarea>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Category</label>
+        <div class="flex flex-wrap gap-2" id="win-category-btns">
+          <button onclick="setWinCategory('Work')" data-c="Work" class="win-cat-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-outline-variant/20 hover:bg-surface-container transition-colors">💼 Work</button>
+          <button onclick="setWinCategory('Health')" data-c="Health" class="win-cat-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-outline-variant/20 hover:bg-surface-container transition-colors">💪 Health</button>
+          <button onclick="setWinCategory('Relationships')" data-c="Relationships" class="win-cat-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-outline-variant/20 hover:bg-surface-container transition-colors">🤝 Relationships</button>
+          <button onclick="setWinCategory('Personal')" data-c="Personal" class="win-cat-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-outline-variant/20 hover:bg-surface-container transition-colors">⭐ Personal</button>
+          <button onclick="setWinCategory('Mindset')" data-c="Mindset" class="win-cat-btn px-3 py-1.5 rounded-lg text-xs font-bold border border-outline-variant/20 hover:bg-surface-container transition-colors">🧠 Mindset</button>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-1">
+        <button onclick="closeAddWin()" class="flex-1 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
+        <button onclick="saveWin()" class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style="background:linear-gradient(135deg,#f59e0b,#f97316)">Save Win 🏆</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════ SETTINGS MODAL ═══════════════════════ -->
 <div id="settings-backdrop" class="eod-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4">
   <div class="eod-modal bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col" style="max-height:90vh">
@@ -1904,9 +2132,9 @@
       </div>
       <span class="text-[10px] font-bold text-on-surface-variant mt-0.5">Session</span>
     </button>
-    <button id="mbnav-timeblocks" onclick="mobileNavTo('timeblocks')" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors text-on-surface-variant">
-      <span class="material-symbols-outlined" style="font-size:22px">view_timeline</span>
-      <span class="text-[10px] font-bold">Blocks</span>
+    <button id="mbnav-weekly" onclick="mobileNavTo('weekly')" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors text-on-surface-variant">
+      <span class="material-symbols-outlined" style="font-size:22px">auto_awesome</span>
+      <span class="text-[10px] font-bold">Weekly</span>
     </button>
     <button onclick="toggleMobileMore()" id="mbnav-more" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors text-on-surface-variant">
       <span class="material-symbols-outlined" style="font-size:22px">more_horiz</span>
@@ -1942,6 +2170,10 @@
       <button onclick="scrollToHistory();closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
         <span class="material-symbols-outlined text-xl" style="color:#6b7280">history</span>
         <span class="text-[10px] font-bold text-on-surface-variant">History</span>
+      </button>
+      <button onclick="mobileNavTo('timeblocks');closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <span class="material-symbols-outlined text-xl" style="color:#7c3aed">view_timeline</span>
+        <span class="text-[10px] font-bold text-on-surface-variant">Blocks</span>
       </button>
       <button onclick="closeMobileMore();openSettings()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
         <span class="material-symbols-outlined text-xl" style="color:#6b7280">settings</span>
@@ -7247,7 +7479,7 @@ document.getElementById('day-detail-backdrop').addEventListener('click', functio
 // PAGE NAVIGATION
 // ═══════════════════════════════════════════════════════════════
 let _currentPage = 'dashboard';
-const PAGES = ['dashboard', 'timeblocks'];
+const PAGES = ['dashboard', 'timeblocks', 'weekly'];
 
 function showPage(page) {
   _currentPage = page;
@@ -7262,6 +7494,9 @@ function showPage(page) {
   if (page === 'timeblocks') {
     renderTBPage();
     startTBNowLine();
+  } else if (page === 'weekly') {
+    stopTBNowLine();
+    renderWeeklyPage();
   } else {
     stopTBNowLine();
     // Re-render all dashboard panels when returning from another page
@@ -9069,6 +9304,7 @@ function bootApp() {
   updatePillarDots();
   renderMorningSummaryBanner();
   renderCarryoverBanner();
+  renderWeeklyIntentionHero();
   checkAutoMorningSetup();
 }
 
@@ -9098,7 +9334,324 @@ async function pullAndRefresh() {
   updateWaterUI();
   renderMorningSummaryBanner();
   renderCarryoverBanner();
+  renderWeeklyIntentionHero();
 }
+
+// ═══════════════════════════════════════════════════════════════
+// WEEKLY HUB — Intention, Review, Win Wall
+// ═══════════════════════════════════════════════════════════════
+const WI_KEY      = 'edgex-weekly-intentions-v1';  // { 'YYYY-Www': { week, intention, setAt } }
+const WR_KEY      = 'edgex-weekly-reviews-v1';     // { 'YYYY-Www': { week, worked, didnt, commit, rating, savedAt } }
+const WIN_KEY     = 'edgex-win-wall-v1';            // [ { id, title, note, category, date } ]
+
+// ── Week helpers ─────────────────────────────────────────────────
+function getISOWeekKey(date) {
+  // Returns 'YYYY-Www' e.g. '2026-W16'
+  const d = date ? new Date(date) : new Date();
+  const jan4 = new Date(d.getFullYear(), 0, 4);
+  const startOfWeek1 = new Date(jan4);
+  startOfWeek1.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1);
+  const diff = d - startOfWeek1;
+  const weekNum = Math.floor(diff / (7 * 86400000)) + 1;
+  const year = d.getMonth() === 0 && weekNum > 50 ? d.getFullYear() - 1
+             : d.getMonth() === 11 && weekNum < 3  ? d.getFullYear() + 1
+             : d.getFullYear();
+  return `${year}-W${String(weekNum).padStart(2,'0')}`;
+}
+
+function getWeekRangeLabel(weekKey) {
+  // 'YYYY-Www' → 'Apr 14 – Apr 20, 2026'
+  const [year, w] = weekKey.split('-W');
+  const jan4 = new Date(parseInt(year), 0, 4);
+  const startOfWeek1 = new Date(jan4);
+  startOfWeek1.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1);
+  const monday = new Date(startOfWeek1);
+  monday.setDate(startOfWeek1.getDate() + (parseInt(w) - 1) * 7);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  return `${fmt(monday)} – ${fmt(sunday)}, ${sunday.getFullYear()}`;
+}
+
+function currentWeekKey() { return getISOWeekKey(); }
+
+// ── Data accessors ────────────────────────────────────────────────
+function getWeeklyIntentions() {
+  try { return JSON.parse(localStorage.getItem(WI_KEY) || '{}'); } catch { return {}; }
+}
+function getWeeklyReviews() {
+  try { return JSON.parse(localStorage.getItem(WR_KEY) || '{}'); } catch { return {}; }
+}
+function getWins() {
+  try { return JSON.parse(localStorage.getItem(WIN_KEY) || '[]'); } catch { return []; }
+}
+
+// ── Weekly Intention ─────────────────────────────────────────────
+let _wiEditing = false;
+
+function openWeeklyIntentionEdit() {
+  const wk = currentWeekKey();
+  const all = getWeeklyIntentions();
+  document.getElementById('wi-input').value = all[wk]?.intention || '';
+  document.getElementById('wi-display').classList.add('hidden');
+  document.getElementById('wi-empty').classList.add('hidden');
+  document.getElementById('wi-edit').classList.remove('hidden');
+  document.getElementById('wi-input').focus();
+}
+
+function cancelWeeklyIntentionEdit() {
+  document.getElementById('wi-edit').classList.add('hidden');
+  renderWeeklyPage();
+}
+
+function saveWeeklyIntention() {
+  const val = document.getElementById('wi-input').value.trim();
+  if (!val) { showToast('Please write your intention first.'); return; }
+  const wk  = currentWeekKey();
+  const all = getWeeklyIntentions();
+  all[wk]   = { week: wk, intention: val, setAt: new Date().toISOString() };
+  localStorage.setItem(WI_KEY, JSON.stringify(all));
+  pushAllToSupabase();
+  renderWeeklyPage();
+  renderWeeklyIntentionHero();
+  showToast('Weekly intention set ✓');
+}
+
+// ── Weekly Review ─────────────────────────────────────────────────
+let _wrRating = 0;
+
+function openWeeklyReview() {
+  const wk  = currentWeekKey();
+  const all = getWeeklyReviews();
+  const ex  = all[wk] || {};
+  document.getElementById('wr-input-worked').value  = ex.worked  || '';
+  document.getElementById('wr-input-didnt').value   = ex.didnt   || '';
+  document.getElementById('wr-input-commit').value  = ex.commit  || '';
+  _wrRating = ex.rating || 0;
+  document.getElementById('wr-modal-week-label').textContent = getWeekRangeLabel(wk);
+  updateWRRatingUI();
+  document.getElementById('wr-backdrop').classList.add('open');
+}
+
+function closeWeeklyReview() {
+  document.getElementById('wr-backdrop').classList.remove('open');
+}
+
+function setWRRating(r) {
+  _wrRating = r;
+  updateWRRatingUI();
+}
+
+function updateWRRatingUI() {
+  document.querySelectorAll('.wr-rating-btn').forEach(btn => {
+    const r = parseInt(btn.dataset.r);
+    const active = r <= _wrRating;
+    btn.style.background = active ? '#10b981' : '';
+    btn.style.color      = active ? '#fff'    : '';
+    btn.style.borderColor= active ? '#10b981' : '';
+  });
+}
+
+function saveWeeklyReview() {
+  const worked = document.getElementById('wr-input-worked').value.trim();
+  const didnt  = document.getElementById('wr-input-didnt').value.trim();
+  const commit = document.getElementById('wr-input-commit').value.trim();
+  if (!worked && !didnt && !commit) { showToast('Please fill in at least one field.'); return; }
+  const wk  = currentWeekKey();
+  const all = getWeeklyReviews();
+  all[wk]   = { week: wk, worked, didnt, commit, rating: _wrRating, savedAt: new Date().toISOString() };
+  localStorage.setItem(WR_KEY, JSON.stringify(all));
+  pushAllToSupabase();
+  closeWeeklyReview();
+  renderWeeklyPage();
+  showToast('Weekly review saved ✓');
+}
+
+// ── Win Wall ──────────────────────────────────────────────────────
+let _winCategory = '';
+
+function openAddWin() {
+  document.getElementById('win-title-input').value = '';
+  document.getElementById('win-note-input').value  = '';
+  _winCategory = '';
+  updateWinCategoryUI();
+  document.getElementById('win-backdrop').classList.add('open');
+  setTimeout(() => document.getElementById('win-title-input').focus(), 150);
+}
+
+function closeAddWin() {
+  document.getElementById('win-backdrop').classList.remove('open');
+}
+
+function setWinCategory(c) {
+  _winCategory = _winCategory === c ? '' : c;
+  updateWinCategoryUI();
+}
+
+function updateWinCategoryUI() {
+  document.querySelectorAll('.win-cat-btn').forEach(btn => {
+    const active = btn.dataset.c === _winCategory;
+    btn.style.background  = active ? '#f59e0b' : '';
+    btn.style.color       = active ? '#fff'    : '';
+    btn.style.borderColor = active ? '#f59e0b' : '';
+  });
+}
+
+function saveWin() {
+  const title = document.getElementById('win-title-input').value.trim();
+  if (!title) { showToast('Please describe the win.'); return; }
+  const wins = getWins();
+  wins.unshift({
+    id:       Date.now(),
+    title,
+    note:     document.getElementById('win-note-input').value.trim(),
+    category: _winCategory,
+    date:     todayStr()
+  });
+  localStorage.setItem(WIN_KEY, JSON.stringify(wins));
+  pushAllToSupabase();
+  closeAddWin();
+  renderWeeklyPage();
+  showToast('Win logged 🏆');
+}
+
+function deleteWin(id) {
+  const wins = getWins().filter(w => w.id !== id);
+  localStorage.setItem(WIN_KEY, JSON.stringify(wins));
+  pushAllToSupabase();
+  renderWeeklyPage();
+}
+
+// ── Render ────────────────────────────────────────────────────────
+const WIN_CAT_COLORS = {
+  'Work':          { bg:'#eff6ff', border:'#bfdbfe', text:'#1d4ed8', emoji:'💼' },
+  'Health':        { bg:'#f0fdf4', border:'#bbf7d0', text:'#15803d', emoji:'💪' },
+  'Relationships': { bg:'#fdf4ff', border:'#e9d5ff', text:'#7e22ce', emoji:'🤝' },
+  'Personal':      { bg:'#fffbeb', border:'#fde68a', text:'#b45309', emoji:'⭐' },
+  'Mindset':       { bg:'#f0f9ff', border:'#bae6fd', text:'#0369a1', emoji:'🧠' },
+};
+
+function renderWeeklyPage() {
+  const wk  = currentWeekKey();
+  const wkLabel = getWeekRangeLabel(wk);
+
+  // ── Intention ──
+  document.getElementById('wi-week-label').textContent = wkLabel;
+  const allIntentions = getWeeklyIntentions();
+  const wi = allIntentions[wk];
+  document.getElementById('wi-edit').classList.add('hidden');
+  if (wi?.intention) {
+    document.getElementById('wi-text').textContent = wi.intention;
+    document.getElementById('wi-display').classList.remove('hidden');
+    document.getElementById('wi-empty').classList.add('hidden');
+  } else {
+    document.getElementById('wi-display').classList.add('hidden');
+    document.getElementById('wi-empty').classList.remove('hidden');
+  }
+
+  // ── Review (this week) ──
+  const allReviews = getWeeklyReviews();
+  const wr = allReviews[wk];
+  if (wr) {
+    document.getElementById('wr-display-worked').textContent = wr.worked || '—';
+    document.getElementById('wr-display-didnt').textContent  = wr.didnt  || '—';
+    document.getElementById('wr-display-commit').textContent = wr.commit || '—';
+    document.getElementById('wr-display-date').textContent   =
+      `Saved ${new Date(wr.savedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}` +
+      (wr.rating ? ` · ${['','★','★★','★★★','★★★★','★★★★★'][wr.rating]} this week` : '');
+    document.getElementById('wr-this-week').classList.remove('hidden');
+    document.getElementById('wr-empty').classList.add('hidden');
+    document.getElementById('wr-open-btn').textContent = '✎ Edit Review';
+  } else {
+    document.getElementById('wr-this-week').classList.add('hidden');
+    document.getElementById('wr-empty').classList.remove('hidden');
+    document.getElementById('wr-open-btn').innerHTML = '<span class="material-symbols-outlined text-sm">add</span>Write Review';
+  }
+
+  // ── Win Wall ──
+  const wins = getWins();
+  const countEl = document.getElementById('win-wall-count');
+  if (wins.length) {
+    countEl.textContent = `${wins.length} win${wins.length !== 1 ? 's' : ''}`;
+    countEl.classList.remove('hidden');
+  } else {
+    countEl.classList.add('hidden');
+  }
+  document.getElementById('win-wall-empty').classList.toggle('hidden', wins.length > 0);
+  document.getElementById('win-wall-grid').innerHTML = wins.map(w => {
+    const c = WIN_CAT_COLORS[w.category] || { bg:'#f8f9fc', border:'#e5e7eb', text:'#374151', emoji:'🏆' };
+    const dateLabel = new Date(w.date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    return `
+    <div class="rounded-2xl p-4 relative group" style="background:${c.bg};border:1.5px solid ${c.border}">
+      <button onclick="deleteWin(${w.id})" class="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full bg-white/80 flex items-center justify-center transition-opacity shadow-sm">
+        <span class="material-symbols-outlined text-sm text-gray-400">close</span>
+      </button>
+      <div class="flex items-start gap-2 mb-2">
+        <span class="text-xl">${c.emoji}</span>
+        <div class="flex-1 min-w-0">
+          <p class="font-bold text-sm leading-snug" style="color:${c.text}">${w.title}</p>
+          ${w.category ? `<span class="text-[10px] font-bold uppercase tracking-widest" style="color:${c.text};opacity:0.6">${w.category}</span>` : ''}
+        </div>
+      </div>
+      ${w.note ? `<p class="text-xs text-on-surface-variant leading-relaxed mb-2">${w.note}</p>` : ''}
+      <p class="text-[10px] text-on-surface-variant/40 font-medium">${dateLabel}</p>
+    </div>`;
+  }).join('');
+
+  // ── Review History ──
+  const sortedWeeks = Object.keys(allReviews).filter(k => k !== wk).sort().reverse();
+  const histEl = document.getElementById('wr-history-list');
+  document.getElementById('wr-history-empty').classList.toggle('hidden', sortedWeeks.length > 0);
+  histEl.innerHTML = sortedWeeks.map(k => {
+    const r = allReviews[k];
+    const stars = r.rating ? '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating) : '';
+    return `
+    <div class="px-5 py-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-on-surface-variant">${getWeekRangeLabel(k)}</span>
+        ${stars ? `<span class="text-xs text-amber-400 font-bold">${stars}</span>` : ''}
+      </div>
+      ${r.worked  ? `<p class="text-xs text-on-surface mb-1"><span class="font-bold text-emerald-600">Worked: </span>${r.worked}</p>`  : ''}
+      ${r.didnt   ? `<p class="text-xs text-on-surface mb-1"><span class="font-bold text-red-500">Didn't: </span>${r.didnt}</p>`   : ''}
+      ${r.commit  ? `<p class="text-xs text-on-surface"><span class="font-bold text-accent">Commit: </span>${r.commit}</p>`  : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Wire backdrop clicks ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('wr-backdrop')?.addEventListener('click', e => { if (e.target === document.getElementById('wr-backdrop')) closeWeeklyReview(); });
+  document.getElementById('win-backdrop')?.addEventListener('click', e => { if (e.target === document.getElementById('win-backdrop')) closeAddWin(); });
+});
+
+// ── Weekly Intention in Dashboard Hero ───────────────────────────
+function renderWeeklyIntentionHero() {
+  const wk  = currentWeekKey();
+  const all = getWeeklyIntentions();
+  const wi  = all[wk];
+  let heroEl = document.getElementById('hero-weekly-intention');
+  if (!heroEl) return;
+  if (wi?.intention) {
+    heroEl.innerHTML = `
+      <div class="flex items-center justify-between mb-1.5">
+        <p class="text-[9px] font-bold uppercase tracking-widest" style="color:rgba(255,255,255,0.35);letter-spacing:0.1em">
+          <span class="material-symbols-outlined align-middle mr-1" style="font-size:11px">auto_awesome</span>Week's Focus
+        </p>
+        <button onclick="showPage('weekly')" class="text-[9px] font-bold hover:opacity-80 transition-opacity" style="color:rgba(165,180,252,0.55)">Edit</button>
+      </div>
+      <p class="text-sm font-semibold leading-snug" style="color:rgba(255,255,255,0.82)">${wi.intention}</p>`;
+    heroEl.classList.remove('hidden');
+  } else {
+    heroEl.innerHTML = `
+      <p class="text-[9px] font-bold uppercase tracking-widest mb-1.5" style="color:rgba(255,255,255,0.35);letter-spacing:0.1em">
+        <span class="material-symbols-outlined align-middle mr-1" style="font-size:11px">auto_awesome</span>Week's Focus
+      </p>
+      <button onclick="showPage('weekly')" class="text-sm italic text-left hover:opacity-80 transition-opacity" style="color:rgba(255,255,255,0.3)">+ Set this week's intention</button>`;
+    heroEl.classList.remove('hidden');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 
 // Hydrate from Supabase first, then boot
 syncFromSupabase().finally(() => {
