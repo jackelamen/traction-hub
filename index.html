@@ -2747,9 +2747,27 @@ async function syncFromSupabase() {
     const rows = await res.json();
     console.log('[Supabase] loaded', rows.length, 'keys from cloud');
     rows.forEach(({ key, value }) => {
-      const str = typeof value === 'string' ? value : JSON.stringify(value);
+      // value from Supabase jsonb comes back as a parsed object/array/primitive
+      // We need to store it as a JSON string in localStorage
+      let str;
+      if (value === null || value === undefined) {
+        str = 'null';
+      } else if (typeof value === 'string') {
+        // Already a string — but might be double-encoded. Try to detect.
+        // If the string itself looks like JSON, store as-is (it's a raw string value)
+        str = value;
+      } else {
+        str = JSON.stringify(value);
+      }
       _lsSet(key, str); // bypass patched setItem to avoid re-uploading
+      if (key === 'morning-setup-v1') {
+        console.log('[Supabase] morning-setup-v1 from cloud:', str);
+      }
     });
+    // Log if morning setup was NOT in the cloud data
+    if (!rows.some(r => r.key === 'morning-setup-v1')) {
+      console.warn('[Supabase] morning-setup-v1 NOT found in cloud — may not have been saved yet');
+    }
   } catch(e) {
     console.warn('[Supabase] syncFromSupabase error:', e);
   }
@@ -8431,8 +8449,19 @@ function getMorningSetup() {
   catch { return null; }
 }
 function saveMorningSetup(data) {
-  localStorage.setItem(MS_KEY, JSON.stringify(data));
-  pushAllToSupabase();
+  const str = JSON.stringify(data);
+  _lsSet(MS_KEY, str); // write directly to avoid triggering throttled push first
+  // Push just this key immediately, then do a full push as backup
+  const row = { user_id: getSbUserId(), key: MS_KEY, value: data, updated_at: new Date().toISOString() };
+  fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
+    method: 'POST',
+    headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rows: [row] })
+  }).then(r => {
+    if (r.ok) console.log('[Supabase] morning-setup-v1 saved to cloud ✓', data);
+    else r.text().then(t => console.warn('[Supabase] morning-setup save failed:', r.status, t));
+  }).catch(e => console.warn('[Supabase] morning-setup save error:', e));
+  pushAllToSupabase(); // also push everything else
 }
 
 function openMorningSetup() {
