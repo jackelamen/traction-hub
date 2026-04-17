@@ -3454,11 +3454,12 @@ let logs              = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 })();
 let sessionLog        = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}'); // keyed by date
 let breathLog         = JSON.parse(localStorage.getItem(BREATH_KEY)  || '{}'); // keyed by date
-let timerSecs         = 50 * 60;
-let timerTotal        = 50 * 60;
-let timerDuration     = 50;   // minutes
-let timerRunning      = false;
-let timerInterval     = null;
+let timerSecs             = 50 * 60;
+let timerTotal            = 50 * 60;
+let timerDuration         = 50;   // minutes
+let timerRunning          = false;
+let timerInterval         = null;
+let timerCompleteTimeout  = null; // tracks the post-complete session-modal timeout
 let walkCount         = 0;
 let horizonCount      = 0;   // horizon looks logged today (persisted in step state)
 let selectedEnergy    = 0;
@@ -3640,7 +3641,7 @@ function timerRestore() {
         showToast(`🌅 ${timerDuration} min complete. Time for your Horizon Walk!`);
         const sel = document.getElementById('session-duration-select');
         if ([15,25,50].includes(timerDuration)) sel.value = String(timerDuration);
-        setTimeout(() => openSessionModal(), 800);
+        timerCompleteTimeout = setTimeout(() => { timerCompleteTimeout = null; openSessionModal(); }, 800);
         return true;
       }
       timerDeadlineAt = state.deadlineAt;
@@ -3708,7 +3709,7 @@ function _timerComplete() {
   showToast(`🌅 ${timerDuration} min complete. Time for your Horizon Walk!`);
   const sel = document.getElementById('session-duration-select');
   if ([15,25,50].includes(timerDuration)) sel.value = String(timerDuration);
-  setTimeout(() => openSessionModal(), 1200);
+  timerCompleteTimeout = setTimeout(() => { timerCompleteTimeout = null; openSessionModal(); }, 1200);
 }
 
 function extendTimer(mins) {
@@ -3772,6 +3773,8 @@ function toggleTimer() {
 }
 
 function resetTimer() {
+  // Cancel any pending post-complete session modal prompt
+  if (timerCompleteTimeout) { clearTimeout(timerCompleteTimeout); timerCompleteTimeout = null; }
   clearInterval(timerInterval);
   timerInterval   = null;
   timerRunning    = false;
@@ -3784,7 +3787,7 @@ function resetTimer() {
   document.getElementById('timer-extend-row').classList.add('hidden');
   document.getElementById('timer-pulse-icon').classList.remove('animate-pulse-icon');
   updateTimerUI();
-  timerClear();
+  timerSave(); // persist the clean reset state so restore doesn't re-trigger the session modal
 }
 
 // ── Step Tracking ────────────────────────────────────────────────
