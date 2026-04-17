@@ -1725,6 +1725,41 @@
 </div>
 
 <!-- ═══════════════════════ MOBILE NAV ═══════════════════════ -->
+<!-- Mobile Music Sheet -->
+<div id="mobile-music-sheet" class="md:hidden hidden fixed inset-0 z-[85] flex flex-col" style="background:rgba(0,0,0,0.55)" onclick="if(event.target===this)closeMobileMusic()">
+  <div class="mt-auto rounded-t-2xl flex flex-col overflow-hidden" style="background:#0f1b35;max-height:80vh">
+    <!-- Handle + header -->
+    <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid rgba(255,255,255,0.08)">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-base" style="color:rgba(255,255,255,0.5)">music_note</span>
+        <span class="text-sm font-bold" style="color:rgba(255,255,255,0.85)">Focus Music</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="openAddTrackModal()" class="text-xs font-bold" style="color:rgba(165,180,252,0.9)">+ Add</button>
+        <button onclick="closeMobileMusic()" class="w-7 h-7 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.1)">
+          <span class="material-symbols-outlined text-sm text-white">close</span>
+        </button>
+      </div>
+    </div>
+    <!-- Tag filters -->
+    <div class="px-4 pt-3 pb-1">
+      <div id="mobile-music-tag-filters" class="flex flex-wrap gap-1.5"></div>
+    </div>
+    <!-- Empty state -->
+    <div id="mobile-music-empty" class="hidden px-4 py-6 text-center">
+      <p class="text-sm" style="color:rgba(255,255,255,0.3)">No tracks yet.</p>
+      <button onclick="openAddTrackModal()" class="mt-2 text-sm font-bold" style="color:rgba(165,180,252,0.9)">+ Add your first track</button>
+    </div>
+    <!-- Track list -->
+    <div id="mobile-music-tracklist-wrap" class="flex-1 overflow-y-auto">
+      <div class="flex items-center justify-between px-4 py-2" style="border-bottom:1px solid rgba(255,255,255,0.06)">
+        <span class="text-[10px] font-bold uppercase tracking-widest" style="color:rgba(255,255,255,0.35)" id="mobile-music-tracklist-label">0 tracks</span>
+      </div>
+      <div id="mobile-music-tracklist"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Mobile bottom nav -->
 <nav id="mobile-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-50" style="background:#fff;border-top:1px solid #f0f0f5;box-shadow:0 -4px 20px rgba(0,0,0,0.06)">
   <!-- Primary nav row -->
@@ -1787,9 +1822,9 @@
         <span class="material-symbols-outlined text-xl" style="color:#6366f1">cloud_sync</span>
         <span class="text-[10px] font-bold text-on-surface-variant">Notion</span>
       </button>
-      <button onclick="closeMobileMore();refreshAsanaTasks()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
-        <svg width="20" height="20" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="8" r="7" fill="#F06A4D"/><circle cx="7" cy="23" r="7" fill="#F06A4D"/><circle cx="25" cy="23" r="7" fill="#F06A4D"/></svg>
-        <span class="text-[10px] font-bold text-on-surface-variant">Asana</span>
+      <button onclick="openMobileMusic()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <span class="material-symbols-outlined text-xl" style="color:#4f46e5">music_note</span>
+        <span class="text-[10px] font-bold text-on-surface-variant">Music</span>
       </button>
     </div>
   </div>
@@ -5054,6 +5089,16 @@ function closeMobileMore() {
   if (tray) tray.classList.add('hidden');
 }
 
+function openMobileMusic() {
+  closeMobileMore();
+  renderMusicCard();
+  document.getElementById('mobile-music-sheet').classList.remove('hidden');
+}
+
+function closeMobileMusic() {
+  document.getElementById('mobile-music-sheet').classList.add('hidden');
+}
+
 // Close more tray when tapping outside
 document.addEventListener('click', function(e) {
   const tray = document.getElementById('mobile-more-tray');
@@ -6067,98 +6112,91 @@ async function fetchVideoTitle(videoId) {
 }
 
 // ── Render ────────────────────────────────────────────────────────
-function renderMusicCard() {
-  const tracks   = getTracks();
-  const favOnly  = activeTagFilters.has('__fav__');
-  const tagFilters = new Set([...activeTagFilters].filter(t => t !== '__fav__'));
-  const favCount = tracks.filter(t => t.fav).length;
-
-  const filtered = tracks.filter(t => {
-    if (favOnly && !t.fav) return false;
-    if (tagFilters.size && !(t.tags || []).some(tg => tagFilters.has(tg))) return false;
-    return true;
-  });
-
-  // Tag filter bar — favorites chip first, then tag chips
-  const filterBar = document.getElementById('music-tag-filters');
-  const usedTags  = [...new Set(tracks.flatMap(t => t.tags || []))].sort();
-  const favChip   = favCount > 0 ? `
-    <button onclick="toggleTagFilter('__fav__')"
-      class="px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors flex items-center gap-0.5"
-      style="${favOnly
-        ? 'background:#f59e0b;color:#fff'
-        : 'background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.55)'}">
-      <span class="material-symbols-outlined" style="font-size:10px;line-height:1;font-variation-settings:'FILL' ${favOnly?1:0}">star</span>
-      Favorites
-    </button>` : '';
-  const tagChips  = usedTags.map(tag => `
-    <button onclick="toggleTagFilter('${tag}')"
-      class="px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors"
-      style="${tagFilters.has(tag)
-        ? 'background:#4f46e5;color:#fff'
-        : 'background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.55)'}">
-      ${tag}
-    </button>`).join('');
-  filterBar.innerHTML = favChip + tagChips;
-
-  // Empty state
-  document.getElementById('music-empty').classList.toggle('hidden', tracks.length > 0);
-  document.getElementById('music-tracklist-wrap').classList.toggle('hidden', tracks.length === 0);
-
-  // Track count label
-  const isFiltered = favOnly || tagFilters.size;
-  document.getElementById('music-tracklist-label').textContent =
-    isFiltered ? `${filtered.length} of ${tracks.length} tracks` : `${tracks.length} track${tracks.length !== 1 ? 's' : ''}`;
-
-  // Track list
-  const list = document.getElementById('music-tracklist');
-  list.style.display = tracklistOpen ? '' : 'none';
-  document.getElementById('music-tracklist-chevron').textContent = tracklistOpen ? 'expand_less' : 'expand_more';
-
-  if (!filtered.length && isFiltered) {
-    list.innerHTML = `<p class="px-3 py-3 text-[11px] italic" style="color:rgba(255,255,255,0.3)">No tracks match the selected filters.</p>`;
-    return;
-  }
-
-  // Sort: favorites float to top within the filtered set
-  const sorted = [...filtered].sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0));
-
-  list.innerHTML = sorted.map(t => {
+function _buildMusicTrackHTML(sorted, tracks) {
+  return sorted.map(t => {
     const realIndex = tracks.indexOf(t);
     return `
-    <div class="flex items-center gap-1.5 px-3 py-2 group" style="cursor:default" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background=''">
+    <div class="flex items-center gap-1.5 px-3 py-2.5 group" style="cursor:default;border-bottom:1px solid rgba(255,255,255,0.05)" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background=''">
       <button onclick="toggleFavorite(${realIndex})" class="flex-shrink-0 transition-colors" title="${t.fav ? 'Remove from favorites' : 'Add to favorites'}">
-        <span class="material-symbols-outlined text-base transition-all" style="font-variation-settings:'FILL' ${t.fav?1:0};color:${t.fav?'#F59E0B':'rgba(255,255,255,0.3)'};opacity:${t.fav?1:0};transition:opacity 0.1s" id="fav-icon-${realIndex}"
-          onmouseover="this.style.opacity=1" onmouseout="this.style.opacity='${t.fav?1:0}'">star</span>
+        <span class="material-symbols-outlined text-base transition-all" style="font-variation-settings:'FILL' ${t.fav?1:0};color:${t.fav?'#F59E0B':'rgba(255,255,255,0.3)'}">star</span>
       </button>
       <button onclick="openTrack(${realIndex})" class="flex-1 min-w-0 text-left">
-        <p class="text-[11px] font-semibold truncate" style="color:rgba(255,255,255,0.85)">${t.title}</p>
+        <p class="text-sm font-semibold truncate" style="color:rgba(255,255,255,0.88)">${t.title}</p>
         <div class="flex flex-wrap gap-1 mt-0.5">
           ${(t.tags||[]).map(tg => `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5)">${tg}</span>`).join('')}
         </div>
       </button>
-      <div class="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all flex-shrink-0">
-        <button onclick="openEditTagsModal(${realIndex})" title="Edit tags" class="w-6 h-6 flex items-center justify-center rounded transition-colors" style="color:rgba(255,255,255,0.35)">
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <button onclick="openEditTagsModal(${realIndex})" title="Edit tags" class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors" style="color:rgba(255,255,255,0.35)">
           <span class="material-symbols-outlined text-sm">label</span>
         </button>
-        <button onclick="deleteTrack(${realIndex})" title="Delete" class="w-6 h-6 flex items-center justify-center rounded transition-colors" style="color:rgba(255,255,255,0.35)">
+        <button onclick="deleteTrack(${realIndex})" title="Delete" class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors" style="color:rgba(255,255,255,0.35)">
           <span class="material-symbols-outlined text-sm">delete</span>
         </button>
       </div>
     </div>`;
   }).join('');
+}
 
-  // Make star icons visible on row hover via CSS trick
-  document.querySelectorAll('#music-tracklist .group').forEach(row => {
-    row.addEventListener('mouseenter', () => {
-      const star = row.querySelector('[id^="fav-icon-"]');
-      if (star && star.style.opacity === '0') star.style.opacity = '0.35';
-    });
-    row.addEventListener('mouseleave', () => {
-      const star = row.querySelector('[id^="fav-icon-"]');
-      if (star && !star.style.fontVariationSettings.includes('FILL\' 1')) star.style.opacity = '0';
-    });
+function _buildTagChipsHTML(usedTags, tagFilters, favOnly, favCount) {
+  const favChip = favCount > 0 ? `
+    <button onclick="toggleTagFilter('__fav__')"
+      class="px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors flex items-center gap-0.5"
+      style="${favOnly ? 'background:#f59e0b;color:#fff' : 'background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.55)'}">
+      <span class="material-symbols-outlined" style="font-size:10px;line-height:1;font-variation-settings:'FILL' ${favOnly?1:0}">star</span>Favorites
+    </button>` : '';
+  const tagChips = usedTags.map(tag => `
+    <button onclick="toggleTagFilter('${tag}')"
+      class="px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors"
+      style="${tagFilters.has(tag) ? 'background:#4f46e5;color:#fff' : 'background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.55)'}">
+      ${tag}
+    </button>`).join('');
+  return favChip + tagChips;
+}
+
+function renderMusicCard() {
+  const tracks     = getTracks();
+  const favOnly    = activeTagFilters.has('__fav__');
+  const tagFilters = new Set([...activeTagFilters].filter(t => t !== '__fav__'));
+  const favCount   = tracks.filter(t => t.fav).length;
+  const filtered   = tracks.filter(t => {
+    if (favOnly && !t.fav) return false;
+    if (tagFilters.size && !(t.tags || []).some(tg => tagFilters.has(tg))) return false;
+    return true;
   });
+  const usedTags   = [...new Set(tracks.flatMap(t => t.tags || []))].sort();
+  const isFiltered = favOnly || tagFilters.size;
+  const countLabel = isFiltered ? `${filtered.length} of ${tracks.length} tracks` : `${tracks.length} track${tracks.length !== 1 ? 's' : ''}`;
+  const sorted     = [...filtered].sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0));
+  const chipsHTML  = _buildTagChipsHTML(usedTags, tagFilters, favOnly, favCount);
+  const trackHTML  = filtered.length || !isFiltered
+    ? _buildMusicTrackHTML(sorted, tracks)
+    : `<p class="px-3 py-3 text-[11px] italic" style="color:rgba(255,255,255,0.3)">No tracks match the selected filters.</p>`;
+
+  // ── Sidebar version ──
+  const filterBar = document.getElementById('music-tag-filters');
+  if (filterBar) filterBar.innerHTML = chipsHTML;
+  document.getElementById('music-empty')?.classList.toggle('hidden', tracks.length > 0);
+  document.getElementById('music-tracklist-wrap')?.classList.toggle('hidden', tracks.length === 0);
+  const labelEl = document.getElementById('music-tracklist-label');
+  if (labelEl) labelEl.textContent = countLabel;
+  const list = document.getElementById('music-tracklist');
+  if (list) {
+    list.style.display = tracklistOpen ? '' : 'none';
+    list.innerHTML = trackHTML;
+  }
+  const chevron = document.getElementById('music-tracklist-chevron');
+  if (chevron) chevron.textContent = tracklistOpen ? 'expand_less' : 'expand_more';
+
+  // ── Mobile sheet version ──
+  const mFilters = document.getElementById('mobile-music-tag-filters');
+  if (mFilters) mFilters.innerHTML = chipsHTML;
+  document.getElementById('mobile-music-empty')?.classList.toggle('hidden', tracks.length > 0);
+  document.getElementById('mobile-music-tracklist-wrap')?.classList.toggle('hidden', tracks.length === 0);
+  const mLabel = document.getElementById('mobile-music-tracklist-label');
+  if (mLabel) mLabel.textContent = countLabel;
+  const mList = document.getElementById('mobile-music-tracklist');
+  if (mList) mList.innerHTML = trackHTML;
 }
 
 function toggleTagFilter(tag) {
