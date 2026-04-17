@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Intentional Traction Dashboard</title>
+<title>The EDGEx</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='10' fill='%231a1a2e'/><text x='16' y='23' font-size='18' text-anchor='middle' font-family='sans-serif'>🌅</text></svg>"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -330,11 +330,16 @@
   <div class="flex-1 overflow-y-auto no-scrollbar px-5 pt-6 pb-4 min-h-0">
 
   <!-- Logo -->
-  <div class="flex items-center gap-3 mb-8">
-    <div class="nav-logo">🌅</div>
-    <div>
-      <div class="sidebar-title">Traction Hub</div>
-      <div class="sidebar-sub">Workday OS</div>
+  <div class="mb-8">
+    <!-- EDGEx text logo -->
+    <div class="flex items-baseline gap-0 leading-none mb-1">
+      <span style="font-family:'Manrope',sans-serif;font-weight:300;font-size:13px;letter-spacing:0.18em;color:rgba(255,255,255,0.45);text-transform:uppercase">The</span>
+    </div>
+    <div class="flex items-baseline gap-0 leading-none">
+      <span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:26px;letter-spacing:-0.5px;color:#ffffff;line-height:1">EDG</span><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:26px;letter-spacing:-0.5px;background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1">E</span><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:26px;letter-spacing:-0.5px;color:rgba(255,255,255,0.35);line-height:1">x</span>
+    </div>
+    <div class="mt-1.5">
+      <span style="font-family:'Inter',sans-serif;font-weight:500;font-size:9.5px;letter-spacing:0.15em;color:rgba(255,255,255,0.25);text-transform:uppercase">Every Day Growth Experience</span>
     </div>
   </div>
 
@@ -366,10 +371,6 @@
   <div class="nav-divider my-4"></div>
   <div class="sidebar-section-label mb-2">Integrations</div>
   <nav class="space-y-0.5">
-    <a href="https://www.notion.so/27f990778487423a94395d4167e276e0" target="_blank" class="nav-item">
-      <span class="material-symbols-outlined nav-icon">menu_book</span>
-      <span>Notion Database</span>
-    </a>
     <button onclick="syncToNotion(todayStr())" class="nav-item">
       <span class="material-symbols-outlined nav-icon">cloud_sync</span>
       <span class="flex-1">Sync to Notion</span>
@@ -504,17 +505,12 @@
     </div>
   </div>
 
-  <!-- Data Tools -->
+  <!-- Settings -->
   <div class="mt-5 pt-4" style="border-top:1px solid rgba(255,255,255,0.07)">
-    <div class="sidebar-section-label mb-2">Data</div>
     <nav class="space-y-0.5">
-      <button onclick="exportAllData()" class="nav-item">
-        <span class="material-symbols-outlined nav-icon">download</span>
-        <span>Export Data</span>
-      </button>
-      <button onclick="document.getElementById('import-file-input').click()" class="nav-item">
-        <span class="material-symbols-outlined nav-icon">upload</span>
-        <span>Import Data</span>
+      <button onclick="openSettings()" class="nav-item">
+        <span class="material-symbols-outlined nav-icon">settings</span>
+        <span>Settings</span>
       </button>
     </nav>
     <input type="file" id="import-file-input" accept=".json" class="hidden" onchange="importAllData(event)"/>
@@ -536,7 +532,7 @@
 <header class="md:ml-64 bg-surface-container-lowest flex justify-between items-center px-4 md:px-8 py-3 md:py-4" style="border-bottom:1px solid #f0f0f5">
   <div>
     <h2 class="text-base md:text-lg font-bold text-on-surface tracking-tight" id="header-subline">Loading...</h2>
-    <p class="text-[10px] md:text-xs text-on-surface-variant/60 mt-0.5 font-medium">Intentional Traction</p>
+    <p class="text-[10px] md:text-xs text-on-surface-variant/60 mt-0.5 font-medium">The EDGEx &middot; Every Day Growth Experience</p>
   </div>
   <div class="flex items-center gap-2 md:gap-3">
     <button onclick="openMorningSetup()" id="morning-setup-btn"
@@ -544,6 +540,10 @@
       style="background:#f3f4f8;color:#374151;border:1.5px solid #e5e7eb">
       <span class="text-base" id="ms-header-icon">☀️</span>
       <span id="ms-header-label" class="hidden sm:inline">Morning Setup</span>
+    </button>
+    <!-- Settings icon — visible on mobile, hidden on desktop (sidebar has it) -->
+    <button onclick="openSettings()" class="md:hidden w-8 h-8 rounded-xl flex items-center justify-center transition-colors" style="background:#f3f4f8;border:1.5px solid #e5e7eb" title="Settings">
+      <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">settings</span>
     </button>
     <div class="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-white font-bold text-sm select-none" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">J</div>
   </div>
@@ -1760,6 +1760,131 @@
   </div>
 </div>
 
+<!-- ═══════════════════════ SETTINGS MODAL ═══════════════════════ -->
+<div id="settings-backdrop" class="eod-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4">
+  <div class="eod-modal bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col" style="max-height:90vh">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-5 flex-shrink-0" style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-bottom:1px solid rgba(255,255,255,0.08)">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(79,70,229,0.25)">
+          <span class="material-symbols-outlined text-indigo-300 text-base">settings</span>
+        </div>
+        <div>
+          <h2 class="font-bold text-white text-base leading-tight">Settings</h2>
+          <p class="text-[11px]" style="color:rgba(255,255,255,0.35)">Integrations &amp; Data</p>
+        </div>
+      </div>
+      <button onclick="closeSettings()" class="w-8 h-8 rounded-full flex items-center justify-center transition-colors" style="background:rgba(255,255,255,0.08)">
+        <span class="material-symbols-outlined text-sm text-white/60">close</span>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="overflow-y-auto flex-1 px-6 py-5 space-y-6">
+
+      <!-- ── Notion ── -->
+      <section>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="material-symbols-outlined text-base text-indigo-400">cloud_sync</span>
+          <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Notion Integration</h3>
+        </div>
+        <div class="rounded-xl overflow-hidden border border-outline-variant/30">
+          <!-- Token row -->
+          <div class="p-4 bg-surface-container">
+            <label class="block text-xs font-bold text-on-surface-variant mb-2">Integration Token</label>
+            <div class="flex gap-2">
+              <input id="notion-token-input" type="password" placeholder="secret_xxxxxxxxxxxx"
+                class="flex-1 bg-surface-container-lowest rounded-xl px-3 py-2.5 text-sm text-on-surface border border-outline-variant/20 focus:ring-2 focus:ring-accent/30 focus:border-accent/40 transition-all"/>
+              <button onclick="saveNotionToken()" class="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90" style="background:#4f46e5">Save</button>
+            </div>
+            <p id="notion-token-status" class="text-[11px] mt-2 text-on-surface-variant/60"></p>
+          </div>
+          <!-- Sync + open rows -->
+          <div style="border-top:1px solid rgba(0,0,0,0.06)">
+            <button onclick="syncToNotion(todayStr());closeSettings()" class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-container transition-colors text-left">
+              <span class="material-symbols-outlined text-indigo-400 text-base">sync</span>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-on-surface">Sync Today to Notion</p>
+                <p class="text-[11px] text-on-surface-variant/60">Push today's log to your Notion database</p>
+              </div>
+              <span id="settings-notion-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(79,70,229,0.12);color:#818cf8">Ready</span>
+            </button>
+          </div>
+          <div style="border-top:1px solid rgba(0,0,0,0.06)">
+            <a href="https://www.notion.so/27f990778487423a94395d4167e276e0" target="_blank"
+              class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-container transition-colors text-left">
+              <span class="material-symbols-outlined text-on-surface-variant text-base">menu_book</span>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-on-surface">Open Notion Database</p>
+                <p class="text-[11px] text-on-surface-variant/60">View your full log in Notion</p>
+              </div>
+              <span class="material-symbols-outlined text-on-surface-variant/40 text-sm">open_in_new</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Asana ── -->
+      <section>
+        <div class="flex items-center gap-2 mb-3">
+          <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="8" r="7" fill="#F06A4D"/><circle cx="7" cy="23" r="7" fill="#F06A4D"/><circle cx="25" cy="23" r="7" fill="#F06A4D"/></svg>
+          <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Asana Integration</h3>
+        </div>
+        <div class="rounded-xl overflow-hidden border border-outline-variant/30">
+          <!-- PAT row -->
+          <div class="p-4 bg-surface-container">
+            <label class="block text-xs font-bold text-on-surface-variant mb-2">Personal Access Token</label>
+            <div class="flex gap-2">
+              <input id="settings-asana-pat-input" type="password" placeholder="1/xxxxxxxxxxxxxxxx"
+                class="flex-1 bg-surface-container-lowest rounded-xl px-3 py-2.5 text-sm text-on-surface border border-outline-variant/20 focus:ring-2 focus:ring-accent/30 focus:border-accent/40 transition-all"/>
+              <button onclick="saveAsanaPAT()" class="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90" style="background:#F06A4D">Save</button>
+            </div>
+            <p id="asana-pat-status" class="text-[11px] mt-2 text-on-surface-variant/60"></p>
+          </div>
+          <!-- Refresh row -->
+          <div style="border-top:1px solid rgba(0,0,0,0.06)">
+            <button onclick="refreshAsanaTasks();closeSettings()" class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-container transition-colors text-left">
+              <span class="material-symbols-outlined text-orange-400 text-base">refresh</span>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-on-surface">Refresh Asana Tasks</p>
+                <p class="text-[11px] text-on-surface-variant/60">Pull your latest incomplete tasks</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Data ── -->
+      <section>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="material-symbols-outlined text-base text-emerald-400">storage</span>
+          <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Data &amp; Backup</h3>
+        </div>
+        <div class="rounded-xl overflow-hidden border border-outline-variant/30">
+          <button onclick="exportAllData()" class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-container transition-colors text-left">
+            <span class="material-symbols-outlined text-emerald-500 text-base">download</span>
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-on-surface">Export All Data</p>
+              <p class="text-[11px] text-on-surface-variant/60">Download a full JSON backup of your dashboard</p>
+            </div>
+          </button>
+          <div style="border-top:1px solid rgba(0,0,0,0.06)">
+            <button onclick="document.getElementById('import-file-input').click()" class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-container transition-colors text-left">
+              <span class="material-symbols-outlined text-blue-500 text-base">upload</span>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-on-surface">Import Data</p>
+                <p class="text-[11px] text-on-surface-variant/60">Restore from a previously exported backup</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /body -->
+  </div>
+</div>
+
 <!-- Mobile bottom nav -->
 <nav id="mobile-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-50" style="background:#fff;border-top:1px solid #f0f0f5;box-shadow:0 -4px 20px rgba(0,0,0,0.06)">
   <!-- Primary nav row -->
@@ -1818,9 +1943,9 @@
         <span class="material-symbols-outlined text-xl" style="color:#6b7280">history</span>
         <span class="text-[10px] font-bold text-on-surface-variant">History</span>
       </button>
-      <button onclick="closeMobileMore();syncToNotion(todayStr())" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
-        <span class="material-symbols-outlined text-xl" style="color:#6366f1">cloud_sync</span>
-        <span class="text-[10px] font-bold text-on-surface-variant">Notion</span>
+      <button onclick="closeMobileMore();openSettings()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <span class="material-symbols-outlined text-xl" style="color:#6b7280">settings</span>
+        <span class="text-[10px] font-bold text-on-surface-variant">Settings</span>
       </button>
       <button onclick="openMobileMusic()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
         <span class="material-symbols-outlined text-xl" style="color:#4f46e5">music_note</span>
@@ -5089,6 +5214,44 @@ function closeMobileMore() {
   if (tray) tray.classList.add('hidden');
 }
 
+// ── Settings modal ────────────────────────────────────────────────
+function openSettings() {
+  // Populate token status hints
+  const hasNotion = !!localStorage.getItem('notion-token-v1');
+  const hasAsana  = !!localStorage.getItem('30day-asana-pat-v1');
+  const nStatus   = document.getElementById('notion-token-status');
+  const aStatus   = document.getElementById('asana-pat-status');
+  if (nStatus) nStatus.textContent = hasNotion ? '✓ Token saved' : 'No token saved — paste yours above';
+  if (aStatus) aStatus.textContent = hasAsana  ? '✓ Token saved' : 'No token saved — paste yours above';
+  // Mirror notion sync badge
+  const settingsBadge = document.getElementById('settings-notion-badge');
+  const sidebarBadge  = document.getElementById('notion-sync-badge');
+  if (settingsBadge && sidebarBadge) {
+    settingsBadge.textContent  = sidebarBadge.textContent;
+    settingsBadge.style.cssText = sidebarBadge.style.cssText;
+  }
+  document.getElementById('settings-backdrop').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-backdrop').classList.remove('open');
+}
+
+function saveAsanaPAT() {
+  const v = (document.getElementById('settings-asana-pat-input').value || '').trim();
+  if (!v) { showToast('Please paste your Asana Personal Access Token.'); return; }
+  localStorage.setItem('30day-asana-pat-v1', v);
+  document.getElementById('settings-asana-pat-input').value = '';
+  document.getElementById('asana-pat-status').textContent = '✓ Token saved';
+  showToast('Asana token saved ✓');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('settings-backdrop')?.addEventListener('click', function(e) {
+    if (e.target === this) closeSettings();
+  });
+});
+
 function openMobileMusic() {
   closeMobileMore();
   renderMusicCard();
@@ -6650,8 +6813,10 @@ function saveNotionToken() {
   if (!v) { showToast('Please paste your Notion integration token.'); return; }
   localStorage.setItem(NOTION_TOKEN_KEY, v);
   document.getElementById('notion-token-input').value = '';
+  const st = document.getElementById('notion-token-status');
+  if (st) st.textContent = '✓ Token saved';
   updateNotionSyncBadge('idle');
-  showToast('Notion token saved. Your next day close will sync automatically.');
+  showToast('Notion token saved ✓');
 }
 
 function updateNotionSyncBadge(state, msg) {
