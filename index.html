@@ -3716,6 +3716,33 @@ function setDuration(mins) {
   timerSave();
 }
 
+function playTimerBell() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Three-strike bell: fundamental + harmonics, fading out
+    const strikes = [0, 0.55, 1.1];
+    strikes.forEach(delay => {
+      const osc1 = ctx.createOscillator(); // fundamental
+      const osc2 = ctx.createOscillator(); // 2nd harmonic
+      const osc3 = ctx.createOscillator(); // 3rd harmonic
+      const gain = ctx.createGain();
+      [osc1, osc2, osc3].forEach(o => o.connect(gain));
+      gain.connect(ctx.destination);
+      osc1.frequency.value = 880;   // A5
+      osc2.frequency.value = 1760;  // A6
+      osc3.frequency.value = 2637;  // E7
+      osc1.type = osc2.type = osc3.type = 'sine';
+      const t = ctx.currentTime + delay;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.4, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 2.2);
+      [osc1, osc2, osc3].forEach(o => { o.start(t); o.stop(t + 2.5); });
+    });
+  } catch(e) {
+    console.warn('[Bell] Web Audio not available:', e);
+  }
+}
+
 function _timerComplete() {
   clearInterval(timerInterval);
   timerInterval   = null;
@@ -3723,6 +3750,7 @@ function _timerComplete() {
   timerDeadlineAt = null;
   timerSecs       = 0;
   timerClear();
+  playTimerBell();
   document.getElementById('timer-btn-icon').textContent   = 'play_arrow';
   document.getElementById('timer-btn-label').textContent  = 'Restart';
   document.getElementById('timer-pulse-icon').textContent = 'notifications_active';
