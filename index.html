@@ -3484,6 +3484,7 @@ let timerDuration         = 50;   // minutes
 let timerRunning          = false;
 let timerInterval         = null;
 let timerCompleteTimeout  = null; // tracks the post-complete session-modal timeout
+let timerWarningFired     = false; // true once the 5-min warning bell has played
 let walkCount         = 0;
 let horizonCount      = 0;   // horizon looks logged today (persisted in step state)
 let selectedEnergy    = 0;
@@ -3716,6 +3717,29 @@ function setDuration(mins) {
   timerSave();
 }
 
+function playTimerWarning() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Single soft chime — lower pitch, gentler than the completion bell
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc1.connect(gain); osc2.connect(gain);
+    gain.connect(ctx.destination);
+    osc1.frequency.value = 528;  // C5-ish — warm, less urgent
+    osc2.frequency.value = 1056; // octave up
+    osc1.type = osc2.type = 'sine';
+    const t = ctx.currentTime;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.25, t + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
+    osc1.start(t); osc1.stop(t + 2);
+    osc2.start(t); osc2.stop(t + 2);
+  } catch(e) {
+    console.warn('[Bell] Web Audio not available:', e);
+  }
+}
+
 function playTimerBell() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -3778,6 +3802,7 @@ function extendTimer(mins) {
 }
 
 function _startTicking() {
+  timerWarningFired = false; // reset so warning fires fresh each new run
   timerRunning = true;
   document.getElementById('timer-btn-icon').textContent   = 'pause';
   document.getElementById('timer-btn-label').textContent  = 'Pause';
@@ -3795,6 +3820,11 @@ function _startTicking() {
       _timerComplete();
     } else {
       timerSecs = remaining;
+      // 5-minute warning — fires once per session
+      if (!timerWarningFired && remaining <= 300 && remaining > 299) {
+        timerWarningFired = true;
+        playTimerWarning();
+      }
       updateTimerUI();
     }
   }, 500); // poll at 500ms so display is always within half a second of truth
@@ -3827,6 +3857,7 @@ function toggleTimer() {
 function resetTimer() {
   // Cancel any pending post-complete session modal prompt
   if (timerCompleteTimeout) { clearTimeout(timerCompleteTimeout); timerCompleteTimeout = null; }
+  timerWarningFired = false;
   clearInterval(timerInterval);
   timerInterval   = null;
   timerRunning    = false;
