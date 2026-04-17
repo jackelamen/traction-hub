@@ -1583,7 +1583,7 @@
 </div><!-- /page-goals -->
 
 <!-- ═══ GOAL MODAL ═══ -->
-<div id="goal-modal-backdrop" class="eod-backdrop fixed inset-0 z-[90] flex items-center justify-center p-4" style="display:none!important">
+<div id="goal-modal-backdrop" class="eod-backdrop fixed inset-0 z-[90] flex items-center justify-center p-4">
   <div class="eod-modal bg-white rounded-2xl shadow-xl w-full overflow-hidden flex flex-col" style="max-width:520px;max-height:90vh">
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
       <h2 id="goal-modal-title" class="text-base font-black text-on-surface">New Goal</h2>
@@ -9343,6 +9343,9 @@ function checkAutoMorningSetup() {
 document.getElementById('morning-setup-backdrop').addEventListener('click', function(e) {
   if (e.target === this) closeMorningSetup();
 });
+document.getElementById('goal-modal-backdrop').addEventListener('click', function(e) {
+  if (e.target === this) closeGoalModal();
+});
 // Enter key advances steps
 document.getElementById('ms-gratitude').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); msNext(); }
@@ -9621,8 +9624,7 @@ function _goalCardHTML(g, cfg) {
 function openGoalModal(id, defaultTier) {
   _goalEditId = id || null;
   const backdrop = document.getElementById('goal-modal-backdrop');
-  backdrop.style.removeProperty('display');
-  backdrop.classList.remove('hidden');
+  backdrop.classList.add('open');
 
   if (id) {
     // Edit mode
@@ -9651,8 +9653,7 @@ function openGoalModal(id, defaultTier) {
 }
 
 function closeGoalModal() {
-  const backdrop = document.getElementById('goal-modal-backdrop');
-  backdrop.style.display = 'none';
+  document.getElementById('goal-modal-backdrop').classList.remove('open');
 }
 
 function goalModalPickTier(tier) {
