@@ -1554,33 +1554,32 @@
   <!-- Header -->
   <div class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-xl font-black text-on-surface" style="letter-spacing:-0.03em">Goal Stack</h1>
-      <p class="text-xs text-on-surface-variant mt-0.5">Life → Year → Month → Week · everything connects</p>
+      <h1 class="text-xl font-black text-on-surface" style="letter-spacing:-0.03em">Goal System</h1>
+      <p class="text-xs text-on-surface-variant mt-0.5">Vision → Life Areas → Goals → 12-Week Sprints</p>
     </div>
-    <button onclick="openGoalModal(null,'life')"
+    <a href="goals.html"
       class="flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-xl text-white shadow-sm"
-      style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">
-      <span class="material-symbols-outlined text-base">add</span>New Goal
-    </button>
+      style="background:linear-gradient(135deg,#4f46e5,#7c3aed);text-decoration:none">
+      <span class="material-symbols-outlined text-base">open_in_new</span>Open Goal System
+    </a>
   </div>
 
-  <!-- Tier pills -->
-  <div id="goals-tier-tabs" class="flex gap-2 mb-6 flex-wrap">
-    <button onclick="setGoalsTier('all')" data-tier="all"
-      class="goals-tier-btn px-4 py-1.5 rounded-full text-xs font-bold transition-colors"
-      style="background:#4f46e5;color:#fff">All</button>
-    <button onclick="setGoalsTier('life')" data-tier="life"
-      class="goals-tier-btn px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-surface-container text-on-surface-variant">Life</button>
-    <button onclick="setGoalsTier('year')" data-tier="year"
-      class="goals-tier-btn px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-surface-container text-on-surface-variant">Year</button>
-    <button onclick="setGoalsTier('month')" data-tier="month"
-      class="goals-tier-btn px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-surface-container text-on-surface-variant">Month</button>
-    <button onclick="setGoalsTier('week')" data-tier="week"
-      class="goals-tier-btn px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-surface-container text-on-surface-variant">Week</button>
+  <!-- Launch card -->
+  <div style="background:#fff;border-radius:16px;border:1px solid rgba(0,0,0,0.05);box-shadow:0 1px 3px rgba(0,0,0,0.06);overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#1a1a2e,#4f46e5);padding:32px 28px;">
+      <div style="font-size:36px;margin-bottom:12px;">🎯</div>
+      <h2 style="color:#fff;font-size:18px;font-weight:800;margin:0 0 6px;letter-spacing:-0.03em">Your Goal System</h2>
+      <p style="color:rgba(255,255,255,0.65);font-size:13px;margin:0;line-height:1.5">Griply hierarchy + 12 Week Year execution. Life Areas → Vision → Goals → Subgoals → 12-Week Sprints with weekly scorecards.</p>
+    </div>
+    <div style="padding:20px 28px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <a href="goals.html" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-radius:10px;padding:11px 20px;font-weight:700;font-size:13.5px;text-decoration:none;box-shadow:0 4px 12px rgba(79,70,229,0.3);">
+        <span class="material-symbols-outlined" style="font-size:17px">flag</span>Open Goal System
+      </a>
+      <a href="goals.html" style="display:inline-flex;align-items:center;gap:8px;background:#fff;color:#374151;border-radius:10px;padding:10px 18px;font-weight:600;font-size:13px;border:1.5px solid #e5e7eb;text-decoration:none;">
+        <span class="material-symbols-outlined" style="font-size:16px">fact_check</span>View Scorecard
+      </a>
+    </div>
   </div>
-
-  <!-- Goals list rendered here -->
-  <div id="goals-list-container"></div>
 
 </div><!-- /page-goals -->
 
@@ -6442,22 +6441,30 @@ function openStepsUpdateModal(preselectedDate) {
   const today    = todayStr();
   const todayIdx = WEEKDAY_DATES.indexOf(today);
 
-  // Build date options: all days up to and including today that have a log,
-  // plus today itself even if not yet logged.
-  const eligibleDates = WEEKDAY_DATES.slice(0, todayIdx + 1).filter(d => {
-    return d === today || !!logs[d];
-  });
+  // Build date options: all days that have a full EOD log OR a steps-only entry,
+  // plus today always. Falls back to last 7 days if today isn't in WEEKDAY_DATES.
+  const stepsOnly = (() => { try { return JSON.parse(localStorage.getItem('30day-steps-only-v1') || '{}'); } catch { return {}; } })();
+  const pool = todayIdx >= 0 ? WEEKDAY_DATES.slice(0, todayIdx + 1) : WEEKDAY_DATES;
+  const eligibleDates = pool.filter(d => d === today || !!logs[d] || !!stepsOnly[d]);
+  // Also include the 7 most recent calendar days in case today is a weekend/outside pool
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0, 10);
+    if (!eligibleDates.includes(ds) && (logs[ds] || stepsOnly[ds])) eligibleDates.push(ds);
+  }
   // Always include today at minimum
   if (!eligibleDates.includes(today)) eligibleDates.push(today);
+  eligibleDates.sort();
 
   const sel = document.getElementById('steps-update-target-date');
   sel.innerHTML = '';
+  const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0,10); })();
   eligibleDates.slice().reverse().forEach(d => {
     const opt    = document.createElement('option');
     opt.value    = d;
     const parts  = d.split('-');
-    const label  = d === today ? `Today (${parts[1]}/${parts[2]})`
-                 : d === (todayIdx > 0 ? WEEKDAY_DATES[todayIdx - 1] : null) ? `Yesterday (${parts[1]}/${parts[2]})`
+    const label  = d === today     ? `Today (${parts[1]}/${parts[2]})`
+                 : d === yesterday ? `Yesterday (${parts[1]}/${parts[2]})`
                  : `${parts[1]}/${parts[2]}/${parts[0]}`;
     opt.textContent = label;
     sel.appendChild(opt);
@@ -6466,8 +6473,8 @@ function openStepsUpdateModal(preselectedDate) {
   // Pick which date to pre-select
   let defaultDate = preselectedDate || today;
   // If today has no log and yesterday does, default to yesterday
-  if (!preselectedDate && !logs[today] && todayIdx > 0 && logs[WEEKDAY_DATES[todayIdx - 1]]) {
-    defaultDate = WEEKDAY_DATES[todayIdx - 1];
+  if (!preselectedDate && !logs[today] && (logs[yesterday] || stepsOnly[yesterday])) {
+    defaultDate = yesterday;
   }
   sel.value = defaultDate;
 
