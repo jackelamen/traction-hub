@@ -3205,8 +3205,9 @@ const SB_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 
 // Keys that are purely ephemeral and should NOT be synced
 const NO_SYNC_KEYS = new Set([
-  'traction-device-id',   // old device ID, no longer used
-  'morning-setup-done',   // sessionStorage flag, not relevant cross-device
+  'traction-device-id',      // old device ID, no longer used
+  'morning-setup-done',      // sessionStorage flag, not relevant cross-device
+  '_edgex_ls_timestamps',    // local write-time metadata — never push to cloud
 ]);
 
 // Everything else gets synced — no allowlist needed
@@ -3218,7 +3219,20 @@ function getSbUserId() { return SB_USER_ID; }
 
 // Keep a direct reference to the original localStorage.setItem (used during boot hydration)
 const _lsSet = localStorage.setItem.bind(localStorage);
+const _lsGet = localStorage.getItem.bind(localStorage);
 let _sbBootComplete = false; // don't push during initial hydration
+
+// Track when each key was last written locally (epoch ms), so pull never clobbers newer local data
+const LS_TIMESTAMPS_KEY = '_edgex_ls_timestamps';
+function _getLsTimestamps() {
+  try { return JSON.parse(_lsGet(LS_TIMESTAMPS_KEY) || '{}'); } catch(e) { return {}; }
+}
+function _touchLsTimestamp(key) {
+  if (key === LS_TIMESTAMPS_KEY) return;
+  const ts = _getLsTimestamps();
+  ts[key] = Date.now();
+  _lsSet(LS_TIMESTAMPS_KEY, JSON.stringify(ts));
+}
 
 // Push ALL current localStorage keys to Supabase in one batch
 async function pushAllToSupabase() {
@@ -3264,6 +3278,7 @@ const _sbPushThrottled = (() => {
 
 localStorage.setItem = function(key, value) {
   _lsSet(key, value);
+  if (!NO_SYNC_KEYS.has(key)) _touchLsTimestamp(key);
   if (_sbBootComplete && !NO_SYNC_KEYS.has(key)) _sbPushThrottled();
 };
 
@@ -3271,7 +3286,7 @@ localStorage.setItem = function(key, value) {
 async function syncFromSupabase() {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&select=key,value`,
+      `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&select=key,value,updated_at`,
       { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' } }
     );
     if (!res.ok) {
@@ -3280,15 +3295,19 @@ async function syncFromSupabase() {
     }
     const rows = await res.json();
     console.log('[Supabase] loaded', rows.length, 'keys from cloud');
-    rows.forEach(({ key, value }) => {
-      // value from Supabase jsonb comes back as a parsed object/array/primitive
-      // We need to store it as a JSON string in localStorage
+    const localTs = _getLsTimestamps();
+    rows.forEach(({ key, value, updated_at }) => {
+      // Never overwrite a key that was written locally more recently than the cloud copy
+      const cloudMs = updated_at ? new Date(updated_at).getTime() : 0;
+      const localMs = localTs[key] || 0;
+      if (localMs > cloudMs) {
+        console.log(`[Supabase] keeping local ${key} (local ${localMs} > cloud ${cloudMs})`);
+        return;
+      }
       let str;
       if (value === null || value === undefined) {
         str = 'null';
       } else if (typeof value === 'string') {
-        // Already a string — but might be double-encoded. Try to detect.
-        // If the string itself looks like JSON, store as-is (it's a raw string value)
         str = value;
       } else {
         str = JSON.stringify(value);
@@ -3298,7 +3317,6 @@ async function syncFromSupabase() {
         console.log('[Supabase] morning-setup-v1 from cloud:', str);
       }
     });
-    // Log if morning setup was NOT in the cloud data
     if (!rows.some(r => r.key === 'morning-setup-v1')) {
       console.warn('[Supabase] morning-setup-v1 NOT found in cloud — may not have been saved yet');
     }
