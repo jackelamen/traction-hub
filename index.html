@@ -362,6 +362,11 @@
       <span class="material-symbols-outlined nav-icon">auto_awesome</span>
       <span class="flex-1">Weekly Hub</span>
     </button>
+    <button onclick="showPage('goals')" id="nav-goals"
+      class="nav-page-btn nav-item">
+      <span class="material-symbols-outlined nav-icon">explore</span>
+      <span class="flex-1">Goal Stack</span>
+    </button>
     <button onclick="openLedgerModal()" class="nav-item">
       <span class="material-symbols-outlined nav-icon">edit_square</span>
       <span>Ledger of Intent</span>
@@ -1541,6 +1546,133 @@
 
 </div><!-- /page-weekly -->
 
+<!-- ═══════════════════════════════════════════════════════ GOALS PAGE ═══ -->
+<div id="page-goals" class="hidden p-5 md:p-7 pb-28 md:pb-12" style="max-width:900px;margin:0 auto">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-xl font-black text-on-surface" style="letter-spacing:-0.03em">Goal Stack</h1>
+      <p class="text-xs text-on-surface-variant mt-0.5">Life → Year → Month → Week · everything connects</p>
+    </div>
+    <button onclick="openGoalModal(null,'life')"
+      class="flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-xl text-white shadow-sm"
+      style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">
+      <span class="material-symbols-outlined text-base">add</span>New Goal
+    </button>
+  </div>
+
+  <!-- Tier pills -->
+  <div id="goals-tier-tabs" class="flex gap-2 mb-6 flex-wrap">
+    <button onclick="setGoalsTier('all')" data-tier="all"
+      class="goals-tier-btn px-4 py-1.5 rounded-full text-xs font-bold transition-colors"
+      style="background:#4f46e5;color:#fff">All</button>
+    <button onclick="setGoalsTier('life')" data-tier="life"
+      class="goals-tier-btn px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-surface-container text-on-surface-variant">Life</button>
+    <button onclick="setGoalsTier('year')" data-tier="year"
+      class="goals-tier-btn px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-surface-container text-on-surface-variant">Year</button>
+    <button onclick="setGoalsTier('month')" data-tier="month"
+      class="goals-tier-btn px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-surface-container text-on-surface-variant">Month</button>
+    <button onclick="setGoalsTier('week')" data-tier="week"
+      class="goals-tier-btn px-4 py-1.5 rounded-full text-xs font-bold transition-colors bg-surface-container text-on-surface-variant">Week</button>
+  </div>
+
+  <!-- Goals list rendered here -->
+  <div id="goals-list-container"></div>
+
+</div><!-- /page-goals -->
+
+<!-- ═══ GOAL MODAL ═══ -->
+<div id="goal-modal-backdrop" class="eod-backdrop fixed inset-0 z-[90] flex items-center justify-center p-4" style="display:none!important">
+  <div class="eod-modal bg-white rounded-2xl shadow-xl w-full overflow-hidden flex flex-col" style="max-width:520px;max-height:90vh">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <h2 id="goal-modal-title" class="text-base font-black text-on-surface">New Goal</h2>
+      <button onclick="closeGoalModal()" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-on-surface-variant">close</span>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+      <!-- Tier selector -->
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 block">Tier</label>
+        <div id="goal-tier-picker" class="flex gap-2 flex-wrap">
+          <button type="button" data-v="life" onclick="goalModalPickTier('life')"
+            class="goal-tier-pill px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-colors border-indigo-500 bg-indigo-50 text-indigo-700">Life</button>
+          <button type="button" data-v="year" onclick="goalModalPickTier('year')"
+            class="goal-tier-pill px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-colors border-transparent bg-surface-container text-on-surface-variant">Year</button>
+          <button type="button" data-v="month" onclick="goalModalPickTier('month')"
+            class="goal-tier-pill px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-colors border-transparent bg-surface-container text-on-surface-variant">Month</button>
+          <button type="button" data-v="week" onclick="goalModalPickTier('week')"
+            class="goal-tier-pill px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-colors border-transparent bg-surface-container text-on-surface-variant">Week</button>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1.5 block">Goal</label>
+        <input id="goal-modal-title-input" type="text" maxlength="120"
+          class="w-full rounded-xl px-4 py-2.5 text-sm border border-gray-200 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          placeholder="What do you want to achieve?"/>
+      </div>
+
+      <!-- Why -->
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1.5 block">Why it matters</label>
+        <textarea id="goal-modal-why" rows="2"
+          class="w-full rounded-xl px-4 py-2.5 text-sm border border-gray-200 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 resize-none"
+          placeholder="Your deeper reason..."></textarea>
+      </div>
+
+      <!-- Due date (optional) -->
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1.5 block">Target date <span class="font-normal normal-case">(optional)</span></label>
+        <input id="goal-modal-due" type="date"
+          class="w-full rounded-xl px-4 py-2.5 text-sm border border-gray-200 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"/>
+      </div>
+
+      <!-- Area -->
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 block">Area of life</label>
+        <div id="goal-area-picker" class="flex gap-2 flex-wrap">
+          <button type="button" data-v="Health" onclick="goalModalPickArea(this)"
+            class="goal-area-pill px-3 py-1 rounded-full text-xs font-bold border-2 transition-colors border-emerald-500 bg-emerald-50 text-emerald-700">Health</button>
+          <button type="button" data-v="Work" onclick="goalModalPickArea(this)"
+            class="goal-area-pill px-3 py-1 rounded-full text-xs font-bold border-2 transition-colors border-transparent bg-surface-container text-on-surface-variant">Work</button>
+          <button type="button" data-v="Relationships" onclick="goalModalPickArea(this)"
+            class="goal-area-pill px-3 py-1 rounded-full text-xs font-bold border-2 transition-colors border-transparent bg-surface-container text-on-surface-variant">Relationships</button>
+          <button type="button" data-v="Finances" onclick="goalModalPickArea(this)"
+            class="goal-area-pill px-3 py-1 rounded-full text-xs font-bold border-2 transition-colors border-transparent bg-surface-container text-on-surface-variant">Finances</button>
+          <button type="button" data-v="Mindset" onclick="goalModalPickArea(this)"
+            class="goal-area-pill px-3 py-1 rounded-full text-xs font-bold border-2 transition-colors border-transparent bg-surface-container text-on-surface-variant">Mindset</button>
+          <button type="button" data-v="Adventure" onclick="goalModalPickArea(this)"
+            class="goal-area-pill px-3 py-1 rounded-full text-xs font-bold border-2 transition-colors border-transparent bg-surface-container text-on-surface-variant">Adventure</button>
+        </div>
+      </div>
+
+      <!-- Status (only visible when editing) -->
+      <div id="goal-modal-status-row" class="hidden">
+        <label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 block">Status</label>
+        <div class="flex gap-2">
+          <button type="button" data-v="active" onclick="goalModalPickStatus('active')"
+            class="goal-status-pill px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-colors border-indigo-500 bg-indigo-50 text-indigo-700">Active</button>
+          <button type="button" data-v="done" onclick="goalModalPickStatus('done')"
+            class="goal-status-pill px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-colors border-transparent bg-surface-container text-on-surface-variant">Done</button>
+          <button type="button" data-v="paused" onclick="goalModalPickStatus('paused')"
+            class="goal-status-pill px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-colors border-transparent bg-surface-container text-on-surface-variant">Paused</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="px-6 py-4 border-t border-gray-100 flex gap-3">
+      <button onclick="saveGoal()"
+        class="flex-1 py-2.5 rounded-xl text-sm font-black text-white transition-opacity hover:opacity-90"
+        style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">Save Goal</button>
+      <button onclick="closeGoalModal()" class="px-4 py-2.5 rounded-xl text-sm font-bold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <!-- ═══════════════════════ TIME BLOCK MODALS (top-level, work from any page) ═══════════════════════ -->
@@ -2182,6 +2314,10 @@
       <button onclick="openMobileMusic()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
         <span class="material-symbols-outlined text-xl" style="color:#4f46e5">music_note</span>
         <span class="text-[10px] font-bold text-on-surface-variant">Music</span>
+      </button>
+      <button onclick="mobileNavTo('goals');closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <span class="material-symbols-outlined text-xl" style="color:#7c3aed">explore</span>
+        <span class="text-[10px] font-bold text-on-surface-variant">Goals</span>
       </button>
     </div>
   </div>
@@ -7479,7 +7615,7 @@ document.getElementById('day-detail-backdrop').addEventListener('click', functio
 // PAGE NAVIGATION
 // ═══════════════════════════════════════════════════════════════
 let _currentPage = 'dashboard';
-const PAGES = ['dashboard', 'timeblocks', 'weekly'];
+const PAGES = ['dashboard', 'timeblocks', 'weekly', 'goals'];
 
 function showPage(page) {
   _currentPage = page;
@@ -7497,6 +7633,9 @@ function showPage(page) {
   } else if (page === 'weekly') {
     stopTBNowLine();
     renderWeeklyPage();
+  } else if (page === 'goals') {
+    stopTBNowLine();
+    renderGoalsPage();
   } else {
     stopTBNowLine();
     // Re-render all dashboard panels when returning from another page
@@ -9335,6 +9474,272 @@ async function pullAndRefresh() {
   renderMorningSummaryBanner();
   renderCarryoverBanner();
   renderWeeklyIntentionHero();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GOAL STACK
+// ═══════════════════════════════════════════════════════════════
+const GOALS_KEY = 'edgex-goals-v1'; // [ { id, tier, title, why, due, area, status, createdAt } ]
+
+function getGoals() {
+  try { return JSON.parse(localStorage.getItem(GOALS_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveGoals(arr) {
+  localStorage.setItem(GOALS_KEY, JSON.stringify(arr));
+  pushAllToSupabase();
+}
+
+// ── Tier config ──────────────────────────────────────────────
+const GOAL_TIERS = [
+  { key:'life',  label:'Life Goals',  icon:'explore',       color:'#7c3aed', bg:'#ede9fe', text:'#5b21b6', desc:'Your north stars — the person you want to become' },
+  { key:'year',  label:'Year Goals',  icon:'calendar_month',color:'#4f46e5', bg:'#e0e7ff', text:'#3730a3', desc:'What you\'ll accomplish this year to move toward your life goals' },
+  { key:'month', label:'Month Goals', icon:'event_note',    color:'#0891b2', bg:'#cffafe', text:'#164e63', desc:'What you\'ll focus on this month to hit your year goals' },
+  { key:'week',  label:'Week Goals',  icon:'date_range',    color:'#059669', bg:'#d1fae5', text:'#065f46', desc:'What you\'ll do this week to advance this month\'s goals' },
+];
+
+const GOAL_AREA_COLORS = {
+  Health:'#059669', Work:'#4f46e5', Relationships:'#ec4899',
+  Finances:'#d97706', Mindset:'#7c3aed', Adventure:'#f97316'
+};
+
+// ── Current state ─────────────────────────────────────────────
+let _goalsTierFilter = 'all';
+let _goalEditId      = null;
+let _goalModalTier   = 'life';
+let _goalModalArea   = 'Health';
+let _goalModalStatus = 'active';
+
+// ── Tier filter tabs ──────────────────────────────────────────
+function setGoalsTier(tier) {
+  _goalsTierFilter = tier;
+  document.querySelectorAll('.goals-tier-btn').forEach(btn => {
+    const active = btn.dataset.tier === tier;
+    btn.style.background = active ? '#4f46e5' : '';
+    btn.style.color      = active ? '#fff'    : '';
+    btn.classList.toggle('bg-surface-container',  !active);
+    btn.classList.toggle('text-on-surface-variant', !active);
+  });
+  renderGoalsPage();
+}
+
+// ── Render ────────────────────────────────────────────────────
+function renderGoalsPage() {
+  const container = document.getElementById('goals-list-container');
+  if (!container) return;
+  const all = getGoals();
+  const tiersToShow = _goalsTierFilter === 'all'
+    ? GOAL_TIERS.map(t => t.key)
+    : [_goalsTierFilter];
+
+  let html = '';
+  tiersToShow.forEach(tierKey => {
+    const cfg   = GOAL_TIERS.find(t => t.key === tierKey);
+    const items = all.filter(g => g.tier === tierKey);
+    const active = items.filter(g => g.status !== 'done' && g.status !== 'paused');
+    const done   = items.filter(g => g.status === 'done');
+    const paused = items.filter(g => g.status === 'paused');
+
+    html += `
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+              style="background:${cfg.bg}">
+              <span class="material-symbols-outlined text-base" style="color:${cfg.color}">${cfg.icon}</span>
+            </div>
+            <div>
+              <h2 class="text-sm font-black text-on-surface leading-tight">${cfg.label}</h2>
+              <p class="text-[10px] text-on-surface-variant leading-tight">${cfg.desc}</p>
+            </div>
+          </div>
+          <button onclick="openGoalModal(null,'${tierKey}')"
+            class="text-[10px] font-black px-3 py-1.5 rounded-xl transition-colors"
+            style="background:${cfg.bg};color:${cfg.color}">+ Add</button>
+        </div>`;
+
+    if (items.length === 0) {
+      html += `<div class="rounded-2xl border-2 border-dashed border-gray-200 py-8 text-center">
+        <p class="text-xs text-on-surface-variant/50 italic">No ${cfg.label.toLowerCase()} yet — add your first one</p>
+      </div>`;
+    } else {
+      html += `<div class="space-y-2.5">`;
+      [...active, ...paused, ...done].forEach(g => {
+        html += _goalCardHTML(g, cfg);
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function _goalCardHTML(g, cfg) {
+  const isDone   = g.status === 'done';
+  const isPaused = g.status === 'paused';
+  const areaColor = GOAL_AREA_COLORS[g.area] || '#6b7280';
+  const dueTxt = g.due ? (() => {
+    const d = new Date(g.due + 'T00:00:00');
+    const diff = Math.ceil((d - new Date()) / 86400000);
+    if (isDone) return '';
+    if (diff < 0)   return `<span style="color:#ef4444" class="font-bold">${Math.abs(diff)}d overdue</span>`;
+    if (diff === 0) return `<span style="color:#f97316" class="font-bold">Due today</span>`;
+    if (diff <= 7)  return `<span style="color:#f97316">${diff}d left</span>`;
+    return `<span style="color:#6b7280">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>`;
+  })() : '';
+
+  return `
+    <div class="rounded-2xl border p-4 transition-all ${isDone ? 'opacity-50' : ''}"
+      style="background:${isDone ? '#f9fafb' : '#fff'};border-color:${isDone ? '#e5e7eb' : cfg.bg}">
+      <div class="flex items-start gap-3">
+        <!-- Checkbox -->
+        <button onclick="toggleGoalDone('${g.id}')"
+          class="w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors"
+          style="border-color:${isDone ? '#10b981' : cfg.color};background:${isDone ? '#10b981' : 'transparent'}">
+          ${isDone ? '<span class="material-symbols-outlined text-white" style="font-size:12px">check</span>' : ''}
+        </button>
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-bold leading-snug ${isDone ? 'line-through text-on-surface-variant' : 'text-on-surface'}">${g.title}</p>
+          ${g.why ? `<p class="text-xs text-on-surface-variant mt-0.5 leading-snug">${g.why}</p>` : ''}
+          <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+            ${g.area ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:${areaColor}18;color:${areaColor}">${g.area}</span>` : ''}
+            ${isPaused ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Paused</span>` : ''}
+            ${dueTxt ? `<span class="text-[10px]">${dueTxt}</span>` : ''}
+          </div>
+        </div>
+        <!-- Edit -->
+        <button onclick="openGoalModal('${g.id}',null)"
+          class="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-on-surface-variant" style="font-size:14px">edit</span>
+        </button>
+      </div>
+    </div>`;
+}
+
+// ── Modal open / close ────────────────────────────────────────
+function openGoalModal(id, defaultTier) {
+  _goalEditId = id || null;
+  const backdrop = document.getElementById('goal-modal-backdrop');
+  backdrop.style.removeProperty('display');
+  backdrop.classList.remove('hidden');
+
+  if (id) {
+    // Edit mode
+    const g = getGoals().find(g => g.id === id);
+    if (!g) return;
+    document.getElementById('goal-modal-title').textContent = 'Edit Goal';
+    document.getElementById('goal-modal-title-input').value = g.title || '';
+    document.getElementById('goal-modal-why').value = g.why || '';
+    document.getElementById('goal-modal-due').value = g.due || '';
+    document.getElementById('goal-modal-status-row').classList.remove('hidden');
+    goalModalPickTier(g.tier);
+    goalModalPickArea2(g.area);
+    goalModalPickStatus(g.status || 'active');
+  } else {
+    // Create mode
+    document.getElementById('goal-modal-title').textContent = 'New Goal';
+    document.getElementById('goal-modal-title-input').value = '';
+    document.getElementById('goal-modal-why').value = '';
+    document.getElementById('goal-modal-due').value = '';
+    document.getElementById('goal-modal-status-row').classList.add('hidden');
+    goalModalPickTier(defaultTier || 'life');
+    goalModalPickArea2('Health');
+    _goalModalStatus = 'active';
+  }
+  setTimeout(() => document.getElementById('goal-modal-title-input').focus(), 100);
+}
+
+function closeGoalModal() {
+  const backdrop = document.getElementById('goal-modal-backdrop');
+  backdrop.style.display = 'none';
+}
+
+function goalModalPickTier(tier) {
+  _goalModalTier = tier;
+  const cfg = GOAL_TIERS.find(t => t.key === tier) || GOAL_TIERS[0];
+  document.querySelectorAll('.goal-tier-pill').forEach(btn => {
+    const active = btn.dataset.v === tier;
+    btn.style.borderColor = active ? cfg.color : 'transparent';
+    btn.style.background  = active ? cfg.bg    : '';
+    btn.style.color       = active ? cfg.text  : '';
+    btn.classList.toggle('bg-surface-container',      !active);
+    btn.classList.toggle('text-on-surface-variant',   !active);
+  });
+}
+
+function goalModalPickArea(btn) {
+  goalModalPickArea2(btn.dataset.v);
+}
+function goalModalPickArea2(area) {
+  _goalModalArea = area;
+  const color = GOAL_AREA_COLORS[area] || '#6b7280';
+  document.querySelectorAll('.goal-area-pill').forEach(btn => {
+    const active = btn.dataset.v === area;
+    btn.style.borderColor = active ? color : 'transparent';
+    btn.style.background  = active ? color + '18' : '';
+    btn.style.color       = active ? color : '';
+    btn.classList.toggle('bg-surface-container',      !active);
+    btn.classList.toggle('text-on-surface-variant',   !active);
+  });
+}
+
+function goalModalPickStatus(status) {
+  _goalModalStatus = status;
+  const colors = { active:'#4f46e5', done:'#059669', paused:'#6b7280' };
+  document.querySelectorAll('.goal-status-pill').forEach(btn => {
+    const active = btn.dataset.v === status;
+    const c = colors[btn.dataset.v] || '#6b7280';
+    btn.style.borderColor = active ? c : 'transparent';
+    btn.style.background  = active ? c + '15' : '';
+    btn.style.color       = active ? c : '';
+    btn.classList.toggle('bg-surface-container',      !active);
+    btn.classList.toggle('text-on-surface-variant',   !active);
+  });
+}
+
+// ── Save / delete ─────────────────────────────────────────────
+function saveGoal() {
+  const title = document.getElementById('goal-modal-title-input').value.trim();
+  if (!title) { document.getElementById('goal-modal-title-input').focus(); return; }
+  const why = document.getElementById('goal-modal-why').value.trim();
+  const due = document.getElementById('goal-modal-due').value;
+  const goals = getGoals();
+
+  if (_goalEditId) {
+    const idx = goals.findIndex(g => g.id === _goalEditId);
+    if (idx > -1) {
+      goals[idx] = { ...goals[idx], title, why, due, tier: _goalModalTier, area: _goalModalArea, status: _goalModalStatus };
+    }
+  } else {
+    goals.push({
+      id: 'goal_' + Date.now(),
+      tier: _goalModalTier,
+      title, why, due,
+      area: _goalModalArea,
+      status: 'active',
+      createdAt: new Date().toISOString()
+    });
+  }
+  saveGoals(goals);
+  closeGoalModal();
+  renderGoalsPage();
+}
+
+function toggleGoalDone(id) {
+  const goals = getGoals();
+  const idx = goals.findIndex(g => g.id === id);
+  if (idx === -1) return;
+  goals[idx].status = goals[idx].status === 'done' ? 'active' : 'done';
+  saveGoals(goals);
+  renderGoalsPage();
+}
+
+function deleteGoal(id) {
+  if (!confirm('Delete this goal?')) return;
+  const goals = getGoals().filter(g => g.id !== id);
+  saveGoals(goals);
+  renderGoalsPage();
 }
 
 // ═══════════════════════════════════════════════════════════════
