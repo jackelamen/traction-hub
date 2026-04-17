@@ -6661,6 +6661,24 @@ function saveAllTags(arr) {
   localStorage.setItem(MUSIC_TAGS_KEY, JSON.stringify(arr));
 }
 
+// ── One-time tag rename migration ────────────────────────────
+(function migrateTagRename() {
+  const OLD = 'Mei Lin', NEW = 'Mei-lan';
+  let changed = false;
+  // Rename in track tags
+  const tracks = getTracks();
+  tracks.forEach(t => {
+    if (!t.tags) return;
+    const idx = t.tags.indexOf(OLD);
+    if (idx > -1) { t.tags[idx] = NEW; changed = true; }
+  });
+  if (changed) saveTracks(tracks);
+  // Rename in global tag list
+  const tags = getAllTags();
+  const ti = tags.indexOf(OLD);
+  if (ti > -1) { tags[ti] = NEW; saveAllTags(tags); }
+})();
+
 function extractVideoId(input) {
   input = input.trim();
   // youtu.be/ID
