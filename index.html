@@ -1178,7 +1178,7 @@
       </div>
 
       <!-- Box Breathing Widget -->
-      <div id="box-breath-card" class="relative rounded-xl overflow-hidden shadow-lg bg-gradient-to-br from-[#0e3b69] via-[#1a4f8a] to-[#2c5282]" style="aspect-ratio:16/9; min-height:220px">
+      <div id="box-breath-card" class="relative rounded-xl overflow-hidden shadow-lg" style="aspect-ratio:16/9; min-height:220px; background:linear-gradient(150deg,#1a0a2e 0%,#3d1a5c 30%,#7b3476 55%,#c0527a 75%,#e8895a 100%)">
         <!-- Fullscreen button -->
         <button onclick="expandBoxBreath()" title="Full screen"
           class="absolute top-3 right-3 z-20 w-7 h-7 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/25 transition-colors">
@@ -2835,7 +2835,13 @@
 </div>
 
 <!-- ═══════════════════════ BOX BREATH FULLSCREEN ═══════════════════════ -->
-<div id="bbx-fs-backdrop" class="hidden fixed inset-0 z-[90] bg-gradient-to-br from-[#0e3b69] via-[#1a4f8a] to-[#2c5282] flex flex-col items-center justify-center">
+<div id="bbx-fs-backdrop" class="hidden fixed inset-0 z-[90] flex flex-col items-center justify-center" style="background:#0e1a2e">
+  <!-- Background: layered sunrise gradient (gold → rose → violet → deep indigo) -->
+  <div class="absolute inset-0" style="background:linear-gradient(170deg, #1a0a2e 0%, #2d1254 18%, #7b3476 35%, #c0527a 50%, #e8895a 65%, #f0b86e 78%, #c9c4e8 90%, #1a1a4e 100%)"></div>
+  <!-- Subtle horizon glow to mimic lake reflection -->
+  <div class="absolute inset-0" style="background:radial-gradient(ellipse 120% 40% at 50% 62%, rgba(240,155,80,0.22) 0%, transparent 70%)"></div>
+  <!-- Dark vignette top + bottom for readability -->
+  <div class="absolute inset-0" style="background:linear-gradient(to bottom, rgba(8,4,20,0.55) 0%, transparent 30%, transparent 65%, rgba(8,4,20,0.65) 100%)"></div>
   <!-- Exit button -->
   <button onclick="collapseBoxBreath()" title="Exit full screen"
     class="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 transition-colors z-10">
@@ -2843,18 +2849,18 @@
   </button>
 
   <!-- Idle state -->
-  <div id="bbx-fs-idle" class="flex flex-col items-center justify-center gap-5">
-    <span class="text-sm font-bold text-[#b9e7f3]/70 uppercase tracking-widest">Box Breathing</span>
-    <h2 class="text-4xl font-bold text-white">Cultivating Stillness</h2>
-    <p class="text-white/50 text-base text-center">4×4×4×4 · 60 seconds · one round</p>
-    <button onclick="startBoxBreath()" class="mt-4 flex items-center gap-3 bg-white/15 hover:bg-white/25 text-white text-base font-bold px-8 py-4 rounded-full transition-all hover:scale-105 active:scale-95">
+  <div id="bbx-fs-idle" class="relative z-10 flex flex-col items-center justify-center gap-5">
+    <span class="text-sm font-bold text-[#b9e7f3]/80 uppercase tracking-widest">Box Breathing</span>
+    <h2 class="text-4xl font-bold text-white" style="text-shadow:0 2px 20px rgba(0,0,0,0.5)">Cultivating Stillness</h2>
+    <p class="text-white/60 text-base text-center">4×4×4×4 · 60 seconds · one round</p>
+    <button onclick="startBoxBreath()" class="mt-4 flex items-center gap-3 bg-white/15 hover:bg-white/25 text-white text-base font-bold px-8 py-4 rounded-full transition-all hover:scale-105 active:scale-95" style="backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2)">
       <span class="material-symbols-outlined text-xl">play_arrow</span>
       Begin
     </button>
   </div>
 
   <!-- Active state -->
-  <div id="bbx-fs-active" class="hidden flex flex-col items-center justify-center gap-6">
+  <div id="bbx-fs-active" class="hidden relative z-10 flex flex-col items-center justify-center gap-6">
     <!-- Big circle arc + breathing orb -->
     <div class="relative flex items-center justify-center" style="width:260px;height:260px">
       <svg id="bbx-fs-svg" width="260" height="260" viewBox="0 0 260 260" style="display:block;position:absolute;top:0;left:0">
@@ -2867,18 +2873,18 @@
           stroke-dashoffset="754"
           style="transform-origin:130px 130px; transform:rotate(-90deg); transition:stroke-dashoffset 0.15s linear, stroke 0.5s ease"/>
       </svg>
-      <!-- Breathing orb -->
+      <!-- Breathing orb — starts at exhale size (small), grows on first inhale -->
       <div id="bbx-fs-orb" class="rounded-full"
-        style="width:96px;height:96px;background:radial-gradient(circle at 38% 38%, rgba(185,231,243,0.25), rgba(26,79,138,0.75));box-shadow:0 0 40px rgba(185,231,243,0.3);transition:width 1s ease-in-out, height 1s ease-in-out, box-shadow 0.6s ease, background 0.5s ease">
+        style="width:96px;height:96px;background:radial-gradient(circle at 38% 38%, rgba(185,231,243,0.25), rgba(26,79,138,0.75));box-shadow:0 0 40px rgba(185,231,243,0.3);transition:none">
       </div>
       <!-- Number overlay -->
       <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <span id="bbx-fs-count" class="text-7xl font-black text-white tabular-nums leading-none">4</span>
-        <span id="bbx-fs-sub" class="text-sm font-bold text-white/40 uppercase tracking-widest mt-2">inhale</span>
+        <span id="bbx-fs-count" class="text-7xl font-black text-white tabular-nums leading-none" style="text-shadow:0 0 30px rgba(255,255,255,0.3)">4</span>
+        <span id="bbx-fs-sub" class="text-sm font-bold text-white/50 uppercase tracking-widest mt-2">inhale</span>
       </div>
     </div>
-    <div id="bbx-fs-phase-label" class="text-3xl font-extrabold text-white tracking-wide">Breathe In</div>
-    <div id="bbx-fs-phase-sub" class="text-base text-white/40">box breathing · 4 × 4 × 4 × 4</div>
+    <div id="bbx-fs-phase-label" class="text-3xl font-extrabold text-white tracking-wide" style="text-shadow:0 2px 16px rgba(0,0,0,0.4)">Breathe In</div>
+    <div id="bbx-fs-phase-sub" class="text-base text-white/50">box breathing · 4 × 4 × 4 × 4</div>
     <div class="flex gap-3 mt-2">
       <div id="bbxd-fs-in"  class="w-3 h-3 rounded-full bg-white/20 transition-all duration-300"></div>
       <div id="bbxd-fs-h1"  class="w-3 h-3 rounded-full bg-white/20 transition-all duration-300"></div>
@@ -2889,16 +2895,16 @@
   </div>
 
   <!-- Done state -->
-  <div id="bbx-fs-done" class="hidden flex flex-col items-center justify-center gap-4">
+  <div id="bbx-fs-done" class="hidden relative z-10 flex flex-col items-center justify-center gap-4">
     <span class="text-6xl">🌅</span>
-    <p class="text-white font-extrabold text-3xl">Round complete</p>
-    <p id="bbx-fs-done-summary" class="text-white/50 text-base text-center"></p>
+    <p class="text-white font-extrabold text-3xl" style="text-shadow:0 2px 16px rgba(0,0,0,0.4)">Round complete</p>
+    <p id="bbx-fs-done-summary" class="text-white/60 text-base text-center"></p>
     <div class="flex gap-4 mt-2">
-      <button onclick="resetBoxBreath()" class="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-bold px-6 py-3 rounded-full transition-all hover:scale-105">
+      <button onclick="resetBoxBreath()" class="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-bold px-6 py-3 rounded-full transition-all hover:scale-105" style="backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2)">
         <span class="material-symbols-outlined">replay</span>
         Again
       </button>
-      <button onclick="collapseBoxBreath()" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white text-sm font-bold px-6 py-3 rounded-full transition-all">
+      <button onclick="collapseBoxBreath()" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white text-sm font-bold px-6 py-3 rounded-full transition-all" style="backdrop-filter:blur(8px)">
         <span class="material-symbols-outlined">close</span>
         Close
       </button>
@@ -5955,8 +5961,22 @@ function _startBoxBreathActive() {
   document.getElementById('bbx-fs-idle').classList.add('hidden');
   document.getElementById('bbx-fs-done').classList.add('hidden');
   document.getElementById('bbx-fs-active').classList.remove('hidden');
-  bbxApplyPhase(0, BBX_SECS);
-  bbxInterval = setInterval(bbxTick, 1000);
+
+  // Reset orbs to exhale (small) size instantly — no transition — so first inhale animates from small
+  const orb   = document.getElementById('bbx-orb');
+  const fsOrb = document.getElementById('bbx-fs-orb');
+  if (orb)   { orb.style.transition = 'none';   orb.style.width   = BBX_ORB.h2.size;  orb.style.height   = BBX_ORB.h2.size; }
+  if (fsOrb) { fsOrb.style.transition = 'none'; fsOrb.style.width = BBX_ORB.h2.fsSiz; fsOrb.style.height = BBX_ORB.h2.fsSiz; }
+
+  // Yield one frame so the browser paints the small orb before we re-enable transitions
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (orb)   orb.style.transition   = '';
+      if (fsOrb) fsOrb.style.transition = '';
+      bbxApplyPhase(0, BBX_SECS);
+      bbxInterval = setInterval(bbxTick, 1000);
+    });
+  });
 }
 
 function bbxTick() {
