@@ -533,19 +533,19 @@
 </aside>
 
 <!-- ═══════════════════════ HEADER ═══════════════════════ -->
-<header class="md:ml-64 bg-surface-container-lowest flex justify-between items-center px-6 md:px-8 py-4" style="border-bottom:1px solid #f0f0f5">
+<header class="md:ml-64 bg-surface-container-lowest flex justify-between items-center px-4 md:px-8 py-3 md:py-4" style="border-bottom:1px solid #f0f0f5">
   <div>
-    <h2 class="text-lg font-bold text-on-surface tracking-tight" id="header-subline">Loading...</h2>
-    <p class="text-xs text-on-surface-variant/60 mt-0.5 font-medium">Intentional Traction</p>
+    <h2 class="text-base md:text-lg font-bold text-on-surface tracking-tight" id="header-subline">Loading...</h2>
+    <p class="text-[10px] md:text-xs text-on-surface-variant/60 mt-0.5 font-medium">Intentional Traction</p>
   </div>
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-2 md:gap-3">
     <button onclick="openMorningSetup()" id="morning-setup-btn"
-      class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+      class="flex items-center gap-1.5 px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl text-sm font-semibold transition-all"
       style="background:#f3f4f8;color:#374151;border:1.5px solid #e5e7eb">
       <span class="text-base" id="ms-header-icon">☀️</span>
-      <span id="ms-header-label">Morning Setup</span>
+      <span id="ms-header-label" class="hidden sm:inline">Morning Setup</span>
     </button>
-    <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm select-none" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">J</div>
+    <div class="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-white font-bold text-sm select-none" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">J</div>
   </div>
 </header>
 
@@ -575,12 +575,12 @@
       <div class="absolute inset-0 pointer-events-none" style="opacity:0.03;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><filter id=%22n%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%224%22/></filter><rect width=%22200%22 height=%22200%22 filter=%22url(%23n)%22 opacity=%221%22/></svg>')"></div>
 
       <!-- Quote section — full width, generous -->
-      <div class="relative px-8 md:px-12 pt-9 pb-7">
+      <div class="relative px-5 md:px-12 pt-6 md:pt-9 pb-5 md:pb-7">
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1">
-            <span class="inline-block px-3 py-1 rounded-full text-[9px] font-bold tracking-[0.12em] uppercase mb-5" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.12)">✦ Daily Insight</span>
-            <h2 class="text-xl md:text-[1.9rem] font-bold leading-snug mb-3" style="letter-spacing:-0.3px;max-width:680px" id="daily-quote-text"></h2>
-            <p class="text-sm font-medium" style="color:rgba(255,255,255,0.4)" id="daily-quote-author"></p>
+            <span class="inline-block px-3 py-1 rounded-full text-[9px] font-bold tracking-[0.12em] uppercase mb-3 md:mb-5" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.12)">✦ Daily Insight</span>
+            <h2 class="text-base md:text-[1.9rem] font-bold leading-snug mb-2 md:mb-3" style="letter-spacing:-0.3px;max-width:680px" id="daily-quote-text"></h2>
+            <p class="text-xs md:text-sm font-medium" style="color:rgba(255,255,255,0.4)" id="daily-quote-author"></p>
           </div>
           <!-- Dismiss button -->
           <button onclick="dismissIntentionBanner()" id="hero-dismiss-btn"
@@ -594,7 +594,7 @@
       <div class="relative grid grid-cols-1 md:grid-cols-3" style="border-top:1px solid rgba(255,255,255,0.08)">
 
         <!-- Intention -->
-        <div class="px-7 py-5 md:border-r" style="border-color:rgba(255,255,255,0.08)" id="hero-intention-row">
+        <div class="px-5 md:px-7 py-4 md:py-5 md:border-r" style="border-color:rgba(255,255,255,0.08)" id="hero-intention-row">
           <p class="text-[9px] font-bold uppercase tracking-widest mb-2" style="color:rgba(255,255,255,0.35);letter-spacing:0.1em">
             <span class="material-symbols-outlined align-middle mr-1" style="font-size:11px">flag</span>Today's Intention
           </p>
@@ -620,7 +620,7 @@
         </div>
 
         <!-- Gratitude -->
-        <div class="px-7 py-5 md:border-r" style="border-color:rgba(255,255,255,0.08)" id="hero-morning-row">
+        <div class="px-5 md:px-7 py-4 md:py-5 md:border-r" style="border-color:rgba(255,255,255,0.08)" id="hero-morning-row">
           <div id="hero-morning-content">
             <p class="text-[9px] font-bold uppercase tracking-widest mb-2" style="color:rgba(255,255,255,0.35);letter-spacing:0.1em">
               <span class="material-symbols-outlined align-middle mr-1" style="font-size:11px">favorite</span>Gratitude
@@ -630,7 +630,7 @@
         </div>
 
         <!-- Priorities -->
-        <div class="px-7 py-5" id="hero-priorities-row">
+        <div class="px-5 md:px-7 py-4 md:py-5" id="hero-priorities-row">
           <p class="text-[9px] font-bold uppercase tracking-widest mb-2.5" style="color:rgba(255,255,255,0.35);letter-spacing:0.1em">
             <span class="material-symbols-outlined align-middle mr-1" style="font-size:11px">checklist</span>Today's Priorities
           </p>
@@ -805,7 +805,7 @@
           </div>
 
           <!-- Deep Work Stats -->
-          <div class="flex flex-row md:flex-col gap-3 flex-shrink-0">
+          <div class="grid grid-cols-2 md:flex md:flex-col gap-3 md:flex-shrink-0 w-full md:w-auto">
             <div class="text-center bg-surface-container rounded-xl px-5 py-3 border border-gray-100">
               <div class="text-2xl font-black text-primary" id="session-count-display">0</div>
               <div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-0.5">Sessions</div>
@@ -873,16 +873,16 @@
           </div>
 
           <!-- Movement & Hydration Stats -->
-          <div class="flex flex-row md:flex-col gap-3 flex-shrink-0">
-            <div class="text-center bg-surface-container rounded-xl px-5 py-3 border border-gray-100">
+          <div class="grid grid-cols-3 md:flex md:flex-col gap-3 md:flex-shrink-0 w-full md:w-auto">
+            <div class="text-center bg-surface-container rounded-xl px-3 md:px-5 py-3 border border-gray-100">
               <div class="text-2xl font-black text-on-surface" id="walk-count-display">0</div>
               <div class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-0.5">Walks</div>
             </div>
             <!-- Step progress -->
-            <div class="bg-surface-container rounded-xl px-4 py-3 border border-gray-100 min-w-[130px]">
+            <div class="bg-surface-container rounded-xl px-3 md:px-4 py-3 border border-gray-100 md:min-w-[130px]">
               <div class="flex items-end justify-between mb-1.5">
                 <div>
-                  <span class="text-xl font-black font-black" style="color:#10b981" id="steps-display">0</span>
+                  <span class="text-lg md:text-xl font-black" style="color:#10b981" id="steps-display">0</span>
                   <span class="text-[10px] text-on-surface-variant font-bold"> / <span id="step-goal-display">10k</span></span>
                 </div>
                 <button onclick="openStepsUpdateModal()" title="Log final step count"
@@ -905,10 +905,10 @@
               </div>
             </div>
             <!-- Water progress -->
-            <div class="bg-surface-container rounded-xl px-4 py-3 border border-gray-100 min-w-[130px]">
+            <div class="bg-surface-container rounded-xl px-3 md:px-4 py-3 border border-gray-100 md:min-w-[130px]">
               <div class="flex items-end justify-between mb-1.5">
                 <div>
-                  <span class="text-xl font-black text-accent" id="water-display">0.00</span>
+                  <span class="text-lg md:text-xl font-black text-accent" id="water-display">0.00</span>
                   <span class="text-[10px] text-on-surface-variant font-bold"> L / 2</span>
                 </div>
                 <button onclick="openWaterModal()" title="Log water intake"
@@ -1725,27 +1725,74 @@
 </div>
 
 <!-- ═══════════════════════ MOBILE NAV ═══════════════════════ -->
-<nav class="md:hidden fixed bottom-0 left-0 right-0 flex justify-around px-2 py-3 z-50" style="background:#fff;border-top:1px solid #f0f0f5;box-shadow:0 -4px 20px rgba(0,0,0,0.06)">
-  <button class="flex flex-col items-center gap-0.5 min-w-0" style="color:#4f46e5">
-    <span class="material-symbols-outlined text-xl">dashboard</span>
-    <span class="text-[10px] font-bold">Home</span>
-  </button>
-  <button onclick="openEodModal()" class="flex flex-col items-center gap-0.5 text-on-surface-variant min-w-0">
-    <span class="material-symbols-outlined text-xl">add_circle</span>
-    <span class="text-[10px] font-bold">Log</span>
-  </button>
-  <button onclick="toggleTimer()" class="flex flex-col items-center gap-0.5 text-on-surface-variant min-w-0">
-    <span class="material-symbols-outlined text-xl">timer</span>
-    <span class="text-[10px] font-bold">Timer</span>
-  </button>
-  <a href="https://www.notion.so/27f990778487423a94395d4167e276e0" target="_blank" class="flex flex-col items-center gap-0.5 text-on-surface-variant min-w-0">
-    <span class="material-symbols-outlined text-xl">menu_book</span>
-    <span class="text-[10px] font-bold">Notion</span>
-  </a>
-  <button onclick="scrollToHistory()" class="flex flex-col items-center gap-0.5 text-on-surface-variant min-w-0">
-    <span class="material-symbols-outlined text-xl">history</span>
-    <span class="text-[10px] font-bold">History</span>
-  </button>
+<!-- Mobile bottom nav -->
+<nav id="mobile-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-50" style="background:#fff;border-top:1px solid #f0f0f5;box-shadow:0 -4px 20px rgba(0,0,0,0.06)">
+  <!-- Primary nav row -->
+  <div class="flex justify-around items-center px-1 pt-2 pb-1">
+    <button id="mbnav-home" onclick="mobileNavTo('dashboard')" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors" style="color:#4f46e5">
+      <span class="material-symbols-outlined" style="font-size:22px">dashboard</span>
+      <span class="text-[10px] font-bold">Home</span>
+    </button>
+    <button id="mbnav-log" onclick="openEodModal()" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors text-on-surface-variant">
+      <span class="material-symbols-outlined" style="font-size:22px">edit_note</span>
+      <span class="text-[10px] font-bold">Log Day</span>
+    </button>
+    <!-- FAB-style center button for session logging -->
+    <button onclick="openSessionModal()" class="flex flex-col items-center gap-0.5 -mt-4 px-2">
+      <div class="w-12 h-12 rounded-full flex items-center justify-center shadow-lg" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">
+        <span class="material-symbols-outlined text-white" style="font-size:22px">add</span>
+      </div>
+      <span class="text-[10px] font-bold text-on-surface-variant mt-0.5">Session</span>
+    </button>
+    <button id="mbnav-timeblocks" onclick="mobileNavTo('timeblocks')" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors text-on-surface-variant">
+      <span class="material-symbols-outlined" style="font-size:22px">view_timeline</span>
+      <span class="text-[10px] font-bold">Blocks</span>
+    </button>
+    <button onclick="toggleMobileMore()" id="mbnav-more" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors text-on-surface-variant">
+      <span class="material-symbols-outlined" style="font-size:22px">more_horiz</span>
+      <span class="text-[10px] font-bold">More</span>
+    </button>
+  </div>
+  <!-- Safe area spacer for phones with home indicator -->
+  <div class="h-safe-area" style="height:env(safe-area-inset-bottom,0px)"></div>
+
+  <!-- "More" tray -->
+  <div id="mobile-more-tray" class="hidden absolute bottom-full left-0 right-0 rounded-t-2xl shadow-xl px-4 pt-4 pb-3" style="background:#fff;border-top:1px solid #f0f0f5">
+    <div class="grid grid-cols-4 gap-3 mb-3">
+      <button onclick="saveBreathRound();renderBreathLog();closeMobileMore();showToast('Breath round logged ✓')" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <span class="material-symbols-outlined text-xl" style="color:#4f46e5">air</span>
+        <span class="text-[10px] font-bold text-on-surface-variant">Breathe</span>
+      </button>
+      <button onclick="openLedgerModal();closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <span class="material-symbols-outlined text-xl" style="color:#f59e0b">edit_square</span>
+        <span class="text-[10px] font-bold text-on-surface-variant">Ledger</span>
+      </button>
+      <button onclick="openDistractionModal();closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <span class="material-symbols-outlined text-xl" style="color:#ef4444">report</span>
+        <span class="text-[10px] font-bold text-on-surface-variant">Distract</span>
+      </button>
+      <button onclick="toggleTimer();closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <span class="material-symbols-outlined text-xl" style="color:#f97316">timer</span>
+        <span class="text-[10px] font-bold text-on-surface-variant">Timer</span>
+      </button>
+      <button onclick="openMorningSetup();closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <span class="text-xl">☀️</span>
+        <span class="text-[10px] font-bold text-on-surface-variant">Morning</span>
+      </button>
+      <button onclick="scrollToHistory();closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <span class="material-symbols-outlined text-xl" style="color:#6b7280">history</span>
+        <span class="text-[10px] font-bold text-on-surface-variant">History</span>
+      </button>
+      <button onclick="syncToNotion(todayStr());closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <span class="material-symbols-outlined text-xl" style="color:#6366f1">cloud_sync</span>
+        <span class="text-[10px] font-bold text-on-surface-variant">Notion</span>
+      </button>
+      <button onclick="refreshAsanaTasks();closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+        <svg width="20" height="20" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="8" r="7" fill="#F06A4D"/><circle cx="7" cy="23" r="7" fill="#F06A4D"/><circle cx="25" cy="23" r="7" fill="#F06A4D"/></svg>
+        <span class="text-[10px] font-bold text-on-surface-variant">Asana</span>
+      </button>
+    </div>
+  </div>
 </nav>
 
 <!-- ═══════════════════════ LEDGER MODAL ═══════════════════════ -->
@@ -4952,6 +4999,48 @@ function closeEncouragement() {
 function scrollToLog()     { openEodModal(); }
 function scrollToHeatmap() { document.getElementById('heatmap-section').scrollIntoView({ behavior:'smooth', block:'start' }); }
 function scrollToHistory() { document.getElementById('history-section').scrollIntoView({ behavior:'smooth', block:'start' }); }
+
+// ── Mobile nav helpers ────────────────────────────────────────
+function mobileNavTo(page) {
+  closeMobileMore();
+  showPage(page);
+  // Update active state on nav buttons
+  document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+    btn.style.color = '';
+    btn.classList.add('text-on-surface-variant');
+  });
+  const activeBtn = document.getElementById('mbnav-' + page);
+  if (activeBtn) {
+    activeBtn.style.color = '#4f46e5';
+    activeBtn.classList.remove('text-on-surface-variant');
+  }
+}
+
+function toggleMobileMore() {
+  const tray = document.getElementById('mobile-more-tray');
+  if (!tray) return;
+  const isOpen = !tray.classList.contains('hidden');
+  if (isOpen) {
+    tray.classList.add('hidden');
+  } else {
+    tray.classList.remove('hidden');
+  }
+}
+
+function closeMobileMore() {
+  const tray = document.getElementById('mobile-more-tray');
+  if (tray) tray.classList.add('hidden');
+}
+
+// Close more tray when tapping outside
+document.addEventListener('click', function(e) {
+  const tray = document.getElementById('mobile-more-tray');
+  const moreBtn = document.getElementById('mbnav-more');
+  if (!tray || tray.classList.contains('hidden')) return;
+  if (!tray.contains(e.target) && e.target !== moreBtn && !moreBtn.contains(e.target)) {
+    closeMobileMore();
+  }
+});
 
 // ═══════════════════════════════════════════════════════════════
 // LEDGER OF INTENT
