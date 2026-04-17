@@ -9253,17 +9253,34 @@ function renderMorningSummaryBanner() {
     </div>
     <p class="text-sm font-medium leading-snug" style="color:rgba(255,255,255,0.82)">${data.gratitude ? `"${data.gratitude}"` : 'Morning setup complete.'}</p>`;
 
-  // Priorities column — numbered list, full text, no truncation
+  // Priorities column — checkable items, state stored per-date in localStorage
   if (prioEl) {
     const priorities = data.priorities || [];
+    const checkedKey = 'edgex-priority-checks-' + todayStr();
+    const checked = JSON.parse(localStorage.getItem(checkedKey) || '[]');
     prioEl.innerHTML = priorities.length
-      ? priorities.map((p, i) => `
-          <div class="flex items-start gap-2">
-            <span class="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black mt-0.5" style="background:rgba(165,180,252,0.2);color:rgba(165,180,252,0.8)">${i + 1}</span>
-            <span class="text-sm font-medium leading-snug" style="color:rgba(255,255,255,0.82)">${p}</span>
-          </div>`).join('')
+      ? priorities.map((p, i) => {
+          const done = checked.includes(i);
+          return `
+          <div class="flex items-start gap-2 group/prio cursor-pointer" onclick="togglePriorityCheck(${i})">
+            <div class="flex-shrink-0 w-4 h-4 rounded-full border flex items-center justify-center mt-0.5 transition-all"
+              style="border-color:${done ? 'rgba(165,180,252,0.8)' : 'rgba(165,180,252,0.35)'};background:${done ? 'rgba(165,180,252,0.25)' : 'transparent'}">
+              ${done ? '<span class="material-symbols-outlined" style="font-size:10px;color:rgba(165,180,252,0.9)">check</span>' : ''}
+            </div>
+            <span class="text-sm font-medium leading-snug transition-all" style="color:${done ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.82)'};${done ? 'text-decoration:line-through' : ''}">${p}</span>
+          </div>`;
+        }).join('')
       : `<p class="text-xs italic" style="color:rgba(255,255,255,0.25)">No priorities set</p>`;
   }
+}
+
+function togglePriorityCheck(idx) {
+  const checkedKey = 'edgex-priority-checks-' + todayStr();
+  const checked = JSON.parse(localStorage.getItem(checkedKey) || '[]');
+  const pos = checked.indexOf(idx);
+  if (pos === -1) checked.push(idx); else checked.splice(pos, 1);
+  localStorage.setItem(checkedKey, JSON.stringify(checked));
+  renderMorningSummaryBanner();
 }
 
 // ── Carry-over banner ────────────────────────────────────────────
