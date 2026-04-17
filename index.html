@@ -1178,7 +1178,9 @@
       </div>
 
       <!-- Box Breathing Widget -->
-      <div id="box-breath-card" class="relative rounded-xl overflow-hidden shadow-lg" style="aspect-ratio:16/9; min-height:220px; background:linear-gradient(150deg,#1a0a2e 0%,#3d1a5c 30%,#7b3476 55%,#c0527a 75%,#e8895a 100%)">
+      <div id="box-breath-card" class="relative rounded-xl overflow-hidden shadow-lg" style="aspect-ratio:16/9; min-height:220px; background-image:url('sunrise.jpg'); background-size:cover; background-position:center">
+        <!-- Dark overlay -->
+        <div class="absolute inset-0" style="background:linear-gradient(to bottom, rgba(8,4,20,0.45) 0%, rgba(8,4,20,0.20) 40%, rgba(8,4,20,0.50) 100%)"></div>
         <!-- Fullscreen button -->
         <button onclick="expandBoxBreath()" title="Full screen"
           class="absolute top-3 right-3 z-20 w-7 h-7 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/25 transition-colors">
@@ -2836,12 +2838,10 @@
 
 <!-- ═══════════════════════ BOX BREATH FULLSCREEN ═══════════════════════ -->
 <div id="bbx-fs-backdrop" class="hidden fixed inset-0 z-[90] flex flex-col items-center justify-center" style="background:#0e1a2e">
-  <!-- Background: layered sunrise gradient (gold → rose → violet → deep indigo) -->
-  <div class="absolute inset-0" style="background:linear-gradient(170deg, #1a0a2e 0%, #2d1254 18%, #7b3476 35%, #c0527a 50%, #e8895a 65%, #f0b86e 78%, #c9c4e8 90%, #1a1a4e 100%)"></div>
-  <!-- Subtle horizon glow to mimic lake reflection -->
-  <div class="absolute inset-0" style="background:radial-gradient(ellipse 120% 40% at 50% 62%, rgba(240,155,80,0.22) 0%, transparent 70%)"></div>
-  <!-- Dark vignette top + bottom for readability -->
-  <div class="absolute inset-0" style="background:linear-gradient(to bottom, rgba(8,4,20,0.55) 0%, transparent 30%, transparent 65%, rgba(8,4,20,0.65) 100%)"></div>
+  <!-- Background: lake sunrise photo -->
+  <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('sunrise.jpg')"></div>
+  <!-- Dark overlay for readability -->
+  <div class="absolute inset-0" style="background:linear-gradient(to bottom, rgba(8,4,20,0.50) 0%, rgba(8,4,20,0.25) 40%, rgba(8,4,20,0.30) 65%, rgba(8,4,20,0.60) 100%)"></div>
   <!-- Exit button -->
   <button onclick="collapseBoxBreath()" title="Exit full screen"
     class="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/25 transition-colors z-10">
