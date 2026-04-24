@@ -2242,6 +2242,61 @@
         </div>
       </section>
 
+      <!-- ── Timer Sound ── -->
+      <section>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="material-symbols-outlined text-base text-amber-400">notifications_active</span>
+          <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Timer Sound</h3>
+        </div>
+        <div class="rounded-xl overflow-hidden border border-outline-variant/30">
+          <!-- Volume -->
+          <div class="p-4 bg-surface-container">
+            <label class="block text-xs font-bold text-on-surface-variant mb-3">Volume</label>
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant text-base">volume_down</span>
+              <input id="settings-chime-volume" type="range" min="0" max="100" value="40"
+                class="flex-1 accent-amber-500 h-1.5 rounded-full cursor-pointer"
+                oninput="updateChimeVolumeLabel(this.value)" onchange="saveChimePrefs()"/>
+              <span class="material-symbols-outlined text-on-surface-variant text-base">volume_up</span>
+              <span id="settings-chime-volume-label" class="text-xs font-bold text-on-surface-variant w-8 text-right">40%</span>
+            </div>
+          </div>
+          <!-- Chime style -->
+          <div class="p-4 bg-surface-container" style="border-top:1px solid rgba(0,0,0,0.06)">
+            <label class="block text-xs font-bold text-on-surface-variant mb-3">Chime Style</label>
+            <div class="grid grid-cols-2 gap-2" id="chime-style-grid">
+              <button onclick="selectChime('bell')" id="chime-btn-bell"
+                class="chime-btn flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all text-left"
+                style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.4);color:#d97706">
+                <span class="material-symbols-outlined text-base">notifications</span> Classic Bell
+              </button>
+              <button onclick="selectChime('soft')" id="chime-btn-soft"
+                class="chime-btn flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all text-left bg-surface-container border-outline-variant/30 text-on-surface-variant">
+                <span class="material-symbols-outlined text-base">water</span> Soft Tone
+              </button>
+              <button onclick="selectChime('bowl')" id="chime-btn-bowl"
+                class="chime-btn flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all text-left bg-surface-container border-outline-variant/30 text-on-surface-variant">
+                <span class="material-symbols-outlined text-base">self_improvement</span> Singing Bowl
+              </button>
+              <button onclick="selectChime('pulse')" id="chime-btn-pulse"
+                class="chime-btn flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all text-left bg-surface-container border-outline-variant/30 text-on-surface-variant">
+                <span class="material-symbols-outlined text-base">graphic_eq</span> Pulse Beep
+              </button>
+            </div>
+          </div>
+          <!-- Preview -->
+          <div style="border-top:1px solid rgba(0,0,0,0.06)">
+            <button onclick="previewChime()" class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-container transition-colors text-left">
+              <span class="material-symbols-outlined text-amber-500 text-base">play_circle</span>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-on-surface">Preview Chime</p>
+                <p class="text-[11px] text-on-surface-variant/60">Hear how it sounds at the current volume</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
     </div><!-- /body -->
   </div>
 </div>
@@ -3716,54 +3771,164 @@ function setDuration(mins) {
   timerSave();
 }
 
-function playTimerWarning() {
+// ── Chime preference helpers ───────────────────────────────────────
+const CHIME_PREFS_KEY = 'timer-chime-prefs-v1';
+
+function getChimePrefs() {
+  try {
+    const raw = localStorage.getItem(CHIME_PREFS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { style: 'bell', volume: 40 };
+}
+
+function saveChimePrefs() {
+  const volEl = document.getElementById('settings-chime-volume');
+  const vol   = volEl ? (parseInt(volEl.value) || 40) : 40;
+  const selBtn = document.querySelector('.chime-btn[data-selected]');
+  const style  = selBtn ? (selBtn.dataset.chimeStyle || 'bell') : 'bell';
+  localStorage.setItem(CHIME_PREFS_KEY, JSON.stringify({ style, volume: vol }));
+}
+
+function updateChimeVolumeLabel(val) {
+  const el = document.getElementById('settings-chime-volume-label');
+  if (el) el.textContent = val + '%';
+}
+
+function selectChime(style) {
+  document.querySelectorAll('.chime-btn').forEach(btn => {
+    const isThis = btn.id === 'chime-btn-' + style;
+    if (isThis) {
+      btn.dataset.chimeStyle = style;
+      btn.setAttribute('data-selected', '1');
+      btn.style.background  = 'rgba(245,158,11,0.12)';
+      btn.style.borderColor = 'rgba(245,158,11,0.4)';
+      btn.style.color       = '#d97706';
+    } else {
+      btn.dataset.chimeStyle = btn.id.replace('chime-btn-', '');
+      btn.removeAttribute('data-selected');
+      btn.style.background  = '';
+      btn.style.borderColor = '';
+      btn.style.color       = '';
+    }
+  });
+  saveChimePrefs();
+}
+
+function loadChimePrefsUI() {
+  const prefs = getChimePrefs();
+  const volEl = document.getElementById('settings-chime-volume');
+  if (volEl) {
+    volEl.value = prefs.volume;
+    updateChimeVolumeLabel(prefs.volume);
+  }
+  selectChime(prefs.style || 'bell');
+}
+
+function previewChime() {
+  playTimerBell();
+}
+
+// ── Core chime synthesiser ─────────────────────────────────────────
+function _chimePeak(fraction) {
+  // fraction 0-1 = natural loudness of this sound type.
+  // Scale by user volume (0-100) then cap so 100% never clips.
+  const prefs = getChimePrefs();
+  return fraction * (prefs.volume / 100) * 0.55;
+}
+
+function _playChimeStyle(style, isBell) {
+  // isBell = true  -> completion bell (multiple strikes)
+  // isBell = false -> warning chime (single soft tone)
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Single soft chime — lower pitch, gentler than the completion bell
-    const osc1 = ctx.createOscillator();
-    const osc2 = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc1.connect(gain); osc2.connect(gain);
-    gain.connect(ctx.destination);
-    osc1.frequency.value = 528;  // C5-ish — warm, less urgent
-    osc2.frequency.value = 1056; // octave up
-    osc1.type = osc2.type = 'sine';
-    const t = ctx.currentTime;
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.25, t + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
-    osc1.start(t); osc1.stop(t + 2);
-    osc2.start(t); osc2.stop(t + 2);
+
+    if (style === 'soft') {
+      // One gentle sine wave
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = isBell ? 660 : 528;
+      osc.type = 'sine';
+      const t    = ctx.currentTime;
+      const peak = _chimePeak(0.8);
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(peak, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + (isBell ? 2.5 : 1.8));
+      osc.start(t); osc.stop(t + (isBell ? 3 : 2));
+
+    } else if (style === 'bowl') {
+      // Singing bowl — low fundamental with slow swell
+      const strikes = isBell ? [0, 1.2, 2.4] : [0];
+      strikes.forEach(delay => {
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination);
+        osc1.frequency.value = 220;
+        osc2.frequency.value = 330;
+        osc1.type = osc2.type = 'sine';
+        const t    = ctx.currentTime + delay;
+        const peak = _chimePeak(0.9);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(peak, t + 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 3.5);
+        osc1.start(t); osc1.stop(t + 4);
+        osc2.start(t); osc2.stop(t + 4);
+      });
+
+    } else if (style === 'pulse') {
+      // Short punchy beep — easy to hear over music
+      const strikes = isBell ? [0, 0.3, 0.6] : [0];
+      strikes.forEach(delay => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = isBell ? 1000 : 750;
+        osc.type = 'square';
+        const t    = ctx.currentTime + delay;
+        const peak = _chimePeak(0.35); // square waves sound louder than sines
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(peak, t + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+        osc.start(t); osc.stop(t + 0.25);
+      });
+
+    } else {
+      // 'bell' (default) — three-strike harmonic bell
+      const strikes = isBell ? [0, 0.55, 1.1] : [0];
+      strikes.forEach(delay => {
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const osc3 = ctx.createOscillator();
+        const gain = ctx.createGain();
+        [osc1, osc2, osc3].forEach(o => o.connect(gain));
+        gain.connect(ctx.destination);
+        osc1.frequency.value = isBell ? 880  : 528;
+        osc2.frequency.value = isBell ? 1760 : 1056;
+        osc3.frequency.value = isBell ? 2637 : 792;
+        osc1.type = osc2.type = osc3.type = 'sine';
+        const t    = ctx.currentTime + delay;
+        const peak = _chimePeak(isBell ? 0.9 : 0.7);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(peak, t + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + (isBell ? 2.2 : 1.8));
+        [osc1, osc2, osc3].forEach(o => { o.start(t); o.stop(t + (isBell ? 2.5 : 2)); });
+      });
+    }
   } catch(e) {
-    console.warn('[Bell] Web Audio not available:', e);
+    console.warn('[Chime] Web Audio not available:', e);
   }
 }
 
+function playTimerWarning() {
+  const prefs = getChimePrefs();
+  _playChimeStyle(prefs.style, false);
+}
+
 function playTimerBell() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Three-strike bell: fundamental + harmonics, fading out
-    const strikes = [0, 0.55, 1.1];
-    strikes.forEach(delay => {
-      const osc1 = ctx.createOscillator(); // fundamental
-      const osc2 = ctx.createOscillator(); // 2nd harmonic
-      const osc3 = ctx.createOscillator(); // 3rd harmonic
-      const gain = ctx.createGain();
-      [osc1, osc2, osc3].forEach(o => o.connect(gain));
-      gain.connect(ctx.destination);
-      osc1.frequency.value = 880;   // A5
-      osc2.frequency.value = 1760;  // A6
-      osc3.frequency.value = 2637;  // E7
-      osc1.type = osc2.type = osc3.type = 'sine';
-      const t = ctx.currentTime + delay;
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.4, t + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 2.2);
-      [osc1, osc2, osc3].forEach(o => { o.start(t); o.stop(t + 2.5); });
-    });
-  } catch(e) {
-    console.warn('[Bell] Web Audio not available:', e);
-  }
+  const prefs = getChimePrefs();
+  _playChimeStyle(prefs.style, true);
 }
 
 function _timerComplete() {
@@ -5684,6 +5849,7 @@ function openSettings() {
     settingsBadge.style.cssText = sidebarBadge.style.cssText;
   }
   document.getElementById('settings-backdrop').classList.add('open');
+  loadChimePrefsUI();
 }
 
 function closeSettings() {
