@@ -6519,12 +6519,12 @@ function renderDistractionPanel() {
         <span class="text-[8px] font-black text-[#B91C1C]">${entries.length - ri}</span>
       </div>
       <div class="flex-1 min-w-0">
-        <p class="text-xs font-semibold text-on-surface leading-snug">${e.what}</p>
+        <p class="text-xs font-semibold leading-snug" style="color:#fca5a5">${e.what}</p>
         <div class="flex items-center gap-1.5 mt-0.5">
-          <span class="text-[9px] font-bold text-[#B91C1C]/70">${e.type}</span>
-          <span class="text-[9px] text-gray-400">·</span>
-          <span class="text-[9px] text-[#B91C1C]/60">${durLabel}</span>
-          <span class="text-[9px] text-gray-300 ml-auto">${e.time}</span>
+          <span class="text-[9px] font-bold" style="color:#fca5a5">${e.type}</span>
+          <span class="text-[9px]" style="color:#f87171">·</span>
+          <span class="text-[9px]" style="color:#fca5a5">${durLabel}</span>
+          <span class="text-[9px] ml-auto" style="color:#fda4af">${e.time}</span>
         </div>
       </div>
       <button onclick="deleteDistraction(${realIdx})" class="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full hover:bg-[#EF4444]/20 flex items-center justify-center flex-shrink-0" title="Remove">
