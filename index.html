@@ -4048,8 +4048,14 @@ function loadStepState() {
       currentSteps = s.currentSteps || 0;
       walkCount    = s.walkCount    || 0;
       horizonCount = s.horizonCount || 0;
+    } else {
+      // Stale entry from a previous day — clear it so the display resets to 0
+      baseSteps    = 0;
+      currentSteps = 0;
+      walkCount    = 0;
+      horizonCount = 0;
+      localStorage.removeItem(STEPS_KEY);
     }
-    // Different day: reset (fresh base needed)
   } catch(e) {}
 }
 
@@ -9780,6 +9786,7 @@ async function pullAndRefresh() {
   renderDistractionPanel();
   updateDistractionBadge();
   updatePillarDots();
+  loadStepState();
   updateStepUI();
   updateWaterUI();
   renderMorningSummaryBanner();
