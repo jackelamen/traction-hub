@@ -1327,7 +1327,7 @@
               <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide">Steps</th>
               <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide">Rating / Score</th>
               <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide">Status</th>
-              <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide"></th>
+              <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide" title="Both pillars complete">✓ = Both pillars done</th>
             </tr>
           </thead>
           <tbody id="log-tbody" class="divide-y divide-gray-100"></tbody>
@@ -5383,9 +5383,13 @@ function ratingBadge(r) {
     : `<span class="text-xs text-gray-400">—</span>`;
 }
 
-function dots(a, b, c) {
-  const d = v => `<div class="w-2 h-2 rounded-full ${v ? 'bg-emerald-500' : 'bg-[#EF4444]/50'}"></div>`;
-  return `<div class="flex gap-1">${d(a)}${d(b)}${d(c)}</div>`;
+function dots(a, b, c, labels) {
+  const names = labels || ['A','B','C'];
+  const chip = (v, label) => {
+    if (v) return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;background:rgba(16,185,129,0.12);color:#10b981;white-space:nowrap">${label}</span>`;
+    return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:600;background:rgba(239,68,68,0.08);color:rgba(239,68,68,0.55);text-decoration:line-through;white-space:nowrap">${label}</span>`;
+  };
+  return `<div style="display:flex;flex-wrap:wrap;gap:3px">${chip(a,names[0])}${chip(b,names[1])}${chip(c,names[2])}</div>`;
 }
 
 function renderTable() {
@@ -5443,8 +5447,8 @@ function renderTable() {
     tr.innerHTML = `
       <td class="px-6 md:px-8 py-5 font-bold text-sm">${i}</td>
       <td class="px-6 md:px-8 py-5 text-sm text-on-surface-variant">${fmtShort(ds)}</td>
-      <td class="px-6 md:px-8 py-5">${dots(log.sanctuary, log.ledger, log.noConsume)}</td>
-      <td class="px-6 md:px-8 py-5">${dots(log.timer, log.horizon, log.walk)}</td>
+      <td class="px-6 md:px-8 py-5">${dots(log.sanctuary, log.ledger, log.noConsume, ['Sanctuary','Ledger','Clean Focus'])}</td>
+      <td class="px-6 md:px-8 py-5">${dots(log.timer, log.horizon, log.walk, ['Timer','Horizon','Walk'])}</td>
       <td class="px-6 md:px-8 py-5">
         <div class="flex items-center gap-2">
           <span class="text-sm font-semibold">${stepsNum}</span>
@@ -5457,11 +5461,18 @@ function renderTable() {
       <td class="px-6 md:px-8 py-5">${ratingCell}</td>
       <td class="px-6 md:px-8 py-5">${status}</td>
       <td class="px-6 md:px-8 py-5">
-        <button onclick="openDayDetail('${ds}')"
-          class="opacity-0 group-hover/row:opacity-100 transition-opacity text-[10px] font-bold text-primary border border-primary/20 px-2.5 py-1 rounded-lg hover:bg-primary/10 flex items-center gap-1">
-          <span class="material-symbols-outlined" style="font-size:11px;line-height:1">open_in_full</span>
-          View
-        </button>
+        <div class="flex items-center gap-1.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
+          <button onclick="openEodModalForDate('${ds}')"
+            class="text-[10px] font-bold text-[#4f46e5] border border-[#4f46e5]/20 px-2.5 py-1 rounded-lg hover:bg-[#4f46e5]/10 flex items-center gap-1">
+            <span class="material-symbols-outlined" style="font-size:11px;line-height:1">edit</span>
+            Edit
+          </button>
+          <button onclick="openDayDetail('${ds}')"
+            class="text-[10px] font-bold text-primary border border-primary/20 px-2.5 py-1 rounded-lg hover:bg-primary/10 flex items-center gap-1">
+            <span class="material-symbols-outlined" style="font-size:11px;line-height:1">open_in_full</span>
+            View
+          </button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
@@ -5527,7 +5538,7 @@ function prefillForm() {
 }
 
 function saveEntry() {
-  const today       = todayStr();
+  const today       = _eodEditDate || todayStr();
   const ledgerToday = (ledgerEntries[today] || []).length > 0;
 
   // Read from EOD modal fields (source of truth)
@@ -5548,8 +5559,8 @@ function saveEntry() {
   const distractCount    = distractions.length;
   const distractMinsLost = distractions.reduce((a,e) => a + (e.mins || 0), 0);
 
-  // Focus score + auto-rating
-  const focusScore = computeFocusScore();
+  // Focus score + auto-rating (use existing score if editing a past day)
+  const focusScore = _eodEditDate ? (logs[_eodEditDate]?.focusScore ?? computeFocusScore()) : computeFocusScore();
   const rating     = scoreToRating(focusScore);
 
   // Session stats
@@ -5600,8 +5611,8 @@ function saveEntry() {
   document.getElementById('inp-steps').value        = steps;
   document.getElementById('inp-notes').value        = notes;
 
-  // Save tomorrow's intention so it can be shown next morning
-  if (tomorrow) localStorage.setItem('30day-tomorrow-v1', JSON.stringify({ date: today, text: tomorrow }));
+  // Save tomorrow's intention so it can be shown next morning (only for today's entry)
+  if (tomorrow && !_eodEditDate) localStorage.setItem('30day-tomorrow-v1', JSON.stringify({ date: today, text: tomorrow }));
 
   closeEodModal();
   renderAll();
@@ -6617,7 +6628,48 @@ function openEodModal() {
 
 function closeEodModal() {
   document.getElementById('eod-backdrop').classList.remove('open');
+  _eodEditDate = null;
 }
+
+// Opens EOD form pre-filled for a past date so you can fix missing answers
+let _eodEditDate = null;
+function openEodModalForDate(dateStr) {
+  _eodEditDate = dateStr;
+  const dn = dayNumFor(dateStr);
+  const d  = new Date(dateStr + 'T00:00:00');
+  const label = d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+
+  document.getElementById('eod-date-label').textContent = `Day ${dn} - ${label} (editing past entry)`;
+  document.getElementById('save-btn-eod-label').textContent = `Save Day ${dn} Entry`;
+
+  // Pre-fill from saved log for that date
+  const log = logs[dateStr] || {};
+  document.getElementById('eod-chk-sanctuary').checked  = !!log.sanctuary;
+  document.getElementById('eod-chk-ledger').checked     = !!log.ledger;
+  document.getElementById('eod-chk-no-consume').checked = !!log.noConsume;
+  document.getElementById('eod-chk-timer').checked      = !!log.timer;
+  document.getElementById('eod-chk-horizon').checked    = !!log.horizon;
+  document.getElementById('eod-chk-walk').checked       = !!log.walk;
+  document.getElementById('eod-inp-walks').value        = log.walks ?? '';
+  document.getElementById('eod-inp-steps').value        = getStepsForDate(dateStr) || '';
+  document.getElementById('eod-win').value              = log.win || '';
+  document.getElementById('eod-tomorrow').value         = log.tomorrow || '';
+  document.getElementById('eod-inp-notes').value        = log.notes || '';
+
+  // Mood
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('ring-2','ring-primary','bg-primary/10'));
+  if (log.eodMood) {
+    const moodBtns = document.querySelectorAll('#eod-mood-selector button');
+    if (moodBtns[log.eodMood - 1]) {
+      moodBtns[log.eodMood - 1].classList.add('ring-2','ring-primary','bg-primary/10');
+    }
+  }
+
+  updateFocusScore();
+  renderEodLedgerReview();
+  document.getElementById('eod-backdrop').classList.add('open');
+}
+
 
 document.getElementById('eod-backdrop').addEventListener('click', function(e) {
   if (e.target === this) closeEodModal();
