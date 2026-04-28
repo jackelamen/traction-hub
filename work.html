@@ -365,11 +365,11 @@
       <span class="material-symbols-outlined nav-icon">auto_awesome</span>
       <span class="flex-1">Weekly Hub</span>
     </button>
-    <button onclick="showPage('goals')" id="nav-goals"
-      class="nav-page-btn nav-item">
-      <span class="material-symbols-outlined nav-icon">explore</span>
-      <span class="flex-1">Goal Stack</span>
-    </button>
+    <a href="goals.html" id="nav-goals"
+      class="nav-page-btn nav-item" style="text-decoration:none">
+      <span class="material-symbols-outlined nav-icon">flag</span>
+      <span class="flex-1">Goals</span>
+    </a>
     <button onclick="openLedgerModal()" class="nav-item">
       <span class="material-symbols-outlined nav-icon">edit_square</span>
       <span>Ledger of Intent</span>
@@ -2386,10 +2386,10 @@
         <span class="material-symbols-outlined text-xl" style="color:#4f46e5">music_note</span>
         <span class="text-[10px] font-bold text-on-surface-variant">Music</span>
       </button>
-      <button onclick="mobileNavTo('goals');closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
-        <span class="material-symbols-outlined text-xl" style="color:#7c3aed">explore</span>
+      <a href="goals.html" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container" style="text-decoration:none">
+        <span class="material-symbols-outlined text-xl" style="color:#34d399">flag</span>
         <span class="text-[10px] font-bold text-on-surface-variant">Goals</span>
-      </button>
+      </a>
     </div>
   </div>
 </nav>
