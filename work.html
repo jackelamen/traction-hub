@@ -1017,8 +1017,8 @@
                 Sanctuary
               </span>
               <span id="dot-ledger" class="criteria-pill inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface-container-high border border-outline-variant/20 text-gray-400 text-[10px] font-bold uppercase tracking-wide transition-all">
-                <span class="material-symbols-outlined" style="font-size:12px;line-height:1">menu_book</span>
-                Ledger
+                <span class="material-symbols-outlined" style="font-size:12px;line-height:1">ads_click</span>
+                Int. Browsing
               </span>
               <span id="dot-noconsume" class="criteria-pill inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface-container-high border border-outline-variant/20 text-gray-400 text-[10px] font-bold uppercase tracking-wide transition-all">
                 <span class="material-symbols-outlined" style="font-size:12px;line-height:1">block</span>
@@ -3099,13 +3099,13 @@
               <span class="text-xs text-on-surface-variant">YouTube curated strictly for growth</span>
             </div>
           </label>
-          <div class="flex items-start gap-3 p-3 rounded-xl border border-outline-variant/20 bg-surface-container-low/50">
-            <input id="eod-chk-ledger" class="w-5 h-5 rounded border-outline text-primary focus:ring-primary/20 mt-0.5 flex-shrink-0" type="checkbox" readonly onclick="return false;" title="Auto-checked when you add ledger entries"/>
+          <label class="flex items-start gap-3 p-3 rounded-xl border border-outline-variant/20 hover:bg-surface-container-low transition-colors cursor-pointer group">
+            <input id="eod-chk-ledger" class="w-5 h-5 rounded border-outline text-primary focus:ring-primary/20 mt-0.5 flex-shrink-0" type="checkbox"/>
             <div>
-              <span class="text-sm font-semibold block">Ledger of Intent</span>
-              <span class="text-xs text-on-surface-variant">Auto-checked when entries exist</span>
+              <span class="text-sm font-semibold group-hover:text-primary transition-colors block">Intentional browsing only</span>
+              <span class="text-xs text-on-surface-variant">Every lookup today was purposeful — no mindless browsing</span>
             </div>
-          </div>
+          </label>
           <label class="flex items-start gap-3 p-3 rounded-xl border border-outline-variant/20 hover:bg-surface-container-low transition-colors cursor-pointer group">
             <input id="eod-chk-no-consume" class="w-5 h-5 rounded border-outline text-primary focus:ring-primary/20 mt-0.5 flex-shrink-0" type="checkbox"/>
             <div>
@@ -5447,7 +5447,7 @@ function renderTable() {
     tr.innerHTML = `
       <td class="px-6 md:px-8 py-5 font-bold text-sm">${i}</td>
       <td class="px-6 md:px-8 py-5 text-sm text-on-surface-variant">${fmtShort(ds)}</td>
-      <td class="px-6 md:px-8 py-5">${dots(log.sanctuary, log.ledger, log.noConsume, ['Sanctuary','Ledger','Clean Focus'])}</td>
+      <td class="px-6 md:px-8 py-5">${dots(log.sanctuary, log.ledger, log.noConsume, ['Sanctuary','Int. Browsing','Clean Focus'])}</td>
       <td class="px-6 md:px-8 py-5">${dots(log.timer, log.horizon, log.walk, ['Timer','Horizon','Walk'])}</td>
       <td class="px-6 md:px-8 py-5">
         <div class="flex items-center gap-2">
@@ -5539,11 +5539,10 @@ function prefillForm() {
 
 function saveEntry() {
   const today       = _eodEditDate || todayStr();
-  const ledgerToday = (ledgerEntries[today] || []).length > 0;
 
   // Read from EOD modal fields (source of truth)
   const sanctuary = document.getElementById('eod-chk-sanctuary').checked;
-  const ledger    = ledgerToday; // always derived
+  const ledger    = document.getElementById('eod-chk-ledger').checked;
   const noConsume = document.getElementById('eod-chk-no-consume').checked;
   const timer     = document.getElementById('eod-chk-timer').checked;
   const horizon   = document.getElementById('eod-chk-horizon').checked;
@@ -6120,15 +6119,11 @@ function deleteLedgerEntry(index) {
 
 // ── Auto-check the ledger checkbox ───────────────────────────
 function autoCheckLedger() {
-  const today   = todayStr();
-  const entries = ledgerEntries[today] || [];
-  const has     = entries.length > 0;
-  // Sync hidden shadow field
-  const chk = document.getElementById('chk-ledger');
-  if (chk) chk.checked = has;
-  // Sync EOD modal field (if open)
-  const eodChk = document.getElementById('eod-chk-ledger');
-  if (eodChk) eodChk.checked = has;
+  // Ledger is now self-reported (intentional browsing) — no auto-sync to EOD form.
+  // Only keep the hidden shadow field in sync with today's saved log.
+  const today = todayStr();
+  const chk   = document.getElementById('chk-ledger');
+  if (chk) chk.checked = !!(logs[today]?.ledger);
   updatePillarDots();
 }
 
@@ -7308,12 +7303,11 @@ function eodPrefill() {
   // Sanctuary and Clean Focus default ON (assumed kept unless you uncheck them)
   const hasExistingLog = !!logs[today];
   document.getElementById('eod-chk-sanctuary').checked  = hasExistingLog ? !!log.sanctuary : true;
+  document.getElementById('eod-chk-ledger').checked     = hasExistingLog ? !!log.ledger : true;
   document.getElementById('eod-chk-no-consume').checked = hasExistingLog ? !!log.noConsume : true;
   document.getElementById('eod-chk-timer').checked      = !!(log.timer   || hasSessions);
   document.getElementById('eod-chk-horizon').checked    = !!(log.horizon || effectiveWalks > 0);
   document.getElementById('eod-chk-walk').checked       = !!(log.walk    || effectiveWalks > 0);
-  // Ledger is always auto-derived from entries
-  document.getElementById('eod-chk-ledger').checked     = todayEntries.length > 0;
 
   // Numeric fields — always show the most current values
   document.getElementById('eod-inp-walks').value  = effectiveWalks || '';
