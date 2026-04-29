@@ -1420,6 +1420,595 @@ label.lbl {
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+/* ═══════════════════════════════════════════
+   EDGEx Personal Goals Skin
+═══════════════════════════════════════════ */
+:root {
+  --bg: #f5f7fb;
+  --white: #ffffff;
+  --white-soft: #eef2f7;
+  --accent: #0f8f68;
+  --accent-dark: #0b604a;
+  --accent-dim: rgba(15,143,104,0.11);
+  --accent-light: #e7f6f1;
+  --blue: #4267b2;
+  --blue-dark: #2f4c88;
+  --blue-dim: rgba(66,103,178,0.11);
+  --blue-light: #e9eef9;
+  --purple: #7556a8;
+  --purple-dim: rgba(117,86,168,0.11);
+  --purple-light: #f0ebf8;
+  --orange: #b56a2c;
+  --orange-dim: rgba(181,106,44,0.12);
+  --green: #0f8f68;
+  --green-dim: rgba(15,143,104,0.11);
+  --red: #bd4b5c;
+  --red-dim: rgba(189,75,92,0.11);
+  --text: #151923;
+  --text-2: #596170;
+  --text-3: #929baa;
+  --border: rgba(21,25,35,0.08);
+  --border-med: rgba(21,25,35,0.14);
+  --sidebar-bg: #12141f;
+  --sidebar-active: rgba(255,255,255,0.09);
+  --shadow-sm: none;
+  --shadow: 0 8px 24px rgba(21,25,35,0.07);
+  --shadow-lg: 0 20px 48px rgba(21,25,35,0.12);
+  --radius: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+}
+
+body {
+  background:
+    radial-gradient(circle at 22% -8%, rgba(15,143,104,0.08), transparent 28%),
+    radial-gradient(circle at 88% -10%, rgba(66,103,178,0.07), transparent 30%),
+    var(--bg);
+  background-repeat: no-repeat;
+}
+
+#sidebar {
+  background: #10121d;
+  padding: 22px 18px 18px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+.nav-section-label {
+  color: rgba(255,255,255,0.22);
+}
+
+.nav-item {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.nav-item.active {
+  background: rgba(255,255,255,0.09);
+  box-shadow: inset 3px 0 0 #2dd4bf;
+}
+
+#main {
+  background: transparent;
+}
+
+.view {
+  max-width: 1120px;
+  padding-top: 34px;
+}
+
+.page-date {
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.page-title {
+  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.page-sub {
+  color: var(--text-2);
+}
+
+.card,
+.stat-card,
+.cycle-card,
+.goal-card,
+.vision-card,
+.action-list-card,
+.streak-chart-wrap {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid var(--border-med);
+  box-shadow: none;
+}
+
+.card:hover,
+.goal-card:hover,
+.vision-card:hover,
+.cycle-card:hover {
+  box-shadow: var(--shadow);
+}
+
+.hero-banner {
+  background: #111827;
+  border: 1px solid rgba(45,212,191,0.18);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.hero-banner::before,
+.stat-card::before {
+  display: none;
+}
+
+.hero-title {
+  letter-spacing: 0;
+}
+
+.hero-cta,
+.btn-primary,
+.btn-purple,
+#sidebar .sidebar-footer button {
+  background: #111827 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(45,212,191,0.22) !important;
+  box-shadow: none !important;
+}
+
+.hero-cta:hover,
+.btn-primary:hover,
+.btn-purple:hover {
+  background: #1f2937 !important;
+  transform: translateY(-1px);
+}
+
+.btn,
+.btn-icon,
+.filter-tab,
+.badge,
+.today-toggle-btn,
+.cycle-toggle-btn {
+  border-radius: 8px !important;
+}
+
+.btn-secondary,
+.btn-ghost,
+.btn-icon {
+  background: rgba(255,255,255,0.72);
+  border-color: var(--border-med);
+}
+
+.badge {
+  background: rgba(21,25,35,0.045);
+  border: 1px solid rgba(21,25,35,0.06);
+  color: var(--text-2);
+}
+
+.badge-blue,
+.badge-career {
+  background: var(--blue-dim);
+  color: var(--blue-dark);
+}
+
+.badge-purple {
+  background: var(--purple-dim);
+  color: var(--purple);
+}
+
+.badge-orange,
+.badge-personal {
+  background: var(--orange-dim);
+  color: var(--orange);
+}
+
+.badge-green,
+.badge-health {
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+.badge-red,
+.badge-family {
+  background: var(--red-dim);
+  color: var(--red);
+}
+
+.filter-tab {
+  background: rgba(255,255,255,0.75);
+  box-shadow: none;
+}
+
+.filter-tab.active {
+  background: #111827;
+  border-color: #111827;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.goals-grid {
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 14px;
+}
+
+.goal-card {
+  border-left-width: 1px;
+}
+
+.goal-card.health,
+.goal-card.career,
+.goal-card.family,
+.goal-card.personal,
+.goal-card.default {
+  border-left-color: var(--border-med);
+}
+
+.goal-grid-body {
+  padding: 20px;
+}
+
+.goal-card-bg-icon {
+  display: none;
+}
+
+.goal-card-title {
+  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+  font-size: 20px !important;
+  letter-spacing: 0 !important;
+}
+
+.goal-card-new {
+  background: rgba(255,255,255,0.56);
+  border: 1.5px dashed var(--border-med);
+  border-radius: 8px;
+  min-height: 210px;
+  color: var(--text-2);
+}
+
+.goal-card-new:hover {
+  background: rgba(255,255,255,0.92);
+  border-color: rgba(15,143,104,0.34);
+}
+
+.goal-card-new-icon,
+.empty-icon,
+.stat-icon-wrap {
+  border-radius: 8px;
+  background: rgba(21,25,35,0.045) !important;
+}
+
+.cycle-card {
+  border-radius: 8px;
+}
+
+.cycle-header {
+  padding: 20px;
+}
+
+.cycle-name {
+  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+.cycle-section {
+  border-top-color: var(--border);
+}
+
+.check-row {
+  background: rgba(238,242,247,0.78);
+  border-color: rgba(21,25,35,0.08);
+}
+
+.check-row:hover {
+  background: rgba(255,255,255,0.94);
+}
+
+.check-box {
+  border-radius: 6px;
+  background: rgba(255,255,255,0.88);
+}
+
+.wk-dot {
+  border-radius: 6px;
+}
+
+.modal-backdrop {
+  background: rgba(18,20,31,0.52);
+}
+
+.modal-sheet {
+  background: var(--white);
+  border-radius: 8px 8px 0 0;
+}
+
+.inp {
+  background: rgba(255,255,255,0.78);
+  border-color: var(--border-med);
+  border-radius: 8px;
+}
+
+.inp:focus {
+  border-color: rgba(15,143,104,0.48);
+  box-shadow: 0 0 0 3px rgba(15,143,104,0.10);
+}
+
+.visions-page-header {
+  background: #111827;
+}
+
+.visions-page-header::before {
+  display: none;
+}
+
+.visions-area-block {
+  border-bottom-color: var(--border-med);
+}
+
+.vision-compass {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.vision-panel {
+  background: rgba(255,255,255,0.9);
+  border: 1px solid var(--border-med);
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.vision-panel-title {
+  font-size: 10px;
+  font-weight: 850;
+  color: var(--text-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.vision-field {
+  width: 100%;
+  min-height: 72px;
+  border: 0;
+  outline: 0;
+  resize: vertical;
+  background: transparent;
+  color: var(--text);
+  font: 650 14px/1.55 'Inter', system-ui, sans-serif;
+}
+
+.vision-field::placeholder {
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.vision-principles {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.vision-link-card {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr);
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.vision-link-card:last-child {
+  border-bottom: 0;
+}
+
+.vision-link-card strong {
+  display: block;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.vision-link-card span {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.vision-photo-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.vision-photo-row .vphoto-item {
+  margin: 0;
+  border-radius: 8px;
+  aspect-ratio: 1 / 1;
+}
+
+.vision-photo-row .vphoto-item img {
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.vision-photo-row .vbento-add,
+.vision-photo-row .vbento-empty {
+  height: auto;
+  min-height: 118px;
+  margin: 0;
+  border-radius: 8px;
+}
+
+@media (max-width: 920px) {
+  .vision-compass {
+    grid-template-columns: 1fr;
+  }
+}
+
+.today-briefing-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 22px;
+  align-items: stretch;
+}
+
+.today-progress-line {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  overflow: hidden;
+  margin-top: 18px;
+}
+
+.today-progress-line span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #2dd4bf;
+}
+
+.today-note {
+  background: rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.11);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.today-note label {
+  color: rgba(255,255,255,0.52);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 9px;
+}
+
+.today-note textarea {
+  min-height: 96px;
+  resize: vertical;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: rgba(255,255,255,0.86);
+  font: 600 14px/1.5 'Inter', system-ui, sans-serif;
+}
+
+.today-note textarea::placeholder {
+  color: rgba(255,255,255,0.32);
+}
+
+.briefing-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.briefing-strip .stat-card {
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 12px;
+  align-items: center;
+}
+
+.briefing-strip .stat-icon-wrap {
+  grid-row: span 2;
+  margin: 0;
+}
+
+.briefing-strip .stat-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.briefing-strip .stat-value {
+  font-size: 23px;
+}
+
+.cycle-progress-mark {
+  width: 84px;
+  flex-shrink: 0;
+}
+
+.cycle-progress-mark strong {
+  display: block;
+  font-size: 23px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--text);
+}
+
+.cycle-progress-mark span {
+  display: block;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.cycle-today-line {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--white-soft);
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.cycle-today-line span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.cycle-why {
+  margin-top: 8px;
+  padding-left: 11px;
+  border-left: 2px solid var(--border-med);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (max-width: 820px) {
+  .today-briefing-grid,
+  .briefing-strip {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ══════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════ -->
+<nav id="sidebar">
+  <!-- EDGEx logo -->
+  <div class="sidebar-brand" style="flex-direction:column;gap:4px;align-items:flex-start">
+    <div style="display:flex;align-items:baseline;gap:0;line-height:1;margin-bottom:2px">
+      <span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;color:#ffffff;line-height:1">EDG</span><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1">E</span><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;color:rgba(255,255,255,0.25);line-height:1">x</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:rgba(5,150,105,0.25)">
+        <span class="icon" style="font-size:12px;color:#34d399;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">flag</span>
+      </span>
       <span style="font-family:'Inter',sans-serif;font-weight:700;font-size:11px;letter-spacing:0.04em;color:rgba(255,255,255,0.70)">Goals Room</span>
     </div>
   </div>
@@ -2434,6 +3023,98 @@ function scoreBadge(s) {
   return s>=85?'badge-green':s>=65?'badge-orange':'badge-red';
 }
 
+function progressMood(pct, done, total) {
+  if (!total) return 'No actions due today';
+  if (done === total) return 'Clean day';
+  if (pct >= 70) return 'Steady';
+  if (pct >= 40) return 'Needs attention';
+  return 'Behind pace';
+}
+
+function todayNoteValue() {
+  try { return localStorage.getItem('edgex_goals_today_note_' + localDateKey()) || ''; }
+  catch(e) { return ''; }
+}
+
+function saveTodayNote(value) {
+  try { localStorage.setItem('edgex_goals_today_note_' + localDateKey(), value || ''); }
+  catch(e) {}
+}
+
+function escapeHTML(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function localDateKey() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+function ringHTML(pct, size=80, stroke=7) {
+  const r=(size-stroke*2)/2, circ=2*Math.PI*r;
+  const offset = pct!==null ? circ*(1-pct/100) : circ;
+  let color, gradId='g'+Math.random().toString(36).slice(2,7);
+  if (pct===null) color='#E2E8F0';
+  else if (pct>=85) color='var(--green)';
+  else if (pct>=65) color='var(--orange)';
+  else color='#DC2626';
+  const cx=size/2, cy=size/2;
+  return `<div class="ring-wrap" style="width:${size}px;height:${size}px">
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#EEF2F7" stroke-width="${stroke}"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+        stroke-linecap="round" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"
+        style="transition:stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1),stroke 0.4s"/>
+    </svg>
+    <div class="ring-label">
+      <div style="font-size:${size>70?16:12}px;font-weight:800;color:${color};letter-spacing:-0.02em">${pct!==null?pct+'%':'—'}</div>
+    </div>
+  </div>`;
+}
+
+// ─────────────────────────────────────────
+//  TODAY
+// ─────────────────────────────────────────
+function renderToday() {
+  const hour = new Date().getHours();
+  const greeting = hour<5?'Still up,':hour<12?'Good morning,':hour<17?'Good afternoon,':'Good evening,';
+  const todayFmt = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  const active = DB.sprints.filter(s=>isSprintActive(s));
+  const empty  = document.getElementById('today-empty');
+  const heroEl = document.getElementById('today-hero');
+  const statsEl = document.getElementById('today-stats');
+  const cyclesEl = document.getElementById('today-cycles');
+
+  const toggleEl = document.getElementById('today-view-toggle');
+  const actionListEl = document.getElementById('today-action-list');
+  const cyclesWrapEl = document.getElementById('today-cycles-wrap');
+
+  if (!active.length) {
+    heroEl.innerHTML=''; statsEl.innerHTML=''; cyclesEl.innerHTML='';
+    if (toggleEl) toggleEl.style.display='none';
+    if (actionListEl) actionListEl.style.display='none';
+    empty.style.display='block'; return;
+  }
+  empty.style.display='none';
+  if (toggleEl) toggleEl.style.display='block';
+
+  // Show/hide correct view
+  const isList = todayViewMode === 'list';
+  if (cyclesWrapEl) cyclesWrapEl.style.display = isList ? 'none' : 'block';
+  if (actionListEl) actionListEl.style.display = isList ? 'block' : 'none';
+
+  // Sync toggle button active state
+  const btnCycles = document.getElementById('toggle-by-cycle');
+  const btnList   = document.getElementById('toggle-action-list');
+  if (btnCycles) btnCycles.classList.toggle('active', !isList);
+  if (btnList)   btnList.classList.toggle('active', isList);
+
+  // Hero banner — only count today's obligations with correct keys
+  let totalT = 0, doneT = 0;
+  active.forEach(sp => { const r = todayDoneTotals(sp); totalT += r.total; doneT += r.done; });
+  const heroPct = totalT ? Math.round(doneT/totalT*100) : null;
   const openT = Math.max(totalT - doneT, 0);
   const todayMood = progressMood(heroPct || 0, doneT, totalT);
   const note = todayNoteValue();
@@ -2614,6 +3295,12 @@ function scoreBadge(s) {
     // Today-only done/total for the ring and label (not the full week)
     const todayR = isCurrentWk ? todayDoneTotals(sp) : { done, total };
     const ringPct = todayR.total ? Math.round(todayR.done/todayR.total*100) : (isCurrentWk ? 0 : pct);
+    const openToday = Math.max(todayR.total - todayR.done, 0);
+    const cardMood = progressMood(ringPct || 0, todayR.done, todayR.total);
+
+    return `<div class="cycle-card fade-up" id="cc-${sp.id}">
+      <!-- Header (always visible) -->
+      <div class="cycle-header" style="cursor:default">
         <div class="cycle-progress-mark">
           <strong>${isCurrentWk ? `${todayR.done}/${todayR.total}` : `${done}/${total}`}</strong>
           <span>${isCurrentWk ? 'today' : `week ${viewWk}`}</span>
@@ -2776,6 +3463,271 @@ function renderTodayActionList() {
         dueToday = !checks[t.id];
       }
 
+      if (!dueToday) return;
+
+      const entry = { sp, wk, checks, tactic: t, goal, areaId, sprintName: sp.name };
+      if (areaId && grouped[areaId]) {
+        grouped[areaId].push(entry);
+      } else {
+        ungrouped.push(entry);
+      }
+    });
+  });
+
+  // Helper: is a tactic fully done for today?
+  function isTodayDone(entry) {
+    const { tactic: t, checks, wk } = entry;
+    const freq = t.freq || 'weekly';
+    if (freq === 'daily') return !!checks[checkKey(t, todayIdx)];
+    if (freq === 'custom') return (t.days || []).includes(todayIdx) ? !!checks[checkKey(t, todayIdx)] : true;
+    if (freq === 'xperweek') return xpwDoneCount(t, checks) >= xpwTarget(t);
+    return !!checks[t.id];
+  }
+
+  // Build the action row HTML for each entry
+  function buildActionRow(entry) {
+    const { sp, wk, checks, tactic: t, sprintName } = entry;
+    const freq = t.freq || 'weekly';
+    const done = isTodayDone(entry);
+    const streak = tacticStreak(sp, t);
+
+    // Frequency label
+    const freqLabel = freq === 'daily' ? 'Daily'
+      : freq === 'custom' ? 'Custom days'
+      : freq === 'xperweek' ? `${xpwDoneCount(t, checks)}/${xpwTarget(t)}×/wk`
+      : freq === 'onetime' ? 'One-time'
+      : 'Weekly';
+
+    let interactiveEl = '';
+
+    if (freq === 'daily' || freq === 'custom') {
+      const activeDays = freq === 'daily' ? [0,1,2,3,4,5,6] : (t.days || []);
+      const dayLabels = ['M','T','W','T','F','S','S'];
+      const chips = [0,1,2,3,4,5,6].map(di => {
+        if (!activeDays.includes(di)) return '';
+        const key = checkKey(t, di);
+        const isDone = !!checks[key];
+        const isToday = di === todayIdx;
+        const isPast = di < todayIdx;
+        const clickable = isToday || isPast;
+        const bg = isDone ? 'var(--green)' : isToday ? 'var(--blue-dim)' : 'var(--bg)';
+        const border = isDone ? 'var(--green)' : isToday ? 'var(--blue)' : 'var(--border-med)';
+        const color = isDone ? '#fff' : isToday ? 'var(--blue)' : 'var(--text-3)';
+        const click = clickable ? `onclick="toggleCheck('${sp.id}',${wk},'${t.id}',this,'${key}')"` : '';
+        return `<span id="cr-chip-${key}" data-key="${key}" ${click} title="${isToday?'Today':dayLabels[di]}" style="width:24px;height:24px;border-radius:4px;background:${bg};border:1px solid ${border};display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${color};${clickable?'cursor:pointer;':'opacity:0.4;'}transition:all 0.12s">${isDone?'✓':dayLabels[di]}</span>`;
+      }).filter(Boolean).join('');
+      interactiveEl = `<div class="action-chips">${chips}</div>`;
+    } else if (freq === 'xperweek') {
+      const n = xpwTarget(t);
+      const c = xpwDoneCount(t, checks);
+      const slots = Array.from({length: n}, (_, i) => {
+        const key = `${t.id}_${i}`;
+        const filled = !!checks[key];
+        const isNext = !filled && i === c;
+        const clickable = filled || isNext;
+        const bg = filled ? 'var(--green)' : isNext ? 'var(--blue-dim)' : 'var(--bg)';
+        const border = filled ? 'var(--green)' : isNext ? 'var(--blue)' : 'var(--border-med)';
+        const color = filled ? '#fff' : isNext ? 'var(--blue)' : 'var(--text-3)';
+        const click = clickable ? `onclick="toggleXpw('${sp.id}',${wk},'${t.id}',${i},this)"` : '';
+        return `<span data-xpw="${i}" ${click} style="width:24px;height:24px;border-radius:4px;background:${bg};border:1px solid ${border};display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${color};${clickable?'cursor:pointer':'opacity:0.4'};transition:all 0.12s">${filled?'✓':i+1}</span>`;
+      }).join('');
+      interactiveEl = `<div class="action-chips">${slots}</div>`;
+    } else {
+      // weekly / onetime — single checkbox row
+      const key = t.id;
+      const checked = !!checks[key];
+      const checkBox = `<div class="check-box" style="margin-top:1px;flex-shrink:0">${checked?`<span class="icon fill" style="font-size:13px;color:#fff">check</span>`:''}</div>`;
+      return `<div class="action-row${checked?' done':''}" id="cr-${t.id}" onclick="toggleCheck('${sp.id}',${wk},'${t.id}',this,'${key}')" style="cursor:pointer">
+        <div class="action-row-left">
+          ${checkBox}
+          <div style="flex:1;min-width:0">
+            <span class="check-text" style="font-size:14px;font-weight:600;display:block;line-height:1.4${checked?';text-decoration:line-through;color:var(--text-3)':''}">${t.text}${streakBadgeHTML(streak)}</span>
+            <div class="action-row-meta">${sprintName} · ${freqLabel}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="action-row${done?' done':''}" id="cr-${t.id}" style="${done?'opacity:0.5':''}">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600;color:${done?'var(--text-3)':'var(--text)'};text-decoration:${done?'line-through':'none'};line-height:1.4">${t.text}${streakBadgeHTML(streak)}</div>
+        <div class="action-row-meta">${sprintName} · ${freqLabel}</div>
+        ${interactiveEl}
+      </div>
+    </div>`;
+  }
+
+  const areaColors = { health:'var(--green)', career:'var(--blue)', family:'#DC2626', personal:'var(--orange)' };
+
+  // Build HTML for each area group that has entries
+  let html = '';
+  AREAS.forEach(area => {
+    const entries = grouped[area.id];
+    if (!entries.length) return;
+
+    const totalActions = entries.length;
+    const doneActions = entries.filter(e => isTodayDone(e)).length;
+    const color = areaColors[area.id] || 'var(--text-3)';
+
+    html += `<div class="action-area-group">
+      <div class="action-area-header">
+        <div class="action-area-label">
+          <span class="action-area-dot" style="background:${color}"></span>
+          ${area.icon} ${area.label}
+        </div>
+        <span class="action-area-progress">${doneActions}/${totalActions}</span>
+      </div>
+      <div class="action-list-card">
+        ${entries.map(buildActionRow).join('')}
+      </div>
+    </div>`;
+  });
+
+  // Any sprint with no linked area
+  if (ungrouped.length) {
+    html += `<div class="action-area-group">
+      <div class="action-area-header">
+        <div class="action-area-label">
+          <span class="action-area-dot" style="background:var(--text-3)"></span>
+          Other
+        </div>
+      </div>
+      <div class="action-list-card">
+        ${ungrouped.map(buildActionRow).join('')}
+      </div>
+    </div>`;
+  }
+
+  if (!html) {
+    html = `<div style="text-align:center;padding:48px 24px;color:var(--text-3)">
+      <span class="icon" style="font-size:36px;display:block;margin-bottom:12px">check_circle</span>
+      <p style="font-size:15px;font-weight:600">Nothing left for today.</p>
+    </div>`;
+  }
+
+  el.innerHTML = `<div class="fade-up">${html}</div>`;
+}
+
+function toggleCycleExpand(sprintId) {
+  if (expandedSprints.has(sprintId)) {
+    expandedSprints.delete(sprintId);
+  } else {
+    expandedSprints.add(sprintId);
+  }
+  // Toggle in-place without a full re-render
+  const expEl = document.getElementById('ce-'+sprintId);
+  const btnEl = document.querySelector(`#cc-${sprintId} .cycle-toggle-btn`);
+  if (expEl) expEl.classList.toggle('open', expandedSprints.has(sprintId));
+  if (btnEl) btnEl.classList.toggle('open', expandedSprints.has(sprintId));
+}
+
+function scWeekAdj(delta, sprintId) {
+  if (!scorecardSprintId || scorecardSprintId!==sprintId) {
+    scorecardSprintId=sprintId;
+    const sp=DB.sprints.find(s=>s.id===sprintId);
+    scorecardWeek=sp?sprintCurrentWeek(sp):1;
+  }
+  scorecardWeek=Math.min(Math.max(scorecardWeek+delta,1),12);
+  renderToday();
+}
+function resetToToday() {
+  // Reset all cycle cards to their real current week, then scroll down
+  scorecardSprintId = null;
+  scorecardWeek = null;
+  renderToday();
+  setTimeout(() => document.getElementById('today-cycles-wrap').scrollIntoView({behavior:'smooth'}), 50);
+}
+function scGoToToday(sprintId) {
+  scorecardSprintId=sprintId;
+  const sp=DB.sprints.find(s=>s.id===sprintId);
+  scorecardWeek=sp?sprintCurrentWeek(sp):1;
+  renderToday();
+}
+function jumpToWeek(sprintId, week) {
+  scorecardSprintId=sprintId; scorecardWeek=week; renderToday();
+}
+
+function toggleXpw(sprintId, week, tacticId, slotIdx, el) {
+  const sp = DB.sprints.find(s=>s.id===sprintId); if(!sp) return;
+  if(!sp.weekChecks) sp.weekChecks={};
+  if(!sp.weekChecks[week]) sp.weekChecks[week]={};
+  const key = `${tacticId}_${slotIdx}`;
+  const was = !!sp.weekChecks[week][key];
+  sp.weekChecks[week][key] = !was;
+  saveDB(DB); syncSprint(sprintId);
+  refreshToday(200);
+}
+
+function toggleCheck(sprintId, week, tacticId, el, key) {
+  const sp=DB.sprints.find(s=>s.id===sprintId); if(!sp) return;
+  if(!sp.weekChecks) sp.weekChecks={};
+  if(!sp.weekChecks[week]) sp.weekChecks[week]={};
+  // key defaults to tacticId for weekly/onetime; for daily/custom it's tacticId_dayIdx
+  const storeKey = key || tacticId;
+  const was=!!sp.weekChecks[week][storeKey];
+  sp.weekChecks[week][storeKey]=!was;
+  saveDB(DB); syncSprint(sprintId);
+  // Detect if this is a day chip (span, not div.check-row)
+  if(el.tagName==='SPAN' && el.dataset.key) {
+    // Update chip appearance in place
+    const di=parseInt(storeKey.split('_').pop());
+    const todayI=todayDayIdx();
+    const isChipToday=(di===todayI);
+    if(!was) {
+      el.style.background='var(--green)'; el.style.borderColor='var(--green)';
+      el.style.color='#fff'; el.textContent='✓';
+    } else {
+      // Restore to correct style: today=blue, past=neutral, yesterday=amber
+      const isChipYest=(di===(todayI-1+7)%7 && todayI>0);
+      if(isChipToday){ el.style.background='var(--blue-dim)'; el.style.borderColor='var(--blue)'; el.style.color='var(--blue)'; }
+      else if(isChipYest){ el.style.background='rgba(255,167,38,0.08)'; el.style.borderColor='#FFA726'; el.style.color='#F57C00'; }
+      else { el.style.background='var(--bg)'; el.style.borderColor='var(--border-med)'; el.style.color='var(--text-2)'; }
+      el.textContent=['M','T','W','T','F','S','S'][di];
+    }
+    refreshToday(320);
+    return;
+  }
+  const row=el;
+  if(!was) {
+    row.classList.add('done');
+    const box=row.querySelector('.check-box');
+    if (box) {
+      box.innerHTML='<span class="icon fill" style="font-size:13px;color:#fff">check</span>';
+      box.style.background='var(--green)'; box.style.borderColor='var(--green)';
+      box.classList.add('pop'); setTimeout(()=>box.classList.remove('pop'),300);
+    }
+    const ct = row.querySelector('.check-text');
+    if (ct) { ct.style.textDecoration='line-through'; ct.style.color='var(--text-3)'; }
+  } else {
+    row.classList.remove('done');
+    const box=row.querySelector('.check-box');
+    if (box) { box.innerHTML=''; box.style.background=''; box.style.borderColor=''; }
+    const ct = row.querySelector('.check-text');
+    if (ct) { ct.style.textDecoration=''; ct.style.color=''; }
+  }
+  refreshToday(320);
+}
+
+// ─────────────────────────────────────────
+//  GOALS
+// ─────────────────────────────────────────
+function renderGoals() { renderGoalFilters(); renderGoalsList(); }
+
+function renderVisionPanels() {
+  document.getElementById('vision-panels').innerHTML = AREAS.map(area => {
+    const v = DB.visions[area.id]||'';
+    return `<div class="vision-card ${area.id}" onclick="openVisionSheet('${area.id}')">
+      <div class="vision-card-dot ${area.id}"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;position:relative">
+        <span class="badge ${area.badgeClass}">${area.icon} ${area.label}</span>
+        <span class="icon" style="font-size:16px;color:var(--text-3)">edit</span>
+      </div>
+      <p style="font-size:13px;color:${v?'var(--text-2)':'var(--text-3)'};line-height:1.6;font-style:${v?'italic':'normal'};min-height:40px;position:relative">${v||'Tap to write your vision...'}</p>
+    </div>`;
+  }).join('');
+}
+
+function renderGoalFilters() {
   const opts=[['all','All'],['health','Health'],['career','Work'],['family','Family'],['personal','Personal']];
   document.getElementById('goal-filters').innerHTML=opts.map(([id,label])=>
     `<button class="filter-tab${goalFilterArea===id?' active':''}" onclick="filterGoals('${id}')">${label}</button>`

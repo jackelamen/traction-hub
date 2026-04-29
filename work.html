@@ -365,6 +365,11 @@
       <span class="material-symbols-outlined nav-icon">auto_awesome</span>
       <span class="flex-1">Weekly Hub</span>
     </button>
+    <button onclick="showPage('history')" id="nav-history"
+      class="nav-page-btn nav-item">
+      <span class="material-symbols-outlined nav-icon">history</span>
+      <span class="flex-1">History</span>
+    </button>
     <a href="goals.html" id="nav-goals"
       class="nav-page-btn nav-item" style="text-decoration:none">
       <span class="material-symbols-outlined nav-icon">flag</span>
@@ -765,9 +770,9 @@
   </section>
 
   <!-- Main Grid -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-8">
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mb-8">
 
-    <section id="log-section" class="lg:col-span-8 space-y-4">
+    <section id="log-section" class="xl:col-span-8 space-y-4">
 
   <!-- ═══ DEEP WORK SECTION ═══ -->
   <section class="mb-0">
@@ -957,10 +962,50 @@
     </div>
   </section>
 
+  <section id="weekly-summary-section" class="mb-0">
+    <div class="card overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100">
+        <h3 class="text-base font-bold text-on-surface">Weekly Summary</h3>
+      </div>
+      <div id="weekly-summary-grid" class="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-gray-100">
+        <!-- filled by renderWeeklySummary() -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent History Preview -->
+  <section id="recent-history-section" class="mb-0">
+    <div class="card overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+        <div>
+          <h3 class="text-xl font-bold text-on-surface">Recent History</h3>
+          <p class="text-xs text-on-surface-variant mt-0.5">Latest workday logs</p>
+        </div>
+        <button onclick="showPage('history')" class="text-xs font-bold text-primary bg-primary-fixed px-3 py-1.5 rounded-full hover:bg-primary-fixed-dim transition-colors">
+          View all
+        </button>
+      </div>
+      <div id="recent-history-list" class="p-4 space-y-3"></div>
+    </div>
+  </section>
+
+  <!-- Distraction Analysis -->
+  <section id="distraction-analysis-section" class="mb-0">
+    <div class="card overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100">
+        <h3 class="text-xl font-bold text-on-surface">Distraction Patterns</h3>
+        <p class="text-xs text-on-surface-variant mt-0.5">Across all logged days</p>
+      </div>
+      <div id="distraction-analysis-body" class="px-6 md:px-8 py-6">
+        <!-- filled by renderDistractionAnalysis() -->
+      </div>
+    </div>
+  </section>
+
     </section>
 
     <!-- Right Column -->
-    <aside class="lg:col-span-4 space-y-6">
+    <aside class="xl:col-span-4 space-y-5 xl:sticky xl:top-6 self-start">
 
       <!-- Time Blocks Widget -->
       <div class="card overflow-hidden">
@@ -1298,58 +1343,31 @@
 
   </div><!-- /Main Grid -->
 
-  <section id="weekly-summary-section" class="mb-6">
-    <div class="card overflow-hidden">
-      <div class="px-6 py-4 border-b border-gray-100">
-        <h3 class="text-base font-bold text-on-surface">Weekly Summary</h3>
-      </div>
-      <div id="weekly-summary-grid" class="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-gray-100">
-        <!-- filled by renderWeeklySummary() -->
-      </div>
-    </div>
-  </section>
+</div><!-- /page-dashboard -->
 
-  <!-- History Table -->
-  <section id="history-section" class="mb-4">
+<!-- ════ PAGE: HISTORY ════ -->
+<div id="page-history" class="hidden p-5 md:p-7 pb-28 md:pb-12">
+  <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
+    <div>
+      <h1 class="text-2xl font-extrabold text-on-surface tracking-tight">Daily Log History</h1>
+      <p class="text-sm text-on-surface-variant mt-0.5">Your full archive of workday traction, ratings, steps, and pillar completion.</p>
+    </div>
+    <button onclick="showPage('dashboard')" class="btn-secondary px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+      <span class="material-symbols-outlined text-base">arrow_back</span>
+      Dashboard
+    </button>
+  </div>
+
+  <section id="history-section" class="mb-6 max-w-5xl">
     <div class="card overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-        <h3 class="text-xl font-bold text-on-surface">Daily Log History</h3>
+        <h3 class="text-xl font-bold text-on-surface">All Workday Logs</h3>
         <span class="text-xs font-bold text-on-surface-variant bg-surface-container px-3 py-1.5 rounded-full" id="history-count">0 entries</span>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead>
-            <tr class="bg-surface-container-low">
-              <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide">Day</th>
-              <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide">Date</th>
-              <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide">Pillar I</th>
-              <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide">Pillar II</th>
-              <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide">Steps</th>
-              <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide">Rating / Score</th>
-              <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide">Status</th>
-              <th class="px-6 md:px-8 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wide" title="Both pillars complete">✓ = Both pillars done</th>
-            </tr>
-          </thead>
-          <tbody id="log-tbody" class="divide-y divide-gray-100"></tbody>
-        </table>
-      </div>
+      <div id="log-tbody" class="p-4 space-y-3"></div>
     </div>
   </section>
-
-  <!-- Distraction Analysis -->
-  <section id="distraction-analysis-section" class="mb-8">
-    <div class="card overflow-hidden">
-      <div class="px-6 py-4 border-b border-gray-100">
-        <h3 class="text-xl font-bold text-on-surface">Distraction Patterns</h3>
-        <p class="text-xs text-on-surface-variant mt-0.5">Across all logged days</p>
-      </div>
-      <div id="distraction-analysis-body" class="px-6 md:px-8 py-6">
-        <!-- filled by renderDistractionAnalysis() -->
-      </div>
-    </div>
-  </section>
-
-</div><!-- /page-dashboard -->
+</div><!-- /page-history -->
 
 <!-- ════ PAGE: TIME BLOCKS ════ -->
 <div id="page-timeblocks" class="hidden h-screen flex flex-col overflow-hidden" style="background:#f8f9fc">
@@ -2370,7 +2388,7 @@
         <span class="text-xl">☀️</span>
         <span class="text-[10px] font-bold text-on-surface-variant">Morning</span>
       </button>
-      <button onclick="scrollToHistory();closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
+      <button onclick="mobileNavTo('history');closeMobileMore()" class="flex flex-col items-center gap-1 p-3 rounded-2xl bg-surface-container">
         <span class="material-symbols-outlined text-xl" style="color:#6b7280">history</span>
         <span class="text-[10px] font-bold text-on-surface-variant">History</span>
       </button>
@@ -3562,6 +3580,16 @@ let currentSteps      = 0;   // latest cumulative step count from device
 const STEP_GOAL_KEY   = '30day-step-goal-v1';
 let STEP_GOAL         = parseInt(localStorage.getItem(STEP_GOAL_KEY) || '10000');
 const STEPS_KEY       = '30day-steps-v1';
+const DAILY_SIGNALS_KEY = 'edgex_daily_signals_v1';
+function getDailySignals() {
+  try { return JSON.parse(localStorage.getItem(DAILY_SIGNALS_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function updateDailySignal(dateStr, patch) {
+  const all = getDailySignals();
+  all[dateStr] = { ...(all[dateStr] || {}), ...patch, updatedAt: new Date().toISOString() };
+  localStorage.setItem(DAILY_SIGNALS_KEY, JSON.stringify(all));
+}
 let selectedAsanaTasks = []; // [{ gid, name }, ...]  — Asana picks
 let sessionTasks       = []; // [{ gid|null, name }] — final combined list
 let editingSessionIdx  = null; // null = new, number = editing existing
@@ -4054,8 +4082,17 @@ function resetTimer() {
 
 // ── Step Tracking ────────────────────────────────────────────────
 function loadStepState() {
+  const signal = getDailySignals()[todayStr()] || {};
   const raw = localStorage.getItem(STEPS_KEY);
-  if (!raw) return;
+  if (!raw) {
+    if (signal.steps) {
+      baseSteps = signal.stepBase || 0;
+      currentSteps = signal.steps || 0;
+      walkCount = signal.walks || 0;
+      horizonCount = signal.horizonCount || 0;
+    }
+    return;
+  }
   try {
     const s = JSON.parse(raw);
     if (s.date === todayStr()) {
@@ -4063,12 +4100,18 @@ function loadStepState() {
       currentSteps = s.currentSteps || 0;
       walkCount    = s.walkCount    || 0;
       horizonCount = s.horizonCount || 0;
+      if (signal.steps && signal.updatedAt && (!s.updatedAt || new Date(signal.updatedAt) > new Date(s.updatedAt || 0))) {
+        baseSteps = signal.stepBase || baseSteps;
+        currentSteps = signal.steps;
+        walkCount = signal.walks || walkCount;
+        horizonCount = signal.horizonCount || horizonCount;
+      }
     } else {
       // Stale entry from a previous day — clear it so the display resets to 0
-      baseSteps    = 0;
-      currentSteps = 0;
-      walkCount    = 0;
-      horizonCount = 0;
+      baseSteps    = signal.stepBase || 0;
+      currentSteps = signal.steps || 0;
+      walkCount    = signal.walks || 0;
+      horizonCount = signal.horizonCount || 0;
       localStorage.removeItem(STEPS_KEY);
     }
   } catch(e) {}
@@ -4081,7 +4124,15 @@ function saveStepState() {
     currentSteps,
     walkCount,
     horizonCount,
+    updatedAt: new Date().toISOString()
   }));
+  updateDailySignal(todayStr(), {
+    steps: currentSteps,
+    stepBase: baseSteps,
+    netSteps: Math.max(0, currentSteps - baseSteps),
+    walks: walkCount,
+    horizonCount
+  });
   pushAllToSupabase();
 }
 
@@ -5392,91 +5443,127 @@ function dots(a, b, c, labels) {
   return `<div style="display:flex;flex-wrap:wrap;gap:3px">${chip(a,names[0])}${chip(b,names[1])}${chip(c,names[2])}</div>`;
 }
 
-function renderTable() {
-  const tbody = document.getElementById('log-tbody');
-  tbody.innerHTML = '';
+function getHistoryEntries() {
   const dn = currentDay();
   const entries = [];
-
   for (let i = Math.min(dn, TOTAL_DAYS); i >= 1; i--) {
     const ds  = dateForDay(i);
     const log = logs[ds];
     if (log) entries.push({ i, ds, log });
   }
+  return entries;
+}
+
+function historyCardHTML({ i, ds, log }, opts = {}) {
+  const rawSteps = getStepsForDate(ds);
+  const stepsNum = rawSteps ? Number(rawSteps).toLocaleString() : '—';
+  const complete = log.pillar1 && log.pillar2;
+  const status = complete
+    ? '<span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#059669] bg-emerald-50 px-2.5 py-1 rounded-full"><span class="material-symbols-outlined" style="font-size:12px">check_circle</span>Complete</span>'
+    : '<span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gray-400 bg-surface-container px-2.5 py-1 rounded-full"><span class="material-symbols-outlined" style="font-size:12px">radio_button_unchecked</span>Partial</span>';
+  const scoreChip = log.focusScore != null
+    ? `<span class="text-[10px] font-bold" style="color:#4f46e5;background:#eef2ff;padding:2px 7px;border-radius:999px">${log.focusScore}</span>`
+    : '';
+  const ratingCell = `
+    <div class="flex items-center gap-1 flex-wrap">
+      <div class="relative group/rating">
+        ${ratingBadge(log.rating)}
+        <select onchange="updateHistoryRating('${ds}', this.value)" onclick="event.stopPropagation()"
+          class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+          <option value="">— No rating —</option>
+          <option value="Excellent" ${log.rating==='Excellent'?'selected':''}>Excellent</option>
+          <option value="Strong"    ${log.rating==='Strong'   ?'selected':''}>Strong</option>
+          <option value="Solid"     ${log.rating==='Solid'    ?'selected':''}>Solid</option>
+          <option value="Okay"      ${log.rating==='Okay'     ?'selected':''}>Okay</option>
+          <option value="Rough"     ${log.rating==='Rough'    ?'selected':''}>Rough</option>
+        </select>
+      </div>
+      ${scoreChip}
+    </div>`;
+  const compact = opts.compact;
+  return `
+    <div class="group/row rounded-2xl border border-gray-100 bg-white hover:bg-surface-container-low transition-colors cursor-pointer overflow-hidden"
+      onclick="if(!event.target.closest('button')&&!event.target.closest('select')) openDayDetail('${ds}')">
+      <div class="p-4">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-11 h-11 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${complete ? 'bg-emerald-50 text-[#059669]' : 'bg-surface-container text-on-surface-variant'}">
+              <span class="text-[9px] font-black uppercase tracking-widest leading-none">Day</span>
+              <span class="text-base font-black leading-none mt-1">${i}</span>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h4 class="text-sm font-black text-on-surface">${fmtShort(ds)}</h4>
+                ${status}
+              </div>
+              <div class="flex items-center gap-2 mt-1 text-xs text-on-surface-variant">
+                <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:13px">directions_walk</span>${stepsNum} steps</span>
+                ${log.sessions ? `<span>${log.sessions} sessions</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 flex-shrink-0">${ratingCell}</div>
+        </div>
+        ${compact ? '' : `
+          <div class="grid md:grid-cols-2 gap-3">
+            <div class="rounded-xl bg-surface-container/70 p-3">
+              <div class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 mb-2">Pillar I</div>
+              ${dots(log.sanctuary, log.ledger, log.noConsume, ['Sanctuary','Intent','Clean'])}
+            </div>
+            <div class="rounded-xl bg-surface-container/70 p-3">
+              <div class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 mb-2">Pillar II</div>
+              ${dots(log.timer, log.horizon, log.walk, ['Timer','Horizon','Walk'])}
+            </div>
+          </div>
+        `}
+        <div class="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-gray-100">
+          <button onclick="openStepsUpdateModal('${ds}')"
+            class="text-[10px] font-bold text-[#10b981] border border-[#10b981]/20 px-2.5 py-1 rounded-lg hover:bg-[#10b981]/10 flex items-center gap-1">
+            <span class="material-symbols-outlined" style="font-size:11px;line-height:1">edit</span>
+            Steps
+          </button>
+          <div class="flex items-center gap-1.5 opacity-100 ${compact ? '' : 'md:opacity-0 group-hover/row:opacity-100'} transition-opacity">
+            <button onclick="openEodModalForDate('${ds}')"
+              class="text-[10px] font-bold text-[#4f46e5] border border-[#4f46e5]/20 px-2.5 py-1 rounded-lg hover:bg-[#4f46e5]/10 flex items-center gap-1">
+              <span class="material-symbols-outlined" style="font-size:11px;line-height:1">edit</span>
+              Edit
+            </button>
+            <button onclick="openDayDetail('${ds}')"
+              class="text-[10px] font-bold text-primary border border-primary/20 px-2.5 py-1 rounded-lg hover:bg-primary/10 flex items-center gap-1">
+              <span class="material-symbols-outlined" style="font-size:11px;line-height:1">open_in_full</span>
+              View
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderRecentHistoryPreview() {
+  const container = document.getElementById('recent-history-list');
+  if (!container) return;
+  const entries = getHistoryEntries();
+  if (!entries.length) {
+    container.innerHTML = `<div class="px-6 py-8 text-center text-on-surface-variant text-sm italic">No entries yet.</div>`;
+    return;
+  }
+  container.innerHTML = entries.slice(0, 3).map(entry => historyCardHTML(entry, { compact: true })).join('');
+}
+
+function renderTable() {
+  const container = document.getElementById('log-tbody');
+  const entries = getHistoryEntries();
+  if (!container) return;
+  container.innerHTML = '';
 
   document.getElementById('history-count').textContent = `${entries.length} entr${entries.length === 1 ? 'y' : 'ies'}`;
 
   if (entries.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="px-8 py-10 text-center text-on-surface-variant text-sm italic">No entries yet. Complete your first entry above.</td></tr>`;
+    container.innerHTML = `<div class="px-6 py-10 text-center text-on-surface-variant text-sm italic">No entries yet. Complete your first entry above.</div>`;
     return;
   }
 
-  entries.forEach(({ i, ds, log }) => {
-    const tr = document.createElement('tr');
-    tr.className = 'hover:bg-surface-container-low transition-colors cursor-pointer group/row';
-    tr.onclick = (e) => { if (!e.target.closest('button') && !e.target.closest('select')) openDayDetail(ds); };
-    const rawSteps = getStepsForDate(ds);
-    const stepsNum = rawSteps ? Number(rawSteps).toLocaleString() : '—';
-    const status = (log.pillar1 && log.pillar2)
-      ? '<span class="material-symbols-outlined text-[#10b981]">check_circle</span>'
-      : '<span class="material-symbols-outlined text-on-surface-variant/30">radio_button_unchecked</span>';
-
-    // Score chip
-    const scoreChip = log.focusScore != null
-      ? `<span class="ml-1.5 text-[10px] font-bold font-bold" style="color:#4f46e5;background:#eef2ff px-1.5 py-0.5 rounded-full">${log.focusScore}</span>`
-      : '';
-
-    // Rating cell: badge + score chip + edit button
-    const ratingCell = `
-      <div class="flex items-center gap-1 flex-wrap">
-        <div class="relative group/rating">
-          ${ratingBadge(log.rating)}
-          <select onchange="updateHistoryRating('${ds}', this.value)" onclick="event.stopPropagation()"
-            class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
-            <option value="">— No rating —</option>
-            <option value="Excellent" ${log.rating==='Excellent'?'selected':''}>Excellent</option>
-            <option value="Strong"    ${log.rating==='Strong'   ?'selected':''}>Strong</option>
-            <option value="Solid"     ${log.rating==='Solid'    ?'selected':''}>Solid</option>
-            <option value="Okay"      ${log.rating==='Okay'     ?'selected':''}>Okay</option>
-            <option value="Rough"     ${log.rating==='Rough'    ?'selected':''}>Rough</option>
-          </select>
-        </div>
-        ${scoreChip}
-      </div>`;
-
-    tr.innerHTML = `
-      <td class="px-6 md:px-8 py-5 font-bold text-sm">${i}</td>
-      <td class="px-6 md:px-8 py-5 text-sm text-on-surface-variant">${fmtShort(ds)}</td>
-      <td class="px-6 md:px-8 py-5">${dots(log.sanctuary, log.ledger, log.noConsume, ['Sanctuary','Int. Browsing','Clean Focus'])}</td>
-      <td class="px-6 md:px-8 py-5">${dots(log.timer, log.horizon, log.walk, ['Timer','Horizon','Walk'])}</td>
-      <td class="px-6 md:px-8 py-5">
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-semibold">${stepsNum}</span>
-          <button onclick="openStepsUpdateModal('${ds}')" title="Edit steps"
-            class="opacity-0 group-hover/row:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:bg-primary/10">
-            <span class="material-symbols-outlined text-primary/60 hover:text-primary" style="font-size:14px;line-height:1">edit</span>
-          </button>
-        </div>
-      </td>
-      <td class="px-6 md:px-8 py-5">${ratingCell}</td>
-      <td class="px-6 md:px-8 py-5">${status}</td>
-      <td class="px-6 md:px-8 py-5">
-        <div class="flex items-center gap-1.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
-          <button onclick="openEodModalForDate('${ds}')"
-            class="text-[10px] font-bold text-[#4f46e5] border border-[#4f46e5]/20 px-2.5 py-1 rounded-lg hover:bg-[#4f46e5]/10 flex items-center gap-1">
-            <span class="material-symbols-outlined" style="font-size:11px;line-height:1">edit</span>
-            Edit
-          </button>
-          <button onclick="openDayDetail('${ds}')"
-            class="text-[10px] font-bold text-primary border border-primary/20 px-2.5 py-1 rounded-lg hover:bg-primary/10 flex items-center gap-1">
-            <span class="material-symbols-outlined" style="font-size:11px;line-height:1">open_in_full</span>
-            View
-          </button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+  container.innerHTML = entries.map(entry => historyCardHTML(entry)).join('');
 }
 
 function updateHistoryRating(dateStr, rating) {
@@ -5825,7 +5912,7 @@ function closeEncouragement() {
 // ── Scrolling ────────────────────────────────────────────────────
 function scrollToLog()     { openEodModal(); }
 function scrollToHeatmap() { document.getElementById('heatmap-section').scrollIntoView({ behavior:'smooth', block:'start' }); }
-function scrollToHistory() { document.getElementById('history-section').scrollIntoView({ behavior:'smooth', block:'start' }); }
+function scrollToHistory() { showPage('history'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 function scrollToTimer()   {
   const el = document.getElementById('timer-toggle-btn');
   if (el) el.closest('section, .card')?.scrollIntoView({ behavior:'smooth', block:'center' });
@@ -6760,11 +6847,18 @@ function saveFinalSteps() {
     logs[targetDate].steps    = steps;
     logs[targetDate].netSteps = Math.max(0, steps - (logs[targetDate].stepBase || 0));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+    updateDailySignal(targetDate, {
+      steps,
+      stepBase: logs[targetDate].stepBase || 0,
+      netSteps: logs[targetDate].netSteps,
+      walks: logs[targetDate].walks || 0
+    });
   } else {
     // No EOD log yet — store steps separately so streak / heatmap aren't affected
     const stepsOnly = JSON.parse(localStorage.getItem('30day-steps-only-v1') || '{}');
     stepsOnly[targetDate] = { steps, netSteps: steps };
     localStorage.setItem('30day-steps-only-v1', JSON.stringify(stepsOnly));
+    updateDailySignal(targetDate, { steps, netSteps: steps });
   }
 
   // If updating today, also sync the live step display
@@ -6821,6 +6915,8 @@ function toOz(amount, unit) {
 }
 
 function getWaterToday() {
+  const signal = getDailySignals()[todayStr()] || {};
+  if (typeof signal.waterOz === 'number') return signal.waterOz;
   const raw = localStorage.getItem(WATER_KEY);
   if (!raw) return 0;
   try {
@@ -6831,6 +6927,10 @@ function getWaterToday() {
 
 function saveWaterToday(oz) {
   localStorage.setItem(WATER_KEY, JSON.stringify({ date: todayStr(), oz }));
+  updateDailySignal(todayStr(), {
+    waterOz: oz,
+    waterL: ozToL(oz)
+  });
   pushAllToSupabase();
 }
 
@@ -7973,7 +8073,7 @@ document.getElementById('day-detail-backdrop').addEventListener('click', functio
 // PAGE NAVIGATION
 // ═══════════════════════════════════════════════════════════════
 let _currentPage = 'dashboard';
-const PAGES = ['dashboard', 'timeblocks', 'weekly', 'goals'];
+const PAGES = ['dashboard', 'timeblocks', 'weekly', 'history', 'goals'];
 
 function showPage(page) {
   _currentPage = page;
@@ -7991,6 +8091,9 @@ function showPage(page) {
   } else if (page === 'weekly') {
     stopTBNowLine();
     renderWeeklyPage();
+  } else if (page === 'history') {
+    stopTBNowLine();
+    renderTable();
   } else if (page === 'goals') {
     stopTBNowLine();
     renderGoalsPage();
@@ -8003,6 +8106,7 @@ function showPage(page) {
     renderBreathLog();
     renderIntentionBanner();
     renderMainTB();
+    renderRecentHistoryPreview();
   }
 }
 
@@ -9732,6 +9836,7 @@ function renderAll() {
   renderHeatmap();
   renderWeeklySummary();
   renderTable();
+  renderRecentHistoryPreview();
   renderDistractionAnalysis();
   updateTBNavBadge(); // also calls renderSidebarTB()
   if (_currentPage === 'timeblocks') renderTBPage();
