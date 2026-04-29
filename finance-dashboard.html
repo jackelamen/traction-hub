@@ -750,9 +750,8 @@ const SB_HEADERS = {
 };
 
 function getSbUserId() {
-  let id = localStorage.getItem('edgex_user_id');
-  if (!id) { id = 'user_' + Math.random().toString(36).slice(2, 11); localStorage.setItem('edgex_user_id', id); }
-  return id;
+  // Fixed ID — all finance data is stored under this key in Supabase
+  return 'edgex_jack_primary';
 }
 
 // Map a local transaction object to a Supabase row
