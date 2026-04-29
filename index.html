@@ -143,6 +143,50 @@ body::after {
   border-color: rgba(52,211,153,0.35);
 }
 
+/* Health card — sky blue */
+.module-card.health {
+  background: linear-gradient(160deg, rgba(10,25,40,0.95) 0%, rgba(8,18,32,0.95) 100%);
+  border-color: rgba(14,165,233,0.2);
+  box-shadow: 0 0 40px rgba(14,165,233,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.module-card.health:hover {
+  box-shadow: 0 8px 48px rgba(14,165,233,0.14), inset 0 1px 0 rgba(255,255,255,0.08);
+  border-color: rgba(14,165,233,0.35);
+}
+.health .ring-track { stroke: rgba(14,165,233,0.15); }
+.health .ring-fill  { stroke: #38bdf8; filter: drop-shadow(0 0 6px rgba(14,165,233,0.7)); }
+.health .ring-value { color: #38bdf8; }
+.health .corner-icon { background: rgba(14,165,233,0.18); color: #38bdf8; }
+.health .card-title .x { color: #38bdf8; }
+.health .card-btn {
+  background: rgba(14,165,233,0.10);
+  border-color: rgba(14,165,233,0.35);
+  color: #38bdf8;
+}
+.module-card.health:hover .card-btn { background: rgba(14,165,233,0.18); }
+
+/* Wellness card — violet */
+.module-card.wellness {
+  background: linear-gradient(160deg, rgba(22,14,42,0.95) 0%, rgba(16,10,32,0.95) 100%);
+  border-color: rgba(124,58,237,0.2);
+  box-shadow: 0 0 40px rgba(124,58,237,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.module-card.wellness:hover {
+  box-shadow: 0 8px 48px rgba(124,58,237,0.14), inset 0 1px 0 rgba(255,255,255,0.08);
+  border-color: rgba(124,58,237,0.35);
+}
+.wellness .ring-track { stroke: rgba(124,58,237,0.15); }
+.wellness .ring-fill  { stroke: #a78bfa; filter: drop-shadow(0 0 6px rgba(124,58,237,0.7)); }
+.wellness .ring-value { color: #a78bfa; }
+.wellness .corner-icon { background: rgba(124,58,237,0.18); color: #a78bfa; }
+.wellness .card-title .x { color: #a78bfa; }
+.wellness .card-btn {
+  background: rgba(124,58,237,0.10);
+  border-color: rgba(124,58,237,0.35);
+  color: #a78bfa;
+}
+.module-card.wellness:hover .card-btn { background: rgba(124,58,237,0.18); }
+
 /* Finance card — indigo/blue */
 .module-card.finance {
   background: linear-gradient(160deg, rgba(15,18,40,0.95) 0%, rgba(10,12,30,0.95) 100%);
@@ -420,6 +464,58 @@ body::after {
       <div class="card-btn">Enter Module →</div>
     </a>
 
+    <!-- Health -->
+    <a class="module-card health" href="health.html">
+      <div class="card-corner-icons">
+        <div class="corner-icon">🫀</div>
+        <div class="corner-icon">🫀</div>
+      </div>
+
+      <div class="ring-wrap">
+        <svg viewBox="0 0 130 130">
+          <circle class="ring-track" cx="65" cy="65" r="54"/>
+          <circle class="ring-fill health-ring" cx="65" cy="65" r="54"
+            stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-value" id="health-pct">—</div>
+          <div class="ring-meta" id="health-meta">today</div>
+        </div>
+      </div>
+
+      <div class="card-title">
+        <span class="the-edge">THE EDGE</span><span class="x">x</span> <span class="module-word">Health</span>
+      </div>
+      <div class="card-desc">Daily routines, sleep, steps, hydration,<br>and 30-day body trends.</div>
+      <div class="card-btn">Enter Module →</div>
+    </a>
+
+    <!-- Wellness -->
+    <a class="module-card wellness" href="wellness.html">
+      <div class="card-corner-icons">
+        <div class="corner-icon">🧘</div>
+        <div class="corner-icon">🧘</div>
+      </div>
+
+      <div class="ring-wrap">
+        <svg viewBox="0 0 130 130">
+          <circle class="ring-track" cx="65" cy="65" r="54"/>
+          <circle class="ring-fill wellness-ring" cx="65" cy="65" r="54"
+            stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-value" id="wellness-pct">—</div>
+          <div class="ring-meta" id="wellness-meta">clarity</div>
+        </div>
+      </div>
+
+      <div class="card-title">
+        <span class="the-edge">THE EDGE</span><span class="x">x</span> <span class="module-word">Wellness</span>
+      </div>
+      <div class="card-desc">Inner-state check-ins, meditation,<br>mental load, and clarity trends.</div>
+      <div class="card-btn">Enter Module →</div>
+    </a>
+
   </div>
 
   <div class="footer">
@@ -520,6 +616,35 @@ animateRing('.work-ring', 100, 400);
     document.getElementById('finance-meta').textContent = income > 0 ? 'spent of income' : 'spent this month';
     animateRing('.finance-ring', pct || (expense > 0 ? 60 : 0), 800);
   } catch(e) { animateRing('.finance-ring', 0, 800); }
+})();
+
+// Health ring: read today's routine completions from edgex_health_summary
+(function() {
+  try {
+    const stored = localStorage.getItem('edgex_health_summary');
+    if (!stored) { animateRing('.health-ring', 0, 1000); return; }
+    const data = JSON.parse(stored);
+    const completed = data.checked ?? 0;
+    const total = data.total ?? 4;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    document.getElementById('health-pct').textContent = pct + '%';
+    document.getElementById('health-meta').textContent = completed + '/' + total + ' routines';
+    animateRing('.health-ring', pct, 1000);
+  } catch(e) { animateRing('.health-ring', 0, 1000); }
+})();
+
+// Wellness ring: read clarity score from edgex_wellness_summary
+(function() {
+  try {
+    const stored = localStorage.getItem('edgex_wellness_summary');
+    if (!stored) { animateRing('.wellness-ring', 0, 1200); return; }
+    const data = JSON.parse(stored);
+    const score = data.score ?? null;
+    if (score == null) { animateRing('.wellness-ring', 0, 1200); return; }
+    document.getElementById('wellness-pct').textContent = score;
+    document.getElementById('wellness-meta').textContent = 'clarity score';
+    animateRing('.wellness-ring', score, 1200);
+  } catch(e) { animateRing('.wellness-ring', 0, 1200); }
 })();
 </script>
 </body>
