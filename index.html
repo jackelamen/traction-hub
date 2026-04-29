@@ -431,6 +431,16 @@ body::after {
 const SB_URL  = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
 
+// ── Intercept recovery tokens (Supabase may redirect here) ──────
+(function interceptRecovery() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return;
+  const params = new URLSearchParams(hash);
+  if (params.get('type') === 'recovery' && params.get('access_token')) {
+    window.location.href = 'reset-password.html' + window.location.hash;
+  }
+})();
+
 // ── Auth check ───────────────────────────────────────────────────
 (function checkAuth() {
   try {
