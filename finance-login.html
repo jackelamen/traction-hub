@@ -308,22 +308,28 @@ function checkFinanceSession() {
 
 // ── Step 1: Send PIN ─────────────────────────────────────────────
 async function sendPin() {
-  const btn   = document.getElementById('sendBtn');
-  const errEl = document.getElementById('sendError');
+  const btn    = document.getElementById('sendBtn');
+  const errEl  = document.getElementById('sendError');
+  const session = getSession();
   errEl.style.display = 'none';
   btn.disabled = true;
   btn.textContent = 'Sending...';
 
   try {
-    const res = await fetch(`${SB_URL}/auth/v1/otp`, {
+    const res = await fetch(`${SB_URL}/functions/v1/finance-pin`, {
       method: 'POST',
-      headers: { 'apikey': SB_ANON, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: userEmail, create_user: false }),
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'send' }),
     });
 
+    const data = await res.json().catch(() => ({}));
+
     if (!res.ok) {
-      const d = await res.json();
-      showSendError(d.error_description || d.msg || 'Could not send PIN. Try again.');
+      showSendError(data.error || 'Could not send PIN. Try again.');
       btn.disabled = false;
       btn.textContent = 'Send PIN to Email';
       return;
@@ -395,10 +401,11 @@ function getPin() {
 
 // ── Step 2: Verify PIN ───────────────────────────────────────────
 async function verifyPin() {
-  const pin   = getPin();
-  const btn   = document.getElementById('verifyBtn');
-  const errEl = document.getElementById('verifyError');
-  const sucEl = document.getElementById('verifySuccess');
+  const pin     = getPin();
+  const btn     = document.getElementById('verifyBtn');
+  const errEl   = document.getElementById('verifyError');
+  const sucEl   = document.getElementById('verifySuccess');
+  const session = getSession();
   errEl.style.display = 'none';
   sucEl.style.display = 'none';
 
@@ -409,16 +416,20 @@ async function verifyPin() {
   btn.textContent = 'Verifying...';
 
   try {
-    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=email_otp`, {
+    const res = await fetch(`${SB_URL}/functions/v1/finance-pin`, {
       method: 'POST',
-      headers: { 'apikey': SB_ANON, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: userEmail, token: pin, type: 'email' }),
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'verify', pin }),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
-    if (!res.ok) {
-      showVerifyError('Incorrect PIN. Please try again.');
+    if (!res.ok || !data.verified) {
+      showVerifyError(data.error || 'Incorrect PIN. Please try again.');
       btn.disabled = false;
       btn.textContent = 'Verify PIN';
       document.querySelectorAll('.pin-digit').forEach(i => i.value = '');
@@ -426,15 +437,7 @@ async function verifyPin() {
       return;
     }
 
-    // Update Layer 1 session with fresh tokens
-    localStorage.setItem('sb_session', JSON.stringify({
-      access_token:  data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at:    Math.floor(Date.now() / 1000) + data.expires_in,
-      user:          data.user,
-    }));
-
-    // Set finance session timestamp
+    // Set finance session timestamp (Layer 1 session unchanged)
     localStorage.setItem(FINANCE_SESSION_KEY, String(Date.now()));
 
     clearInterval(timerInterval);
