@@ -307,8 +307,26 @@ body::after {
   position: relative;
   z-index: 1;
   text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
 }
 .footer strong { color: rgba(255,255,255,0.32); font-weight: 600; }
+
+.btn-logout {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.3);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: all 0.15s;
+}
+.btn-logout:hover { border-color: rgba(239,68,68,0.4); color: #f87171; }
 </style>
 </head>
 <body>
@@ -377,7 +395,7 @@ body::after {
     </a>
 
     <!-- Finance -->
-    <a class="module-card finance" href="finance-dashboard.html">
+    <a class="module-card finance" href="finance-login.html">
       <div class="card-corner-icons">
         <div class="corner-icon">💸</div>
         <div class="corner-icon">💸</div>
@@ -404,9 +422,41 @@ body::after {
 
   </div>
 
-  <div class="footer"><strong>theedgex.com</strong> &nbsp;·&nbsp; personal operating system</div>
+  <div class="footer">
+    <span><strong>theedgex.com</strong> &nbsp;·&nbsp; personal operating system</span>
+    <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+  </div>
 
 <script>
+const SB_URL  = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
+
+// ── Auth check ───────────────────────────────────────────────────
+(function checkAuth() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (!s.access_token || s.expires_at <= Math.floor(Date.now() / 1000)) {
+      window.location.href = 'login.html';
+    }
+  } catch(e) { window.location.href = 'login.html'; }
+})();
+
+// ── Logout ───────────────────────────────────────────────────────
+async function doLogout() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (s.access_token) {
+      await fetch(`${SB_URL}/auth/v1/logout`, {
+        method: 'POST',
+        headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${s.access_token}` },
+      });
+    }
+  } catch(e) {}
+  localStorage.removeItem('sb_session');
+  localStorage.removeItem('finance_session_ts');
+  window.location.href = 'login.html';
+}
+
 const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.3
 
 // Animate rings on load

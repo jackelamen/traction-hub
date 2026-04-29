@@ -411,6 +411,7 @@
     <button class="btn-secondary" onclick="exportData()">Export JSON</button>
     <button class="btn-secondary" onclick="document.getElementById('importJson').click()">Import JSON</button>
     <input type="file" id="importJson" accept=".json" style="display:none" onchange="importJSON(this)">
+    <button class="btn-secondary" onclick="doLogout()" style="border-color:rgba(248,113,113,0.3);color:#f87171" title="Sign out">Sign Out</button>
   </div>
 </div>
 
@@ -738,20 +739,65 @@ const STORAGE_KEY = 'finance_tracker_data_v1';
 const MIGRATE_KEY = 'finance_sb_migrated_v1';
 
 // ════════════════════════════════════════════════════════════════════
-// SUPABASE CONFIG
+// SUPABASE CONFIG & AUTH
 // ════════════════════════════════════════════════════════════════════
 const SB_URL  = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
-const SB_HEADERS = {
-  'apikey': SB_ANON,
-  'Authorization': `Bearer ${SB_ANON}`,
-  'Content-Type': 'application/json',
-  'Prefer': 'resolution=merge-duplicates',
-};
+const FINANCE_SESSION_KEY = 'finance_session_ts';
+const FINANCE_SESSION_MAX = 60 * 60 * 1000; // 1 hour
+
+function getSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (s.access_token && s.expires_at > Math.floor(Date.now() / 1000)) return s;
+  } catch(e) {}
+  return null;
+}
+
+function checkFinanceSession() {
+  const ts = localStorage.getItem(FINANCE_SESSION_KEY);
+  if (!ts) return false;
+  return (Date.now() - parseInt(ts)) < FINANCE_SESSION_MAX;
+}
+
+// Auth gate — redirect before any rendering
+(function authGate() {
+  const session = getSession();
+  if (!session) { window.location.href = 'login.html'; return; }
+  if (!checkFinanceSession()) { window.location.href = 'finance-login.html'; return; }
+})();
+
+function getAuthHeaders() {
+  const session = getSession();
+  const token = session ? session.access_token : SB_ANON;
+  return {
+    'apikey': SB_ANON,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'resolution=merge-duplicates',
+  };
+}
+
+const SB_HEADERS = getAuthHeaders();
 
 function getSbUserId() {
-  // Fixed ID — all finance data is stored under this key in Supabase
-  return 'edgex_jack_primary';
+  const session = getSession();
+  return session?.user?.id || 'fa3f910d-64f8-43cf-94c1-61d645ed9414';
+}
+
+async function doLogout() {
+  try {
+    const s = getSession();
+    if (s?.access_token) {
+      await fetch(`${SB_URL}/auth/v1/logout`, {
+        method: 'POST',
+        headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${s.access_token}` },
+      });
+    }
+  } catch(e) {}
+  localStorage.removeItem('sb_session');
+  localStorage.removeItem(FINANCE_SESSION_KEY);
+  window.location.href = 'login.html';
 }
 
 // Map a local transaction object to a Supabase row
@@ -826,7 +872,7 @@ async function sbUpsertTx(tx) {
   try {
     await fetch(`${SB_URL}/rest/v1/finance_transactions`, {
       method: 'POST',
-      headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      headers: { ...getAuthHeaders(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify(txToRow(tx)),
     });
   } catch(e) { console.warn('Supabase upsert error:', e); }
@@ -835,9 +881,9 @@ async function sbUpsertTx(tx) {
 // ── Delete a single transaction from Supabase ────────────────────
 async function sbDeleteTx(id) {
   try {
-    await fetch(`${SB_URL}/rest/v1/finance_transactions?id=eq.${encodeURIComponent(id)}&user_id=eq.${encodeURIComponent(getSbUserId())}`, {
+    await fetch(`${SB_URL}/rest/v1/finance_transactions?id=eq.${encodeURIComponent(id)}`, {
       method: 'DELETE',
-      headers: SB_HEADERS,
+      headers: getAuthHeaders(),
     });
   } catch(e) { console.warn('Supabase delete error:', e); }
 }
@@ -852,7 +898,7 @@ function saveData(changedTx = null, deletedId = null) {
   if (!rows.length) return;
   fetch(`${SB_URL}/rest/v1/finance_transactions`, {
     method: 'POST',
-    headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    headers: { ...getAuthHeaders(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
     body: JSON.stringify(rows),
   }).catch(e => console.warn('Supabase bulk upsert error:', e));
 }
@@ -865,11 +911,11 @@ async function loadData() {
     if (stored) { const p = JSON.parse(stored); if (p.transactions) data = p; }
   } catch(e) { console.warn('localStorage load error:', e); }
 
-  // Then fetch from Supabase and merge (remote is source of truth)
+  // Then fetch from Supabase using auth token (source of truth)
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/finance_transactions?user_id=eq.${encodeURIComponent(getSbUserId())}&order=date.desc`,
-      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' } }
+      `${SB_URL}/rest/v1/finance_transactions?order=date.desc`,
+      { headers: { ...getAuthHeaders(), 'Accept': 'application/json' } }
     );
     if (res.ok) {
       const rows = await res.json();
