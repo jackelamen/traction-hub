@@ -1420,603 +1420,7 @@ label.lbl {
   border-radius: 50%;
   flex-shrink: 0;
 }
-<<<<<<< Updated upstream
-=======
-
-/* ═══════════════════════════════════════════
-   EDGEx Personal Goals Skin
-═══════════════════════════════════════════ */
-:root {
-  --bg: #f5f7fb;
-  --white: #ffffff;
-  --white-soft: #eef2f7;
-  --accent: #0f8f68;
-  --accent-dark: #0b604a;
-  --accent-dim: rgba(15,143,104,0.11);
-  --accent-light: #e7f6f1;
-  --blue: #4267b2;
-  --blue-dark: #2f4c88;
-  --blue-dim: rgba(66,103,178,0.11);
-  --blue-light: #e9eef9;
-  --purple: #7556a8;
-  --purple-dim: rgba(117,86,168,0.11);
-  --purple-light: #f0ebf8;
-  --orange: #b56a2c;
-  --orange-dim: rgba(181,106,44,0.12);
-  --green: #0f8f68;
-  --green-dim: rgba(15,143,104,0.11);
-  --red: #bd4b5c;
-  --red-dim: rgba(189,75,92,0.11);
-  --text: #151923;
-  --text-2: #596170;
-  --text-3: #929baa;
-  --border: rgba(21,25,35,0.08);
-  --border-med: rgba(21,25,35,0.14);
-  --sidebar-bg: #12141f;
-  --sidebar-active: rgba(255,255,255,0.09);
-  --shadow-sm: none;
-  --shadow: 0 8px 24px rgba(21,25,35,0.07);
-  --shadow-lg: 0 20px 48px rgba(21,25,35,0.12);
-  --radius: 8px;
-  --radius-lg: 8px;
-  --radius-xl: 8px;
-}
-
-body {
-  background:
-    radial-gradient(circle at 22% -8%, rgba(15,143,104,0.08), transparent 28%),
-    radial-gradient(circle at 88% -10%, rgba(66,103,178,0.07), transparent 30%),
-    var(--bg);
-  background-repeat: no-repeat;
-}
-
-#sidebar {
-  background: #10121d;
-  padding: 22px 18px 18px;
-  border-right: 1px solid rgba(255,255,255,0.06);
-}
-
-.nav-section-label {
-  color: rgba(255,255,255,0.22);
-}
-
-.nav-item {
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-.nav-item.active {
-  background: rgba(255,255,255,0.09);
-  box-shadow: inset 3px 0 0 #2dd4bf;
-}
-
-#main {
-  background: transparent;
-}
-
-.view {
-  max-width: 1120px;
-  padding-top: 34px;
-}
-
-.page-date {
-  color: var(--text-3);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.page-title {
-  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: 0;
-}
-
-.page-sub {
-  color: var(--text-2);
-}
-
-.card,
-.stat-card,
-.cycle-card,
-.goal-card,
-.vision-card,
-.action-list-card,
-.streak-chart-wrap {
-  background: rgba(255,255,255,0.92);
-  border: 1px solid var(--border-med);
-  box-shadow: none;
-}
-
-.card:hover,
-.goal-card:hover,
-.vision-card:hover,
-.cycle-card:hover {
-  box-shadow: var(--shadow);
-}
-
-.hero-banner {
-  background: #111827;
-  border: 1px solid rgba(45,212,191,0.18);
-  border-radius: 8px;
-  box-shadow: none;
-}
-
-.hero-banner::before,
-.stat-card::before {
-  display: none;
-}
-
-.hero-title {
-  letter-spacing: 0;
-}
-
-.hero-cta,
-.btn-primary,
-.btn-purple,
-#sidebar .sidebar-footer button {
-  background: #111827 !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(45,212,191,0.22) !important;
-  box-shadow: none !important;
-}
-
-.hero-cta:hover,
-.btn-primary:hover,
-.btn-purple:hover {
-  background: #1f2937 !important;
-  transform: translateY(-1px);
-}
-
-.btn,
-.btn-icon,
-.filter-tab,
-.badge,
-.today-toggle-btn,
-.cycle-toggle-btn {
-  border-radius: 8px !important;
-}
-
-.btn-secondary,
-.btn-ghost,
-.btn-icon {
-  background: rgba(255,255,255,0.72);
-  border-color: var(--border-med);
-}
-
-.badge {
-  background: rgba(21,25,35,0.045);
-  border: 1px solid rgba(21,25,35,0.06);
-  color: var(--text-2);
-}
-
-.badge-blue,
-.badge-career {
-  background: var(--blue-dim);
-  color: var(--blue-dark);
-}
-
-.badge-purple {
-  background: var(--purple-dim);
-  color: var(--purple);
-}
-
-.badge-orange,
-.badge-personal {
-  background: var(--orange-dim);
-  color: var(--orange);
-}
-
-.badge-green,
-.badge-health {
-  background: var(--green-dim);
-  color: var(--green);
-}
-
-.badge-red,
-.badge-family {
-  background: var(--red-dim);
-  color: var(--red);
-}
-
-.filter-tab {
-  background: rgba(255,255,255,0.75);
-  box-shadow: none;
-}
-
-.filter-tab.active {
-  background: #111827;
-  border-color: #111827;
-  color: #ffffff;
-  box-shadow: none;
-}
-
-.goals-grid {
-  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-  gap: 14px;
-}
-
-.goal-card {
-  border-left-width: 1px;
-}
-
-.goal-card.health,
-.goal-card.career,
-.goal-card.family,
-.goal-card.personal,
-.goal-card.default {
-  border-left-color: var(--border-med);
-}
-
-.goal-grid-body {
-  padding: 20px;
-}
-
-.goal-card-bg-icon {
-  display: none;
-}
-
-.goal-card-title {
-  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
-  font-size: 20px !important;
-  letter-spacing: 0 !important;
-}
-
-.goal-card-new {
-  background: rgba(255,255,255,0.56);
-  border: 1.5px dashed var(--border-med);
-  border-radius: 8px;
-  min-height: 210px;
-  color: var(--text-2);
-}
-
-.goal-card-new:hover {
-  background: rgba(255,255,255,0.92);
-  border-color: rgba(15,143,104,0.34);
-}
-
-.goal-card-new-icon,
-.empty-icon,
-.stat-icon-wrap {
-  border-radius: 8px;
-  background: rgba(21,25,35,0.045) !important;
-}
-
-.cycle-card {
-  border-radius: 8px;
-}
-
-.cycle-header {
-  padding: 20px;
-}
-
-.cycle-name {
-  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
-  letter-spacing: 0;
-}
-
-.cycle-section {
-  border-top-color: var(--border);
-}
-
-.check-row {
-  background: rgba(238,242,247,0.78);
-  border-color: rgba(21,25,35,0.08);
-}
-
-.check-row:hover {
-  background: rgba(255,255,255,0.94);
-}
-
-.check-box {
-  border-radius: 6px;
-  background: rgba(255,255,255,0.88);
-}
-
-.wk-dot {
-  border-radius: 6px;
-}
-
-.modal-backdrop {
-  background: rgba(18,20,31,0.52);
-}
-
-.modal-sheet {
-  background: var(--white);
-  border-radius: 8px 8px 0 0;
-}
-
-.inp {
-  background: rgba(255,255,255,0.78);
-  border-color: var(--border-med);
-  border-radius: 8px;
-}
-
-.inp:focus {
-  border-color: rgba(15,143,104,0.48);
-  box-shadow: 0 0 0 3px rgba(15,143,104,0.10);
-}
-
-.visions-page-header {
-  background: #111827;
-}
-
-.visions-page-header::before {
-  display: none;
-}
-
-.visions-area-block {
-  border-bottom-color: var(--border-med);
-}
-
-.vision-compass {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
-  gap: 22px;
-  align-items: start;
-}
-
-.vision-panel {
-  background: rgba(255,255,255,0.9);
-  border: 1px solid var(--border-med);
-  border-radius: 8px;
-  padding: 18px;
-}
-
-.vision-panel-title {
-  font-size: 10px;
-  font-weight: 850;
-  color: var(--text-3);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-.vision-field {
-  width: 100%;
-  min-height: 72px;
-  border: 0;
-  outline: 0;
-  resize: vertical;
-  background: transparent;
-  color: var(--text);
-  font: 650 14px/1.55 'Inter', system-ui, sans-serif;
-}
-
-.vision-field::placeholder {
-  color: var(--text-3);
-  font-weight: 500;
-}
-
-.vision-principles {
-  display: grid;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.vision-link-card {
-  display: grid;
-  grid-template-columns: 8px minmax(0, 1fr);
-  gap: 10px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-}
-
-.vision-link-card:last-child {
-  border-bottom: 0;
-}
-
-.vision-link-card strong {
-  display: block;
-  font-size: 14px;
-  color: var(--text);
-  line-height: 1.25;
-}
-
-.vision-link-card span {
-  display: block;
-  margin-top: 4px;
-  color: var(--text-3);
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.vision-photo-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.vision-photo-row .vphoto-item {
-  margin: 0;
-  border-radius: 8px;
-  aspect-ratio: 1 / 1;
-}
-
-.vision-photo-row .vphoto-item img {
-  height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.vision-photo-row .vbento-add,
-.vision-photo-row .vbento-empty {
-  height: auto;
-  min-height: 118px;
-  margin: 0;
-  border-radius: 8px;
-}
-
-@media (max-width: 920px) {
-  .vision-compass {
-    grid-template-columns: 1fr;
-  }
-}
-
-.today-briefing-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 22px;
-  align-items: stretch;
-}
-
-.today-progress-line {
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.12);
-  overflow: hidden;
-  margin-top: 18px;
-}
-
-.today-progress-line span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: #2dd4bf;
-}
-
-.today-note {
-  background: rgba(255,255,255,0.055);
-  border: 1px solid rgba(255,255,255,0.11);
-  border-radius: 8px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-}
-
-.today-note label {
-  color: rgba(255,255,255,0.52);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 9px;
-}
-
-.today-note textarea {
-  min-height: 96px;
-  resize: vertical;
-  flex: 1;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: rgba(255,255,255,0.86);
-  font: 600 14px/1.5 'Inter', system-ui, sans-serif;
-}
-
-.today-note textarea::placeholder {
-  color: rgba(255,255,255,0.32);
-}
-
-.briefing-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 22px;
-}
-
-.briefing-strip .stat-card {
-  padding: 14px 16px;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 12px;
-  align-items: center;
-}
-
-.briefing-strip .stat-icon-wrap {
-  grid-row: span 2;
-  margin: 0;
-}
-
-.briefing-strip .stat-label {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.briefing-strip .stat-value {
-  font-size: 23px;
-}
-
-.cycle-progress-mark {
-  width: 84px;
-  flex-shrink: 0;
-}
-
-.cycle-progress-mark strong {
-  display: block;
-  font-size: 23px;
-  line-height: 1;
-  letter-spacing: 0;
-  color: var(--text);
-}
-
-.cycle-progress-mark span {
-  display: block;
-  color: var(--text-3);
-  font-size: 11px;
-  font-weight: 700;
-  margin-top: 6px;
-}
-
-.cycle-today-line {
-  height: 6px;
-  border-radius: 999px;
-  background: var(--white-soft);
-  overflow: hidden;
-  margin-top: 10px;
-}
-
-.cycle-today-line span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent);
-}
-
-.cycle-why {
-  margin-top: 8px;
-  padding-left: 11px;
-  border-left: 2px solid var(--border-med);
-  color: var(--text-2);
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-@media (max-width: 820px) {
-  .today-briefing-grid,
-  .briefing-strip {
-    grid-template-columns: 1fr;
-  }
-}
->>>>>>> Stashed changes
-</style>
-</head>
-<body>
-<div id="app">
-
-<!-- ══════════════════════════════════════
-     SIDEBAR
-══════════════════════════════════════ -->
-<nav id="sidebar">
-  <!-- EDGEx logo -->
-  <div class="sidebar-brand" style="flex-direction:column;gap:4px;align-items:flex-start">
-    <div style="display:flex;align-items:baseline;gap:0;line-height:1;margin-bottom:2px">
-      <span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;color:#ffffff;line-height:1">EDG</span><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1">E</span><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;color:rgba(255,255,255,0.25);line-height:1">x</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:rgba(5,150,105,0.25)">
-        <span class="icon" style="font-size:12px;color:#34d399;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">flag</span>
-      </span>
-<<<<<<< Updated upstream
-      <span style="font-family:'Inter',sans-serif;font-weight:700;font-size:11px;letter-spacing:0.04em;color:rgba(255,255,255,0.70)">EDGE Goals</span>
-=======
       <span style="font-family:'Inter',sans-serif;font-weight:700;font-size:11px;letter-spacing:0.04em;color:rgba(255,255,255,0.70)">Goals Room</span>
->>>>>>> Stashed changes
     </div>
   </div>
 
@@ -2065,17 +1469,10 @@ body {
   <div id="today-view-toggle" style="display:none;margin-bottom:20px">
     <div style="display:inline-flex;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px;gap:2px">
       <button id="toggle-by-cycle" class="today-toggle-btn active" onclick="setTodayViewMode('cycles')">
-<<<<<<< Updated upstream
-        <span class="icon" style="font-size:14px">view_agenda</span>By Cycle
-      </button>
-      <button id="toggle-action-list" class="today-toggle-btn" onclick="setTodayViewMode('list')">
-        <span class="icon" style="font-size:14px">checklist</span>All Actions
-=======
         <span class="icon" style="font-size:14px">view_agenda</span>Cycles
       </button>
       <button id="toggle-action-list" class="today-toggle-btn" onclick="setTodayViewMode('list')">
         <span class="icon" style="font-size:14px">checklist</span>List
->>>>>>> Stashed changes
       </button>
     </div>
   </div>
@@ -2097,15 +1494,9 @@ body {
 <div id="view-goals" class="view">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:32px;flex-wrap:wrap">
     <div class="page-header" style="margin-bottom:0">
-<<<<<<< Updated upstream
-      <div class="page-date">Your life, designed</div>
-      <h1 class="page-title">Goals</h1>
-      <p class="page-sub">What you're committed to building.</p>
-=======
       <div class="page-date">Active commitments</div>
       <h1 class="page-title">Goal Room</h1>
       <p class="page-sub">The promises that deserve a plan.</p>
->>>>>>> Stashed changes
     </div>
     <button class="btn btn-primary" onclick="openNewGoalSheet()">
       <span class="icon" style="font-size:17px">add</span>New Goal
@@ -2131,11 +1522,7 @@ body {
     <div class="page-header" style="margin-bottom:0">
       <div class="page-date">12 weeks at a time</div>
       <h1 class="page-title">Focus Cycles</h1>
-<<<<<<< Updated upstream
-      <p class="page-sub">Deliberate blocks of effort toward one goal.</p>
-=======
       <p class="page-sub">Twelve weeks, one honest direction.</p>
->>>>>>> Stashed changes
     </div>
     <button class="btn btn-primary" onclick="openNewSprintSheet()">
       <span class="icon" style="font-size:17px">add</span>New Cycle
@@ -2149,13 +1536,8 @@ body {
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:32px;flex-wrap:wrap">
     <div class="page-header" style="margin-bottom:0">
       <div class="page-date">Big picture</div>
-<<<<<<< Updated upstream
-      <h1 class="page-title">Goal Roadmap</h1>
-      <p class="page-sub">All your goals and cycles on one timeline.</p>
-=======
       <h1 class="page-title">Roadmap</h1>
       <p class="page-sub">Where the work is headed.</p>
->>>>>>> Stashed changes
     </div>
   </div>
   <div id="roadmap-body"></div>
@@ -2171,13 +1553,8 @@ body {
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:32px;flex-wrap:wrap">
     <div class="page-header" style="margin-bottom:0">
       <div class="page-date">Close the loop</div>
-<<<<<<< Updated upstream
-      <h1 class="page-title">Cycle Retrospectives</h1>
-      <p class="page-sub">What you learned from each 12-week sprint.</p>
-=======
       <h1 class="page-title">Retrospectives</h1>
       <p class="page-sub">What the cycle taught you.</p>
->>>>>>> Stashed changes
     </div>
   </div>
   <div id="retros-list" style="display:flex;flex-direction:column;gap:16px"></div>
@@ -2252,13 +1629,8 @@ body {
       <button class="btn-icon" onclick="closeSheet('sheet-vision')"><span class="icon" style="font-size:18px">close</span></button>
     </div>
     <input type="hidden" id="vis-area"/>
-<<<<<<< Updated upstream
-    <p style="color:var(--text-2);font-size:14px;margin-bottom:18px;line-height:1.6">Write what you want this area of your life to look like. Present tense, specific, vivid.</p>
-    <textarea id="vis-text" class="inp" rows="5" placeholder='"I move through life with real energy. My resting heart rate is below 60. I hike without fatigue."'></textarea>
-=======
     <p style="color:var(--text-2);font-size:14px;margin-bottom:18px;line-height:1.6">Write the future state. Present tense, specific, and honest enough to guide what belongs in your goals.</p>
     <textarea id="vis-text" class="inp" rows="5" placeholder='"I move through life with real energy. I keep promises to my body. Strength feels ordinary, not heroic."'></textarea>
->>>>>>> Stashed changes
     <div style="display:flex;gap:10px;margin-top:20px">
       <button onclick="saveVision()" class="btn btn-primary" style="flex:1;justify-content:center;border-radius:14px">Save Vision</button>
       <button onclick="closeSheet('sheet-vision')" class="btn btn-secondary" style="border-radius:14px">Cancel</button>
@@ -2550,11 +1922,7 @@ body {
   <div class="medit-vignette"></div>
   <div class="medit-bar" id="medit-bar">
     <div>
-<<<<<<< Updated upstream
-      <div class="medit-title">✦ The Manifest.</div>
-=======
       <div class="medit-title">Vision Images</div>
->>>>>>> Stashed changes
       <div class="medit-hint">Move your mouse or tap to show controls</div>
     </div>
     <button class="medit-close" onclick="closeMeditation()">
@@ -2580,17 +1948,10 @@ body {
 //  DATA
 // ─────────────────────────────────────────
 const AREAS = [
-<<<<<<< Updated upstream
-  { id:'health',   label:'Health & Fitness',    icon:'🏃', badgeClass:'badge-health',   barClass:'health' },
-  { id:'career',   label:'Career & Business',   icon:'💼', badgeClass:'badge-career',   barClass:'career' },
-  { id:'family',   label:'Family',              icon:'❤️', badgeClass:'badge-family',   barClass:'family' },
-  { id:'personal', label:'Personal Development',icon:'🌱', badgeClass:'badge-personal', barClass:'personal' },
-=======
   { id:'health',   label:'Health',   icon:'', badgeClass:'badge-health',   barClass:'health' },
   { id:'career',   label:'Work',     icon:'', badgeClass:'badge-career',   barClass:'career' },
   { id:'family',   label:'Family',   icon:'', badgeClass:'badge-family',   barClass:'family' },
   { id:'personal', label:'Personal', icon:'', badgeClass:'badge-personal', barClass:'personal' },
->>>>>>> Stashed changes
 ];
 
 // ─────────────────────────────────────────
@@ -3073,117 +2434,6 @@ function scoreBadge(s) {
   return s>=85?'badge-green':s>=65?'badge-orange':'badge-red';
 }
 
-<<<<<<< Updated upstream
-=======
-function progressMood(pct, done, total) {
-  if (!total) return 'No actions due today';
-  if (done === total) return 'Clean day';
-  if (pct >= 70) return 'Steady';
-  if (pct >= 40) return 'Needs attention';
-  return 'Behind pace';
-}
-
-function todayNoteValue() {
-  try { return localStorage.getItem('edgex_goals_today_note_' + localDateKey()) || ''; }
-  catch(e) { return ''; }
-}
-
-function saveTodayNote(value) {
-  try { localStorage.setItem('edgex_goals_today_note_' + localDateKey(), value || ''); }
-  catch(e) {}
-}
-
-function escapeHTML(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-function localDateKey() {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
-}
-
->>>>>>> Stashed changes
-function ringHTML(pct, size=80, stroke=7) {
-  const r=(size-stroke*2)/2, circ=2*Math.PI*r;
-  const offset = pct!==null ? circ*(1-pct/100) : circ;
-  let color, gradId='g'+Math.random().toString(36).slice(2,7);
-  if (pct===null) color='#E2E8F0';
-  else if (pct>=85) color='var(--green)';
-  else if (pct>=65) color='var(--orange)';
-  else color='#DC2626';
-  const cx=size/2, cy=size/2;
-  return `<div class="ring-wrap" style="width:${size}px;height:${size}px">
-    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#EEF2F7" stroke-width="${stroke}"/>
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
-        stroke-linecap="round" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"
-        style="transition:stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1),stroke 0.4s"/>
-    </svg>
-    <div class="ring-label">
-      <div style="font-size:${size>70?16:12}px;font-weight:800;color:${color};letter-spacing:-0.02em">${pct!==null?pct+'%':'—'}</div>
-    </div>
-  </div>`;
-}
-
-// ─────────────────────────────────────────
-//  TODAY
-// ─────────────────────────────────────────
-function renderToday() {
-  const hour = new Date().getHours();
-  const greeting = hour<5?'Still up,':hour<12?'Good morning,':hour<17?'Good afternoon,':'Good evening,';
-  const todayFmt = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-
-  const active = DB.sprints.filter(s=>isSprintActive(s));
-  const empty  = document.getElementById('today-empty');
-  const heroEl = document.getElementById('today-hero');
-  const statsEl = document.getElementById('today-stats');
-  const cyclesEl = document.getElementById('today-cycles');
-
-  const toggleEl = document.getElementById('today-view-toggle');
-  const actionListEl = document.getElementById('today-action-list');
-  const cyclesWrapEl = document.getElementById('today-cycles-wrap');
-
-  if (!active.length) {
-    heroEl.innerHTML=''; statsEl.innerHTML=''; cyclesEl.innerHTML='';
-    if (toggleEl) toggleEl.style.display='none';
-    if (actionListEl) actionListEl.style.display='none';
-    empty.style.display='block'; return;
-  }
-  empty.style.display='none';
-  if (toggleEl) toggleEl.style.display='block';
-
-  // Show/hide correct view
-  const isList = todayViewMode === 'list';
-  if (cyclesWrapEl) cyclesWrapEl.style.display = isList ? 'none' : 'block';
-  if (actionListEl) actionListEl.style.display = isList ? 'block' : 'none';
-
-  // Sync toggle button active state
-  const btnCycles = document.getElementById('toggle-by-cycle');
-  const btnList   = document.getElementById('toggle-action-list');
-  if (btnCycles) btnCycles.classList.toggle('active', !isList);
-  if (btnList)   btnList.classList.toggle('active', isList);
-
-  // Hero banner — only count today's obligations with correct keys
-  let totalT = 0, doneT = 0;
-  active.forEach(sp => { const r = todayDoneTotals(sp); totalT += r.total; doneT += r.done; });
-  const heroPct = totalT ? Math.round(doneT/totalT*100) : null;
-<<<<<<< Updated upstream
-
-  heroEl.innerHTML = `
-    <div class="hero-banner fade-up">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
-        <div style="flex:1">
-          <p class="hero-greeting">${todayFmt}</p>
-          <h1 class="hero-title">${greeting} Jack.<br><span style="opacity:0.8;font-size:0.78em;font-weight:600">Your day is waiting.</span></h1>
-          <button class="hero-cta" onclick="resetToToday()">
-            <span class="icon fill" style="font-size:17px">bolt</span>View today's actions
-          </button>
-        </div>
-        <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px">
-          ${ringHTML(heroPct, 90, 8)}
-          <span style="font-size:11px;font-weight:600;opacity:0.65">${doneT}/${totalT} done</span>
-=======
   const openT = Math.max(totalT - doneT, 0);
   const todayMood = progressMood(heroPct || 0, doneT, totalT);
   const note = todayNoteValue();
@@ -3205,7 +2455,6 @@ function renderToday() {
         <div class="today-note">
           <label for="today-note">Today’s posture</label>
           <textarea id="today-note" oninput="saveTodayNote(this.value)" placeholder="Keep the baseline simple. Do not turn recovery into a performance.">${escapeHTML(note)}</textarea>
->>>>>>> Stashed changes
         </div>
       </div>
     </div>`;
@@ -3214,42 +2463,26 @@ function renderToday() {
   const overallScores = active.map(sp=>avgExecScore(sp)).filter(s=>s!==null);
   const avgAll = overallScores.length ? Math.round(overallScores.reduce((a,b)=>a+b,0)/overallScores.length) : null;
   statsEl.innerHTML = `
-<<<<<<< Updated upstream
-    <div class="stat-strip">
-=======
     <div class="briefing-strip">
->>>>>>> Stashed changes
       <div class="stat-card stripe-blue">
         <div class="stat-icon-wrap" style="background:var(--blue-dim)">
           <span class="icon fill" style="font-size:20px;color:var(--blue)">loop</span>
         </div>
-<<<<<<< Updated upstream
-        <div class="stat-label">Active Cycles</div>
-=======
         <div class="stat-label">In Motion</div>
->>>>>>> Stashed changes
         <div class="stat-value">${active.length}</div>
       </div>
       <div class="stat-card stripe-green">
         <div class="stat-icon-wrap" style="background:var(--accent-dim)">
           <span class="icon fill" style="font-size:20px;color:var(--accent)">check_circle</span>
         </div>
-<<<<<<< Updated upstream
-        <div class="stat-label">Done Today</div>
-=======
         <div class="stat-label">Today</div>
->>>>>>> Stashed changes
         <div class="stat-value" style="color:${doneT===totalT&&totalT>0?'var(--accent)':'var(--text)'}">${doneT}<span style="font-size:18px;color:var(--text-3);font-weight:600"> / ${totalT}</span></div>
       </div>
       <div class="stat-card stripe-orange">
         <div class="stat-icon-wrap" style="background:var(--orange-dim)">
           <span class="icon fill" style="font-size:20px;color:var(--orange)">insights</span>
         </div>
-<<<<<<< Updated upstream
-        <div class="stat-label">Avg Execution</div>
-=======
         <div class="stat-label">Follow-through</div>
->>>>>>> Stashed changes
         <div class="stat-value" style="color:${scoreColor(avgAll)}">${avgAll!==null?avgAll+'%':'—'}</div>
       </div>
     </div>`;
@@ -3381,25 +2614,10 @@ function renderToday() {
     // Today-only done/total for the ring and label (not the full week)
     const todayR = isCurrentWk ? todayDoneTotals(sp) : { done, total };
     const ringPct = todayR.total ? Math.round(todayR.done/todayR.total*100) : (isCurrentWk ? 0 : pct);
-<<<<<<< Updated upstream
-=======
-    const openToday = Math.max(todayR.total - todayR.done, 0);
-    const cardMood = progressMood(ringPct || 0, todayR.done, todayR.total);
->>>>>>> Stashed changes
-
-    return `<div class="cycle-card fade-up" id="cc-${sp.id}">
-      <!-- Header (always visible) -->
-      <div class="cycle-header" style="cursor:default">
-<<<<<<< Updated upstream
-        <div class="cycle-ring-section">
-          ${ringHTML(isCurrentWk ? ringPct : pct, 78, 7)}
-          <p style="font-size:11px;color:var(--text-3);font-weight:600;text-align:center;margin-top:5px">${isCurrentWk ? `${todayR.done}/${todayR.total} today` : `${done}/${total}`}</p>
-=======
         <div class="cycle-progress-mark">
           <strong>${isCurrentWk ? `${todayR.done}/${todayR.total}` : `${done}/${total}`}</strong>
           <span>${isCurrentWk ? 'today' : `week ${viewWk}`}</span>
           <div class="cycle-today-line"><span style="width:${isCurrentWk ? ringPct : (pct || 0)}%"></span></div>
->>>>>>> Stashed changes
         </div>
         <div class="cycle-info">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
@@ -3426,15 +2644,6 @@ function renderToday() {
             ${!isCurrentWk?`<span class="badge badge-muted" style="color:var(--orange);background:var(--orange-dim)">Viewing past week</span>`:''}
           </div>
           <div class="cycle-name">${sp.name}</div>
-<<<<<<< Updated upstream
-          ${goal?`<p class="cycle-goal-link" style="cursor:pointer" title="${goal.why||''}" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">↳ ${goal.title} ${goal.why?'<span style="font-size:10px;color:var(--blue);font-weight:700;vertical-align:middle">why?</span>':''}</p>`:''}
-          ${goal&&goal.why?`<div style="display:none;margin-top:6px;padding:9px 12px;border-radius:10px;background:var(--blue-dim);border-left:3px solid var(--blue);font-size:12px;color:var(--blue-dark);font-style:italic;line-height:1.55">"${goal.why}"</div>`:''}
-          <!-- Cycle progress bar -->
-          <div style="margin-top:14px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-              <span style="font-size:11px;color:var(--text-3);font-weight:600">Cycle progress</span>
-              <span style="font-size:11px;color:var(--text-3);font-weight:600">Week ${currentWk} of 12</span>
-=======
           ${goal?`<p class="cycle-goal-link">↳ ${goal.title}</p>`:''}
           ${goal&&goal.why?`<div class="cycle-why"><strong style="color:var(--text);font-weight:800">Why:</strong> ${goal.why}</div>`:''}
           <!-- Current cycle line -->
@@ -3442,28 +2651,19 @@ function renderToday() {
             <div style="display:flex;justify-content:space-between;margin-bottom:5px">
               <span style="font-size:11px;color:var(--text-3);font-weight:600">Current cycle</span>
               <span style="font-size:11px;color:var(--text-3);font-weight:600">${cardMood}${openToday ? ` · ${openToday} open` : ''}</span>
->>>>>>> Stashed changes
             </div>
             <div class="prog-track" style="height:7px">
               <div class="prog-fill ${areaBarClass==='health'?'green':areaBarClass==='family'?'orange':''}" style="width:${sprintProgressPct(sp)}%"></div>
             </div>
           </div>
-<<<<<<< Updated upstream
-          ${avgScore!==null?`<div style="margin-top:8px"><span class="badge ${avgScore>=85?'badge-green':avgScore>=65?'badge-orange':'badge-red'}">${avgScore}% avg execution</span></div>`:''}
-=======
           ${avgScore!==null?`<div style="margin-top:8px"><span class="badge ${avgScore>=85?'badge-green':avgScore>=65?'badge-orange':'badge-red'}">${avgScore}% follow-through</span></div>`:''}
->>>>>>> Stashed changes
         </div>
       </div>
 
       <!-- Actions (always visible) -->
       <div class="cycle-section">
         <div class="cycle-section-title">
-<<<<<<< Updated upstream
-          <span>Week ${viewWk} Actions</span>
-=======
           <span>${isCurrentWk ? 'Today’s actions' : `Week ${viewWk} actions`}</span>
->>>>>>> Stashed changes
           ${allDone?`<span class="badge badge-green"><span class="icon fill" style="font-size:12px">check_circle</span>All done!</span>`:''}
           ${!canCheck&&total>0?`<span style="font-size:11px;color:var(--text-3);font-style:italic">Read-only</span>`:''}
         </div>
@@ -3576,279 +2776,7 @@ function renderTodayActionList() {
         dueToday = !checks[t.id];
       }
 
-<<<<<<< Updated upstream
-=======
-      if (!dueToday) return;
-
->>>>>>> Stashed changes
-      const entry = { sp, wk, checks, tactic: t, goal, areaId, sprintName: sp.name };
-      if (areaId && grouped[areaId]) {
-        grouped[areaId].push(entry);
-      } else {
-        ungrouped.push(entry);
-      }
-    });
-  });
-
-  // Helper: is a tactic fully done for today?
-  function isTodayDone(entry) {
-    const { tactic: t, checks, wk } = entry;
-    const freq = t.freq || 'weekly';
-    if (freq === 'daily') return !!checks[checkKey(t, todayIdx)];
-    if (freq === 'custom') return (t.days || []).includes(todayIdx) ? !!checks[checkKey(t, todayIdx)] : true;
-    if (freq === 'xperweek') return xpwDoneCount(t, checks) >= xpwTarget(t);
-    return !!checks[t.id];
-  }
-
-  // Build the action row HTML for each entry
-  function buildActionRow(entry) {
-    const { sp, wk, checks, tactic: t, sprintName } = entry;
-    const freq = t.freq || 'weekly';
-    const done = isTodayDone(entry);
-    const streak = tacticStreak(sp, t);
-
-    // Frequency label
-    const freqLabel = freq === 'daily' ? 'Daily'
-      : freq === 'custom' ? 'Custom days'
-      : freq === 'xperweek' ? `${xpwDoneCount(t, checks)}/${xpwTarget(t)}×/wk`
-      : freq === 'onetime' ? 'One-time'
-      : 'Weekly';
-
-    let interactiveEl = '';
-
-    if (freq === 'daily' || freq === 'custom') {
-      const activeDays = freq === 'daily' ? [0,1,2,3,4,5,6] : (t.days || []);
-      const dayLabels = ['M','T','W','T','F','S','S'];
-      const chips = [0,1,2,3,4,5,6].map(di => {
-        if (!activeDays.includes(di)) return '';
-        const key = checkKey(t, di);
-        const isDone = !!checks[key];
-        const isToday = di === todayIdx;
-        const isPast = di < todayIdx;
-        const clickable = isToday || isPast;
-        const bg = isDone ? 'var(--green)' : isToday ? 'var(--blue-dim)' : 'var(--bg)';
-        const border = isDone ? 'var(--green)' : isToday ? 'var(--blue)' : 'var(--border-med)';
-        const color = isDone ? '#fff' : isToday ? 'var(--blue)' : 'var(--text-3)';
-        const click = clickable ? `onclick="toggleCheck('${sp.id}',${wk},'${t.id}',this,'${key}')"` : '';
-        return `<span id="cr-chip-${key}" data-key="${key}" ${click} title="${isToday?'Today':dayLabels[di]}" style="width:24px;height:24px;border-radius:4px;background:${bg};border:1px solid ${border};display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${color};${clickable?'cursor:pointer;':'opacity:0.4;'}transition:all 0.12s">${isDone?'✓':dayLabels[di]}</span>`;
-      }).filter(Boolean).join('');
-      interactiveEl = `<div class="action-chips">${chips}</div>`;
-    } else if (freq === 'xperweek') {
-      const n = xpwTarget(t);
-      const c = xpwDoneCount(t, checks);
-      const slots = Array.from({length: n}, (_, i) => {
-        const key = `${t.id}_${i}`;
-        const filled = !!checks[key];
-        const isNext = !filled && i === c;
-        const clickable = filled || isNext;
-        const bg = filled ? 'var(--green)' : isNext ? 'var(--blue-dim)' : 'var(--bg)';
-        const border = filled ? 'var(--green)' : isNext ? 'var(--blue)' : 'var(--border-med)';
-        const color = filled ? '#fff' : isNext ? 'var(--blue)' : 'var(--text-3)';
-        const click = clickable ? `onclick="toggleXpw('${sp.id}',${wk},'${t.id}',${i},this)"` : '';
-        return `<span data-xpw="${i}" ${click} style="width:24px;height:24px;border-radius:4px;background:${bg};border:1px solid ${border};display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${color};${clickable?'cursor:pointer':'opacity:0.4'};transition:all 0.12s">${filled?'✓':i+1}</span>`;
-      }).join('');
-      interactiveEl = `<div class="action-chips">${slots}</div>`;
-    } else {
-      // weekly / onetime — single checkbox row
-      const key = t.id;
-      const checked = !!checks[key];
-      const checkBox = `<div class="check-box" style="margin-top:1px;flex-shrink:0">${checked?`<span class="icon fill" style="font-size:13px;color:#fff">check</span>`:''}</div>`;
-      return `<div class="action-row${checked?' done':''}" id="cr-${t.id}" onclick="toggleCheck('${sp.id}',${wk},'${t.id}',this,'${key}')" style="cursor:pointer">
-        <div class="action-row-left">
-          ${checkBox}
-          <div style="flex:1;min-width:0">
-            <span class="check-text" style="font-size:14px;font-weight:600;display:block;line-height:1.4${checked?';text-decoration:line-through;color:var(--text-3)':''}">${t.text}${streakBadgeHTML(streak)}</span>
-            <div class="action-row-meta">${sprintName} · ${freqLabel}</div>
-          </div>
-        </div>
-      </div>`;
-    }
-
-    return `<div class="action-row${done?' done':''}" id="cr-${t.id}" style="${done?'opacity:0.5':''}">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:600;color:${done?'var(--text-3)':'var(--text)'};text-decoration:${done?'line-through':'none'};line-height:1.4">${t.text}${streakBadgeHTML(streak)}</div>
-        <div class="action-row-meta">${sprintName} · ${freqLabel}</div>
-        ${interactiveEl}
-      </div>
-    </div>`;
-  }
-
-  const areaColors = { health:'var(--green)', career:'var(--blue)', family:'#DC2626', personal:'var(--orange)' };
-
-  // Build HTML for each area group that has entries
-  let html = '';
-  AREAS.forEach(area => {
-    const entries = grouped[area.id];
-    if (!entries.length) return;
-
-    const totalActions = entries.length;
-    const doneActions = entries.filter(e => isTodayDone(e)).length;
-    const color = areaColors[area.id] || 'var(--text-3)';
-
-    html += `<div class="action-area-group">
-      <div class="action-area-header">
-        <div class="action-area-label">
-          <span class="action-area-dot" style="background:${color}"></span>
-          ${area.icon} ${area.label}
-        </div>
-        <span class="action-area-progress">${doneActions}/${totalActions}</span>
-      </div>
-      <div class="action-list-card">
-        ${entries.map(buildActionRow).join('')}
-      </div>
-    </div>`;
-  });
-
-  // Any sprint with no linked area
-  if (ungrouped.length) {
-    html += `<div class="action-area-group">
-      <div class="action-area-header">
-        <div class="action-area-label">
-          <span class="action-area-dot" style="background:var(--text-3)"></span>
-          Other
-        </div>
-      </div>
-      <div class="action-list-card">
-        ${ungrouped.map(buildActionRow).join('')}
-      </div>
-    </div>`;
-  }
-
-  if (!html) {
-    html = `<div style="text-align:center;padding:48px 24px;color:var(--text-3)">
-      <span class="icon" style="font-size:36px;display:block;margin-bottom:12px">check_circle</span>
-      <p style="font-size:15px;font-weight:600">Nothing left for today.</p>
-    </div>`;
-  }
-
-  el.innerHTML = `<div class="fade-up">${html}</div>`;
-}
-
-function toggleCycleExpand(sprintId) {
-  if (expandedSprints.has(sprintId)) {
-    expandedSprints.delete(sprintId);
-  } else {
-    expandedSprints.add(sprintId);
-  }
-  // Toggle in-place without a full re-render
-  const expEl = document.getElementById('ce-'+sprintId);
-  const btnEl = document.querySelector(`#cc-${sprintId} .cycle-toggle-btn`);
-  if (expEl) expEl.classList.toggle('open', expandedSprints.has(sprintId));
-  if (btnEl) btnEl.classList.toggle('open', expandedSprints.has(sprintId));
-}
-
-function scWeekAdj(delta, sprintId) {
-  if (!scorecardSprintId || scorecardSprintId!==sprintId) {
-    scorecardSprintId=sprintId;
-    const sp=DB.sprints.find(s=>s.id===sprintId);
-    scorecardWeek=sp?sprintCurrentWeek(sp):1;
-  }
-  scorecardWeek=Math.min(Math.max(scorecardWeek+delta,1),12);
-  renderToday();
-}
-function resetToToday() {
-  // Reset all cycle cards to their real current week, then scroll down
-  scorecardSprintId = null;
-  scorecardWeek = null;
-  renderToday();
-  setTimeout(() => document.getElementById('today-cycles-wrap').scrollIntoView({behavior:'smooth'}), 50);
-}
-function scGoToToday(sprintId) {
-  scorecardSprintId=sprintId;
-  const sp=DB.sprints.find(s=>s.id===sprintId);
-  scorecardWeek=sp?sprintCurrentWeek(sp):1;
-  renderToday();
-}
-function jumpToWeek(sprintId, week) {
-  scorecardSprintId=sprintId; scorecardWeek=week; renderToday();
-}
-
-function toggleXpw(sprintId, week, tacticId, slotIdx, el) {
-  const sp = DB.sprints.find(s=>s.id===sprintId); if(!sp) return;
-  if(!sp.weekChecks) sp.weekChecks={};
-  if(!sp.weekChecks[week]) sp.weekChecks[week]={};
-  const key = `${tacticId}_${slotIdx}`;
-  const was = !!sp.weekChecks[week][key];
-  sp.weekChecks[week][key] = !was;
-  saveDB(DB); syncSprint(sprintId);
-  refreshToday(200);
-}
-
-function toggleCheck(sprintId, week, tacticId, el, key) {
-  const sp=DB.sprints.find(s=>s.id===sprintId); if(!sp) return;
-  if(!sp.weekChecks) sp.weekChecks={};
-  if(!sp.weekChecks[week]) sp.weekChecks[week]={};
-  // key defaults to tacticId for weekly/onetime; for daily/custom it's tacticId_dayIdx
-  const storeKey = key || tacticId;
-  const was=!!sp.weekChecks[week][storeKey];
-  sp.weekChecks[week][storeKey]=!was;
-  saveDB(DB); syncSprint(sprintId);
-  // Detect if this is a day chip (span, not div.check-row)
-  if(el.tagName==='SPAN' && el.dataset.key) {
-    // Update chip appearance in place
-    const di=parseInt(storeKey.split('_').pop());
-    const todayI=todayDayIdx();
-    const isChipToday=(di===todayI);
-    if(!was) {
-      el.style.background='var(--green)'; el.style.borderColor='var(--green)';
-      el.style.color='#fff'; el.textContent='✓';
-    } else {
-      // Restore to correct style: today=blue, past=neutral, yesterday=amber
-      const isChipYest=(di===(todayI-1+7)%7 && todayI>0);
-      if(isChipToday){ el.style.background='var(--blue-dim)'; el.style.borderColor='var(--blue)'; el.style.color='var(--blue)'; }
-      else if(isChipYest){ el.style.background='rgba(255,167,38,0.08)'; el.style.borderColor='#FFA726'; el.style.color='#F57C00'; }
-      else { el.style.background='var(--bg)'; el.style.borderColor='var(--border-med)'; el.style.color='var(--text-2)'; }
-      el.textContent=['M','T','W','T','F','S','S'][di];
-    }
-    refreshToday(320);
-    return;
-  }
-  const row=el;
-  if(!was) {
-    row.classList.add('done');
-    const box=row.querySelector('.check-box');
-    if (box) {
-      box.innerHTML='<span class="icon fill" style="font-size:13px;color:#fff">check</span>';
-      box.style.background='var(--green)'; box.style.borderColor='var(--green)';
-      box.classList.add('pop'); setTimeout(()=>box.classList.remove('pop'),300);
-    }
-    const ct = row.querySelector('.check-text');
-    if (ct) { ct.style.textDecoration='line-through'; ct.style.color='var(--text-3)'; }
-  } else {
-    row.classList.remove('done');
-    const box=row.querySelector('.check-box');
-    if (box) { box.innerHTML=''; box.style.background=''; box.style.borderColor=''; }
-    const ct = row.querySelector('.check-text');
-    if (ct) { ct.style.textDecoration=''; ct.style.color=''; }
-  }
-  refreshToday(320);
-}
-
-// ─────────────────────────────────────────
-//  GOALS
-// ─────────────────────────────────────────
-function renderGoals() { renderGoalFilters(); renderGoalsList(); }
-
-function renderVisionPanels() {
-  document.getElementById('vision-panels').innerHTML = AREAS.map(area => {
-    const v = DB.visions[area.id]||'';
-    return `<div class="vision-card ${area.id}" onclick="openVisionSheet('${area.id}')">
-      <div class="vision-card-dot ${area.id}"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;position:relative">
-        <span class="badge ${area.badgeClass}">${area.icon} ${area.label}</span>
-        <span class="icon" style="font-size:16px;color:var(--text-3)">edit</span>
-      </div>
-      <p style="font-size:13px;color:${v?'var(--text-2)':'var(--text-3)'};line-height:1.6;font-style:${v?'italic':'normal'};min-height:40px;position:relative">${v||'Tap to write your vision...'}</p>
-    </div>`;
-  }).join('');
-}
-
-function renderGoalFilters() {
-<<<<<<< Updated upstream
-  const opts=[['all','All'],['health','🏃 Health'],['career','💼 Career'],['family','❤️ Family'],['personal','🌱 Personal Dev']];
-=======
   const opts=[['all','All'],['health','Health'],['career','Work'],['family','Family'],['personal','Personal']];
->>>>>>> Stashed changes
   document.getElementById('goal-filters').innerHTML=opts.map(([id,label])=>
     `<button class="filter-tab${goalFilterArea===id?' active':''}" onclick="filterGoals('${id}')">${label}</button>`
   ).join('');
@@ -3867,13 +2795,8 @@ function renderGoalsList() {
       <span class="icon" style="font-size:28px">add</span>
     </div>
     <div>
-<<<<<<< Updated upstream
-      <div style="font-size:17px;font-weight:800;color:inherit;letter-spacing:-0.01em">Initiate New Goal</div>
-      <div style="font-size:13px;color:var(--text-3);margin-top:4px;font-weight:500">Define a new vector for your personal momentum.</div>
-=======
       <div style="font-size:17px;font-weight:800;color:inherit;letter-spacing:0">Add a goal</div>
       <div style="font-size:13px;color:var(--text-3);margin-top:4px;font-weight:500">Name the thing you actually want to carry.</div>
->>>>>>> Stashed changes
     </div>
   </button>`;
 
@@ -3923,11 +2846,7 @@ function renderGoalsList() {
 
         <!-- deep intent -->
         ${g.why
-<<<<<<< Updated upstream
-          ?`<p style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:20px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden"><strong style="color:var(--text);font-weight:700">Deep Intent:</strong> ${g.why}</p>`
-=======
           ?`<p style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:20px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden"><strong style="color:var(--text);font-weight:700">Why:</strong> ${g.why}</p>`
->>>>>>> Stashed changes
           :`<div style="margin-bottom:20px"></div>`
         }
 
@@ -3938,11 +2857,7 @@ function renderGoalsList() {
         ${activeSp?`<div style="margin-top:auto">
           <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px">
             <div>
-<<<<<<< Updated upstream
-              <div style="font-size:10px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1px">Cycle Progress</div>
-=======
               <div style="font-size:10px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1px">Current cycle</div>
->>>>>>> Stashed changes
               <div style="font-size:11px;color:var(--text-3);font-weight:600">${activeSp.name} · Wk ${wk}/12${score!==null?` · ${score}% exec`:''}</div>
             </div>
             <span style="font-size:20px;font-weight:900;color:${accent};letter-spacing:-0.02em">${pct}%</span>
@@ -4562,17 +3477,10 @@ function renderRoadmap() {
 //  VISION BOARD
 // ─────────────────────────────────────────
 const VB_AREAS = [
-<<<<<<< Updated upstream
-  { id:'health',   label:'Health & Fitness',    icon:'🏃', color:'var(--green)' },
-  { id:'career',   label:'Career & Business',   icon:'💼', color:'var(--blue)' },
-  { id:'family',   label:'Family',              icon:'❤️', color:'#EF5350' },
-  { id:'personal', label:'Personal Development',icon:'🌱', color:'#F59E0B' },
-=======
   { id:'health',   label:'Health',   icon:'', color:'var(--green)' },
   { id:'career',   label:'Work',     icon:'', color:'var(--blue)' },
   { id:'family',   label:'Family',   icon:'', color:'#9f2f2f' },
   { id:'personal', label:'Personal', icon:'', color:'var(--orange)' },
->>>>>>> Stashed changes
 ];
 
 function loadVBImages() {
@@ -4587,13 +3495,6 @@ function saveVBImages(arr) {
   }
 }
 
-<<<<<<< Updated upstream
-const AREA_VIS_COLORS = {
-  health:   { accent: '#059669', dim: 'rgba(5,150,105,0.10)',   gradient: '#0f0c29' },
-  career:   { accent: '#4f46e5', dim: 'rgba(79,70,229,0.10)',   gradient: '#0f0c29' },
-  family:   { accent: '#ef4444', dim: 'rgba(239,68,68,0.10)',   gradient: '#0f0c29' },
-  personal: { accent: '#f97316', dim: 'rgba(249,115,22,0.10)',  gradient: '#0f0c29' },
-=======
 function visionMetaKey(areaId) {
   return 'edgex_vision_meta_' + areaId;
 }
@@ -4638,7 +3539,6 @@ const AREA_VIS_COLORS = {
   career:   { accent: '#4267b2', dim: 'rgba(66,103,178,0.10)',  gradient: '#111827' },
   family:   { accent: '#bd4b5c', dim: 'rgba(189,75,92,0.10)',   gradient: '#111827' },
   personal: { accent: '#b56a2c', dim: 'rgba(181,106,44,0.10)',  gradient: '#111827' },
->>>>>>> Stashed changes
 };
 
 // Track which view is active: 'areas' or 'collage'
@@ -4658,13 +3558,8 @@ function renderVisionBoard() {
   // Page header
   let html = `<div class="visions-page-header">
     <div style="position:relative;z-index:1">
-<<<<<<< Updated upstream
-      <h1 style="font-size:52px;font-weight:900;color:#fff;letter-spacing:-0.04em;line-height:1.1;margin-bottom:12px">The Manifest.</h1>
-      <p style="font-size:16px;color:rgba(255,255,255,0.55);font-weight:500;max-width:520px;line-height:1.65">Your living visual blueprint for high-performance evolution and purpose-led living.</p>
-=======
       <h1 style="font-size:52px;font-weight:900;color:#fff;letter-spacing:0;line-height:1.1;margin-bottom:12px">Visions</h1>
       <p style="font-size:16px;color:rgba(255,255,255,0.58);font-weight:500;max-width:620px;line-height:1.65">The compass for why the goals exist. Words lead here; images support the direction.</p>
->>>>>>> Stashed changes
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:28px;flex-wrap:wrap;gap:16px">
         <div style="display:flex;gap:20px;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:8px">
@@ -4678,17 +3573,10 @@ function renderVisionBoard() {
         </div>
         <div class="vview-tabs">
           <button class="vview-tab ${_vbView==='areas'?'active':''}" onclick="setVBView('areas')">
-<<<<<<< Updated upstream
-            <span class="icon" style="font-size:14px;vertical-align:middle;margin-right:4px">grid_view</span>By Area
-          </button>
-          <button class="vview-tab ${_vbView==='collage'?'active':''}" onclick="setVBView('collage')">
-            <span class="icon" style="font-size:14px;vertical-align:middle;margin-right:4px">auto_awesome_mosaic</span>All Photos
-=======
             <span class="icon" style="font-size:14px;vertical-align:middle;margin-right:4px">explore</span>Compass
           </button>
           <button class="vview-tab ${_vbView==='collage'?'active':''}" onclick="setVBView('collage')">
             <span class="icon" style="font-size:14px;vertical-align:middle;margin-right:4px">photo_library</span>Images
->>>>>>> Stashed changes
           </button>
         </div>
       </div>
@@ -4736,11 +3624,7 @@ function renderVBCollage(images) {
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
       <div>
         <h2 style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:var(--text)">${images.length} Photo${images.length!==1?'s':''}</h2>
-<<<<<<< Updated upstream
-        <p style="font-size:13px;color:var(--text-2);margin-top:2px">All your vision images across every life area</p>
-=======
         <p style="font-size:13px;color:var(--text-2);margin-top:2px">The image library that supports your written compass.</p>
->>>>>>> Stashed changes
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-ghost btn-sm" onclick="openMeditation()" style="color:var(--purple);border-color:var(--purple-dim);background:var(--purple-dim)">
@@ -4763,48 +3647,15 @@ function renderVBAreas(images) {
   VB_AREAS.forEach(area => {
     const vc = AREA_VIS_COLORS[area.id] || AREA_VIS_COLORS.personal;
     const visionText = DB.visions[area.id] || '';
-<<<<<<< Updated upstream
-    const areaGoals = DB.goals.filter(g => g.areaId === area.id && g.status === 'active');
-    const imgs = images.filter(i => i.area === area.id);
-    const n = imgs.length;
-
-    // Masonry gallery — photos display at their natural aspect ratio
-    let galleryHtml = '';
-    if (n === 0) {
-      galleryHtml = `<div class="vbento-empty" onclick="openAddImageSheet('${area.id}')">
-        <span class="icon" style="font-size:36px">add_photo_alternate</span>
-        <div>
-          <div style="font-size:14px;font-weight:700;margin-bottom:4px">Add your first photo</div>
-          <div style="font-size:12px;opacity:0.7">Images that inspire this vision</div>
-        </div>
-      </div>`;
-    } else {
-      const colsClass = n === 1 ? 'cols-1' : n === 2 ? 'cols-2' : '';
-      const photoItems = imgs.map(img => `<div class="vphoto-item" onclick="openLightbox('${img.id}')">
-=======
     const meta = getVisionMeta(area.id);
     const areaGoals = DB.goals.filter(g => g.areaId === area.id && g.status === 'active');
     const imgs = images.filter(i => i.area === area.id);
     const selectedImgs = imgs.slice(0, 5);
     const photoItems = selectedImgs.map(img => `<div class="vphoto-item" onclick="openLightbox('${img.id}')">
->>>>>>> Stashed changes
         <img src="${img.src}" alt="${img.caption||''}" loading="lazy"/>
         <div class="vphoto-item-overlay"></div>
         ${img.caption ? `<div class="vphoto-caption">${img.caption}</div>` : ''}
       </div>`).join('');
-<<<<<<< Updated upstream
-
-      const addSlot = `<div class="vbento-add" onclick="openAddImageSheet('${area.id}')">
-        <span class="icon" style="font-size:24px">add_circle</span>
-        <span>Add Photo</span>
-      </div>`;
-
-      galleryHtml = `<div class="vphoto-masonry ${colsClass}">
-        ${photoItems}
-        ${addSlot}
-      </div>`;
-    }
-=======
     const addSlot = `<div class="vbento-add" onclick="openAddImageSheet('${area.id}')">
         <span class="icon" style="font-size:24px">add_circle</span>
         <span>Add Photo</span>
@@ -4820,36 +3671,16 @@ function renderVBAreas(images) {
         </div>
       </div>`;
     }).join('');
->>>>>>> Stashed changes
 
     html += `<div class="visions-area-block">
       <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px">
         <div>
-<<<<<<< Updated upstream
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${vc.accent};margin-bottom:6px">${area.icon} ${area.id.toUpperCase()}</div>
-          <h3 style="font-size:30px;font-weight:800;letter-spacing:-0.025em;color:var(--text);line-height:1.2">${area.label}</h3>
-          ${visionText
-            ? `<p class="visions-statement">"${visionText}"</p>`
-            : `<p class="visions-statement empty" onclick="openVisionSheet('${area.id}')">Write your ${area.label} vision — what does your ideal future look like here? <span style="color:${vc.accent};font-weight:700">Add it →</span></p>`
-          }
-          ${areaGoals.length ? `<div class="visions-goals-row">
-            ${areaGoals.map(g => {
-              const activeSp = DB.sprints.find(s => s.goalId === g.id && isSprintActive(s));
-              return `<div class="visions-goal-chip" onclick="nav('goal-detail','${g.id}')">
-                <span style="width:6px;height:6px;border-radius:50%;background:${vc.accent};flex-shrink:0"></span>
-                ${g.title}
-                ${activeSp ? `<span style="font-size:11px;color:${vc.accent};font-weight:700">Wk ${sprintCurrentWeek(activeSp)}/12</span>` : ''}
-              </div>`;
-            }).join('')}
-          </div>` : ''}
-=======
           <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.10em;color:${vc.accent};margin-bottom:6px">${area.id}</div>
           <h3 style="font-size:30px;font-weight:800;letter-spacing:0;color:var(--text);line-height:1.2">${area.label}</h3>
           ${visionText
             ? `<p class="visions-statement">"${visionText}"</p>`
             : `<p class="visions-statement empty" onclick="openVisionSheet('${area.id}')">Write the future state for ${area.label}. <span style="color:${vc.accent};font-weight:700">Add it →</span></p>`
           }
->>>>>>> Stashed changes
         </div>
         <div style="display:flex;gap:8px;flex-shrink:0">
           <button class="btn btn-ghost btn-sm" onclick="openVisionSheet('${area.id}')">
@@ -4861,9 +3692,6 @@ function renderVBAreas(images) {
         </div>
       </div>
 
-<<<<<<< Updated upstream
-      ${galleryHtml}
-=======
       <div class="vision-compass">
         <div>
           <div class="vision-panel">
@@ -4901,7 +3729,6 @@ function renderVBAreas(images) {
           </div>
         </div>
       </div>
->>>>>>> Stashed changes
 
     </div>`;
   });
@@ -5086,11 +3913,7 @@ function renderTodayEnhancements() {
   if (!active.length) return;
 
   // Area balance: weight by number of tactics per area this week (all 4 areas)
-<<<<<<< Updated upstream
-  const areaColors = { health:'#059669', career:'#4f46e5', family:'#ef4444', personal:'#f97316' };
-=======
   const areaColors = { health:'#0f8f68', career:'#4267b2', family:'#bd4b5c', personal:'#b56a2c' };
->>>>>>> Stashed changes
   const areaWeights = { health:0, career:0, family:0, personal:0 };
   const areaChecked = { health:0, career:0, family:0, personal:0 };
 
@@ -5127,11 +3950,7 @@ function renderTodayEnhancements() {
   if (donutData.length >= 1) {
     const areasWithMultiple = donutData.length > 1;
     donutSection = `<div class="streak-chart-wrap">
-<<<<<<< Updated upstream
-      <div class="streak-chart-title">Area Balance This Week</div>
-=======
       <div class="streak-chart-title">Where the week is going</div>
->>>>>>> Stashed changes
       <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
         ${areasWithMultiple ? donutHTML(donutData, 110) : ''}
         <div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:8px">
@@ -5141,11 +3960,7 @@ function renderTodayEnhancements() {
                 <span style="width:9px;height:9px;border-radius:3px;background:${d.color};display:inline-block;flex-shrink:0"></span>
                 <span style="font-size:12px;font-weight:700;color:var(--text-2)">${d.shortLabel}</span>
               </div>
-<<<<<<< Updated upstream
-              <span style="font-size:12px;font-weight:800;color:${d.pct>=85?'var(--green)':d.pct>=50?'var(--orange)':'#DC2626'}">${d.checked}/${d.value} <span style="font-weight:600;color:var(--text-3)">(${d.pct}%)</span></span>
-=======
               <span style="font-size:12px;font-weight:800;color:${d.pct>=85?'var(--green)':d.pct>=50?'var(--orange)':'var(--red)'}">${d.checked}/${d.value} <span style="font-weight:600;color:var(--text-3)">(${d.pct}%)</span></span>
->>>>>>> Stashed changes
             </div>
             <div class="prog-track" style="height:5px"><div class="prog-fill" style="width:${d.pct}%;background:${d.color}"></div></div>
           </div>`).join('')}
