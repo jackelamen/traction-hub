@@ -265,10 +265,15 @@ body::after {
 .goals .ring-value { color: #34d399; }
 
 .ring-meta {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   color: rgba(255,255,255,0.4);
   letter-spacing: 0.02em;
+  max-width: 70px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* corner icons */
@@ -617,7 +622,7 @@ animateRing('.work-ring', 100, 400);
     const pct = income > 0 ? Math.min(100, Math.round(expense / income * 100)) : 0;
     const fmt = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? Math.round(n/1000)+'K' : String(Math.round(n));
     document.getElementById('finance-pct').textContent = income > 0 ? pct + '%' : '₩' + fmt(expense);
-    document.getElementById('finance-meta').textContent = income > 0 ? 'of income spent' : 'spent this month';
+    document.getElementById('finance-meta').textContent = income > 0 ? 'of income' : 'this month';
     animateRing('.finance-ring', pct || (expense > 0 ? 60 : 0), 800);
   } catch(e) { animateRing('.finance-ring', 0, 800); }
 })();
@@ -632,7 +637,7 @@ animateRing('.work-ring', 100, 400);
     const total = data.total ?? 4;
     const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
     document.getElementById('health-pct').textContent = pct + '%';
-    document.getElementById('health-meta').textContent = completed + '/' + total + ' routines';
+    document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
     animateRing('.health-ring', pct, 1000);
   } catch(e) { animateRing('.health-ring', 0, 1000); }
 })();
@@ -646,7 +651,7 @@ animateRing('.work-ring', 100, 400);
     const score = data.score ?? null;
     if (score == null) { animateRing('.wellness-ring', 0, 1200); return; }
     document.getElementById('wellness-pct').textContent = score;
-    document.getElementById('wellness-meta').textContent = 'clarity score';
+    document.getElementById('wellness-meta').textContent = 'clarity';
     animateRing('.wellness-ring', score, 1200);
   } catch(e) { animateRing('.wellness-ring', 0, 1200); }
 })();
