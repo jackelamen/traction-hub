@@ -100,6 +100,9 @@ body::after {
   .hero-title { font-size: 52px; }
 }
 
+/* Keep 3rd card from stretching full width on 2-col grid */
+.module-card.finance { grid-column: span 1; }
+
 .module-card {
   border-radius: 22px;
   padding: 30px 26px 26px;
@@ -138,6 +141,28 @@ body::after {
   box-shadow: 0 8px 48px rgba(52,211,153,0.14), inset 0 1px 0 rgba(255,255,255,0.08);
   border-color: rgba(52,211,153,0.35);
 }
+
+/* Finance card — indigo/blue */
+.module-card.finance {
+  background: linear-gradient(160deg, rgba(15,18,40,0.95) 0%, rgba(10,12,30,0.95) 100%);
+  border-color: rgba(108,138,255,0.2);
+  box-shadow: 0 0 40px rgba(108,138,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.module-card.finance:hover {
+  box-shadow: 0 8px 48px rgba(108,138,255,0.14), inset 0 1px 0 rgba(255,255,255,0.08);
+  border-color: rgba(108,138,255,0.35);
+}
+.finance .ring-track { stroke: rgba(108,138,255,0.15); }
+.finance .ring-fill  { stroke: #6c8aff; filter: drop-shadow(0 0 6px rgba(108,138,255,0.7)); }
+.finance .ring-value { color: #6c8aff; }
+.finance .corner-icon { background: rgba(108,138,255,0.18); color: #6c8aff; }
+.finance .card-title .x { color: #6c8aff; }
+.finance .card-btn {
+  background: rgba(108,138,255,0.10);
+  border-color: rgba(108,138,255,0.35);
+  color: #6c8aff;
+}
+.module-card.finance:hover .card-btn { background: rgba(108,138,255,0.18); }
 
 /* ── Ring widget ── */
 .ring-wrap {
@@ -350,6 +375,32 @@ body::after {
       <div class="card-btn">Enter Module →</div>
     </a>
 
+    <!-- Finance -->
+    <a class="module-card finance" href="finance-dashboard.html">
+      <div class="card-corner-icons">
+        <div class="corner-icon">💸</div>
+        <div class="corner-icon">💸</div>
+      </div>
+
+      <div class="ring-wrap">
+        <svg viewBox="0 0 130 130">
+          <circle class="ring-track" cx="65" cy="65" r="54"/>
+          <circle class="ring-fill finance-ring" cx="65" cy="65" r="54"
+            stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-value" id="finance-pct">—</div>
+          <div class="ring-meta" id="finance-meta">this month</div>
+        </div>
+      </div>
+
+      <div class="card-title">
+        <span class="the-edge">THE EDGE</span><span class="x">x</span> <span class="module-word">Finance</span>
+      </div>
+      <div class="card-desc">Track spending, income, and trends<br>across categories and currencies.</div>
+      <div class="card-btn">Enter Module →</div>
+    </a>
+
   </div>
 
   <div class="footer"><strong>theedgex.com</strong> &nbsp;·&nbsp; personal operating system</div>
@@ -387,6 +438,27 @@ animateRing('.work-ring', 100, 400);
   document.getElementById('goals-pct').textContent  = pct + '%';
   document.getElementById('goals-meta').textContent = done + '/' + total + ' done';
   animateRing('.goals-ring', pct, 600);
+})();
+
+// Finance ring: read this month's spend from localStorage
+(async () => {
+  try {
+    const stored = localStorage.getItem('finance_tracker_data_v1');
+    if (!stored) { animateRing('.finance-ring', 0, 800); return; }
+    const d = JSON.parse(stored);
+    const now = new Date();
+    const monthTx = (d.transactions || []).filter(t => {
+      const td = new Date(t.date);
+      return td.getFullYear() === now.getFullYear() && td.getMonth() === now.getMonth();
+    });
+    const expense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amountKRW || 0), 0);
+    const income  = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + (t.amountKRW || 0), 0);
+    const pct = income > 0 ? Math.min(100, Math.round(expense / income * 100)) : 0;
+    const fmt = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? Math.round(n/1000)+'K' : String(Math.round(n));
+    document.getElementById('finance-pct').textContent = income > 0 ? pct + '%' : '₩' + fmt(expense);
+    document.getElementById('finance-meta').textContent = income > 0 ? 'spent of income' : 'spent this month';
+    animateRing('.finance-ring', pct || (expense > 0 ? 60 : 0), 800);
+  } catch(e) { animateRing('.finance-ring', 0, 800); }
 })();
 </script>
 </body>
