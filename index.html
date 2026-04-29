@@ -87,21 +87,22 @@ body::after {
 /* ── Module cards ── */
 .modules {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 24px;
   width: 100%;
-  max-width: 700px;
+  max-width: 1020px;
   position: relative;
   z-index: 1;
+}
+
+@media (max-width: 860px) {
+  .modules { grid-template-columns: 1fr 1fr; max-width: 700px; }
 }
 
 @media (max-width: 580px) {
   .modules { grid-template-columns: 1fr; max-width: 360px; gap: 18px; }
   .hero-title { font-size: 52px; }
 }
-
-/* Keep 3rd card from stretching full width on 2-col grid */
-.module-card.finance { grid-column: span 1; }
 
 .module-card {
   border-radius: 22px;
