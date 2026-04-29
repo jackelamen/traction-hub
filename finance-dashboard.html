@@ -411,7 +411,8 @@
     <button class="btn-secondary" onclick="exportData()">Export JSON</button>
     <button class="btn-secondary" onclick="document.getElementById('importJson').click()">Import JSON</button>
     <input type="file" id="importJson" accept=".json" style="display:none" onchange="importJSON(this)">
-    <button class="btn-secondary" onclick="doLogout()" style="border-color:rgba(248,113,113,0.3);color:#f87171" title="Sign out">Sign Out</button>
+    <button class="btn-secondary" onclick="lockFinance()" style="border-color:rgba(108,138,255,0.3);color:#6c8aff" title="Lock Finance and return to PIN screen">🔒 Lock</button>
+    <button class="btn-secondary" onclick="doLogout()" style="border-color:rgba(248,113,113,0.3);color:#f87171" title="Sign out of everything">Sign Out</button>
   </div>
 </div>
 
@@ -783,6 +784,11 @@ const SB_HEADERS = getAuthHeaders();
 function getSbUserId() {
   const session = getSession();
   return session?.user?.id || 'fa3f910d-64f8-43cf-94c1-61d645ed9414';
+}
+
+function lockFinance() {
+  localStorage.removeItem(FINANCE_SESSION_KEY);
+  window.location.href = 'finance-login.html';
 }
 
 async function doLogout() {
