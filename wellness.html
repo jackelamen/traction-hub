@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The EDGE Wellness</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='10' fill='%231a1a2e'/><text x='16' y='23' font-size='18' text-anchor='middle' font-family='sans-serif' fill='white'>W</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#f8f9fc;--white:#fff;--soft:#f3f4f8;--text:#111827;--text-2:#6b7280;--text-3:#9ca3af;--border:rgba(0,0,0,.06);--border-med:#e5e7eb;--sidebar:#1a1a2e;--side-hover:rgba(255,255,255,.07);--side-active:rgba(124,58,237,.24);--side-text:rgba(255,255,255,.55);--side-hi:rgba(255,255,255,.90);--accent:#7c3aed;--accent-dark:#5b21b6;--accent-dim:rgba(124,58,237,.10);--accent-light:#f5f3ff;--blue:#0ea5e9;--blue-light:#e0f2fe;--green:#10b981;--green-light:#ecfdf5;--orange:#f97316;--orange-light:#fff7ed;--red:#ef4444;--red-light:#fef2f2;--shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);--shadow:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font-family:'Inter','Manrope',system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+.icon{font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;line-height:1;display:inline-block;vertical-align:middle;user-select:none}
+#app{display:flex;min-height:100vh}
+#sidebar{width:256px;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;background:var(--sidebar);display:flex;flex-direction:column;padding:24px 20px 20px;z-index:50}
+.sidebar-brand{margin-bottom:32px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.nav-group{display:flex;flex-direction:column;gap:1px;flex:1}
+.nav-section-label{font-size:9.5px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.10em;text-transform:uppercase;padding:4px 14px 2px;margin-bottom:2px;margin-top:20px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:none;background:transparent;color:var(--side-text);font-size:13.5px;font-weight:500;font-family:inherit;cursor:pointer;width:100%;text-align:left;transition:background .18s,color .18s;text-decoration:none}
+.nav-item .icon{font-size:19px;color:inherit;flex-shrink:0}
+.nav-item:hover{background:var(--side-hover);color:var(--side-hi)}
+.nav-item.active{background:var(--side-active);color:#fff}
+.nav-item.active .icon{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+.sidebar-footer{margin-top:20px;display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(255,255,255,.07);padding-top:16px}
+#main{margin-left:256px;flex:1;min-height:100vh}
+.view{display:none;padding:28px 32px 80px;max-width:1180px}
+.view.active{display:block}
+.page-header{margin-bottom:28px}
+.page-date{font-size:12px;font-weight:500;color:var(--text-3);margin-bottom:4px}
+.page-title{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.page-sub{font-size:14px;color:var(--text-2);margin-top:4px}
+.card{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm)}
+.card-pad{padding:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;transition:transform .18s,box-shadow .18s,background .18s,border-color .18s}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#0ea5e9);color:#fff;box-shadow:0 4px 12px rgba(124,58,237,.30)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(124,58,237,.38)}
+.btn-secondary{background:#fff;color:#374151;border:1.5px solid var(--border-med)}
+.btn-secondary:hover{background:var(--soft);border-color:#d1d5db}
+.btn-danger{background:var(--red-light);color:#dc2626}
+.btn-sm{padding:8px 14px;font-size:12px}
+.btn-icon{width:36px;height:36px;padding:0;border-radius:10px;border:1.5px solid var(--border-med);background:#fff;color:var(--text-2)}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.hero-card{background:linear-gradient(135deg,#17122a,#31205f 58%,#0b3a58);border-radius:18px;overflow:hidden;color:#fff;box-shadow:var(--shadow);position:relative}
+.hero-card::after{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+.hero-content{position:relative;z-index:1;padding:24px;display:grid;grid-template-columns:1.2fr .8fr;gap:22px;align-items:center}
+.well-ring{width:148px;height:148px;margin-left:auto;position:relative}
+.well-ring svg{width:148px;height:148px;transform:rotate(-90deg)}
+.well-ring .label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.stat-card{background:#fff;border-radius:14px;padding:18px;border:1px solid var(--border);box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--blue))}
+.stat-label{font-size:12px;font-weight:600;color:var(--text-2)}
+.stat-value{font-size:28px;font-weight:800;letter-spacing:-.03em;margin-top:3px}
+.stat-sub{font-size:11px;color:var(--text-3);font-weight:600;margin-top:1px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800}
+.badge-purple{background:var(--accent-light);color:var(--accent-dark)}
+.badge-blue{background:var(--blue-light);color:#0369a1}
+.badge-green{background:var(--green-light);color:#059669}
+.badge-orange{background:var(--orange-light);color:#ea580c}
+.badge-red{background:var(--red-light);color:#dc2626}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:12px;padding:4px;width:max-content;box-shadow:var(--shadow-sm);margin-bottom:20px}
+.tab{border:none;background:transparent;padding:8px 14px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-2);cursor:pointer}
+.tab.active{background:var(--accent-light);color:var(--accent-dark)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+input,select,textarea{font-family:inherit;font-size:14px;border:1.5px solid var(--border-med);border-radius:10px;background:#f9fafb;color:var(--text);padding:10px 12px;outline:none;width:100%}
+textarea{resize:vertical;min-height:84px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.range-row{display:flex;gap:6px;align-items:center}
+.range-row input[type=range]{padding:0;accent-color:var(--accent)}
+.score-pill{width:36px;height:32px;border-radius:9px;background:var(--accent-light);color:var(--accent-dark);display:flex;align-items:center;justify-content:center;font-weight:800}
+.reset-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.reset-card{padding:15px;border:1px solid var(--border);border-radius:14px;background:#fff;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}
+.reset-card:hover{transform:translateY(-1px);border-color:rgba(124,58,237,.28);box-shadow:var(--shadow-sm)}
+.reset-icon{width:34px;height:34px;border-radius:10px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.mini-list{display:flex;flex-direction:column;gap:10px}
+.mini-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.mini-item strong{font-size:13px}
+.mini-item small{display:block;color:var(--text-2);font-size:12px;margin-top:2px}
+.thought-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.thought-row.done{opacity:.55;background:#f9fafb}
+.timer-face{display:flex;align-items:center;justify-content:center;flex-direction:column;min-height:260px;border-radius:18px;background:linear-gradient(135deg,#17122a,#24335f);color:#fff;position:relative;overflow:hidden}
+.timer-face::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.12),transparent 45%);pointer-events:none}
+.timer-face>*{position:relative;z-index:1}
+.timer-time{font-size:58px;font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.breath-dot{width:92px;height:92px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;margin-bottom:18px;transition:transform 1s ease,background 1s ease}
+.breath-dot.expand{transform:scale(1.45);background:rgba(125,211,252,.28)}
+.trend-bars{display:flex;align-items:flex-end;gap:8px;height:180px;padding:16px 4px 2px}
+.trend-bar{flex:1;min-width:24px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,var(--accent),var(--blue));position:relative;display:flex;align-items:flex-end;justify-content:center}
+.trend-bar span{position:absolute;bottom:-22px;font-size:10px;font-weight:700;color:var(--text-3)}
+.empty{padding:40px 20px;text-align:center;color:var(--text-2)}
+.toast{position:fixed;right:24px;bottom:24px;background:#111827;color:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(0,0,0,.22);font-size:13px;font-weight:700;display:none;z-index:100}
+.hidden-file{display:none}
+@media(max-width:900px){#sidebar{position:static;width:100%;height:auto}#app{display:block}#main{margin-left:0}.view{padding:22px 18px 70px}.grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.reset-grid{grid-template-columns:1fr}.well-ring{margin:0 auto}}
+@media(max-width:600px){.tabs{width:100%}.tab{flex:1}.timer-time{font-size:46px}}
+</style>
+</head>
+<body>
+<div id="app">
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div style="display:flex;align-items:baseline;gap:0;line-height:1;margin-bottom:2px">
+      <span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;color:#ffffff">EDG</span><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;background:linear-gradient(135deg,#c4b5fd,#7dd3fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">E</span><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;color:rgba(255,255,255,.25)">x</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:rgba(124,58,237,.25)"><span class="icon" style="font-size:12px;color:#c4b5fd;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">spa</span></span>
+      <span style="font-weight:700;font-size:11px;letter-spacing:.04em;color:rgba(255,255,255,.70)">EDGE Wellness</span>
+    </div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-section-label">Main</div>
+    <button class="nav-item active" id="nav-today" onclick="nav('today')"><span class="icon">self_improvement</span>Today</button>
+    <button class="nav-item" id="nav-checkin" onclick="nav('checkin')"><span class="icon">psychology</span>Check-In</button>
+    <button class="nav-item" id="nav-reset" onclick="nav('reset')"><span class="icon">restart_alt</span>Reset Tools</button>
+    <button class="nav-item" id="nav-meditate" onclick="nav('meditate')"><span class="icon">timer</span>Meditate</button>
+    <button class="nav-item" id="nav-inbox" onclick="nav('inbox')"><span class="icon">inbox</span>Mental Load</button>
+    <button class="nav-item" id="nav-trends" onclick="nav('trends')"><span class="icon">query_stats</span>Trends</button>
+    <button class="nav-item" id="nav-settings" onclick="nav('settings')"><span class="icon">tune</span>Settings</button>
+  </div>
+  <div class="sidebar-footer">
+    <button onclick="nav('checkin')" class="btn btn-primary" style="width:100%"><span class="icon" style="font-size:17px">add</span>Check In</button>
+    <a href="index.html" class="nav-item" style="justify-content:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);font-size:11.5px"><span class="icon" style="font-size:14px">apps</span>Switch module</a>
+  </div>
+</nav>
+
+<main id="main">
+  <section id="view-today" class="view active">
+    <div class="page-header">
+      <div class="page-date" id="today-date">Today</div>
+      <h1 class="page-title">Wellness Dashboard</h1>
+      <p class="page-sub">The clarity and nervous-system layer of your Life OS.</p>
+    </div>
+    <div class="hero-card" style="margin-bottom:18px">
+      <div class="hero-content">
+        <div>
+          <div class="badge badge-purple" style="margin-bottom:12px"><span class="icon" style="font-size:14px">spa</span>Clarity</div>
+          <h2 style="font-size:26px;line-height:1.15;letter-spacing:-.03em;margin-bottom:8px" id="clarity-title">Come back to center</h2>
+          <p style="color:rgba(255,255,255,.68);max-width:560px" id="clarity-copy">Log mood, stress, clarity, and what is present to see your inner-state signal.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+            <button class="btn btn-primary" onclick="nav('checkin')"><span class="icon" style="font-size:17px">edit_note</span><span id="checkin-btn-label">Check In</span></button>
+            <button class="btn btn-secondary" onclick="nav('reset')"><span class="icon" style="font-size:17px">restart_alt</span>Reset</button>
+            <button class="btn btn-secondary" onclick="nav('meditate')"><span class="icon" style="font-size:17px">timer</span>Meditate</button>
+          </div>
+        </div>
+        <div class="well-ring">
+          <svg viewBox="0 0 148 148">
+            <circle cx="74" cy="74" r="60" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="12"/>
+            <circle id="clarity-ring" cx="74" cy="74" r="60" fill="none" stroke="#c4b5fd" stroke-width="12" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="377"/>
+          </svg>
+          <div class="label">
+            <div style="font-size:34px;font-weight:800;letter-spacing:-.04em" id="clarity-score">--</div>
+            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.50);letter-spacing:.08em;text-transform:uppercase">score</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-4" id="today-stats" style="margin-bottom:18px"></div>
+    <div class="grid-2">
+      <div class="card card-pad">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div><h2 style="font-size:16px;font-weight:800">Suggested Reset</h2><p style="font-size:12px;color:var(--text-2)">Fast path when the signal is noisy.</p></div>
+          <button class="btn btn-secondary btn-sm" onclick="nav('reset')"><span class="icon" style="font-size:15px">restart_alt</span>All Tools</button>
+        </div>
+        <div id="suggested-reset"></div>
+      </div>
+      <div class="card card-pad">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div><h2 style="font-size:16px;font-weight:800">Recent Check-Ins</h2><p style="font-size:12px;color:var(--text-2)">Last seven entries.</p></div>
+          <button class="btn btn-secondary btn-sm" onclick="nav('trends')"><span class="icon" style="font-size:15px">query_stats</span>Trends</button>
+        </div>
+        <div class="mini-list" id="recent-checkins"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-checkin" class="view">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+      <div class="page-header" style="margin-bottom:0">
+        <div class="page-date">Daily inner-state log</div>
+        <h1 class="page-title">Check In</h1>
+        <p class="page-sub">Name what is present, then choose what would make today lighter.</p>
+      </div>
+      <button class="btn btn-secondary" onclick="loadTodayIntoForm()"><span class="icon" style="font-size:17px">refresh</span>Reload Today</button>
+    </div>
+    <div class="card card-pad">
+      <div class="form-grid">
+        <div class="field"><label>Date</label><input id="log-date" type="date"/></div>
+        <div class="field"><label>Mood</label><select id="mood"><option value="">Choose</option><option value="1">Heavy</option><option value="2">Low</option><option value="3">Neutral</option><option value="4">Good</option><option value="5">Bright</option></select></div>
+        <div class="field"><label>Dominant State</label><select id="state"><option value="">Choose</option><option>Calm</option><option>Focused</option><option>Scattered</option><option>Overwhelmed</option><option>Anxious</option><option>Restless</option><option>Confident</option><option>Flat</option><option>Grateful</option></select></div>
+        <div class="field"><label>Sleep Impact</label><select id="sleep-impact"><option value="">Unknown</option><option value="helped">Helped</option><option value="neutral">Neutral</option><option value="hurt">Hurt</option></select></div>
+      </div>
+      <div class="grid-3" style="margin-top:16px">
+        <div class="field"><label>Stress</label><div class="range-row"><input id="stress" type="range" min="1" max="5" value="3" oninput="syncRangeLabel('stress')"/><div class="score-pill" id="stress-label">3</div></div></div>
+        <div class="field"><label>Clarity</label><div class="range-row"><input id="clarity" type="range" min="1" max="5" value="3" oninput="syncRangeLabel('clarity')"/><div class="score-pill" id="clarity-label">3</div></div></div>
+        <div class="field"><label>Groundedness</label><div class="range-row"><input id="grounded" type="range" min="1" max="5" value="3" oninput="syncRangeLabel('grounded')"/><div class="score-pill" id="grounded-label">3</div></div></div>
+      </div>
+      <div class="grid-2" style="margin-top:16px">
+        <div class="field"><label>What is present?</label><textarea id="present" placeholder="A plain sentence about what is true right now."></textarea></div>
+        <div class="field"><label>What would make today lighter?</label><textarea id="lighter" placeholder="One adjustment, support, boundary, or reset."></textarea></div>
+      </div>
+      <div class="grid-2" style="margin-top:16px">
+        <div class="field"><label>Looping Thought</label><textarea id="loop" placeholder="Optional: the thought that keeps repeating."></textarea></div>
+        <div class="field"><label>Reframe</label><textarea id="reframe" placeholder="Optional: a kinder or more useful interpretation."></textarea></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+        <button class="btn btn-primary" onclick="saveCheckin()"><span class="icon" style="font-size:17px">save</span>Save Check-In</button>
+        <button class="btn btn-secondary" onclick="sendLoopToInbox()"><span class="icon" style="font-size:17px">move_to_inbox</span>Send Loop to Inbox</button>
+        <button class="btn btn-danger" onclick="deleteCheckin()"><span class="icon" style="font-size:17px">delete</span>Delete This Date</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-reset" class="view">
+    <div class="page-header">
+      <div class="page-date">When you feel off</div>
+      <h1 class="page-title">Reset Tools</h1>
+      <p class="page-sub">Small protocols for shifting state without making the moment dramatic.</p>
+    </div>
+    <div class="reset-grid" id="reset-tools"></div>
+  </section>
+
+  <section id="view-meditate" class="view">
+    <div class="page-header">
+      <div class="page-date">Meditation and breathwork</div>
+      <h1 class="page-title">Practice Timer</h1>
+      <p class="page-sub">Track minutes and notice how your state changes.</p>
+    </div>
+    <div class="grid-2">
+      <div class="card card-pad">
+        <div class="timer-face">
+          <div class="breath-dot" id="breath-dot"><span class="icon" style="font-size:36px">spa</span></div>
+          <div class="timer-time" id="timer-display">05:00</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.55);font-weight:800;letter-spacing:.08em;text-transform:uppercase" id="timer-phase">Ready</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+          <button class="btn btn-secondary btn-sm" onclick="setDuration(2)">2m</button>
+          <button class="btn btn-secondary btn-sm" onclick="setDuration(5)">5m</button>
+          <button class="btn btn-secondary btn-sm" onclick="setDuration(10)">10m</button>
+          <button class="btn btn-primary" onclick="toggleTimer()" id="timer-btn"><span class="icon" style="font-size:17px">play_arrow</span>Start</button>
+          <button class="btn btn-secondary" onclick="resetTimer()"><span class="icon" style="font-size:17px">stop</span>Reset</button>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">Session Note</h2>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Save after a session to build your practice history.</p>
+        <div class="field" style="margin-bottom:12px"><label>Practice Type</label><select id="practice-type"><option>Meditation</option><option>Box Breathing</option><option>Body Scan</option><option>Prayer</option><option>Quiet Sitting</option><option>Other</option></select></div>
+        <div class="field" style="margin-bottom:12px"><label>After State</label><select id="after-state"><option value="">Choose</option><option>Clearer</option><option>Calmer</option><option>Still Restless</option><option>Sleepy</option><option>Emotional</option><option>Grounded</option></select></div>
+        <div class="field"><label>Note</label><textarea id="practice-note" placeholder="What shifted? What did you notice?"></textarea></div>
+        <button class="btn btn-primary" style="margin-top:14px" onclick="savePractice()"><span class="icon" style="font-size:17px">save</span>Save Session</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-inbox" class="view">
+    <div class="page-header">
+      <div class="page-date">Mental load inbox</div>
+      <h1 class="page-title">Open Loops</h1>
+      <p class="page-sub">Put unresolved thoughts somewhere sturdy, then decide what they become.</p>
+    </div>
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div class="grid-2">
+        <div class="field"><label>Thought / Worry / Decision</label><input id="thought-input" type="text" placeholder="What is taking up space?"/></div>
+        <div class="field"><label>Convert To</label><select id="thought-type"><option>Hold</option><option>Work task</option><option>Goal action</option><option>Finance action</option><option>Life admin</option><option>Journal</option><option>Release</option></select></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:14px" onclick="addThought()"><span class="icon" style="font-size:17px">add</span>Add Loop</button>
+    </div>
+    <div class="mini-list" id="thought-list"></div>
+  </section>
+
+  <section id="view-trends" class="view">
+    <div class="page-header">
+      <div class="page-date">Patterns over time</div>
+      <h1 class="page-title">Trends</h1>
+      <p class="page-sub">See what supports clarity and what drains it.</p>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="trend-clarityScore" onclick="setTrend('clarityScore')">Clarity Score</button>
+      <button class="tab" id="trend-stress" onclick="setTrend('stress')">Stress</button>
+      <button class="tab" id="trend-mood" onclick="setTrend('mood')">Mood</button>
+      <button class="tab" id="trend-grounded" onclick="setTrend('grounded')">Grounded</button>
+    </div>
+    <div class="card card-pad">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px">
+        <div><h2 style="font-size:16px;font-weight:800" id="trend-title">Clarity Score</h2><p style="font-size:12px;color:var(--text-2)" id="trend-sub">Last 14 check-ins.</p></div>
+        <span class="badge badge-purple" id="trend-average">Avg --</span>
+      </div>
+      <div class="trend-bars" id="trend-bars"></div>
+    </div>
+  </section>
+
+  <section id="view-settings" class="view">
+    <div class="page-header">
+      <div class="page-date">Local-first data</div>
+      <h1 class="page-title">Settings</h1>
+      <p class="page-sub">Your Wellness module stores data in this browser only.</p>
+    </div>
+    <div class="grid-2">
+      <div class="card card-pad">
+        <h2 style="font-size:16px;font-weight:800;margin-bottom:8px">Data Portability</h2>
+        <p style="color:var(--text-2);font-size:13px;margin-bottom:16px">Export a backup or import a previous Wellness JSON file.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="exportData()"><span class="icon" style="font-size:17px">download</span>Export</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()"><span class="icon" style="font-size:17px">upload</span>Import</button>
+          <input class="hidden-file" type="file" id="import-file" accept=".json" onchange="importData(this)"/>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <h2 style="font-size:16px;font-weight:800;margin-bottom:8px">Reset</h2>
+        <p style="color:var(--text-2);font-size:13px;margin-bottom:16px">Clear local Wellness data from this browser.</p>
+        <button class="btn btn-danger" onclick="resetData()"><span class="icon" style="font-size:17px">delete_forever</span>Clear Wellness Data</button>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'edgex_wellness_v1';
+const SUMMARY_KEY = 'edgex_wellness_summary';
+const SB_URL  = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
+const SB_USER_ID = 'jack_traction_hub_v1';
+
+// ── Auth gate ────────────────────────────────────────────────────
+(function checkAuth() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (!s.access_token || s.expires_at <= Math.floor(Date.now() / 1000)) {
+      window.location.href = 'login.html';
+    }
+  } catch(e) { window.location.href = 'login.html'; }
+})();
+
+// ── Supabase sync helpers ────────────────────────────────────────
+async function pushKeysToSupabase(keys) {
+  const rows = keys.map(key => {
+    let value;
+    try { value = JSON.parse(localStorage.getItem(key)); } catch(e) { value = localStorage.getItem(key); }
+    return { user_id: SB_USER_ID, key, value, updated_at: new Date().toISOString() };
+  }).filter(r => r.value !== null);
+  if (!rows.length) return;
+  try {
+    await fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
+      method: 'POST',
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows })
+    });
+  } catch(e) { console.warn('[Wellness] Supabase push failed', e); }
+}
+async function syncFromSupabase() {
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&select=key,value,updated_at`, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
+    });
+    if (!res.ok) return;
+    const keys = new Set([STORAGE_KEY, SUMMARY_KEY]);
+    const rows = await res.json();
+    rows.forEach(({ key, value }) => {
+      if (keys.has(key)) localStorage.setItem(key, JSON.stringify(value));
+    });
+  } catch(e) { console.warn('[Wellness] Supabase sync failed', e); }
+}
+
+const RESET_TOOLS = [
+  { id:'breathe', icon:'air', title:'2-Minute Breathing', body:'Slow inhales, longer exhales. Lower the volume before deciding anything.' },
+  { id:'dump', icon:'edit_note', title:'Brain Dump', body:'Write every open loop. No sorting. Just get it out of working memory.' },
+  { id:'name', icon:'label', title:'Name the Feeling', body:'Use plain language: anxious, annoyed, sad, excited, tired, pressured.' },
+  { id:'walk', icon:'directions_walk', title:'Walk Outside', body:'Ten quiet minutes. Let your body metabolize the noise.' },
+  { id:'boundary', icon:'do_not_disturb_on', title:'Boundary Check', body:'Ask what needs a no, a pause, or a later.' },
+  { id:'reach', icon:'forum', title:'Reach Out', body:'Send one honest message to someone steady.' }
+];
+const DEFAULTS = { checkins:{}, thoughts:[], practices:[] };
+let db = loadData();
+let currentView = 'today';
+let trendMetric = 'clarityScore';
+let duration = 5 * 60;
+let remaining = duration;
+let timer = null;
+let breath = null;
+
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+function fmtDate(str){ return new Date(str + 'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
+function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function loadData(){ try { return { ...clone(DEFAULTS), ...(JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')) }; } catch(e) { return clone(DEFAULTS); } }
+function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); writeSummary(); pushKeysToSupabase([STORAGE_KEY, SUMMARY_KEY]); }
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>el.style.display='none',2200); }
+function nav(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view)?.classList.add('active');
+  document.getElementById('nav-'+view)?.classList.add('active');
+  currentView=view;
+  if(view==='today') renderToday();
+  if(view==='checkin') loadTodayIntoForm();
+  if(view==='reset') renderResetTools();
+  if(view==='meditate') renderTimer();
+  if(view==='inbox') renderThoughts();
+  if(view==='trends') renderTrends();
+}
+function getCheckin(date=todayStr()){ return db.checkins[date] || null; }
+function clarityScore(c){
+  if(!c) return null;
+  const mood = parseInt(c.mood) || 3;
+  const clarity = parseInt(c.clarity) || 3;
+  const grounded = parseInt(c.grounded) || 3;
+  const stress = parseInt(c.stress) || 3;
+  return Math.max(0, Math.min(100, Math.round((mood*18)+(clarity*24)+(grounded*22)+((6-stress)*20)-20)));
+}
+function clarityLabel(score){
+  if(score==null) return ['Come back to center','Log mood, stress, clarity, and what is present to see your inner-state signal.'];
+  if(score>=85) return ['Clear and grounded','A good window for decision-making, creative work, and meaningful conversations.'];
+  if(score>=70) return ['Steady enough','Keep moving, but protect focus and reduce needless inputs.'];
+  if(score>=50) return ['A little noisy','Use a reset before asking more from yourself.'];
+  return ['Nervous system first','Lower demands, create quiet, and take the next small stabilizing step.'];
+}
+function setRing(score){
+  const circle=document.getElementById('clarity-ring');
+  const val=score==null?0:score;
+  circle.style.transition='stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)';
+  circle.style.strokeDashoffset=377*(1-val/100);
+  circle.style.stroke=val>=80?'#c4b5fd':val>=60?'#7dd3fc':val>=40?'#fb923c':'#f87171';
+}
+function renderToday(){
+  document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const c=getCheckin();
+  const score=clarityScore(c);
+  const [title,copy]=clarityLabel(score);
+  document.getElementById('clarity-title').textContent=title;
+  document.getElementById('clarity-copy').textContent=copy;
+  document.getElementById('clarity-score').textContent=score==null?'--':score;
+  document.getElementById('checkin-btn-label').textContent=c?'Update Check-In':'Check In';
+  setRing(score);
+  document.getElementById('today-stats').innerHTML=[
+    stat('Mood', c?.mood ? moodLabel(c.mood) : '--', 'current emotional tone'),
+    stat('Stress', c?.stress || '--', '1 low, 5 high'),
+    stat('Clarity', c?.clarity || '--', '1 foggy, 5 clear'),
+    stat('Practice', practiceMinutesToday()+'m', 'meditation today')
+  ].join('');
+  renderSuggestedReset(score,c);
+  renderRecent();
+}
+function stat(label,value,sub){ return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></div>`; }
+function moodLabel(v){ return {1:'Heavy',2:'Low',3:'Neutral',4:'Good',5:'Bright'}[v] || '--'; }
+function practiceMinutesToday(){ return db.practices.filter(p=>p.date===todayStr()).reduce((s,p)=>s+(p.minutes||0),0); }
+function renderSuggestedReset(score,c){
+  let tool = RESET_TOOLS[0];
+  if(c?.state==='Overwhelmed') tool=RESET_TOOLS[1];
+  else if(c?.state==='Anxious') tool=RESET_TOOLS[0];
+  else if(c?.state==='Restless') tool=RESET_TOOLS[3];
+  else if(score!=null && score<50) tool=RESET_TOOLS[4];
+  document.getElementById('suggested-reset').innerHTML = `<div class="reset-card" onclick="startReset('${tool.id}')"><div class="reset-icon"><span class="icon">${tool.icon}</span></div><h3 style="font-size:15px;font-weight:800;margin-bottom:4px">${tool.title}</h3><p style="font-size:13px;color:var(--text-2)">${tool.body}</p></div>`;
+}
+function renderRecent(){
+  const entries=Object.entries(db.checkins).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
+  const el=document.getElementById('recent-checkins');
+  if(!entries.length){ el.innerHTML='<div class="empty">No check-ins yet. Start with today.</div>'; return; }
+  el.innerHTML=entries.map(([date,c])=>{
+    const score=clarityScore(c);
+    return `<div class="mini-item"><div><strong>${fmtDate(date)}</strong><small>${escapeHTML(c.state||'Unlabeled')} · stress ${c.stress||'--'} · clarity ${c.clarity||'--'}</small></div><span class="badge ${score>=80?'badge-green':score>=60?'badge-blue':score>=40?'badge-orange':'badge-red'}">${score}</span></div>`;
+  }).join('');
+}
+function setVal(id,v){ document.getElementById(id).value=v; }
+function val(id){ return document.getElementById(id).value; }
+function syncRangeLabel(id){ document.getElementById(id+'-label').textContent=document.getElementById(id).value; }
+document.addEventListener('change',e=>{ if(e.target?.id==='log-date') loadTodayIntoForm(); });
+function loadTodayIntoForm(){
+  const date=document.getElementById('log-date').value || todayStr();
+  setVal('log-date',date);
+  const c=getCheckin(date)||{};
+  ['mood','state','sleep-impact','stress','clarity','grounded','present','lighter','loop','reframe'].forEach(id=>setVal(id,c[camel(id)] || (['stress','clarity','grounded'].includes(id)?3:'')));
+  ['stress','clarity','grounded'].forEach(syncRangeLabel);
+}
+function camel(id){ return id.replace(/-([a-z])/g,(_,c)=>c.toUpperCase()); }
+function saveCheckin(){
+  const date=val('log-date') || todayStr();
+  db.checkins[date]={ mood:val('mood'), state:val('state'), sleepImpact:val('sleep-impact'), stress:val('stress'), clarity:val('clarity'), grounded:val('grounded'), present:val('present'), lighter:val('lighter'), loop:val('loop'), reframe:val('reframe'), savedAt:new Date().toISOString() };
+  saveData();
+  toast('Wellness check-in saved');
+  renderToday();
+}
+function deleteCheckin(){
+  const date=val('log-date') || todayStr();
+  if(!db.checkins[date]){ toast('No check-in for this date'); return; }
+  if(!confirm('Delete the wellness check-in for '+date+'?')) return;
+  delete db.checkins[date];
+  saveData();
+  loadTodayIntoForm();
+  renderToday();
+  toast('Check-in deleted');
+}
+function sendLoopToInbox(){
+  const text=val('loop').trim();
+  if(!text){ toast('No looping thought to send'); return; }
+  db.thoughts.unshift({ id:'t-'+Date.now().toString(36), text, type:'Hold', done:false, createdAt:new Date().toISOString() });
+  saveData();
+  toast('Sent to mental load inbox');
+}
+function renderResetTools(){
+  document.getElementById('reset-tools').innerHTML=RESET_TOOLS.map(t=>`<div class="reset-card" onclick="startReset('${t.id}')"><div class="reset-icon"><span class="icon">${t.icon}</span></div><h3 style="font-size:15px;font-weight:800;margin-bottom:4px">${t.title}</h3><p style="font-size:13px;color:var(--text-2);margin-bottom:12px">${t.body}</p><button class="btn btn-secondary btn-sm"><span class="icon" style="font-size:15px">play_arrow</span>Use Reset</button></div>`).join('');
+}
+function startReset(id){
+  const t=RESET_TOOLS.find(x=>x.id===id);
+  if(!t) return;
+  if(id==='breathe'){ nav('meditate'); setDuration(2); return; }
+  if(id==='dump'){ nav('inbox'); document.getElementById('thought-input')?.focus(); return; }
+  toast(t.title + ' selected');
+}
+function setDuration(min){ duration=min*60; remaining=duration; renderTimer(); }
+function renderTimer(){
+  const m=String(Math.floor(remaining/60)).padStart(2,'0');
+  const s=String(remaining%60).padStart(2,'0');
+  document.getElementById('timer-display').textContent=m+':'+s;
+}
+function toggleTimer(){
+  if(timer){ clearInterval(timer); clearInterval(breath); timer=null; breath=null; document.getElementById('timer-btn').innerHTML='<span class="icon" style="font-size:17px">play_arrow</span>Start'; document.getElementById('timer-phase').textContent='Paused'; return; }
+  document.getElementById('timer-btn').innerHTML='<span class="icon" style="font-size:17px">pause</span>Pause';
+  document.getElementById('timer-phase').textContent='Breathe';
+  let expand=false;
+  breath=setInterval(()=>{ expand=!expand; document.getElementById('breath-dot').classList.toggle('expand',expand); document.getElementById('timer-phase').textContent=expand?'Inhale':'Exhale'; },4000);
+  timer=setInterval(()=>{
+    remaining--;
+    renderTimer();
+    if(remaining<=0){ clearInterval(timer); clearInterval(breath); timer=null; breath=null; document.getElementById('timer-btn').innerHTML='<span class="icon" style="font-size:17px">play_arrow</span>Start'; document.getElementById('timer-phase').textContent='Complete'; document.getElementById('breath-dot').classList.remove('expand'); toast('Session complete'); }
+  },1000);
+}
+function resetTimer(){ if(timer) toggleTimer(); remaining=duration; document.getElementById('timer-phase').textContent='Ready'; document.getElementById('breath-dot').classList.remove('expand'); renderTimer(); }
+function savePractice(){
+  const minutes=Math.round((duration-remaining)/60) || Math.round(duration/60);
+  db.practices.unshift({ id:'p-'+Date.now().toString(36), date:todayStr(), minutes, type:val('practice-type'), after:val('after-state'), note:val('practice-note'), savedAt:new Date().toISOString() });
+  setVal('practice-note',''); setVal('after-state','');
+  saveData(); renderToday(); toast('Practice saved');
+}
+function addThought(){
+  const text=val('thought-input').trim();
+  if(!text) return;
+  db.thoughts.unshift({ id:'t-'+Date.now().toString(36), text, type:val('thought-type'), done:false, createdAt:new Date().toISOString() });
+  setVal('thought-input',''); saveData(); renderThoughts(); toast('Loop added');
+}
+function renderThoughts(){
+  const el=document.getElementById('thought-list');
+  if(!db.thoughts.length){ el.innerHTML='<div class="empty">No open loops right now.</div>'; return; }
+  el.innerHTML=db.thoughts.map(t=>`<div class="thought-row ${t.done?'done':''}"><div><strong>${escapeHTML(t.text)}</strong><small>${escapeHTML(t.type)} · ${new Date(t.createdAt).toLocaleDateString()}</small></div><div style="display:flex;gap:6px"><button class="btn btn-icon" onclick="toggleThought('${t.id}')" title="Toggle"><span class="icon">${t.done?'undo':'check'}</span></button><button class="btn btn-icon" onclick="deleteThought('${t.id}')" title="Delete"><span class="icon">close</span></button></div></div>`).join('');
+}
+function toggleThought(id){ const t=db.thoughts.find(x=>x.id===id); if(t) t.done=!t.done; saveData(); renderThoughts(); }
+function deleteThought(id){ db.thoughts=db.thoughts.filter(t=>t.id!==id); saveData(); renderThoughts(); }
+function setTrend(metric){
+  trendMetric=metric;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('trend-'+metric).classList.add('active');
+  renderTrends();
+}
+function renderTrends(){
+  const meta={clarityScore:['Clarity Score',c=>clarityScore(c),100],stress:['Stress',c=>parseInt(c.stress)||0,5],mood:['Mood',c=>parseInt(c.mood)||0,5],grounded:['Grounded',c=>parseInt(c.grounded)||0,5]}[trendMetric];
+  const entries=Object.entries(db.checkins).sort((a,b)=>a[0].localeCompare(b[0])).slice(-14);
+  const vals=entries.map(([date,c])=>({date,val:meta[1](c)||0}));
+  const avg=vals.length?vals.reduce((s,x)=>s+x.val,0)/vals.length:0;
+  document.getElementById('trend-title').textContent=meta[0];
+  document.getElementById('trend-sub').textContent='Last '+vals.length+' check-ins.';
+  document.getElementById('trend-average').textContent='Avg '+(trendMetric==='clarityScore'?Math.round(avg):avg.toFixed(1));
+  const el=document.getElementById('trend-bars');
+  if(!vals.length){ el.innerHTML='<div class="empty" style="width:100%">No check-ins yet.</div>'; return; }
+  el.innerHTML=vals.map(x=>`<div class="trend-bar" style="height:${Math.max(8,Math.round(x.val/meta[2]*100))}%" title="${fmtDate(x.date)}: ${x.val}"><span>${new Date(x.date+'T12:00:00').getDate()}</span></div>`).join('');
+}
+function writeSummary(){
+  const c=getCheckin();
+  const score=clarityScore(c);
+  const openLoops=db.thoughts.filter(t=>!t.done).length;
+  localStorage.setItem('edgex_wellness_summary', JSON.stringify({ score, openLoops, minutes:practiceMinutesToday(), date:todayStr(), updatedAt:new Date().toISOString() }));
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='edgex-wellness-'+todayStr()+'.json'; a.click(); URL.revokeObjectURL(url);
+}
+function importData(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{ try{ db={...clone(DEFAULTS),...JSON.parse(e.target.result)}; saveData(); renderToday(); toast('Wellness data imported'); } catch(err){ alert('Could not import that file.'); } };
+  reader.readAsText(file); input.value='';
+}
+function resetData(){ if(!confirm('Clear all Wellness module data from this browser?')) return; db=clone(DEFAULTS); saveData(); renderToday(); toast('Wellness data reset'); }
+writeSummary();
+renderToday();
+renderTimer();
+
+// ── Boot: pull from Supabase then re-render ──────────────────────
+syncFromSupabase().then(() => {
+  db = loadData();
+  writeSummary();
+  renderToday();
+});
+</script>
+</body>
+</html>

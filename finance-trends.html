@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance — Spending Trends</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+    --border: #2e3350; --accent: #6c8aff; --accent2: #a78bfa;
+    --green: #34d399; --red: #f87171; --yellow: #fbbf24;
+    --text: #e2e8f0; --muted: #64748b; --card-radius: 14px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 28px; background: var(--surface);
+    border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
+  }
+  .topbar h1 { font-size: 18px; font-weight: 700; }
+  .topbar .actions { display: flex; gap: 10px; align-items: center; }
+  .btn { padding: 8px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+  .btn-secondary:hover { background: var(--border); }
+
+  .page { padding: 28px; max-width: 1400px; margin: 0 auto; }
+
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 28px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 4px; width: fit-content;
+  }
+  .tab { padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--muted); border: none; background: none; }
+  .tab.active { background: var(--surface2); color: var(--text); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 22px; }
+  .card-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); margin-bottom: 16px; }
+
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 18px 20px; }
+  .stat-card .val { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .stat-card .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+  .stat-card .change { font-size: 12px; margin-top: 6px; }
+  .change.up { color: var(--red); }
+  .change.down { color: var(--green); }
+  .change.neutral { color: var(--muted); }
+
+  /* Bar chart */
+  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 200px; padding-top: 10px; }
+  .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 6px; height: 100%; justify-content: flex-end; }
+  .bar-col .bar-wrap { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; flex: 1; }
+  .bar-col .bar { width: 100%; border-radius: 5px 5px 0 0; min-height: 3px; transition: height 0.4s ease; cursor: pointer; }
+  .bar-col .bar:hover { opacity: 0.85; }
+  .bar-col .bar-label { font-size: 10px; color: var(--muted); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+  .bar-col .bar-val { font-size: 9px; color: var(--muted); text-align: center; margin-bottom: 3px; }
+  .bar-col.active .bar-label { color: var(--text); font-weight: 600; }
+
+  /* Grouped bar chart */
+  .grouped-bar-wrap { overflow-x: auto; }
+  .grouped-bar-chart { display: flex; align-items: flex-end; gap: 16px; height: 220px; padding: 10px 0 0; min-width: 600px; }
+  .grouped-col { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; height: 100%; justify-content: flex-end; }
+  .grouped-bars { display: flex; align-items: flex-end; gap: 2px; width: 100%; flex: 1; }
+  .grouped-bar-item { flex: 1; border-radius: 4px 4px 0 0; min-height: 2px; cursor: pointer; transition: opacity 0.15s; }
+  .grouped-bar-item:hover { opacity: 0.8; }
+  .grouped-col .month-lbl { font-size: 10px; color: var(--muted); text-align: center; white-space: nowrap; }
+
+  /* Line chart */
+  .chart-svg { width: 100%; overflow: visible; }
+
+  /* Donut chart */
+  .donut-wrap { display: flex; align-items: center; gap: 24px; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .donut-legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .donut-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .donut-lbl { flex: 1; }
+  .donut-amt { font-weight: 600; color: var(--text); }
+  .donut-pct { color: var(--muted); font-size: 11px; min-width: 32px; text-align: right; }
+
+  /* Category rows */
+  .cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .cat-name { flex: 1; font-size: 13px; }
+  .cat-bar-wrap { width: 120px; height: 4px; background: var(--border); border-radius: 2px; }
+  .cat-bar-fill { height: 4px; border-radius: 2px; }
+  .cat-amount { font-size: 13px; font-weight: 600; min-width: 80px; text-align: right; }
+  .cat-pct { font-size: 11px; color: var(--muted); min-width: 36px; text-align: right; }
+
+  /* Stacked bar */
+  .stacked-seg { height: 100%; transition: width 0.4s; cursor: pointer; }
+  .stacked-seg:hover { opacity: 0.8; }
+
+  /* Month pills */
+  .month-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+  .month-pill { padding: 5px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); }
+  .month-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Merch rows */
+  .merch-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(46,51,80,0.4); }
+  .merch-row:last-child { border-bottom: none; }
+  .merch-rank { font-size: 12px; color: var(--muted); min-width: 20px; }
+  .merch-name { flex: 1; font-size: 13px; font-weight: 500; }
+  .merch-count { font-size: 11px; color: var(--muted); min-width: 50px; }
+  .merch-amt { font-size: 13px; font-weight: 600; color: var(--red); }
+
+  /* Heatmap */
+  .heatmap-cell:hover::after {
+    content: attr(data-tip); position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 8px; font-size: 11px; white-space: nowrap; z-index: 10; pointer-events: none;
+  }
+
+  .no-data-banner {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius);
+    padding: 32px; text-align: center; color: var(--muted); margin-bottom: 24px;
+  }
+  .no-data-banner p { font-size: 14px; margin-top: 8px; }
+
+  .data-source-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 20px; font-size: 12px;
+    background: rgba(108,138,255,0.15); border: 1px solid rgba(108,138,255,0.3); color: var(--accent);
+  }
+
+  .tooltip { position: fixed; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 12px; pointer-events: none; z-index: 999; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+  .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 900px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📈 Spending Trends</h1>
+  <div class="actions">
+    <span class="data-source-badge" id="dataBadge" style="display:none">✓ Live from dashboard</span>
+    <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import JSON</button>
+    <input type="file" id="importFile" accept=".json" multiple style="display:none" onchange="loadFile(this)">
+    <a href="finance-dashboard.html"><button class="btn btn-secondary">← Dashboard</button></a>
+  </div>
+</div>
+
+<div class="page">
+
+  <div id="noDataBanner" class="no-data-banner" style="display:none">
+    <div style="font-size:36px;margin-bottom:8px">📊</div>
+    <p><strong>No transactions found.</strong></p>
+    <p style="margin-top:6px">Add transactions in the <a href="finance-dashboard.html" style="color:var(--accent)">Dashboard</a>, or import a JSON export above.</p>
+  </div>
+
+  <div id="dashboard">
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('overview', this)">Overview</button>
+      <button class="tab" onclick="showTab('monthly', this)">Monthly</button>
+      <button class="tab" onclick="showTab('categories', this)">Categories</button>
+      <button class="tab" onclick="showTab('merchants', this)">Merchants</button>
+      <button class="tab" onclick="showTab('heatmap', this)">Heatmap</button>
+    </div>
+
+    <!-- OVERVIEW TAB -->
+    <div id="tab-overview">
+      <div class="grid-4" id="summaryStats"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Monthly Total Spending</div>
+          <div class="bar-chart" id="monthlyBarChart"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Spending by Category — Current Month</div>
+          <div id="donutWrap" style="margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">Category Spend by Month (Grouped Bars)</div>
+        <div style="margin-bottom:12px" id="catLegend"></div>
+        <div class="grouped-bar-wrap">
+          <div class="grouped-bar-chart" id="groupedBarChart"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Month-over-Month Change</div>
+        <div id="momChart"></div>
+      </div>
+    </div>
+
+    <!-- MONTHLY TAB -->
+    <div id="tab-monthly" style="display:none">
+      <div class="month-pills" id="monthPills"></div>
+      <div class="grid-4" id="monthlyStats"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Daily Spend Trend</div>
+          <div style="position:relative;height:200px">
+            <svg id="dailySvg" style="width:100%;height:100%"></svg>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Category Breakdown</div>
+          <div id="monthlyCatsDonut" style="margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Stacked Category Bars — All Months</div>
+        <div id="stackedBars"></div>
+      </div>
+    </div>
+
+    <!-- CATEGORIES TAB -->
+    <div id="tab-categories" style="display:none">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Category Totals (All Time)</div>
+          <div id="allCatsList"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Category Trend Line</div>
+          <div id="catTrendSelect" style="margin-bottom:12px"></div>
+          <div id="catTrendChart"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Category Monthly Comparison Table</div>
+        <div id="catMonthTable" style="overflow-x:auto"></div>
+      </div>
+    </div>
+
+    <!-- MERCHANTS TAB -->
+    <div id="tab-merchants" style="display:none">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Top Merchants by Total Spend</div>
+          <div id="topMerchantsList"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Top Merchants by Frequency</div>
+          <div id="freqMerchantsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HEATMAP TAB -->
+    <div id="tab-heatmap" style="display:none">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">Daily Spend Heatmap</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;font-size:11px;color:var(--muted);">
+          Less <div id="heatLegend" style="display:flex;gap:2px"></div> More
+        </div>
+        <div id="heatmapWrap"></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Avg Spend by Day of Week</div>
+          <div id="dowChart"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Avg Spend by Day of Month</div>
+          <div id="domChart"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let allTransactions = [];
+let activeTab = 'overview';
+let selectedMonth = null;
+let selectedCat = 'Food';
+const STORAGE_KEY = 'finance_tracker_data_v1';
+
+const CAT_COLORS = {
+  Food: '#f97316', Transport: '#3b82f6', Shopping: '#a855f7',
+  Utilities: '#06b6d4', Health: '#ec4899', Entertainment: '#eab308',
+  Housing: '#f43f5e', Transfer: '#94a3b8', Other: '#64748b', Income: '#34d399',
+};
+const CAT_ICONS = {
+  Food: '🍜', Transport: '🚇', Shopping: '🛍️', Utilities: '💡',
+  Health: '🏥', Entertainment: '🎬', Housing: '🏠', Transfer: '🔄', Other: '📦', Income: '💰',
+};
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  loadFromStorage();
+};
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.transactions && parsed.transactions.length > 0) {
+        allTransactions = parsed.transactions;
+        document.getElementById('dataBadge').style.display = 'inline-flex';
+        document.getElementById('noDataBanner').style.display = 'none';
+        initDashboard();
+        return;
+      }
+    }
+  } catch (e) { console.warn('localStorage read error:', e); }
+  // No data from storage
+  document.getElementById('noDataBanner').style.display = 'block';
+}
+
+function initDashboard() {
+  const months = getMonths();
+  selectedMonth = months[months.length - 1];
+  if (Object.keys(CAT_COLORS).filter(c => c !== 'Income').some(cat =>
+    allTransactions.some(t => t.category === cat)
+  )) {
+    // pick first populated category
+    selectedCat = Object.keys(CAT_COLORS).find(cat =>
+      cat !== 'Income' && allTransactions.some(t => t.category === cat)
+    ) || 'Food';
+  }
+  renderTab('overview');
+}
+
+// ── File import ───────────────────────────────────────────────────────────────
+function loadFile(input) {
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        const incoming = data.transactions || [];
+        let added = 0;
+        incoming.forEach(t => {
+          if (!allTransactions.find(x => x.id === t.id)) {
+            allTransactions.push(t);
+            added++;
+          }
+        });
+        allTransactions.sort((a, b) => a.date.localeCompare(b.date));
+        document.getElementById('noDataBanner').style.display = 'none';
+        initDashboard();
+        showToast(`Loaded ${added} transactions from file.`);
+      } catch { showToast('Could not parse file.'); }
+    };
+    reader.readAsText(file);
+  });
+  input.value = '';
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const fmt = n => Math.round(n).toLocaleString('ko-KR');
+const fmtShort = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(0)+'K' : String(Math.round(n));
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function getExpenses() { return allTransactions.filter(t => t.type === 'expense'); }
+
+function getMonths() {
+  const s = new Set(allTransactions.map(t => t.date.slice(0, 7)));
+  return [...s].sort();
+}
+
+function monthLabel(ym) {
+  if (!ym) return '';
+  const [y, m] = ym.split('-');
+  return MONTHS_SHORT[parseInt(m) - 1] + ' ' + y.slice(2);
+}
+
+function txForMonth(ym) {
+  return getExpenses().filter(t => t.date.startsWith(ym));
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+function showTab(name, btn) {
+  activeTab = name;
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
+  document.getElementById('tab-' + name).style.display = 'block';
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTab(name);
+}
+
+function renderTab(name) {
+  if (name === 'overview')    renderOverview();
+  else if (name === 'monthly')    renderMonthly();
+  else if (name === 'categories') renderCategories();
+  else if (name === 'merchants')  renderMerchants();
+  else if (name === 'heatmap')    renderHeatmap();
+}
+
+// ── DONUT CHART ───────────────────────────────────────────────────────────────
+function buildDonut(catData, totalAmt, containerId, radius = 70) {
+  const sorted = [...catData].sort((a, b) => b.amt - a.amt);
+  const total = sorted.reduce((s, x) => s + x.amt, 0);
+  if (!total) {
+    document.getElementById(containerId).innerHTML = '<div class="empty">No expense data</div>';
+    return;
+  }
+
+  const cx = radius + 10, cy = radius + 10;
+  const size = (radius + 10) * 2;
+  const innerR = radius * 0.55;
+
+  let segments = '';
+  let angle = -Math.PI / 2;
+  sorted.forEach(({ cat, amt, color }) => {
+    if (!amt) return;
+    const sweep = (amt / total) * 2 * Math.PI;
+    const x1 = cx + radius * Math.cos(angle);
+    const y1 = cy + radius * Math.sin(angle);
+    angle += sweep;
+    const x2 = cx + radius * Math.cos(angle);
+    const y2 = cy + radius * Math.sin(angle);
+    const large = sweep > Math.PI ? 1 : 0;
+    const ix1 = cx + innerR * Math.cos(angle - sweep);
+    const iy1 = cy + innerR * Math.sin(angle - sweep);
+    const ix2 = cx + innerR * Math.cos(angle);
+    const iy2 = cy + innerR * Math.sin(angle);
+    const pct = Math.round(amt / total * 100);
+    const tip = `${CAT_ICONS[cat]||''} ${cat}: ₩${fmt(amt)} (${pct}%)`;
+    segments += `<path d="M${x1},${y1} A${radius},${radius} 0 ${large},1 ${x2},${y2} L${ix2},${iy2} A${innerR},${innerR} 0 ${large},0 ${ix1},${iy1} Z"
+      fill="${color}" data-tip="${tip}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"
+      style="cursor:pointer;transition:opacity 0.15s" onmouseover="this.style.opacity=0.75" onmouseout="this.style.opacity=1"/>`;
+  });
+
+  const svgDonut = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="flex-shrink:0">
+    ${segments}
+    <text x="${cx}" y="${cy - 6}" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="700">₩${fmtShort(total)}</text>
+    <text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="var(--muted)" font-size="10">total</text>
+  </svg>`;
+
+  const legendRows = sorted.filter(x => x.amt > 0).map(({ cat, amt, color }) => {
+    const pct = Math.round(amt / total * 100);
+    return `<div class="donut-legend-row">
+      <div class="donut-dot" style="background:${color}"></div>
+      <span class="donut-lbl">${CAT_ICONS[cat]||''} ${cat}</span>
+      <span class="donut-amt">₩${fmtShort(amt)}</span>
+      <span class="donut-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById(containerId).innerHTML = `<div class="donut-wrap">
+    ${svgDonut}
+    <div class="donut-legend">${legendRows}</div>
+  </div>`;
+}
+
+// ── OVERVIEW ─────────────────────────────────────────────────────────────────
+function renderOverview() {
+  const expenses = getExpenses();
+  const months = getMonths();
+  if (!months.length) return;
+
+  const curM = months[months.length - 1];
+  const prevM = months[months.length - 2];
+  const curTotal = txForMonth(curM).reduce((s, t) => s + t.amountKRW, 0);
+  const prevTotal = prevM ? txForMonth(prevM).reduce((s, t) => s + t.amountKRW, 0) : 0;
+  const allTotal = expenses.reduce((s, t) => s + t.amountKRW, 0);
+  const avgMonthly = months.length ? Math.round(allTotal / months.length) : 0;
+  const changePct = prevTotal ? ((curTotal - prevTotal) / prevTotal * 100).toFixed(1) : null;
+
+  // Stat cards
+  document.getElementById('summaryStats').innerHTML = [
+    {
+      val: '₩' + fmt(curTotal), lbl: monthLabel(curM) + ' Spending',
+      change: changePct ? (changePct > 0 ? `↑ ${changePct}% vs last month` : `↓ ${Math.abs(changePct)}% vs last month`) : '',
+      dir: changePct > 0 ? 'up' : 'down'
+    },
+    { val: '₩' + fmt(prevTotal), lbl: (prevM ? monthLabel(prevM) : 'Prev Month') + ' Spending', change: '', dir: 'neutral' },
+    { val: '₩' + fmt(avgMonthly), lbl: 'Avg Monthly Spend', change: `Over ${months.length} month${months.length !== 1 ? 's' : ''}`, dir: 'neutral' },
+    { val: expenses.length.toLocaleString(), lbl: 'Total Transactions', change: '₩' + fmt(allTotal) + ' all time', dir: 'neutral' },
+  ].map(s => `<div class="stat-card">
+    <div class="val">${s.val}</div>
+    <div class="lbl">${s.lbl}</div>
+    ${s.change ? `<div class="change ${s.dir}">${s.change}</div>` : ''}
+  </div>`).join('');
+
+  // Monthly total bar chart
+  const monthlyTotals = months.map(m => ({ m, total: txForMonth(m).reduce((s, t) => s + t.amountKRW, 0) }));
+  const maxMonthly = Math.max(...monthlyTotals.map(x => x.total), 1);
+  document.getElementById('monthlyBarChart').innerHTML = monthlyTotals.map(({ m, total }) => {
+    const h = Math.round((total / maxMonthly) * 100);
+    const isLast = m === curM;
+    return `<div class="bar-col ${isLast ? 'active' : ''}">
+      <div class="bar-val">₩${fmtShort(total)}</div>
+      <div class="bar-wrap">
+        <div class="bar" style="height:${h}%;background:${isLast ? 'var(--accent)' : 'var(--surface2)'};border:1px solid ${isLast ? 'var(--accent)' : 'var(--border)'}"
+          data-tip="${monthLabel(m)}: ₩${fmt(total)}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>
+      </div>
+      <div class="bar-label">${monthLabel(m)}</div>
+    </div>`;
+  }).join('');
+
+  // Donut for current month
+  const curTxs = txForMonth(curM);
+  const catAgg = {};
+  curTxs.forEach(t => catAgg[t.category] = (catAgg[t.category] || 0) + t.amountKRW);
+  const catData = Object.entries(catAgg).map(([cat, amt]) => ({ cat, amt, color: CAT_COLORS[cat] || '#64748b' }));
+  buildDonut(catData, curTotal, 'donutWrap', 75);
+
+  // Grouped bar chart (categories per month)
+  const expCats = [...new Set(expenses.map(t => t.category))].filter(c => c !== 'Income');
+  const monthCatTotals = {};
+  expenses.forEach(t => {
+    const m = t.date.slice(0, 7);
+    if (!monthCatTotals[m]) monthCatTotals[m] = {};
+    monthCatTotals[m][t.category] = (monthCatTotals[m][t.category] || 0) + t.amountKRW;
+  });
+  const groupMax = Math.max(...months.flatMap(m => expCats.map(c => monthCatTotals[m]?.[c] || 0)), 1);
+
+  // Legend
+  document.getElementById('catLegend').innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:10px">` +
+    expCats.map(cat => `<div style="display:flex;align-items:center;gap:5px;font-size:12px">
+      <div style="width:10px;height:10px;border-radius:3px;background:${CAT_COLORS[cat]||'#64748b'}"></div>
+      ${CAT_ICONS[cat]||''} ${cat}
+    </div>`).join('') + `</div>`;
+
+  document.getElementById('groupedBarChart').innerHTML = months.map(m => {
+    const bars = expCats.map(cat => {
+      const val = monthCatTotals[m]?.[cat] || 0;
+      const h = Math.round((val / groupMax) * 100);
+      const color = CAT_COLORS[cat] || '#64748b';
+      return `<div class="grouped-bar-item" style="height:${h}%;background:${color}"
+        data-tip="${monthLabel(m)} ${cat}: ₩${fmt(val)}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>`;
+    }).join('');
+    return `<div class="grouped-col">
+      <div class="grouped-bars">${bars}</div>
+      <div class="month-lbl">${monthLabel(m)}</div>
+    </div>`;
+  }).join('');
+
+  // MoM change chart
+  const momData = monthlyTotals.slice(1).map((cur, i) => {
+    const prev = monthlyTotals[i].total;
+    const pct = prev > 0 ? ((cur.total - prev) / prev * 100) : 0;
+    return { m: cur.m, pct };
+  });
+  const momMax = Math.max(...momData.map(x => Math.abs(x.pct)), 1);
+  document.getElementById('momChart').innerHTML = `<div style="display:flex;align-items:center;gap:6px;height:140px;">` +
+    momData.map(({ m, pct }) => {
+      const h = Math.round(Math.abs(pct) / momMax * 60);
+      const color = pct > 0 ? 'var(--red)' : 'var(--green)';
+      const label = (pct > 0 ? '+' : '') + pct.toFixed(0) + '%';
+      return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:2px;height:100%;justify-content:center;">
+        ${pct > 0
+          ? `<div style="font-size:9px;color:var(--red);margin-bottom:2px">${label}</div>
+             <div style="width:100%;height:${h}px;background:${color};border-radius:4px 4px 0 0;min-height:2px"></div>
+             <div style="width:100%;height:1px;background:var(--border)"></div>
+             <div style="height:${60}px"></div>`
+          : `<div style="height:${60}px"></div>
+             <div style="width:100%;height:1px;background:var(--border)"></div>
+             <div style="width:100%;height:${h}px;background:${color};border-radius:0 0 4px 4px;min-height:2px"></div>
+             <div style="font-size:9px;color:var(--green);margin-top:2px">${label}</div>`
+        }
+        <div style="font-size:9px;color:var(--muted);text-align:center;margin-top:4px">${monthLabel(m)}</div>
+      </div>`;
+    }).join('') + `</div>`;
+}
+
+// ── MONTHLY ───────────────────────────────────────────────────────────────────
+function renderMonthly() {
+  const months = getMonths();
+  if (!months.length) return;
+  if (!selectedMonth) selectedMonth = months[months.length - 1];
+
+  document.getElementById('monthPills').innerHTML = months.map(m =>
+    `<div class="month-pill ${m === selectedMonth ? 'active' : ''}" onclick="selectMonth('${m}', this)">${monthLabel(m)}</div>`
+  ).join('');
+
+  renderMonthDetail();
+}
+
+function selectMonth(m, el) {
+  selectedMonth = m;
+  document.querySelectorAll('.month-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderMonthDetail();
+}
+
+function renderMonthDetail() {
+  const txs = txForMonth(selectedMonth);
+  const total = txs.reduce((s, t) => s + t.amountKRW, 0);
+  const months = getMonths();
+  const prevM = months[months.indexOf(selectedMonth) - 1];
+  const prevTotal = prevM ? txForMonth(prevM).reduce((s, t) => s + t.amountKRW, 0) : 0;
+  const changePct = prevTotal ? ((total - prevTotal) / prevTotal * 100).toFixed(1) : null;
+  const daysInMonth = new Date(selectedMonth.slice(0, 4), parseInt(selectedMonth.slice(5, 7)), 0).getDate();
+  const avgDaily = total / daysInMonth;
+
+  document.getElementById('monthlyStats').innerHTML = [
+    {
+      val: '₩' + fmt(total), lbl: 'Total Spending',
+      sub: changePct ? (changePct > 0 ? `↑ ${changePct}% vs ${monthLabel(prevM)}` : `↓ ${Math.abs(changePct)}% vs ${monthLabel(prevM)}`) : '',
+      dir: changePct > 0 ? 'up' : 'down'
+    },
+    { val: txs.length, lbl: 'Transactions', sub: '', dir: 'neutral' },
+    { val: '₩' + fmt(avgDaily), lbl: 'Avg Daily Spend', sub: `Over ${daysInMonth} days`, dir: 'neutral' },
+    { val: '₩' + fmt(Math.max(...txs.map(t => t.amountKRW), 0)), lbl: 'Largest Transaction', sub: '', dir: 'neutral' },
+  ].map(s => `<div class="stat-card">
+    <div class="val">${s.val}</div><div class="lbl">${s.lbl}</div>
+    ${s.sub ? `<div class="change ${s.dir}">${s.sub}</div>` : ''}
+  </div>`).join('');
+
+  // Daily line chart
+  const dailyTotals = {};
+  txs.forEach(t => dailyTotals[t.date] = (dailyTotals[t.date] || 0) + t.amountKRW);
+  const days = Array.from({ length: daysInMonth }, (_, i) => {
+    const d = String(i + 1).padStart(2, '0');
+    const key = `${selectedMonth}-${d}`;
+    return { day: i + 1, total: dailyTotals[key] || 0 };
+  });
+  const maxDay = Math.max(...days.map(d => d.total), 1);
+  const svgH = 160, svgW = 700, padX = 30, padY = 20;
+  const pts = days.map((d, i) => {
+    const x = padX + (i / (days.length - 1)) * (svgW - padX * 2);
+    const y = svgH - padY - (d.total / maxDay) * (svgH - padY * 2);
+    return `${x},${y}`;
+  }).join(' ');
+  const areaPoints = days.map((d, i) => {
+    const x = padX + (i / (days.length - 1)) * (svgW - padX * 2);
+    const y = svgH - padY - (d.total / maxDay) * (svgH - padY * 2);
+    return `${x},${y}`;
+  });
+  const firstX = padX, lastX = padX + (days.length - 1) / (days.length - 1) * (svgW - padX * 2);
+  const areaPath = `M${firstX},${svgH - padY} ${areaPoints.join(' ')} L${lastX},${svgH - padY} Z`;
+
+  document.getElementById('dailySvg').innerHTML = `
+    <svg viewBox="0 0 ${svgW} ${svgH}" width="100%" height="100%">
+      <path d="${areaPath}" fill="var(--accent)" opacity="0.08"/>
+      <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+      ${days.map((d, i) => {
+        if (!d.total) return '';
+        const x = padX + (i / (days.length - 1)) * (svgW - padX * 2);
+        const y = svgH - padY - (d.total / maxDay) * (svgH - padY * 2);
+        return `<circle cx="${x}" cy="${y}" r="3.5" fill="var(--accent)"
+          data-tip="Day ${d.day}: ₩${fmt(d.total)}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"/>`;
+      }).join('')}
+      <line x1="${padX}" y1="${svgH - padY}" x2="${svgW - padX}" y2="${svgH - padY}" stroke="var(--border)" stroke-width="1"/>
+      <text x="${padX}" y="${svgH - 4}" fill="var(--muted)" font-size="10">1</text>
+      <text x="${svgW - padX}" y="${svgH - 4}" fill="var(--muted)" font-size="10">${daysInMonth}</text>
+    </svg>`;
+
+  // Donut breakdown for selected month
+  const catAgg = {};
+  txs.forEach(t => catAgg[t.category] = (catAgg[t.category] || 0) + t.amountKRW);
+  const catData = Object.entries(catAgg).map(([cat, amt]) => ({ cat, amt, color: CAT_COLORS[cat] || '#64748b' }));
+  buildDonut(catData, total, 'monthlyCatsDonut', 70);
+
+  // Stacked horizontal bars for all months
+  const allMonths = getMonths();
+  const cats = [...new Set(getExpenses().map(t => t.category))].filter(c => c !== 'Income');
+  const monthCatTotals = {};
+  getExpenses().forEach(t => {
+    const m = t.date.slice(0, 7);
+    if (!monthCatTotals[m]) monthCatTotals[m] = {};
+    monthCatTotals[m][t.category] = (monthCatTotals[m][t.category] || 0) + t.amountKRW;
+  });
+  const stackMax = Math.max(...allMonths.map(m => Object.values(monthCatTotals[m] || {}).reduce((s, v) => s + v, 0)), 1);
+
+  document.getElementById('stackedBars').innerHTML = allMonths.map(m => {
+    const mData = monthCatTotals[m] || {};
+    const mTotal = Object.values(mData).reduce((s, v) => s + v, 0);
+    const barW = Math.round(mTotal / stackMax * 100);
+    const isSelected = m === selectedMonth;
+    const segs = cats.map(cat => {
+      const pct = mTotal > 0 ? (mData[cat] || 0) / mTotal * 100 : 0;
+      return pct > 0.5
+        ? `<div class="stacked-seg" style="width:${pct}%;background:${CAT_COLORS[cat] || '#64748b'}"
+            data-tip="${cat}: ₩${fmt(mData[cat] || 0)}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>`
+        : '';
+    }).join('');
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="font-size:11px;color:${isSelected ? 'var(--text)' : 'var(--muted)'};min-width:52px;font-weight:${isSelected ? '600' : '400'}">${monthLabel(m)}</div>
+      <div style="flex:1;background:var(--surface2);border-radius:6px;overflow:hidden;height:22px">
+        <div style="display:flex;width:${barW}%;height:100%">${segs}</div>
+      </div>
+      <div style="font-size:11px;color:${isSelected ? 'var(--text)' : 'var(--muted)'};min-width:64px;text-align:right">₩${fmtShort(mTotal)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── CATEGORIES ────────────────────────────────────────────────────────────────
+function renderCategories() {
+  const expenses = getExpenses();
+  const catTotals = {};
+  expenses.forEach(t => catTotals[t.category] = (catTotals[t.category] || 0) + t.amountKRW);
+  const total = expenses.reduce((s, t) => s + t.amountKRW, 0);
+  const sorted = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+
+  document.getElementById('allCatsList').innerHTML = sorted.map(([cat, amt]) => {
+    const pct = total > 0 ? Math.round(amt / total * 100) : 0;
+    const color = CAT_COLORS[cat] || '#64748b';
+    return `<div class="cat-row" style="cursor:pointer" onclick="selectCat('${cat}')">
+      <div class="cat-dot" style="background:${color}"></div>
+      <div class="cat-name">${CAT_ICONS[cat]||''} ${cat}</div>
+      <div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="cat-amount">₩${fmt(amt)}</div>
+      <div class="cat-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('catTrendSelect').innerHTML = sorted.map(([cat]) =>
+    `<button onclick="selectCat('${cat}')" style="padding:4px 10px;border-radius:20px;border:1px solid ${cat===selectedCat?CAT_COLORS[cat]:'var(--border)'};background:${cat===selectedCat?(CAT_COLORS[cat]+'22'):'var(--surface2)'};color:${cat===selectedCat?CAT_COLORS[cat]:'var(--muted)'};font-size:11px;cursor:pointer;margin:2px">${CAT_ICONS[cat]||''} ${cat}</button>`
+  ).join('');
+
+  renderCatTrend();
+
+  // Monthly comparison table
+  const months = getMonths();
+  const cats = sorted.map(([c]) => c);
+  const monthCatTotals = {};
+  expenses.forEach(t => {
+    const m = t.date.slice(0, 7);
+    if (!monthCatTotals[m]) monthCatTotals[m] = {};
+    monthCatTotals[m][t.category] = (monthCatTotals[m][t.category] || 0) + t.amountKRW;
+  });
+  document.getElementById('catMonthTable').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead><tr>
+        <th style="text-align:left;padding:7px 8px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">Category</th>
+        ${months.map(m => `<th style="text-align:right;padding:7px 8px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap">${monthLabel(m)}</th>`).join('')}
+      </tr></thead>
+      <tbody>${cats.map(cat => `
+        <tr>
+          <td style="padding:7px 8px;border-bottom:1px solid rgba(46,51,80,0.3)">
+            <span style="color:${CAT_COLORS[cat]||'#64748b'}">${CAT_ICONS[cat]||''}</span> ${cat}
+          </td>
+          ${months.map(m => {
+            const v = monthCatTotals[m]?.[cat] || 0;
+            return `<td style="text-align:right;padding:7px 8px;border-bottom:1px solid rgba(46,51,80,0.3);color:${v>0?'var(--text)':'var(--muted)'}">${v > 0 ? '₩' + fmtShort(v) : '—'}</td>`;
+          }).join('')}
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function selectCat(cat) {
+  selectedCat = cat;
+  renderCategories();
+}
+
+function renderCatTrend() {
+  const months = getMonths();
+  const monthTotals = months.map(m => ({
+    m,
+    total: txForMonth(m).filter(t => t.category === selectedCat).reduce((s, t) => s + t.amountKRW, 0)
+  }));
+  const maxVal = Math.max(...monthTotals.map(x => x.total), 1);
+  const color = CAT_COLORS[selectedCat] || '#64748b';
+
+  if (monthTotals.length < 2) {
+    document.getElementById('catTrendChart').innerHTML = '<div class="empty">Not enough data</div>';
+    return;
+  }
+
+  const svgH = 130, svgW = 500, padX = 24, padY = 18;
+  const pts = monthTotals.map(({ total }, i) => {
+    const x = padX + (i / (monthTotals.length - 1)) * (svgW - padX * 2);
+    const y = svgH - padY - (total / maxVal) * (svgH - padY * 2);
+    return `${x},${y}`;
+  });
+  const firstX = padX, lastX = padX + (monthTotals.length - 1) / (monthTotals.length - 1) * (svgW - padX * 2);
+  const areaPath = `M${firstX},${svgH - padY} ${pts.join(' ')} L${lastX},${svgH - padY} Z`;
+
+  document.getElementById('catTrendChart').innerHTML = `
+    <svg viewBox="0 0 ${svgW} ${svgH}" width="100%" height="${svgH}">
+      <path d="${areaPath}" fill="${color}" opacity="0.1"/>
+      <polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>
+      ${monthTotals.map(({ m, total }, i) => {
+        const x = padX + (i / (monthTotals.length - 1)) * (svgW - padX * 2);
+        const y = svgH - padY - (total / maxVal) * (svgH - padY * 2);
+        return `<circle cx="${x}" cy="${y}" r="4" fill="${color}"
+          data-tip="${monthLabel(m)}: ₩${fmt(total)}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"/>
+          <text x="${x}" y="${svgH - 4}" text-anchor="middle" fill="var(--muted)" font-size="9">${monthLabel(m)}</text>`;
+      }).join('')}
+      <line x1="${padX}" y1="${svgH - padY}" x2="${svgW - padX}" y2="${svgH - padY}" stroke="var(--border)" stroke-width="1"/>
+    </svg>`;
+}
+
+// ── MERCHANTS ─────────────────────────────────────────────────────────────────
+function renderMerchants() {
+  const expenses = getExpenses();
+  const m = {};
+  expenses.forEach(t => {
+    if (!m[t.merchant]) m[t.merchant] = { total: 0, count: 0, cat: t.category };
+    m[t.merchant].total += t.amountKRW;
+    m[t.merchant].count++;
+  });
+  const byTotal = Object.entries(m).sort((a, b) => b[1].total - a[1].total).slice(0, 15);
+  const byFreq = Object.entries(m).sort((a, b) => b[1].count - a[1].count).slice(0, 15);
+
+  const renderList = items => items.map(([name, data], i) => `
+    <div class="merch-row">
+      <div class="merch-rank">${i + 1}</div>
+      <div style="width:8px;height:8px;border-radius:50%;background:${CAT_COLORS[data.cat]||'#64748b'};flex-shrink:0"></div>
+      <div class="merch-name">${esc(name)}</div>
+      <div class="merch-count">${data.count}x</div>
+      <div class="merch-amt">₩${fmtShort(data.total)}</div>
+    </div>`).join('');
+
+  document.getElementById('topMerchantsList').innerHTML = renderList(byTotal);
+  document.getElementById('freqMerchantsList').innerHTML = renderList(byFreq);
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────────
+function renderHeatmap() {
+  const expenses = getExpenses();
+  const dailyTotals = {};
+  expenses.forEach(t => dailyTotals[t.date] = (dailyTotals[t.date] || 0) + t.amountKRW);
+
+  const dates = Object.keys(dailyTotals).sort();
+  if (!dates.length) {
+    document.getElementById('heatmapWrap').innerHTML = '<div class="empty">No data</div>';
+    return;
+  }
+
+  const start = new Date(dates[0] + 'T00:00:00');
+  const end = new Date(dates[dates.length - 1] + 'T00:00:00');
+  const maxVal = Math.max(...Object.values(dailyTotals));
+
+  const startPad = start.getDay();
+  const cells = [];
+  for (let i = 0; i < startPad; i++) cells.push(null);
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const key = d.toISOString().split('T')[0];
+    cells.push({ date: key, total: dailyTotals[key] || 0 });
+  }
+
+  const getColor = total => {
+    if (!total) return 'var(--surface2)';
+    const i = total / maxVal;
+    if (i < 0.2) return '#1e3a5f';
+    if (i < 0.4) return '#1e4e8c';
+    if (i < 0.6) return '#2563eb';
+    if (i < 0.8) return '#6c8aff';
+    return '#a5b4fc';
+  };
+
+  document.getElementById('heatLegend').innerHTML = [0, 0.2, 0.4, 0.6, 0.8, 1].map(v =>
+    `<div style="width:16px;height:16px;border-radius:3px;background:${getColor(v * maxVal)}"></div>`).join('');
+
+  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  let html = `<div style="display:flex;gap:2px;margin-bottom:4px">` +
+    dayLabels.map(d => `<div style="font-size:10px;color:var(--muted);width:16px;text-align:center">${d}</div>`).join('') + `</div>`;
+
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+
+  html += `<div style="display:flex;gap:2px;overflow-x:auto">`;
+  weeks.forEach(week => {
+    html += `<div style="display:flex;flex-direction:column;gap:2px">`;
+    week.forEach(cell => {
+      if (!cell) {
+        html += `<div style="width:16px;height:16px;border-radius:3px"></div>`;
+      } else {
+        html += `<div style="width:16px;height:16px;border-radius:3px;background:${getColor(cell.total)};cursor:pointer;position:relative"
+          data-tip="${cell.date}: ₩${fmt(cell.total)}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>`;
+      }
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+  document.getElementById('heatmapWrap').innerHTML = html;
+
+  // Day of week
+  const dowTotals = Array(7).fill(0), dowCounts = Array(7).fill(0);
+  expenses.forEach(t => {
+    const dow = new Date(t.date + 'T00:00:00').getDay();
+    dowTotals[dow] += t.amountKRW;
+    dowCounts[dow]++;
+  });
+  const dowAvg = dowTotals.map((t, i) => dowCounts[i] ? Math.round(t / dowCounts[i]) : 0);
+  const dowMax = Math.max(...dowAvg, 1);
+  document.getElementById('dowChart').innerHTML = `<div style="display:flex;align-items:flex-end;gap:8px;height:130px;padding-top:10px">` +
+    DAYS_EN.map((d, i) => {
+      const h = Math.round(dowAvg[i] / dowMax * 100);
+      return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px;height:100%;justify-content:flex-end">
+        <div style="font-size:9px;color:var(--muted)">₩${fmtShort(dowAvg[i])}</div>
+        <div style="width:100%;height:${h}%;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px"
+          data-tip="${d}: avg ₩${fmt(dowAvg[i])}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>
+        <div style="font-size:11px;color:var(--muted)">${d}</div>
+      </div>`;
+    }).join('') + `</div>`;
+
+  // Day of month
+  const domTotals = Array(31).fill(0), domCounts = Array(31).fill(0);
+  expenses.forEach(t => {
+    const dom = parseInt(t.date.slice(8, 10)) - 1;
+    domTotals[dom] += t.amountKRW;
+    domCounts[dom]++;
+  });
+  const domAvg = domTotals.map((t, i) => domCounts[i] ? Math.round(t / domCounts[i]) : 0);
+  const domMax = Math.max(...domAvg, 1);
+  document.getElementById('domChart').innerHTML = `<div style="display:flex;align-items:flex-end;gap:2px;height:130px;padding-top:10px">` +
+    domAvg.map((avg, i) => {
+      const h = Math.round(avg / domMax * 100);
+      return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:2px;height:100%;justify-content:flex-end">
+        <div style="width:100%;height:${h}%;background:var(--accent2);border-radius:3px 3px 0 0;min-height:${avg > 0 ? 2 : 0}px"
+          data-tip="Day ${i + 1}: avg ₩${fmt(avg)}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>
+        ${(i + 1) % 5 === 0 ? `<div style="font-size:9px;color:var(--muted)">${i + 1}</div>` : '<div style="height:12px"></div>'}
+      </div>`;
+    }).join('') + `</div>`;
+}
+
+// ── Tooltip ───────────────────────────────────────────────────────────────────
+function showTip(e, el) {
+  const tip = document.getElementById('tooltip');
+  tip.textContent = el.dataset.tip;
+  tip.style.display = 'block';
+  tip.style.left = (e.clientX + 12) + 'px';
+  tip.style.top = (e.clientY - 32) + 'px';
+}
+function hideTip() { document.getElementById('tooltip').style.display = 'none'; }
+
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.4)';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The EDGE Health</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='10' fill='%231a1a2e'/><text x='16' y='23' font-size='18' text-anchor='middle' font-family='sans-serif' fill='white'>H</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#f8f9fc;
+  --white:#fff;
+  --white-soft:#f3f4f8;
+  --text:#111827;
+  --text-2:#6b7280;
+  --text-3:#9ca3af;
+  --border:rgba(0,0,0,0.06);
+  --border-med:#e5e7eb;
+  --sidebar-bg:#1a1a2e;
+  --sidebar-hover:rgba(255,255,255,0.07);
+  --sidebar-active:rgba(14,165,233,0.24);
+  --sidebar-text:rgba(255,255,255,0.55);
+  --sidebar-text-hi:rgba(255,255,255,0.90);
+  --accent:#0ea5e9;
+  --accent-dark:#0369a1;
+  --accent-dim:rgba(14,165,233,0.10);
+  --accent-light:#e0f2fe;
+  --green:#10b981;
+  --green-light:#ecfdf5;
+  --orange:#f97316;
+  --orange-light:#fff7ed;
+  --red:#ef4444;
+  --red-light:#fef2f2;
+  --purple:#7c3aed;
+  --purple-light:#f5f3ff;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --shadow:0 4px 6px rgba(0,0,0,0.07),0 2px 4px rgba(0,0,0,0.05);
+  --radius-sm:8px;
+  --radius:10px;
+  --radius-lg:14px;
+  --radius-xl:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font-family:'Inter','Manrope',system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+.icon{font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;line-height:1;display:inline-block;vertical-align:middle;user-select:none}
+.icon.fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#d0d7e3;border-radius:99px}
+#app{display:flex;min-height:100vh}
+#sidebar{width:256px;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;padding:24px 20px 20px;z-index:50}
+.sidebar-brand{margin-bottom:32px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.nav-group{display:flex;flex-direction:column;gap:1px;flex:1}
+.nav-section-label{font-size:9.5px;font-weight:700;color:rgba(255,255,255,0.25);letter-spacing:.10em;text-transform:uppercase;padding:4px 14px 2px;margin-bottom:2px;margin-top:20px}
+.nav-section-label:first-of-type{margin-top:0}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:none;background:transparent;color:var(--sidebar-text);font-size:13.5px;font-weight:500;font-family:inherit;cursor:pointer;width:100%;text-align:left;transition:background .18s,color .18s;text-decoration:none}
+.nav-item .icon{font-size:19px;color:inherit;flex-shrink:0}
+.nav-item:hover{background:var(--sidebar-hover);color:var(--sidebar-text-hi)}
+.nav-item.active{background:var(--sidebar-active);color:#fff}
+.nav-item.active .icon{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+.sidebar-footer{margin-top:20px;display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(255,255,255,0.07);padding-top:16px}
+#main{margin-left:256px;flex:1;min-height:100vh}
+.view{display:none;padding:28px 32px 80px;max-width:1180px}
+.view.active{display:block}
+.page-header{margin-bottom:28px}
+.page-date{font-size:12px;font-weight:500;color:var(--text-3);margin-bottom:4px}
+.page-title{font-size:28px;font-weight:800;color:var(--text);letter-spacing:-.02em;line-height:1.2}
+.page-sub{font-size:14px;color:var(--text-2);margin-top:4px}
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
+.card-pad{padding:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;transition:transform .18s,box-shadow .18s,background .18s,border-color .18s}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#22c55e);color:#fff;box-shadow:0 4px 12px rgba(14,165,233,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(14,165,233,.38)}
+.btn-secondary{background:#fff;color:#374151;border:1.5px solid var(--border-med)}
+.btn-secondary:hover{background:var(--white-soft);border-color:#d1d5db}
+.btn-ghost{background:transparent;color:var(--text-2)}
+.btn-ghost:hover{background:var(--white-soft);color:var(--text)}
+.btn-danger{background:var(--red-light);color:#dc2626}
+.btn-sm{padding:8px 14px;font-size:12px}
+.btn-icon{width:36px;height:36px;padding:0;border-radius:10px;border:1.5px solid var(--border-med);background:#fff;color:var(--text-2)}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.stat-card{background:#fff;border-radius:14px;padding:18px;border:1px solid var(--border);box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--accent),#22c55e)}
+.stat-label{font-size:12px;font-weight:600;color:var(--text-2)}
+.stat-value{font-size:28px;font-weight:800;letter-spacing:-.03em;margin-top:3px}
+.stat-sub{font-size:11px;color:var(--text-3);font-weight:600;margin-top:1px}
+.hero-card{background:linear-gradient(135deg,#0f172a,#0b4a6f 58%,#065f46);border-radius:18px;overflow:hidden;color:#fff;box-shadow:var(--shadow);position:relative}
+.hero-card::after{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+.hero-content{position:relative;z-index:1;padding:24px;display:grid;grid-template-columns:1.2fr .8fr;gap:22px;align-items:center}
+.readiness-ring{width:148px;height:148px;margin-left:auto;position:relative}
+.readiness-ring svg{width:148px;height:148px;transform:rotate(-90deg)}
+.readiness-ring .label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:800}
+.badge-blue{background:var(--accent-light);color:var(--accent-dark)}
+.badge-green{background:var(--green-light);color:#059669}
+.badge-orange{background:var(--orange-light);color:#ea580c}
+.badge-red{background:var(--red-light);color:#dc2626}
+.badge-purple{background:var(--purple-light);color:var(--purple)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:12px;padding:4px;width:max-content;box-shadow:var(--shadow-sm);margin-bottom:20px}
+.tab{border:none;background:transparent;padding:8px 14px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-2);cursor:pointer}
+.tab.active{background:var(--accent-light);color:var(--accent-dark)}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+input,select,textarea{font-family:inherit;font-size:14px;border:1.5px solid var(--border-med);border-radius:10px;background:#f9fafb;color:var(--text);padding:10px 12px;outline:none;width:100%}
+textarea{resize:vertical;min-height:74px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.range-row{display:flex;gap:6px;align-items:center}
+.range-row input[type=range]{padding:0;accent-color:var(--accent)}
+.score-pill{width:36px;height:32px;border-radius:9px;background:var(--accent-light);color:var(--accent-dark);display:flex;align-items:center;justify-content:center;font-weight:800}
+.habit-list{display:flex;flex-direction:column;gap:8px}
+.habit-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:#f9fafb;border:1px solid var(--border)}
+.habit-row input{width:18px;height:18px;accent-color:var(--accent)}
+.habit-row.done{background:var(--green-light);border-color:rgba(16,185,129,.22)}
+.habit-row .name{font-weight:700;flex:1}
+.habit-row .meta{font-size:12px;color:var(--text-2)}
+.routine-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.trend-bars{display:flex;align-items:flex-end;gap:8px;height:180px;padding:16px 4px 2px}
+.trend-bar{flex:1;min-width:24px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,var(--accent),#22c55e);position:relative;display:flex;align-items:flex-end;justify-content:center}
+.trend-bar span{position:absolute;bottom:-22px;font-size:10px;font-weight:700;color:var(--text-3)}
+.mini-list{display:flex;flex-direction:column;gap:10px}
+.mini-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.mini-item strong{font-size:13px}
+.mini-item small{display:block;color:var(--text-2);font-size:12px;margin-top:2px}
+.empty{padding:40px 20px;text-align:center;color:var(--text-2)}
+.toast{position:fixed;right:24px;bottom:24px;background:#111827;color:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(0,0,0,.22);font-size:13px;font-weight:700;display:none;z-index:100}
+.hidden-file{display:none}
+@media (max-width:900px){
+  #sidebar{position:static;width:100%;height:auto}
+  #app{display:block}
+  #main{margin-left:0}
+  .view{padding:22px 18px 70px}
+  .grid-4,.grid-3,.grid-2,.form-grid,.hero-content{grid-template-columns:1fr}
+  .readiness-ring{margin:0 auto}
+}
+@media (max-width:600px){
+  .tabs{width:100%}
+  .tab{flex:1}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div style="display:flex;align-items:baseline;gap:0;line-height:1;margin-bottom:2px">
+      <span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;color:#ffffff;line-height:1">EDG</span><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;background:linear-gradient(135deg,#38bdf8,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1">E</span><span style="font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;color:rgba(255,255,255,0.25);line-height:1">x</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:rgba(14,165,233,0.25)">
+        <span class="icon" style="font-size:12px;color:#7dd3fc;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">monitor_heart</span>
+      </span>
+      <span style="font-family:'Inter',sans-serif;font-weight:700;font-size:11px;letter-spacing:0.04em;color:rgba(255,255,255,0.70)">EDGE Health</span>
+    </div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-section-label">Main</div>
+    <button class="nav-item active" id="nav-today" onclick="nav('today')"><span class="icon">today</span>Today</button>
+    <button class="nav-item" id="nav-log" onclick="nav('log')"><span class="icon">edit_note</span>Daily Log</button>
+    <button class="nav-item" id="nav-routines" onclick="nav('routines')"><span class="icon">repeat</span>Routines</button>
+    <button class="nav-item" id="nav-trends" onclick="nav('trends')"><span class="icon">query_stats</span>Trends</button>
+    <button class="nav-item" id="nav-settings" onclick="nav('settings')"><span class="icon">tune</span>Settings</button>
+  </div>
+  <div class="sidebar-footer">
+    <button onclick="nav('log')" class="btn btn-primary" style="width:100%"><span class="icon" style="font-size:17px">add</span>Log Today</button>
+    <a href="index.html" class="nav-item" style="justify-content:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);font-size:11.5px"><span class="icon" style="font-size:14px">apps</span>Switch module</a>
+  </div>
+</nav>
+
+<main id="main">
+  <section id="view-today" class="view active">
+    <div class="page-header">
+      <div class="page-date" id="today-date">Today</div>
+      <h1 class="page-title">Health Dashboard</h1>
+      <p class="page-sub">The body layer of your Life OS.</p>
+    </div>
+    <div class="hero-card" style="margin-bottom:18px">
+      <div class="hero-content">
+        <div>
+          <div class="badge badge-blue" style="margin-bottom:12px"><span class="icon" style="font-size:14px">monitor_heart</span>Readiness</div>
+          <h2 style="font-size:26px;line-height:1.15;letter-spacing:-.03em;margin-bottom:8px" id="readiness-title">Ready to move well</h2>
+          <p style="color:rgba(255,255,255,.68);max-width:560px" id="readiness-copy">Log sleep, movement, hydration, and energy to see the signal.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px" id="today-actions"></div>
+        </div>
+        <div class="readiness-ring">
+          <svg viewBox="0 0 148 148">
+            <circle cx="74" cy="74" r="60" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="12"/>
+            <circle id="readiness-ring" cx="74" cy="74" r="60" fill="none" stroke="#7dd3fc" stroke-width="12" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="377"/>
+          </svg>
+          <div class="label">
+            <div style="font-size:34px;font-weight:800;letter-spacing:-.04em" id="readiness-score">--</div>
+            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.50);letter-spacing:.08em;text-transform:uppercase">score</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-4" id="today-stats" style="margin-bottom:18px"></div>
+    <div class="grid-2">
+      <div class="card card-pad">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <h2 style="font-size:16px;font-weight:800">Today Routines</h2>
+            <p style="font-size:12px;color:var(--text-2)">Small repeatable behaviors.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="nav('routines')"><span class="icon" style="font-size:15px">tune</span>Edit</button>
+        </div>
+        <div class="habit-list" id="today-habits"></div>
+      </div>
+      <div class="card card-pad">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <h2 style="font-size:16px;font-weight:800">Recent Logs</h2>
+            <p style="font-size:12px;color:var(--text-2)">Last seven entries.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="nav('trends')"><span class="icon" style="font-size:15px">query_stats</span>Trends</button>
+        </div>
+        <div class="mini-list" id="recent-logs"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-log" class="view">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+      <div class="page-header" style="margin-bottom:0">
+        <div class="page-date">Daily body log</div>
+        <h1 class="page-title">Log Health</h1>
+        <p class="page-sub">Capture the signals that affect your energy and execution.</p>
+      </div>
+      <button class="btn btn-secondary" onclick="loadTodayIntoForm()"><span class="icon" style="font-size:17px">refresh</span>Reload Today</button>
+    </div>
+    <div class="card card-pad">
+      <div class="form-grid">
+        <div class="field"><label>Date</label><input id="log-date" type="date"/></div>
+        <div class="field"><label>Sleep Hours</label><input id="sleep-hours" type="number" min="0" max="16" step="0.25" placeholder="7.5"/></div>
+        <div class="field"><label>Steps</label><input id="steps" type="number" min="0" step="100" placeholder="8000"/></div>
+        <div class="field"><label>Weight</label><input id="weight" type="number" min="0" step="0.1" placeholder="optional"/></div>
+      </div>
+      <div class="form-grid" style="margin-top:14px">
+        <div class="field"><label>Exercise Minutes</label><input id="exercise-mins" type="number" min="0" step="5" placeholder="30"/></div>
+        <div class="field"><label>Exercise Type</label><select id="exercise-type"><option value="">None</option><option>Walk</option><option>Run</option><option>Strength</option><option>Mobility</option><option>Sport</option><option>Other</option></select></div>
+        <div class="field"><label>Water</label><input id="water" type="number" min="0" step="1" placeholder="oz or cups"/></div>
+        <div class="field"><label>Nutrition</label><select id="nutrition"><option value="">Not logged</option><option value="1">Poor</option><option value="2">Light</option><option value="3">Good</option><option value="4">Strong</option><option value="5">Excellent</option></select></div>
+      </div>
+      <div class="grid-3" style="margin-top:16px">
+        <div class="field">
+          <label>Energy</label>
+          <div class="range-row"><input id="energy" type="range" min="1" max="5" value="3" oninput="syncRangeLabel('energy')"/><div class="score-pill" id="energy-label">3</div></div>
+        </div>
+        <div class="field">
+          <label>Sleep Quality</label>
+          <div class="range-row"><input id="sleep-quality" type="range" min="1" max="5" value="3" oninput="syncRangeLabel('sleep-quality')"/><div class="score-pill" id="sleep-quality-label">3</div></div>
+        </div>
+        <div class="field">
+          <label>Pain / Strain</label>
+          <div class="range-row"><input id="pain" type="range" min="0" max="5" value="0" oninput="syncRangeLabel('pain')"/><div class="score-pill" id="pain-label">0</div></div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:16px">
+        <label>Notes</label>
+        <textarea id="notes" placeholder="Anything physical worth remembering: soreness, meal timing, caffeine, illness, recovery, training context."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+        <button class="btn btn-primary" onclick="saveLog()"><span class="icon" style="font-size:17px">save</span>Save Log</button>
+        <button class="btn btn-danger" onclick="deleteLog()"><span class="icon" style="font-size:17px">delete</span>Delete This Date</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-routines" class="view">
+    <div class="page-header">
+      <div class="page-date">Health operating rhythm</div>
+      <h1 class="page-title">Routines</h1>
+      <p class="page-sub">Define the repeatable behaviors that keep your body online.</p>
+    </div>
+    <div class="grid-2">
+      <div class="card card-pad">
+        <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">Routine Library</h2>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">These appear on Today as checkable items.</p>
+        <div class="habit-list" id="routine-list"></div>
+        <div class="routine-actions">
+          <input id="new-routine" type="text" placeholder="Add routine, e.g. 10 min mobility" style="flex:1;min-width:220px"/>
+          <button class="btn btn-primary" onclick="addRoutine()"><span class="icon" style="font-size:17px">add</span>Add</button>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">Targets</h2>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Used to calculate readiness and dashboard progress.</p>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label>Sleep Target</label><input id="target-sleep" type="number" min="1" max="12" step=".25"/></div>
+          <div class="field"><label>Step Target</label><input id="target-steps" type="number" min="1000" step="500"/></div>
+          <div class="field"><label>Water Target</label><input id="target-water" type="number" min="1" step="1"/></div>
+          <div class="field"><label>Weekly Exercise Min</label><input id="target-exercise" type="number" min="0" step="15"/></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="saveSettings()"><span class="icon" style="font-size:17px">save</span>Save Targets</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-trends" class="view">
+    <div class="page-header">
+      <div class="page-date">Signals over time</div>
+      <h1 class="page-title">Trends</h1>
+      <p class="page-sub">See whether the body layer is supporting the rest of the system.</p>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="trend-readiness" onclick="setTrend('readiness')">Readiness</button>
+      <button class="tab" id="trend-sleep" onclick="setTrend('sleep')">Sleep</button>
+      <button class="tab" id="trend-steps" onclick="setTrend('steps')">Steps</button>
+      <button class="tab" id="trend-exercise" onclick="setTrend('exercise')">Exercise</button>
+    </div>
+    <div class="card card-pad">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px">
+        <div>
+          <h2 style="font-size:16px;font-weight:800" id="trend-title">Readiness</h2>
+          <p style="font-size:12px;color:var(--text-2)" id="trend-sub">Last 14 logged days.</p>
+        </div>
+        <span class="badge badge-blue" id="trend-average">Avg --</span>
+      </div>
+      <div class="trend-bars" id="trend-bars"></div>
+    </div>
+  </section>
+
+  <section id="view-settings" class="view">
+    <div class="page-header">
+      <div class="page-date">Local-first data</div>
+      <h1 class="page-title">Settings</h1>
+      <p class="page-sub">Your health module stores data in this browser only.</p>
+    </div>
+    <div class="grid-2">
+      <div class="card card-pad">
+        <h2 style="font-size:16px;font-weight:800;margin-bottom:8px">Data Portability</h2>
+        <p style="color:var(--text-2);font-size:13px;margin-bottom:16px">Export a backup or import a previous Health module JSON file.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="exportData()"><span class="icon" style="font-size:17px">download</span>Export</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()"><span class="icon" style="font-size:17px">upload</span>Import</button>
+          <input class="hidden-file" type="file" id="import-file" accept=".json" onchange="importData(this)"/>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <h2 style="font-size:16px;font-weight:800;margin-bottom:8px">Reset</h2>
+        <p style="color:var(--text-2);font-size:13px;margin-bottom:16px">Clear local Health data from this browser.</p>
+        <button class="btn btn-danger" onclick="resetData()"><span class="icon" style="font-size:17px">delete_forever</span>Clear Health Data</button>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'edgex_health_v1';
+const SUMMARY_KEY = 'edgex_health_summary';
+const DAILY_SIGNALS_KEY = 'edgex_daily_signals_v1';
+const SB_URL  = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
+const SB_USER_ID = 'jack_traction_hub_v1';
+
+// ── Auth gate ────────────────────────────────────────────────────
+(function checkAuth() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (!s.access_token || s.expires_at <= Math.floor(Date.now() / 1000)) {
+      window.location.href = 'login.html';
+    }
+  } catch(e) { window.location.href = 'login.html'; }
+})();
+const DEFAULTS = {
+  settings: { sleepTarget: 7.5, stepTarget: 10000, waterTarget: 68, weeklyExerciseTarget: 150 },
+  routines: [
+    { id: 'morning-walk', name: 'Morning walk', meta: '10+ minutes outside' },
+    { id: 'mobility', name: 'Mobility reset', meta: 'hips, back, neck' },
+    { id: 'protein', name: 'Protein-forward meal', meta: 'anchor one meal' },
+    { id: 'shutdown', name: 'Sleep shutdown', meta: 'screens down, room ready' }
+  ],
+  logs: {},
+  checks: {}
+};
+let db = clone(DEFAULTS);
+let currentView = 'today';
+let trendMetric = 'readiness';
+
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+function fmtDate(str){ return new Date(str + 'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
+async function pushKeysToSupabase(keys) {
+  const rows = keys.map(key => {
+    let value;
+    try { value = JSON.parse(localStorage.getItem(key)); } catch(e) { value = localStorage.getItem(key); }
+    return { user_id: SB_USER_ID, key, value, updated_at: new Date().toISOString() };
+  }).filter(r => r.value !== null);
+  if (!rows.length) return;
+  try {
+    await fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
+      method: 'POST',
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows })
+    });
+  } catch(e) { console.warn('[Health] Supabase push failed', e); }
+}
+async function syncFromSupabase() {
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&select=key,value,updated_at`, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
+    });
+    if (!res.ok) return;
+    const keys = new Set([STORAGE_KEY, SUMMARY_KEY, DAILY_SIGNALS_KEY]);
+    const rows = await res.json();
+    rows.forEach(({ key, value }) => {
+      if (keys.has(key)) localStorage.setItem(key, JSON.stringify(value));
+    });
+  } catch(e) { console.warn('[Health] Supabase sync failed', e); }
+}
+function getDailySignals() {
+  try { return JSON.parse(localStorage.getItem(DAILY_SIGNALS_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function getSignal(date = todayStr()) { return getDailySignals()[date] || {}; }
+function updateDailySignal(date, patch) {
+  const all = getDailySignals();
+  patch = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== null && v !== ''));
+  all[date] = { ...(all[date] || {}), ...patch, updatedAt: new Date().toISOString() };
+  localStorage.setItem(DAILY_SIGNALS_KEY, JSON.stringify(all));
+  pushKeysToSupabase([DAILY_SIGNALS_KEY]);
+}
+function loadData(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return clone(DEFAULTS);
+    const parsed = JSON.parse(raw);
+    return {
+      settings: { ...DEFAULTS.settings, ...(parsed.settings || {}) },
+      routines: parsed.routines || clone(DEFAULTS.routines),
+      logs: parsed.logs || {},
+      checks: parsed.checks || {}
+    };
+  } catch(e) { return clone(DEFAULTS); }
+}
+function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); writeSummary(); pushKeysToSupabase([STORAGE_KEY, SUMMARY_KEY]); }
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>el.style.display='none', 2200);
+}
+function nav(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-' + view)?.classList.add('active');
+  document.getElementById('nav-' + view)?.classList.add('active');
+  currentView = view;
+  if (view === 'today') renderToday();
+  if (view === 'log') loadTodayIntoForm();
+  if (view === 'routines') renderRoutines();
+  if (view === 'trends') renderTrends();
+  if (view === 'settings') renderSettings();
+}
+function getLog(date = todayStr()){
+  const log = db.logs[date] || {};
+  const signal = getSignal(date);
+  const merged = {
+    ...log,
+    steps: signal.steps ?? log.steps,
+    water: signal.waterOz ?? log.water,
+    sleepHours: signal.sleepHours ?? log.sleepHours,
+    exerciseMins: signal.exerciseMins ?? log.exerciseMins,
+    weight: signal.weight ?? log.weight
+  };
+  return Object.keys(merged).length ? merged : null;
+}
+function readiness(log){
+  if (!log) return null;
+  const s = db.settings;
+  const sleep = Math.min(100, ((parseFloat(log.sleepHours) || 0) / s.sleepTarget) * 100);
+  const steps = Math.min(100, ((parseInt(log.steps) || 0) / s.stepTarget) * 100);
+  const water = Math.min(100, ((parseFloat(log.water) || 0) / s.waterTarget) * 100);
+  const energy = ((parseInt(log.energy) || 3) / 5) * 100;
+  const quality = ((parseInt(log.sleepQuality) || 3) / 5) * 100;
+  const painPenalty = (parseInt(log.pain) || 0) * 7;
+  return Math.max(0, Math.min(100, Math.round((sleep*.28)+(steps*.18)+(water*.14)+(energy*.22)+(quality*.18)-painPenalty)));
+}
+function readinessLabel(score){
+  if (score == null) return ['Log today to see readiness','Capture your first health signal for today.'];
+  if (score >= 85) return ['Strong body signal','Good day for challenging work, training, and momentum.'];
+  if (score >= 70) return ['Steady and capable','Keep the plan realistic and protect the basics.'];
+  if (score >= 50) return ['Proceed with care','Bias toward lighter training, recovery, and simple wins.'];
+  return ['Recovery priority','Make sleep, hydration, and low-friction movement the mission.'];
+}
+function setRing(score){
+  const circle = document.getElementById('readiness-ring');
+  const val = score == null ? 0 : score;
+  circle.style.transition = 'stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)';
+  circle.style.strokeDashoffset = 377 * (1 - val / 100);
+  circle.style.stroke = val >= 80 ? '#34d399' : val >= 60 ? '#7dd3fc' : val >= 40 ? '#fb923c' : '#f87171';
+}
+function renderToday(){
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const log = getLog();
+  const score = readiness(log);
+  const [title, copy] = readinessLabel(score);
+  document.getElementById('readiness-title').textContent = title;
+  document.getElementById('readiness-copy').textContent = copy;
+  document.getElementById('readiness-score').textContent = score == null ? '--' : score;
+  setRing(score);
+  const s = db.settings;
+  const steps = log?.steps || 0;
+  const sleep = log?.sleepHours || 0;
+  const water = log?.water || 0;
+  const exercise = log?.exerciseMins || 0;
+  document.getElementById('today-stats').innerHTML = [
+    stat('Sleep', sleep ? sleep + 'h' : '--', s.sleepTarget + 'h target', sleep >= s.sleepTarget ? 'badge-green' : 'badge-blue'),
+    stat('Steps', steps ? Number(steps).toLocaleString() : '--', Math.round((steps / s.stepTarget) * 100 || 0) + '% of target', steps >= s.stepTarget ? 'badge-green' : 'badge-blue'),
+    stat('Water', water ? water : '--', s.waterTarget + ' target', water >= s.waterTarget ? 'badge-green' : 'badge-blue'),
+    stat('Exercise', exercise ? exercise + 'm' : '--', weeklyExerciseMinutes() + '/' + s.weeklyExerciseTarget + 'm this week', weeklyExerciseMinutes() >= s.weeklyExerciseTarget ? 'badge-green' : 'badge-blue')
+  ].join('');
+  document.getElementById('today-actions').innerHTML = `<button class="btn btn-primary" onclick="nav('log')"><span class="icon" style="font-size:17px">edit_note</span>${log ? 'Update Today' : 'Log Today'}</button><button class="btn btn-secondary" onclick="nav('trends')"><span class="icon" style="font-size:17px">query_stats</span>View Trends</button>`;
+  renderTodayHabits();
+  renderRecentLogs();
+}
+function stat(label,value,sub,badge){
+  return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></div>`;
+}
+function renderTodayHabits(){
+  const date = todayStr();
+  const checks = db.checks[date] || {};
+  const el = document.getElementById('today-habits');
+  if (!db.routines.length) { el.innerHTML = '<div class="empty">No routines yet.</div>'; return; }
+  el.innerHTML = db.routines.map(r => {
+    const done = !!checks[r.id];
+    return `<label class="habit-row ${done ? 'done' : ''}"><input type="checkbox" ${done ? 'checked' : ''} onchange="toggleRoutine('${r.id}')"/><span class="name">${escapeHTML(r.name)}</span><span class="meta">${escapeHTML(r.meta || '')}</span></label>`;
+  }).join('');
+}
+function toggleRoutine(id){
+  const date = todayStr();
+  db.checks[date] = db.checks[date] || {};
+  db.checks[date][id] = !db.checks[date][id];
+  saveData();
+  renderTodayHabits();
+  toast('Routine updated');
+}
+function renderRecentLogs(){
+  const entries = Object.entries(db.logs).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
+  const el = document.getElementById('recent-logs');
+  if (!entries.length) { el.innerHTML = '<div class="empty">No logs yet. Start with today.</div>'; return; }
+  el.innerHTML = entries.map(([date,log]) => {
+    const score = readiness(log);
+    return `<div class="mini-item"><div><strong>${fmtDate(date)}</strong><small>${log.sleepHours || '--'}h sleep · ${Number(log.steps || 0).toLocaleString()} steps · ${log.exerciseMins || 0}m exercise</small></div><span class="badge ${score >= 80 ? 'badge-green' : score >= 60 ? 'badge-blue' : score >= 40 ? 'badge-orange' : 'badge-red'}">${score}</span></div>`;
+  }).join('');
+}
+function weeklyExerciseMinutes(){
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  start.setHours(0,0,0,0);
+  return Object.entries(db.logs).reduce((sum,[date,log]) => {
+    const d = new Date(date + 'T00:00:00');
+    return d >= start ? sum + (parseInt(log.exerciseMins) || 0) : sum;
+  }, 0);
+}
+function loadTodayIntoForm(){
+  const date = document.getElementById('log-date').value || todayStr();
+  document.getElementById('log-date').value = date;
+  const log = getLog(date) || {};
+  setVal('sleep-hours', log.sleepHours || '');
+  setVal('steps', log.steps || '');
+  setVal('weight', log.weight || '');
+  setVal('exercise-mins', log.exerciseMins || '');
+  setVal('exercise-type', log.exerciseType || '');
+  setVal('water', log.water || '');
+  setVal('nutrition', log.nutrition || '');
+  setVal('energy', log.energy || 3);
+  setVal('sleep-quality', log.sleepQuality || 3);
+  setVal('pain', log.pain || 0);
+  setVal('notes', log.notes || '');
+  ['energy','sleep-quality','pain'].forEach(syncRangeLabel);
+}
+function setVal(id,v){ document.getElementById(id).value = v; }
+function syncRangeLabel(id){ document.getElementById(id + '-label').textContent = document.getElementById(id).value; }
+document.addEventListener('change', e => { if (e.target && e.target.id === 'log-date') loadTodayIntoForm(); });
+function saveLog(){
+  const date = document.getElementById('log-date').value || todayStr();
+  const signalPatch = {
+    sleepHours: numOrNull(val('sleep-hours')),
+    steps: intOrNull(val('steps')),
+    weight: numOrNull(val('weight')),
+    exerciseMins: intOrNull(val('exercise-mins')),
+    waterOz: numOrNull(val('water'))
+  };
+  db.logs[date] = {
+    sleepHours: val('sleep-hours'), steps: val('steps'), weight: val('weight'),
+    exerciseMins: val('exercise-mins'), exerciseType: val('exercise-type'),
+    water: val('water'), nutrition: val('nutrition'), energy: val('energy'),
+    sleepQuality: val('sleep-quality'), pain: val('pain'), notes: val('notes'),
+    savedAt: new Date().toISOString()
+  };
+  updateDailySignal(date, signalPatch);
+  saveData();
+  toast('Health log saved');
+  renderToday();
+}
+function val(id){ return document.getElementById(id).value; }
+function numOrNull(v){ const n = parseFloat(v); return Number.isFinite(n) ? n : null; }
+function intOrNull(v){ const n = parseInt(v, 10); return Number.isFinite(n) ? n : null; }
+function deleteLog(){
+  const date = document.getElementById('log-date').value || todayStr();
+  if (!db.logs[date]) { toast('No log for this date'); return; }
+  if (!confirm('Delete the health log for ' + date + '?')) return;
+  delete db.logs[date];
+  saveData();
+  loadTodayIntoForm();
+  renderToday();
+  toast('Log deleted');
+}
+function renderRoutines(){
+  const el = document.getElementById('routine-list');
+  el.innerHTML = db.routines.map(r => `<div class="habit-row"><span class="icon" style="font-size:18px;color:var(--accent)">check_circle</span><span class="name">${escapeHTML(r.name)}</span><span class="meta">${escapeHTML(r.meta || '')}</span><button class="btn btn-icon" onclick="removeRoutine('${r.id}')" title="Remove"><span class="icon">close</span></button></div>`).join('') || '<div class="empty">No routines yet.</div>';
+  renderSettings();
+}
+function addRoutine(){
+  const input = document.getElementById('new-routine');
+  const name = input.value.trim();
+  if (!name) return;
+  db.routines.push({ id: 'r-' + Date.now().toString(36), name, meta: 'custom' });
+  input.value = '';
+  saveData();
+  renderRoutines();
+  toast('Routine added');
+}
+function removeRoutine(id){
+  db.routines = db.routines.filter(r => r.id !== id);
+  Object.values(db.checks).forEach(day => delete day[id]);
+  saveData();
+  renderRoutines();
+}
+function renderSettings(){
+  setVal('target-sleep', db.settings.sleepTarget);
+  setVal('target-steps', db.settings.stepTarget);
+  setVal('target-water', db.settings.waterTarget);
+  setVal('target-exercise', db.settings.weeklyExerciseTarget);
+}
+function saveSettings(){
+  db.settings.sleepTarget = parseFloat(val('target-sleep')) || DEFAULTS.settings.sleepTarget;
+  db.settings.stepTarget = parseInt(val('target-steps')) || DEFAULTS.settings.stepTarget;
+  db.settings.waterTarget = parseFloat(val('target-water')) || DEFAULTS.settings.waterTarget;
+  db.settings.weeklyExerciseTarget = parseInt(val('target-exercise')) || DEFAULTS.settings.weeklyExerciseTarget;
+  saveData();
+  toast('Targets saved');
+  renderToday();
+}
+function setTrend(metric){
+  trendMetric = metric;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('trend-' + metric).classList.add('active');
+  renderTrends();
+}
+function renderTrends(){
+  const signalDates = Object.keys(getDailySignals());
+  const dates = [...new Set([...Object.keys(db.logs), ...signalDates])].sort().slice(-14);
+  const entries = dates.map(date => [date, getLog(date) || {}]);
+  const metricMeta = {
+    readiness:['Readiness','score',l=>readiness(l)],
+    sleep:['Sleep','hours',l=>parseFloat(l.sleepHours)||0],
+    steps:['Steps','steps',l=>parseInt(l.steps)||0],
+    exercise:['Exercise','minutes',l=>parseInt(l.exerciseMins)||0]
+  }[trendMetric];
+  document.getElementById('trend-title').textContent = metricMeta[0];
+  document.getElementById('trend-sub').textContent = 'Last ' + Math.max(entries.length,0) + ' logged days.';
+  const vals = entries.map(([date,log]) => ({ date, val: metricMeta[2](log) || 0 }));
+  const max = Math.max(...vals.map(x=>x.val), trendMetric === 'steps' ? db.settings.stepTarget : 100, 1);
+  const avg = vals.length ? vals.reduce((s,x)=>s+x.val,0) / vals.length : 0;
+  document.getElementById('trend-average').textContent = 'Avg ' + formatTrend(avg, trendMetric);
+  const el = document.getElementById('trend-bars');
+  if (!vals.length) { el.innerHTML = '<div class="empty" style="width:100%">No logs yet.</div>'; return; }
+  el.innerHTML = vals.map(x => {
+    const h = Math.max(8, Math.round((x.val / max) * 100));
+    return `<div class="trend-bar" style="height:${h}%" title="${fmtDate(x.date)}: ${formatTrend(x.val, trendMetric)}"><span>${new Date(x.date+'T12:00:00').getDate()}</span></div>`;
+  }).join('');
+}
+function formatTrend(v, metric){
+  if (metric === 'sleep') return v.toFixed(1) + 'h';
+  if (metric === 'steps') return Math.round(v).toLocaleString();
+  if (metric === 'exercise') return Math.round(v) + 'm';
+  return Math.round(v);
+}
+function writeSummary(){
+  const log = getLog();
+  const score = readiness(log);
+  const checked = Object.values(db.checks[todayStr()] || {}).filter(Boolean).length;
+  const total = db.routines.length;
+  localStorage.setItem(SUMMARY_KEY, JSON.stringify({
+    score, checked, total, date: todayStr(), updatedAt: new Date().toISOString()
+  }));
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify(db,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'edgex-health-' + todayStr() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(input){
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      db = {
+        settings: { ...DEFAULTS.settings, ...(imported.settings || {}) },
+        routines: imported.routines || clone(DEFAULTS.routines),
+        logs: imported.logs || {},
+        checks: imported.checks || {}
+      };
+      saveData();
+      renderToday();
+      toast('Health data imported');
+    } catch(err) { alert('Could not import that file.'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+function resetData(){
+  if (!confirm('Clear all Health module data from this browser?')) return;
+  db = clone(DEFAULTS);
+  saveData();
+  renderToday();
+  toast('Health data reset');
+}
+function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+async function bootHealth() {
+  await syncFromSupabase();
+  db = loadData();
+  writeSummary();
+  renderToday();
+}
+bootHealth();
+</script>
+</body>
+</html>
