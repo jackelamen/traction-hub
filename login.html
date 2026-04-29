@@ -154,6 +154,34 @@ body::after {
   color: rgba(255,255,255,0.18);
   letter-spacing: 0.06em;
 }
+
+.forgot-link {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  margin-top: 14px;
+  text-align: center;
+  text-decoration: underline;
+  padding: 0;
+}
+.forgot-link:hover { color: rgba(255,255,255,0.6); }
+
+.success-msg {
+  background: rgba(52,211,153,0.12);
+  border: 1px solid rgba(52,211,153,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #34d399;
+  margin-top: 14px;
+  display: none;
+  text-align: center;
+}
 </style>
 </head>
 <body>
@@ -176,6 +204,8 @@ body::after {
 
   <button class="btn-login" id="loginBtn" onclick="doLogin()">Sign In</button>
   <div class="error-msg" id="errorMsg"></div>
+  <div class="success-msg" id="successMsg"></div>
+  <button class="forgot-link" onclick="doForgotPassword()">Forgot password?</button>
 </div>
 
 <div class="footer-note">theedgex.com &nbsp;·&nbsp; personal operating system</div>
@@ -253,6 +283,36 @@ function showError(msg) {
   const el = document.getElementById('errorMsg');
   el.textContent = msg;
   el.style.display = 'block';
+  document.getElementById('successMsg').style.display = 'none';
+}
+
+function showSuccess(msg) {
+  const el = document.getElementById('successMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('errorMsg').style.display = 'none';
+}
+
+async function doForgotPassword() {
+  const email = document.getElementById('email').value.trim();
+  if (!email) { showError('Enter your email address above first.'); return; }
+
+  try {
+    const res = await fetch(`${SB_URL}/auth/v1/recover`, {
+      method: 'POST',
+      headers: { 'apikey': SB_ANON, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        gotrue_meta_security: {},
+        redirect_to: 'https://theedgex.com/reset-password.html',
+      }),
+    });
+
+    // Supabase returns 200 even if email not found (security)
+    showSuccess('Password reset email sent. Check your inbox.');
+  } catch(e) {
+    showError('Network error. Please try again.');
+  }
 }
 </script>
 </body>
