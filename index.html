@@ -562,7 +562,12 @@ const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     });
     if (!res.ok) { window.location.href = 'login.html'; return; }
     const data = await res.json();
-    localStorage.setItem('sb_session', JSON.stringify(data));
+    // Store with same shape as login.html (compute expires_at from expires_in)
+    localStorage.setItem('sb_session', JSON.stringify({
+      access_token:  data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at:    Math.floor(Date.now() / 1000) + (data.expires_in || 3600)
+    }));
   } catch(e) { window.location.href = 'login.html'; }
 })();
 
