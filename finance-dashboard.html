@@ -553,6 +553,16 @@
   .trend-cat-toggle.off { background:#f3f4f8;color:#9ca3af;text-decoration:line-through; }
   .trend-cat-dot { width:9px;height:9px;border-radius:50%;flex-shrink:0; }
   .trend-filter-note { font-size:12px;color:var(--muted);margin-top:10px; }
+  .compare-controls { display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;margin-bottom:16px; }
+  .compare-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px; }
+  .compare-card { background:#f9fafb;border:1px solid var(--border);border-radius:12px;padding:14px; }
+  .compare-card .label { font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em; }
+  .compare-card .value { font-size:20px;font-weight:800;letter-spacing:-0.03em;margin-top:4px; }
+  .compare-card .delta { font-size:12px;font-weight:800;margin-top:4px; }
+  .compare-row { display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border); }
+  .compare-row:last-child { border-bottom:none; }
+  .compare-bar { height:7px;background:#eef2ff;border-radius:99px;overflow:hidden; }
+  .compare-bar span { display:block;height:100%;border-radius:99px; }
   .modal-backdrop {
     position:fixed;inset:0;background:rgba(15,23,42,0.45);display:none;align-items:center;justify-content:center;
     padding:22px;z-index:10000;
@@ -606,7 +616,7 @@
     #moduleSidebar { position:static;width:100%;height:auto; }
     #moduleMain { margin-left:0; }
     #section-tracker, #section-trends, #section-budget, .topbar { padding-left:18px;padding-right:18px; }
-    .metric-grid, .budget-grid, .inline-form, .savings-form, .edit-grid { grid-template-columns:1fr; }
+    .metric-grid, .budget-grid, .inline-form, .savings-form, .edit-grid, .compare-controls, .compare-grid { grid-template-columns:1fr; }
     .topbar { flex-direction:column; }
   }
 </style>
@@ -766,6 +776,7 @@
               <option value="Business">💼 Business</option>
               <option value="Travel">✈️ Travel</option>
               <option value="Transfer">🔄 Transfer</option>
+              <option value="Tax">🧾 Tax</option>
               <option value="Other">📦 Other</option>
             </select>
           </div>
@@ -826,6 +837,7 @@
           <button class="filter-btn" onclick="setFilter('Business',this)">💼 Business</button>
           <button class="filter-btn" onclick="setFilter('Travel',this)">✈️ Travel</button>
           <button class="filter-btn" onclick="setFilter('Transfer',this)">🔄 Transfer</button>
+          <button class="filter-btn" onclick="setFilter('Tax',this)">🧾 Tax</button>
           <button class="filter-btn" onclick="setFilter('Other',this)">📦 Other</button>
         </div>
 
@@ -1033,6 +1045,21 @@
   <!-- Monthly detail -->
   <div id="ttab-monthly" style="display:none">
     <div class="month-pills" id="tMonthPills"></div>
+    <div class="tcard">
+      <div class="tcard-title">Month-to-Month Comparison</div>
+      <div class="compare-controls">
+        <div class="form-group">
+          <label>Compare</label>
+          <select id="compareMonthA" onchange="setCompareMonths()"></select>
+        </div>
+        <div class="form-group">
+          <label>Against</label>
+          <select id="compareMonthB" onchange="setCompareMonths()"></select>
+        </div>
+        <button class="btn-secondary" onclick="compareWithPrevious()">Use previous month</button>
+      </div>
+      <div id="monthCompareBody"></div>
+    </div>
     <div class="grid-4" id="tMonthlyStats"></div>
     <div class="grid-2">
       <div class="tcard" style="margin-bottom:0">
@@ -1349,14 +1376,14 @@ const CAT_COLORS = {
   Food: '#f97316', Transport: '#3b82f6', Shopping: '#a855f7',
   Utilities: '#06b6d4', Health: '#ec4899', Entertainment: '#eab308',
   Housing: '#f43f5e', 'Home/Living': '#10b981', Business: '#0ea5e9',
-  Travel: '#f59e0b', Transfer: '#94a3b8', Other: '#64748b', Income: '#34d399',
+  Travel: '#f59e0b', Transfer: '#94a3b8', Tax: '#14b8a6', Other: '#64748b', Income: '#34d399',
 };
 const CAT_ICONS = {
   Food: '🍜', Transport: '🚇', Shopping: '🛍️', Utilities: '💡',
   Health: '🏥', Entertainment: '🎬', Housing: '🏠', 'Home/Living': '🛋️',
-  Business: '💼', Travel: '✈️', Transfer: '🔄', Other: '📦', Income: '💰',
+  Business: '💼', Travel: '✈️', Transfer: '🔄', Tax: '🧾', Other: '📦', Income: '💰',
 };
-const ALL_CATEGORIES = ['Food','Transport','Shopping','Utilities','Health','Entertainment','Housing','Home/Living','Business','Travel','Transfer','Other','Income'];
+const ALL_CATEGORIES = ['Food','Transport','Shopping','Utilities','Health','Entertainment','Housing','Home/Living','Business','Travel','Transfer','Tax','Other','Income'];
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -1745,6 +1772,7 @@ function setType(t) {
       <option value="Business">💼 Business</option>
       <option value="Travel">✈️ Travel</option>
       <option value="Transfer">🔄 Transfer</option>
+      <option value="Tax">🧾 Tax</option>
       <option value="Other">📦 Other</option>`;
   }
 }
@@ -2351,6 +2379,8 @@ function monthLabel(ym) {
 // ════════════════════════════════════════════════════════════════════
 let activeTrendsTab = 'overview';
 let selectedMonth = null;
+let compareMonthA = null;
+let compareMonthB = null;
 let selectedCat = 'Food';
 let hiddenTrendCategories = new Set();
 
@@ -2611,18 +2641,133 @@ function renderTrendsMonthly() {
   const months = getMonths();
   if (!months.length) return;
   if (!selectedMonth || !months.includes(selectedMonth)) selectedMonth = months[months.length - 1];
+  if (!compareMonthA || !months.includes(compareMonthA)) compareMonthA = selectedMonth;
+  if (!compareMonthB || !months.includes(compareMonthB)) {
+    const prev = months[months.indexOf(compareMonthA) - 1];
+    compareMonthB = prev || months[Math.max(0, months.length - 2)] || compareMonthA;
+  }
 
   document.getElementById('tMonthPills').innerHTML = months.map(m =>
     `<div class="month-pill ${m === selectedMonth ? 'active' : ''}" onclick="selectTrendsMonth('${m}', this)">${monthLabel(m)}</div>`
   ).join('');
+  renderCompareMonthSelectors(months);
+  renderMonthComparison();
   renderMonthlyDetail();
 }
 
 function selectTrendsMonth(m, el) {
   selectedMonth = m;
+  compareMonthA = m;
+  const months = getMonths();
+  compareMonthB = months[months.indexOf(m) - 1] || compareMonthB || m;
   document.querySelectorAll('.month-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
+  renderCompareMonthSelectors(months);
+  renderMonthComparison();
   renderMonthlyDetail();
+}
+
+function renderCompareMonthSelectors(months) {
+  const opts = months.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
+  const a = document.getElementById('compareMonthA');
+  const b = document.getElementById('compareMonthB');
+  if (!a || !b) return;
+  a.innerHTML = opts;
+  b.innerHTML = opts;
+  a.value = compareMonthA;
+  b.value = compareMonthB;
+}
+
+function setCompareMonths() {
+  compareMonthA = document.getElementById('compareMonthA').value;
+  compareMonthB = document.getElementById('compareMonthB').value;
+  renderMonthComparison();
+}
+
+function compareWithPrevious() {
+  const months = getMonths();
+  const idx = months.indexOf(compareMonthA || selectedMonth);
+  compareMonthB = months[idx - 1] || months[Math.max(0, idx)] || compareMonthA;
+  renderCompareMonthSelectors(months);
+  renderMonthComparison();
+}
+
+function monthCompareStats(monthKey) {
+  const txs = txForMonth(monthKey);
+  const total = txs.reduce((s, t) => s + t.amountKRW, 0);
+  const days = monthKey ? new Date(monthKey.slice(0,4), parseInt(monthKey.slice(5,7)), 0).getDate() : 1;
+  const largest = Math.max(...txs.map(t => t.amountKRW), 0);
+  const cats = {};
+  txs.forEach(t => cats[t.category] = (cats[t.category] || 0) + t.amountKRW);
+  return { txs, total, avgDaily: total / days, largest, cats };
+}
+
+function deltaHTML(delta, format = 'money') {
+  const cls = delta > 0 ? 'up' : delta < 0 ? 'down' : 'neutral';
+  const color = delta > 0 ? 'var(--red)' : delta < 0 ? 'var(--green)' : 'var(--muted)';
+  const sign = delta > 0 ? '+' : delta < 0 ? '-' : '';
+  const val = format === 'count' ? Math.abs(delta).toLocaleString() : '₩' + fmt(Math.abs(delta));
+  return `<div class="delta ${cls}" style="color:${color}">${sign}${val}</div>`;
+}
+
+function renderMonthComparison() {
+  const el = document.getElementById('monthCompareBody');
+  if (!el || !compareMonthA || !compareMonthB) return;
+  const a = monthCompareStats(compareMonthA);
+  const b = monthCompareStats(compareMonthB);
+  const totalDelta = a.total - b.total;
+  const pct = b.total ? ((totalDelta / b.total) * 100).toFixed(1) : null;
+  const cats = [...new Set([...Object.keys(a.cats), ...Object.keys(b.cats)])]
+    .sort((x, y) => Math.abs((a.cats[y]||0) - (b.cats[y]||0)) - Math.abs((a.cats[x]||0) - (b.cats[x]||0)));
+  const maxCat = Math.max(...cats.flatMap(c => [a.cats[c] || 0, b.cats[c] || 0]), 1);
+
+  el.innerHTML = `
+    <div class="compare-grid">
+      <div class="compare-card">
+        <div class="label">${monthLabel(compareMonthA)} total</div>
+        <div class="value">₩${fmt(a.total)}</div>
+        ${deltaHTML(totalDelta)}
+        ${pct !== null ? `<div class="metric-sub">${totalDelta >= 0 ? '+' : ''}${pct}% vs ${monthLabel(compareMonthB)}</div>` : ''}
+      </div>
+      <div class="compare-card">
+        <div class="label">Transactions</div>
+        <div class="value">${a.txs.length}</div>
+        ${deltaHTML(a.txs.length - b.txs.length, 'count')}
+      </div>
+      <div class="compare-card">
+        <div class="label">Avg daily</div>
+        <div class="value">₩${fmt(a.avgDaily)}</div>
+        ${deltaHTML(a.avgDaily - b.avgDaily)}
+      </div>
+      <div class="compare-card">
+        <div class="label">Largest</div>
+        <div class="value">₩${fmt(a.largest)}</div>
+        ${deltaHTML(a.largest - b.largest)}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">${monthLabel(compareMonthA)}</div>
+      <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">${monthLabel(compareMonthB)}</div>
+    </div>
+    ${cats.length ? cats.map(cat => {
+      const av = a.cats[cat] || 0;
+      const bv = b.cats[cat] || 0;
+      const delta = av - bv;
+      const color = CAT_COLORS[cat] || '#64748b';
+      return `<div class="compare-row">
+        <div style="width:150px;font-weight:800">${CAT_ICONS[cat]||''} ${cat}</div>
+        <div style="flex:1">
+          <div class="compare-bar"><span style="width:${Math.round(av/maxCat*100)}%;background:${color}"></span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">₩${fmt(av)}</div>
+        </div>
+        <div style="width:90px;text-align:center;font-size:12px;font-weight:800;color:${delta > 0 ? 'var(--red)' : delta < 0 ? 'var(--green)' : 'var(--muted)'}">${delta > 0 ? '+' : delta < 0 ? '-' : ''}₩${fmt(Math.abs(delta))}</div>
+        <div style="flex:1">
+          <div class="compare-bar"><span style="width:${Math.round(bv/maxCat*100)}%;background:${color};opacity:0.55"></span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">₩${fmt(bv)}</div>
+        </div>
+      </div>`;
+    }).join('') : '<div class="empty-msg">No included category spending for these months.</div>'}
+  `;
 }
 
 function renderMonthlyDetail() {
