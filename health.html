@@ -121,11 +121,20 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .routine-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .trend-detail{display:grid;grid-template-columns:1fr 1.15fr;gap:18px;align-items:stretch}
 .trend-chart{min-height:230px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,#f8fafc,#fff);padding:14px;display:flex;flex-direction:column;gap:12px}
-.trend-chart svg{width:100%;height:160px;overflow:visible}
+.trend-plot{position:relative;height:160px}
+.trend-plot svg{position:absolute;inset:0;width:100%;height:160px;overflow:visible}
 .trend-chart .axis{stroke:#dbe3ef;stroke-width:1}
 .trend-chart .target{stroke:#f97316;stroke-width:1.5;stroke-dasharray:5 5}
 .trend-chart .line{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .trend-chart .dot{fill:#fff;stroke:var(--accent);stroke-width:2}
+.trend-hover-point{position:absolute;width:28px;height:28px;transform:translate(-50%,-50%);border-radius:99px;cursor:default;z-index:2}
+.trend-hover-point::after{content:'';position:absolute;left:50%;top:50%;width:9px;height:9px;transform:translate(-50%,-50%);border-radius:99px;background:#fff;border:2px solid var(--accent);box-shadow:0 1px 4px rgba(14,165,233,.28)}
+.trend-hover-point:focus{outline:none}
+.trend-hover-point:focus::after,.trend-hover-point:hover::after{width:12px;height:12px;background:var(--accent)}
+.trend-tooltip{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);background:#111827;color:#fff;border-radius:9px;padding:7px 9px;box-shadow:0 10px 24px rgba(0,0,0,.20);font-size:11px;font-weight:800;line-height:1.25;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s,transform .12s;z-index:5}
+.trend-tooltip small{display:block;color:rgba(255,255,255,.68);font-size:10px;font-weight:700;margin-top:2px}
+.trend-tooltip::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#111827}
+.trend-hover-point:hover .trend-tooltip,.trend-hover-point:focus .trend-tooltip{opacity:1;transform:translateX(-50%) translateY(-2px)}
 .trend-chart-footer{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em}
 .trend-table{display:flex;flex-direction:column;gap:8px}
 .trend-day{display:grid;grid-template-columns:82px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff}
@@ -134,7 +143,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .trend-day-track{height:8px;border-radius:99px;background:#e5e7eb;overflow:hidden}
 .trend-day-track span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),#22c55e)}
 .trend-day-value{font-size:13px;font-weight:900;text-align:right;min-width:72px}
-.trend-day.miss .trend-day-track span{background:linear-gradient(90deg,#fb923c,#f97316)}
+.trend-day.excellent .trend-day-track span{background:linear-gradient(90deg,#10b981,#22c55e)}
+.trend-day.strong .trend-day-track span{background:linear-gradient(90deg,#0ea5e9,#22c55e)}
+.trend-day.close .trend-day-track span{background:linear-gradient(90deg,#f59e0b,#22c55e)}
+.trend-day.support .trend-day-track span{background:linear-gradient(90deg,#fb923c,#f97316)}
+.trend-day.low .trend-day-track span{background:linear-gradient(90deg,#f87171,#ef4444)}
 .trend-panel{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
 .insight-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
 .insight-card{padding:14px;border:1px solid var(--border);border-radius:14px;background:#fff}
@@ -231,9 +244,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <div class="hero-card" style="margin-bottom:18px">
       <div class="hero-content">
         <div>
-          <div class="badge badge-blue" style="margin-bottom:12px"><span class="icon" style="font-size:14px">monitor_heart</span>Readiness</div>
-          <h2 style="font-size:26px;line-height:1.15;letter-spacing:-.03em;margin-bottom:8px" id="readiness-title">Ready to move well</h2>
-          <p style="color:rgba(255,255,255,.68);max-width:560px" id="readiness-copy">Log sleep, movement, hydration, and energy to see the signal.</p>
+          <div class="badge badge-blue" style="margin-bottom:12px"><span class="icon" style="font-size:14px">monitor_heart</span>Health Score</div>
+          <h2 style="font-size:26px;line-height:1.15;letter-spacing:-.03em;margin-bottom:8px" id="readiness-title">Build and protect a high Health Score</h2>
+          <p style="color:rgba(255,255,255,.68);max-width:560px" id="readiness-copy">Your main health goal is to raise this score and keep it high through sleep, movement, hydration, energy, sleep quality, and low pain.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px" id="today-actions"></div>
         </div>
         <div class="readiness-ring">
@@ -243,7 +256,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
           </svg>
           <div class="label">
             <div style="font-size:34px;font-weight:800;letter-spacing:-.04em" id="readiness-score">--</div>
-            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.50);letter-spacing:.08em;text-transform:uppercase">signal</div>
+            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.50);letter-spacing:.08em;text-transform:uppercase">health score</div>
           </div>
         </div>
       </div>
@@ -253,8 +266,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       <div class="card card-pad">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:10px">
           <div>
-            <h2 style="font-size:16px;font-weight:800">Score Breakdown</h2>
-            <p style="font-size:12px;color:var(--text-2)">How today's body signal is being calculated.</p>
+            <h2 style="font-size:16px;font-weight:800">Health Score Breakdown</h2>
+            <p style="font-size:12px;color:var(--text-2)">The levers that raise or lower today's score.</p>
           </div>
           <span class="badge badge-blue" id="health-score-confidence">--</span>
         </div>
@@ -262,7 +275,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </div>
       <div class="card card-pad">
         <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">What Would Move It</h2>
-        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">The score is a compass, not a grade.</p>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Aim for 85+ and protect the weakest lever first.</p>
         <div id="health-score-advice"></div>
       </div>
     </div>
@@ -376,7 +389,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </div>
       <div class="card card-pad">
         <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">Targets</h2>
-        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Used to calculate readiness and dashboard progress.</p>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Used to calculate Health Score and dashboard progress.</p>
         <div class="form-grid" style="grid-template-columns:1fr 1fr">
           <div class="field"><label>Sleep Target</label><input id="target-sleep" type="number" min="1" max="12" step=".25"/></div>
           <div class="field"><label>Step Target</label><input id="target-steps" type="number" min="1000" step="500"/></div>
@@ -397,10 +410,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <div class="page-header">
       <div class="page-date">Signals over time</div>
       <h1 class="page-title">Trends</h1>
-      <p class="page-sub">See whether the body layer is supporting the rest of the system.</p>
+      <p class="page-sub">Health Score is the main outcome. The goal is to raise it, then maintain it.</p>
     </div>
     <div class="tabs">
-      <button class="tab active" id="trend-readiness" onclick="setTrend('readiness')">Readiness</button>
+      <button class="tab active" id="trend-readiness" onclick="setTrend('readiness')">Health Score</button>
       <button class="tab" id="trend-sleep" onclick="setTrend('sleep')">Sleep</button>
       <button class="tab" id="trend-steps" onclick="setTrend('steps')">Steps</button>
       <button class="tab" id="trend-water" onclick="setTrend('water')">Water</button>
@@ -412,7 +425,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <div class="card card-pad">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px">
         <div>
-          <h2 style="font-size:16px;font-weight:800" id="trend-title">Readiness</h2>
+          <h2 style="font-size:16px;font-weight:800" id="trend-title">Health Score</h2>
           <p style="font-size:12px;color:var(--text-2)" id="trend-sub">Last 14 logged days.</p>
         </div>
         <span class="badge badge-blue" id="trend-average">Avg --</span>
@@ -422,7 +435,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <div class="trend-panel">
       <div class="card card-pad">
         <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">What Is Driving It</h2>
-        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Readiness inputs averaged across recent logs.</p>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Health Score inputs averaged across recent logs.</p>
         <div id="trend-drivers"></div>
       </div>
       <div class="card card-pad">
@@ -732,11 +745,11 @@ function readinessDetails(log){
   return { score, components };
 }
 function readinessLabel(score){
-  if (score == null) return ['Log today to see readiness','Capture your first health signal for today.'];
-  if (score >= 85) return ['Strong body signal','Good day for challenging work, training, and momentum.'];
-  if (score >= 70) return ['Steady and capable','Keep the plan realistic and protect the basics.'];
-  if (score >= 50) return ['Proceed with care','Bias toward lighter training, recovery, and simple wins.'];
-  return ['Recovery priority','Make sleep, hydration, and low-friction movement the mission.'];
+  if (score == null) return ['Log today to calculate your Health Score','Capture sleep, movement, hydration, energy, sleep quality, and pain to see what needs attention.'];
+  if (score >= 85) return ['High Health Score','Maintain the basics that created this: sleep, movement, water, steady energy, and low pain.'];
+  if (score >= 70) return ['Build toward 85+','You are in a workable range. Raise the weakest lever before adding intensity.'];
+  if (score >= 50) return ['Stabilize the score','Bias toward lighter training, better hydration, easier movement, and an earlier shutdown.'];
+  return ['Recovery priority','The goal today is not a heroic score. Restore the basics so tomorrow has a better floor.'];
 }
 function setRing(score){
   const circle = document.getElementById('readiness-ring');
@@ -782,7 +795,7 @@ function renderReadinessBreakdown(log){
     confidenceEl.textContent = 'No signal';
     confidenceEl.className = 'badge badge-orange';
     breakdownEl.innerHTML = '<div class="empty">Log today to see what the score is responding to.</div>';
-    adviceEl.innerHTML = '<div class="score-note"><h3>Start with the basics.</h3><p>Sleep, movement, water, energy, sleep quality, and pain are enough to produce a useful read.</p></div>';
+    adviceEl.innerHTML = '<div class="score-note"><h3>Start with the basics.</h3><p>Health Score is calculated from sleep, movement, water, energy, sleep quality, and pain. Log those first.</p></div>';
     return;
   }
   const details = readinessDetails(log);
@@ -790,13 +803,14 @@ function renderReadinessBreakdown(log){
   confidenceEl.textContent = filled >= 5 ? 'High confidence' : filled >= 3 ? 'Partial signal' : 'Thin signal';
   confidenceEl.className = 'badge ' + (filled >= 5 ? 'badge-green' : filled >= 3 ? 'badge-blue' : 'badge-orange');
   const sorted = [...details.components].sort((a,b)=>a.value-b.value);
-  breakdownEl.innerHTML = details.components.map(c => scoreRow(c.label, c.value, c.detail)).join('');
+  breakdownEl.innerHTML = details.components.map(c => scoreRow(c.label, c.value, c.detail, c.weight)).join('');
   const top = sorted.slice(0,2);
-  adviceEl.innerHTML = `<div class="score-note"><h3>${top[0].label} is the biggest lever today.</h3><p>${top[0].advice}</p></div><div class="action-list">${top.map(c => `<div class="action-item"><span class="icon">arrow_upward</span><div><strong>${c.label}</strong><br><span style="color:var(--text-2)">${c.advice}</span></div></div>`).join('')}</div>`;
+  adviceEl.innerHTML = `<div class="score-note"><h3>Raise ${top[0].label.toLowerCase()} to raise Health Score.</h3><p>${top[0].advice}</p></div><div class="action-list">${top.map(c => `<div class="action-item"><span class="icon">arrow_upward</span><div><strong>${c.label}</strong><br><span style="color:var(--text-2)">${c.advice}</span></div></div>`).join('')}</div>`;
 }
-function scoreRow(label, value, detail){
+function scoreRow(label, value, detail, weight){
   const pct = Math.max(0, Math.min(100, Math.round(value || 0)));
-  return `<div class="score-row"><strong>${label}</strong><div class="score-meter"><span style="width:${pct}%"></span></div><small>${escapeHTML(detail)}</small></div>`;
+  const impact = weight ? ' · ' + Math.round(weight * 100) + '% impact' : '';
+  return `<div class="score-row"><strong>${label}</strong><div class="score-meter"><span style="width:${pct}%"></span></div><small>${escapeHTML(detail + impact)}</small></div>`;
 }
 function renderHealthCoach(log, score){
   const coach = getHealthCoach(log, score);
@@ -820,8 +834,8 @@ function getHealthCoach(log, score){
   if (!log) {
     return {
       badge:'Needs signal', badgeClass:'badge-orange', tone:'soft', kicker:'Start here',
-      title:'Do a two-minute body scan before logging.',
-      copy:'The goal is not perfect data. It is noticing what your body is asking for before the day becomes automatic.',
+      title:'Log the basics to get your Health Score.',
+      copy:'The score is not a judgment. It is a control panel for the few body signals that most affect your day.',
       blocks:[{label:'Notice',text:'Energy, soreness, thirst, hunger.'},{label:'Choose',text:'One low-friction support.'},{label:'Protect',text:'Sleep window and movement minimum.'}],
       actions:[
         {icon:'edit_note', title:'Log the basics', body:'Sleep, water, movement, energy, and pain are enough.'},
@@ -844,12 +858,12 @@ function getHealthCoach(log, score){
     {icon:'bedtime', title:'Do not spend the whole surplus', body:'Keep tonight easy enough that tomorrow benefits too.'}
   ];
   if (score < 50) {
-    return { badge:'Recovery', badgeClass:'badge-red', tone:'soft', kicker:'Mode for today', title:'Lower demand so your body can come back online.', copy:'This is a day to remove friction, not chase a heroic score. Recovery behaviors are productive behaviors.', blocks:[{label:'Training',text:'Gentle only.'},{label:'Work pace',text:'Short blocks, more breaks.'},{label:'Win condition',text:'Sleep, water, walk.'}], actions };
+    return { badge:'Recovery', badgeClass:'badge-red', tone:'soft', kicker:'Health Score mode', title:'Raise the floor before chasing output.', copy:'This is a day to remove friction. Recovery behaviors are the fastest path to a better Health Score tomorrow.', blocks:[{label:'Training',text:'Gentle only.'},{label:'Work pace',text:'Short blocks, more breaks.'},{label:'Win condition',text:'Sleep, water, walk.'}], actions };
   }
   if (score < 70) {
-    return { badge:'Stabilize', badgeClass:'badge-orange', tone:'soft', kicker:'Mode for today', title:'Keep the basics close and avoid overreaching.', copy:'You can still build momentum. Make the plan smaller, cleaner, and easier to finish.', blocks:[{label:'Training',text:'Technique or zone 2.'},{label:'Food',text:'Simple and steady.'},{label:'Evening',text:'Earlier shutdown.'}], actions };
+    return { badge:'Stabilize', badgeClass:'badge-orange', tone:'soft', kicker:'Health Score mode', title:'Move the score back into a stable range.', copy:'You can still build momentum. Focus on the weakest basic before adding a harder workout or a heavier day.', blocks:[{label:'Training',text:'Technique or zone 2.'},{label:'Food',text:'Simple and steady.'},{label:'Evening',text:'Earlier shutdown.'}], actions };
   }
-  return { badge:'Build', badgeClass:score >= 85 ? 'badge-green' : 'badge-blue', tone:'green', kicker:'Mode for today', title:score >= 85 ? 'Spend the strong signal wisely.' : 'You have enough capacity to build.', copy:'Use this window for meaningful movement, then protect the recovery behaviors that created it.', blocks:[{label:'Training',text:'Challenge with control.'},{label:'Fuel',text:'Protein and water.'},{label:'Tomorrow',text:'Leave some in reserve.'}], actions };
+  return { badge:'Build', badgeClass:score >= 85 ? 'badge-green' : 'badge-blue', tone:'green', kicker:'Health Score mode', title:score >= 85 ? 'Maintain the high score.' : 'Push toward 85+.', copy:'Use this window for meaningful movement, then protect the recovery behaviors that keep Health Score high.', blocks:[{label:'Training',text:'Challenge with control.'},{label:'Fuel',text:'Protein and water.'},{label:'Tomorrow',text:'Leave some in reserve.'}], actions };
 }
 function renderTodayHabits(){
   const date = todayStr();
@@ -1007,7 +1021,7 @@ function renderTrends(){
 }
 function getMetricMeta(metric){
   return {
-    readiness:{ label:'Readiness', unit:'score', max:100, target:75, value:l=>readiness(l) },
+    readiness:{ label:'Health Score', unit:'score', max:100, target:85, value:l=>readiness(l) },
     sleep:{ label:'Sleep', unit:'hours', max:Math.max(db.settings.sleepTarget, 10), target:db.settings.sleepTarget, value:l=>numOrNull(l.sleepHours) },
     steps:{ label:'Steps', unit:'steps', max:db.settings.stepTarget, target:db.settings.stepTarget, value:l=>intOrNull(l.steps) },
     water:{ label:'Water', unit:'liters', max:Math.max(db.settings.waterTarget, 3), target:db.settings.waterTarget, value:l=>numOrNull(l.water) },
@@ -1041,17 +1055,17 @@ function trendDeltaText(delta, metric, meta){
   const formatted = formatTrend(abs, metric);
   if (abs < (metric === 'steps' ? 250 : metric === 'readiness' ? 3 : .25)) return 'About flat vs prior week';
   const better = meta.lowerIsBetter ? delta < 0 : delta > 0;
-  return (better ? 'Improved ' : 'Down ') + formatted + ' vs prior week';
+  return (better ? 'Improved ' : 'Dropped ') + formatted + ' vs prior week';
 }
 function renderTrendDetail(vals, meta, max){
   const chart = renderTrendLine(vals, meta, max);
   const rows = [...vals].reverse().slice(0,10).map(x => {
     const pct = Math.max(2, Math.min(100, Math.round((x.val / max) * 100)));
-    const hit = meta.lowerIsBetter ? x.val <= meta.target : x.val >= meta.target;
-    return `<div class="trend-day ${hit ? '' : 'miss'}">
+    const status = getTrendStatus(x.val, meta);
+    return `<div class="trend-day ${status.tone}">
       <div>
         <div class="trend-day-date">${fmtDate(x.date).replace(',', '')}</div>
-        <div class="trend-day-sub">${hit ? 'On target' : 'Needs support'}</div>
+        <div class="trend-day-sub">${status.label}</div>
       </div>
       <div class="trend-day-track"><span style="width:${pct}%"></span></div>
       <div class="trend-day-value">${formatTrend(x.val, trendMetric)}</div>
@@ -1065,14 +1079,41 @@ function renderTrendLine(vals, meta, max){
   const scaleY = v => pad + ((max - v) / max) * (h - pad * 2);
   const points = vals.map((x,i) => `${scaleX(i).toFixed(1)},${scaleY(x.val).toFixed(1)}`).join(' ');
   const targetY = Math.max(pad, Math.min(h - pad, scaleY(meta.target)));
-  const circles = vals.map((x,i) => `<circle class="dot" cx="${scaleX(i).toFixed(1)}" cy="${scaleY(x.val).toFixed(1)}" r="4"><title>${fmtDate(x.date)}: ${formatTrend(x.val, trendMetric)}</title></circle>`).join('');
-  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="${meta.label} trend">
+  const circles = vals.map((x,i) => `<circle class="dot" cx="${scaleX(i).toFixed(1)}" cy="${scaleY(x.val).toFixed(1)}" r="4"></circle>`).join('');
+  const hoverPoints = vals.map((x,i) => {
+    const left = (scaleX(i) / w) * 100;
+    const top = (scaleY(x.val) / h) * 100;
+    const status = getTrendStatus(x.val, meta);
+    return `<div class="trend-hover-point" tabindex="0" style="left:${left.toFixed(2)}%;top:${top.toFixed(2)}%" aria-label="${fmtDate(x.date)} ${formatTrend(x.val, trendMetric)} ${status.label}">
+      <div class="trend-tooltip">${formatTrend(x.val, trendMetric)}<small>${fmtDate(x.date)} · ${status.label}</small></div>
+    </div>`;
+  }).join('');
+  return `<div class="trend-plot"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="${meta.label} trend">
       <line class="axis" x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}"></line>
       <line class="target" x1="${pad}" y1="${targetY.toFixed(1)}" x2="${w-pad}" y2="${targetY.toFixed(1)}"></line>
       <polyline class="line" points="${points}"></polyline>
       ${circles}
-    </svg>
+    </svg>${hoverPoints}</div>
     <div class="trend-chart-footer"><span>${fmtDate(vals[0].date)}</span><span>Target ${formatTrend(meta.target, trendMetric)}</span><span>${fmtDate(vals[vals.length - 1].date)}</span></div>`;
+}
+function getTrendStatus(value, meta){
+  if (!Number.isFinite(value)) return { label:'No data', tone:'low' };
+  if (meta.lowerIsBetter) {
+    const ratio = value / meta.target;
+    if (ratio <= .5) return { label:'Excellent', tone:'excellent' };
+    if (ratio <= .85) return { label:'Strong', tone:'strong' };
+    if (ratio <= 1) return { label:'On target', tone:'strong' };
+    if (ratio <= 1.25) return { label:'Slightly high', tone:'close' };
+    if (ratio <= 1.75) return { label:'Needs support', tone:'support' };
+    return { label:'High strain', tone:'low' };
+  }
+  const ratio = value / meta.target;
+  if (ratio >= 1.2) return { label:'Excellent', tone:'excellent' };
+  if (ratio >= 1.05) return { label:'Strong', tone:'strong' };
+  if (ratio >= 1) return { label:'On target', tone:'strong' };
+  if (ratio >= .9) return { label:'Close', tone:'close' };
+  if (ratio >= .65) return { label:'Needs support', tone:'support' };
+  return { label:'Low', tone:'low' };
 }
 function renderTrendDrivers(entries){
   const logs = entries.map(([,log]) => log);
@@ -1112,8 +1153,8 @@ function renderTrendCoach(entries, vals, meta){
   let title = 'Keep watching the pattern.';
   let copy = 'There is not enough movement in this metric yet, so use the driver list to choose the easiest support behavior.';
   if (trendMetric === 'readiness') {
-    title = 'Your readiness is mostly limited by ' + weakest.label.toLowerCase() + '.';
-    copy = weakest.advice;
+    title = 'Your Health Score is mostly limited by ' + weakest.label.toLowerCase() + '.';
+    copy = weakest.advice + ' Keep the score above 85 as the main health objective.';
   } else if (avg != null && meta.lowerIsBetter && avg > meta.target) {
     title = meta.label + ' is above the comfort zone.';
     copy = 'Treat this as a recovery signal. Reduce intensity and add gentle movement, sleep protection, or mobility.';
