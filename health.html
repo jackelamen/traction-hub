@@ -164,6 +164,15 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .mini-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff}
 .mini-item strong{font-size:13px}
 .mini-item small{display:block;color:var(--text-2);font-size:12px;margin-top:2px}
+.log-history{display:flex;flex-direction:column;gap:10px}
+.log-history-row{display:grid;grid-template-columns:1.1fr 2fr auto;gap:14px;align-items:center;padding:14px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.log-history-row.active{border-color:rgba(14,165,233,.35);box-shadow:0 0 0 3px var(--accent-dim)}
+.log-history-date{font-size:14px;font-weight:900}
+.log-history-meta{font-size:12px;color:var(--text-2);margin-top:2px}
+.log-history-stats{display:flex;gap:8px;flex-wrap:wrap}
+.log-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:8px;background:#f9fafb;border:1px solid var(--border);font-size:11px;font-weight:800;color:#374151}
+.log-history-notes{font-size:12px;color:var(--text-2);margin-top:8px;max-width:720px}
+.log-history-actions{display:flex;gap:8px;justify-content:flex-end}
 .coach-card{border:1px solid var(--border);border-radius:14px;background:#fff;padding:15px}
 .coach-card.soft{background:linear-gradient(135deg,#f8fafc,#eff6ff);border-color:rgba(14,165,233,.16)}
 .coach-card.green{background:linear-gradient(135deg,#f8fafc,#ecfdf5);border-color:rgba(16,185,129,.18)}
@@ -196,6 +205,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
   #main{margin-left:0}
   .view{padding:22px 18px 70px}
   .grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.trend-panel,.score-grid,.trend-detail{grid-template-columns:1fr}
+  .log-history-row{grid-template-columns:1fr}
+  .log-history-actions{justify-content:flex-start}
   .micro-grid,.insight-grid{grid-template-columns:1fr}
   .readiness-ring{margin:0 auto}
 }
@@ -334,6 +345,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </div>
     </div>
     <div class="card card-pad">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap">
+        <div>
+          <h2 style="font-size:16px;font-weight:800">Entry Editor</h2>
+          <p style="font-size:12px;color:var(--text-2)">Choose a date or edit from history below.</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="startNewLog()"><span class="icon" style="font-size:15px">today</span>New Today</button>
+      </div>
       <div class="form-grid">
         <div class="field"><label>Date</label><input id="log-date" type="date"/></div>
         <div class="field"><label>Sleep Hours</label><input id="sleep-hours" type="number" min="0" max="16" step="0.25" placeholder="7.5"/></div>
@@ -368,6 +386,24 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <button class="btn btn-primary" onclick="saveLog()"><span class="icon" style="font-size:17px">save</span>Save Log</button>
         <button class="btn btn-danger" onclick="deleteLog()"><span class="icon" style="font-size:17px">delete</span>Delete This Date</button>
       </div>
+    </div>
+    <div class="card card-pad" style="margin-top:18px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+        <div>
+          <h2 style="font-size:16px;font-weight:800">Log History</h2>
+          <p style="font-size:12px;color:var(--text-2)">Review saved days and edit mistakes.</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="log-history-search" type="search" placeholder="Search notes or type..." style="width:220px" oninput="renderLogHistory()"/>
+          <select id="log-history-limit" style="width:130px" onchange="renderLogHistory()">
+            <option value="14">Last 14</option>
+            <option value="30" selected>Last 30</option>
+            <option value="90">Last 90</option>
+            <option value="all">All logs</option>
+          </select>
+        </div>
+      </div>
+      <div class="log-history" id="log-history"></div>
     </div>
   </section>
 
@@ -701,7 +737,7 @@ function nav(view){
   document.getElementById('nav-' + view)?.classList.add('active');
   currentView = view;
   if (view === 'today') renderToday();
-  if (view === 'log') loadTodayIntoForm();
+  if (view === 'log') { loadTodayIntoForm(); renderLogHistory(); }
   if (view === 'routines') renderRoutines();
   if (view === 'trends') renderTrends();
   if (view === 'settings') renderSettings();
@@ -893,6 +929,61 @@ function renderRecentLogs(){
     return `<div class="mini-item"><div><strong>${fmtDate(date)}</strong><small>${log.sleepHours || '--'}h sleep · ${Number(log.steps || 0).toLocaleString()} steps · ${log.exerciseMins || 0}m exercise</small></div><span class="badge ${score >= 80 ? 'badge-green' : score >= 60 ? 'badge-blue' : score >= 40 ? 'badge-orange' : 'badge-red'}">${score}</span></div>`;
   }).join('');
 }
+function getLogDates(){
+  return [...new Set([...Object.keys(db.logs), ...Object.keys(getDailySignals())])].sort((a,b)=>b.localeCompare(a));
+}
+function renderLogHistory(){
+  const el = document.getElementById('log-history');
+  if (!el) return;
+  const search = (document.getElementById('log-history-search')?.value || '').trim().toLowerCase();
+  const limit = document.getElementById('log-history-limit')?.value || '30';
+  const activeDate = document.getElementById('log-date')?.value || todayStr();
+  let dates = getLogDates();
+  if (limit !== 'all') dates = dates.slice(0, parseInt(limit, 10));
+  const rows = dates.map(date => {
+    const log = getLog(date) || {};
+    return { date, log, source: db.logs[date] ? 'Full log' : 'Synced signal' };
+  }).filter(({ date, log, source }) => {
+    if (!search) return true;
+    const haystack = [date, source, log.exerciseType, log.notes, log.sleepHours, log.steps, log.water, log.energy, log.pain].join(' ').toLowerCase();
+    return haystack.includes(search);
+  });
+  if (!rows.length) {
+    el.innerHTML = '<div class="empty">No saved logs match this view.</div>';
+    return;
+  }
+  el.innerHTML = rows.map(({ date, log, source }) => renderLogHistoryRow(date, log, source, date === activeDate)).join('');
+}
+function renderLogHistoryRow(date, log, source, active){
+  const score = readiness(log);
+  const scoreClass = score >= 85 ? 'badge-green' : score >= 70 ? 'badge-blue' : score >= 50 ? 'badge-orange' : 'badge-red';
+  const notes = log.notes ? `<div class="log-history-notes">${escapeHTML(log.notes)}</div>` : '';
+  const deleteAction = source === 'Full log'
+    ? `<button class="btn btn-danger btn-sm" onclick="deleteLogDate('${date}')"><span class="icon" style="font-size:15px">delete</span></button>`
+    : `<span class="badge badge-blue" title="This row came from synced work data. Edit it to save it as a Health log.">Synced</span>`;
+  return `<div class="log-history-row ${active ? 'active' : ''}">
+    <div>
+      <div class="log-history-date">${fmtDate(date)}</div>
+      <div class="log-history-meta">${source}${log.savedAt ? ' · Saved ' + new Date(log.savedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''}</div>
+    </div>
+    <div>
+      <div class="log-history-stats">
+        <span class="badge ${scoreClass}">Health ${score ?? '--'}</span>
+        <span class="log-chip"><span class="icon" style="font-size:14px">bedtime</span>${log.sleepHours || '--'}h</span>
+        <span class="log-chip"><span class="icon" style="font-size:14px">directions_walk</span>${Number(log.steps || 0).toLocaleString()}</span>
+        <span class="log-chip"><span class="icon" style="font-size:14px">water_drop</span>${log.water ? parseFloat(log.water).toFixed(2) : '--'}L</span>
+        <span class="log-chip"><span class="icon" style="font-size:14px">fitness_center</span>${log.exerciseMins || 0}m</span>
+        <span class="log-chip"><span class="icon" style="font-size:14px">battery_4_bar</span>${log.energy || '--'}/5</span>
+        <span class="log-chip"><span class="icon" style="font-size:14px">healing</span>${log.pain ?? '--'}/5</span>
+      </div>
+      ${notes}
+    </div>
+    <div class="log-history-actions">
+      <button class="btn btn-secondary btn-sm" onclick="editLogDate('${date}')"><span class="icon" style="font-size:15px">edit</span>Edit</button>
+      ${deleteAction}
+    </div>
+  </div>`;
+}
 function weeklyExerciseMinutes(){
   const now = new Date();
   const start = new Date(now);
@@ -922,7 +1013,23 @@ function loadTodayIntoForm(){
 }
 function setVal(id,v){ document.getElementById(id).value = v; }
 function syncRangeLabel(id){ document.getElementById(id + '-label').textContent = document.getElementById(id).value; }
-document.addEventListener('change', e => { if (e.target && e.target.id === 'log-date') loadTodayIntoForm(); });
+document.addEventListener('change', e => {
+  if (e.target && e.target.id === 'log-date') {
+    loadTodayIntoForm();
+    renderLogHistory();
+  }
+});
+function startNewLog(){
+  document.getElementById('log-date').value = todayStr();
+  loadTodayIntoForm();
+  renderLogHistory();
+}
+function editLogDate(date){
+  document.getElementById('log-date').value = date;
+  loadTodayIntoForm();
+  renderLogHistory();
+  document.getElementById('view-log').scrollIntoView({ behavior:'smooth', block:'start' });
+}
 function saveLog(){
   const date = document.getElementById('log-date').value || todayStr();
   const waterL = numOrNull(val('water'));
@@ -945,18 +1052,28 @@ function saveLog(){
   saveData();
   toast('Health log saved');
   renderToday();
+  renderLogHistory();
 }
 function val(id){ return document.getElementById(id).value; }
 function numOrNull(v){ const n = parseFloat(v); return Number.isFinite(n) ? n : null; }
 function intOrNull(v){ const n = parseInt(v, 10); return Number.isFinite(n) ? n : null; }
 function deleteLog(){
   const date = document.getElementById('log-date').value || todayStr();
-  if (!db.logs[date]) { toast('No log for this date'); return; }
+  deleteLogDate(date);
+}
+function deleteLogDate(date){
+  if (!db.logs[date]) { toast('No editable Health log for this date'); return; }
   if (!confirm('Delete the health log for ' + date + '?')) return;
   delete db.logs[date];
+  const signals = getDailySignals();
+  if (signals[date]) {
+    delete signals[date];
+    localStorage.setItem(DAILY_SIGNALS_KEY, JSON.stringify(signals));
+  }
   saveData();
-  loadTodayIntoForm();
+  if ((document.getElementById('log-date')?.value || todayStr()) === date) loadTodayIntoForm();
   renderToday();
+  renderLogHistory();
   toast('Log deleted');
 }
 function renderRoutines(){
