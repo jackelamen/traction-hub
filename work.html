@@ -3405,6 +3405,7 @@ async function syncFromSupabase() {
     console.log('[Supabase] loaded', rows.length, 'keys from cloud');
     const localTs = _getLsTimestamps();
     rows.forEach(({ key, value, updated_at }) => {
+      if (NO_SYNC_KEYS.has(key)) return;
       // Never overwrite a key that was written locally more recently than the cloud copy
       const cloudMs = updated_at ? new Date(updated_at).getTime() : 0;
       const localMs = localTs[key] || 0;
