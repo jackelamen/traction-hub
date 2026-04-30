@@ -2783,6 +2783,18 @@ async function syncSprintFull(sprintId) {
         }, 'local_id');
         if (!t._uuid && tRows?.[0]?.id) t._uuid = tRows[0].id;
       }
+
+      // Delete any tactics that were removed locally — fetch all tactic UUIDs for
+      // this phase from Supabase and delete any that are no longer in the local list.
+      try {
+        const existingRows = await sbGet('sprint_tactics', `?phase_id=eq.${ph._uuid}&select=id`);
+        const keptUuids = new Set((ph.tactics || []).filter(t => t._uuid).map(t => t._uuid));
+        for (const row of existingRows) {
+          if (!keptUuids.has(row.id)) {
+            fetch(`${SB_URL}/rest/v1/sprint_tactics?id=eq.${row.id}`, { method: 'DELETE', headers: sbHeaders() });
+          }
+        }
+      } catch(e) { console.warn('tactic cleanup failed:', e); }
     }
   } catch(e) { console.error('syncSprintFull failed:', e); }
 }
