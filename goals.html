@@ -3193,13 +3193,13 @@ function renderToday() {
       <div class="today-briefing-grid">
         <div style="flex:1">
           <p class="hero-greeting">${todayFmt}</p>
-          ${(() => {
-            const exempt = todayExemptType();
-            const exemptLabels = { sick:’🤒 Sick day’, holiday:’🏖 Holiday’, rest:’😴 Rest day’, travel:’✈ Travel day’ };
-            if (exempt) {
-              return `<h1 class="hero-title">${greeting} Jack.<br><span style="opacity:0.82;font-size:0.78em;font-weight:600">${exemptLabels[exempt] || exempt} — actions paused, streak protected.</span></h1>`;
-            }
-            return `<h1 class="hero-title">${greeting} Jack.<br><span style="opacity:0.82;font-size:0.78em;font-weight:600">${openT ? `${openT} action${openT===1?’’:’s’} need attention.` : ‘The promises are clean for today.’}</span></h1>`;
+          ${(function(){
+            var exempt = todayExemptType();
+            var exemptLabels = { sick:’🤒 Sick day’, holiday:’🏖 Holiday’, rest:’😴 Rest day’, travel:’✈ Travel day’ };
+            var subtitle = exempt
+              ? (exemptLabels[exempt] || exempt) + ‘ — actions paused, streak protected.’
+              : (openT ? openT + ‘ action’ + (openT===1?’’:’s’) + ‘ need attention.’ : ‘The promises are clean for today.’);
+            return ‘<h1 class="hero-title">’ + greeting + ‘ Jack.<br><span style="opacity:0.82;font-size:0.78em;font-weight:600">’ + subtitle + ‘</span></h1>’;
           })()}
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
             <button class="hero-cta" onclick="resetToToday()">
@@ -3211,10 +3211,17 @@ function renderToday() {
           <!-- Exempt day controls -->
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px">
             <span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em">Mark today:</span>
-            ${[[‘sick’,’🤒’,’Sick’],[‘holiday’,’🏖’,’Holiday’],[‘rest’,’😴’,’Rest’],[‘travel’,’✈’,’Travel’]].map(([type,icon,label]) => {
-              const active = todayExemptType() === type;
-              return `<button onclick="setGoalExemptToday(‘${type}’)" style="padding:4px 10px;border-radius:20px;border:1.5px solid ${active?’rgba(255,255,255,0.6)’:’rgba(255,255,255,0.2)’};background:${active?’rgba(255,255,255,0.2)’:’transparent’};color:${active?’#fff’:’rgba(255,255,255,0.5)’};font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s">${icon} ${label}</button>`;
-            }).join(‘’)}
+            ${(function(){
+              const exempt = todayExemptType();
+              return [[‘sick’,’🤒’,’Sick’],[‘holiday’,’🏖’,’Holiday’],[‘rest’,’😴’,’Rest’],[‘travel’,’✈’,’Travel’]].map(function(item){
+                var type=item[0],icon=item[1],label=item[2];
+                var active = exempt === type;
+                var border = active?’rgba(255,255,255,0.6)’:’rgba(255,255,255,0.2)’;
+                var bg = active?’rgba(255,255,255,0.2)’:’transparent’;
+                var color = active?’#fff’:’rgba(255,255,255,0.5)’;
+                return ‘<button onclick="setGoalExemptToday(\’’+type+’\’)" style="padding:4px 10px;border-radius:20px;border:1.5px solid ‘+border+’;background:’+bg+’;color:’+color+’;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s">’+icon+’ ‘+label+’</button>’;
+              }).join(‘’);
+            })()}
           </div>
         </div>
         <div class="today-note">
