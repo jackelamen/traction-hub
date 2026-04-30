@@ -6933,6 +6933,7 @@ function saveFinalSteps() {
     localStorage.setItem('30day-steps-only-v1', JSON.stringify(stepsOnly));
     updateDailySignal(targetDate, { steps, netSteps: steps });
   }
+  syncToHealthLog(targetDate, { steps: String(steps) });
 
   // If updating today, also sync the live step display
   if (targetDate === todayStr()) {
@@ -7004,16 +7005,56 @@ function getWaterToday() {
   } catch { return 0; }
 }
 
-function saveWaterToday(oz) {
+async function saveWaterToday(oz) {
   localStorage.setItem(WATER_KEY, JSON.stringify({ date: todayStr(), oz }));
   updateDailySignal(todayStr(), {
     waterOz: oz,
     waterL: ozToL(oz)
   });
   pushAllToSupabase();
+  syncToHealthLog(todayStr(), { water: ozToL(oz).toFixed(2) });
 }
 
 function ozToL(oz)  { return oz / 33.814; }
+
+// Patch edgex_health_v1 logs directly in Supabase so the health module
+// always has the latest water/steps without requiring a manual health save.
+// Fetches the current value fresh from Supabase to avoid stale localStorage overwrites.
+async function syncToHealthLog(dateStr, patch) {
+  const HEALTH_KEY = 'edgex_health_v1';
+  const clean = Object.fromEntries(
+    Object.entries(patch).filter(([, v]) => v !== null && v !== undefined && v !== '')
+  );
+  if (!Object.keys(clean).length) return;
+  try {
+    // Fetch current edgex_health_v1 value from Supabase
+    const res = await fetch(
+      `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=eq.${HEALTH_KEY}&select=value`,
+      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' } }
+    );
+    if (!res.ok) { console.warn('[syncToHealthLog] fetch failed:', res.status); return; }
+    const rows = await res.json();
+    const health = (rows && rows[0] && rows[0].value) ? rows[0].value : {};
+    if (!health.logs) health.logs = {};
+    health.logs[dateStr] = {
+      ...(health.logs[dateStr] || {}),
+      ...clean,
+      savedAt: new Date().toISOString()
+    };
+    // Push the updated value back to Supabase
+    await fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': `Bearer ${SB_ANON}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ rows: [{ user_id: getSbUserId(), key: HEALTH_KEY, value: health, updated_at: new Date().toISOString() }] })
+    });
+    // Also update localStorage so health.html sees the change immediately if open in the same browser
+    _lsSet(HEALTH_KEY, JSON.stringify(health));
+  } catch(e) { console.warn('[syncToHealthLog] failed:', e); }
+}
 
 function updateWaterUI() {
   const oz  = getWaterToday();

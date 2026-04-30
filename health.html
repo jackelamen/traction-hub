@@ -450,6 +450,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 const STORAGE_KEY = 'edgex_health_v1';
 const SUMMARY_KEY = 'edgex_health_summary';
 const DAILY_SIGNALS_KEY = 'edgex_daily_signals_v1';
+const WORK_TRACTION_KEY = '30day-traction-v2';
+const WORK_STEPS_KEY = '30day-steps-v1';
+const WORK_STEPS_ONLY_KEY = '30day-steps-only-v1';
+const WORK_WATER_KEY = '30day-water-v1';
 const SB_URL  = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
 const SB_USER_ID = 'jack_traction_hub_v1';
@@ -525,7 +529,15 @@ async function syncFromSupabase() {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return;
-    const keys = new Set([STORAGE_KEY, SUMMARY_KEY, DAILY_SIGNALS_KEY]);
+    const keys = new Set([
+      STORAGE_KEY,
+      SUMMARY_KEY,
+      DAILY_SIGNALS_KEY,
+      WORK_TRACTION_KEY,
+      WORK_STEPS_KEY,
+      WORK_STEPS_ONLY_KEY,
+      WORK_WATER_KEY
+    ]);
     const timestamps = _getLsTimestamps();
     const rows = await res.json();
     rows.forEach(({ key, value, updated_at }) => {
@@ -559,6 +571,80 @@ function updateDailySignal(date, patch) {
   patch = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== null && v !== ''));
   all[date] = { ...(all[date] || {}), ...patch, updatedAt: new Date().toISOString() };
   localStorage.setItem(DAILY_SIGNALS_KEY, JSON.stringify(all));
+}
+function parseStore(key, fallback = {}) {
+  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+  catch(e) { return fallback; }
+}
+function shouldUseWorkSignal(existing, sourceUpdatedAt) {
+  if (!existing) return true;
+  if (!sourceUpdatedAt || !existing.updatedAt) return false;
+  return new Date(sourceUpdatedAt).getTime() > new Date(existing.updatedAt).getTime();
+}
+function syncWorkHealthSignals() {
+  const all = getDailySignals();
+  let changed = false;
+  const apply = (date, patch, sourceUpdatedAt) => {
+    if (!date || !patch) return;
+    const clean = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== null && v !== undefined && v !== ''));
+    if (!Object.keys(clean).length) return;
+    const existing = all[date] || {};
+    if (!shouldUseWorkSignal(existing, sourceUpdatedAt)) {
+      const hasNewValue = Object.entries(clean).some(([k, v]) => existing[k] == null && v != null);
+      if (!hasNewValue) return;
+    }
+    const next = { ...existing, ...clean, updatedAt: sourceUpdatedAt || existing.updatedAt || new Date().toISOString() };
+    if (JSON.stringify(existing) !== JSON.stringify(next)) {
+      all[date] = next;
+      changed = true;
+    }
+  };
+
+  const workLogs = parseStore(WORK_TRACTION_KEY);
+  Object.entries(workLogs).forEach(([date, log]) => {
+    if (!log || typeof log !== 'object') return;
+    const steps = parseInt(log.steps, 10);
+    const stepBase = parseInt(log.stepBase, 10) || 0;
+    apply(date, {
+      steps: Number.isFinite(steps) ? steps : null,
+      stepBase,
+      netSteps: Number.isFinite(steps) ? Math.max(0, steps - stepBase) : null,
+      walks: parseInt(log.walks, 10) || null
+    }, log.savedAt);
+  });
+
+  const stepsOnly = parseStore(WORK_STEPS_ONLY_KEY);
+  Object.entries(stepsOnly).forEach(([date, entry]) => {
+    const steps = parseInt(entry?.steps, 10);
+    apply(date, {
+      steps: Number.isFinite(steps) ? steps : null,
+      netSteps: Number.isFinite(steps) ? (parseInt(entry.netSteps, 10) || steps) : null
+    }, entry?.updatedAt);
+  });
+
+  const liveSteps = parseStore(WORK_STEPS_KEY, null);
+  if (liveSteps && liveSteps.date === todayStr()) {
+    const steps = parseInt(liveSteps.currentSteps, 10);
+    const stepBase = parseInt(liveSteps.baseSteps, 10) || 0;
+    apply(liveSteps.date, {
+      steps: Number.isFinite(steps) ? steps : null,
+      stepBase,
+      netSteps: Number.isFinite(steps) ? Math.max(0, steps - stepBase) : null,
+      walks: parseInt(liveSteps.walkCount, 10) || null,
+      horizonCount: parseInt(liveSteps.horizonCount, 10) || null
+    }, liveSteps.updatedAt);
+  }
+
+  const water = parseStore(WORK_WATER_KEY, null);
+  if (water && water.date) {
+    const waterOz = parseFloat(water.oz);
+    apply(water.date, {
+      waterOz: Number.isFinite(waterOz) ? waterOz : null,
+      waterL: Number.isFinite(waterOz) ? +(waterOz / 33.814).toFixed(2) : null
+    }, water.updatedAt);
+  }
+
+  if (changed) localStorage.setItem(DAILY_SIGNALS_KEY, JSON.stringify(all));
 }
 function loadData(){
   try {
@@ -598,8 +684,8 @@ function getLog(date = todayStr()){
   const signal = getSignal(date);
   const merged = {
     ...log,
-    steps: signal.steps ?? log.steps,
-    water: signal.waterOz != null ? +(signal.waterOz / 33.814).toFixed(2) : log.water,
+    steps: log.steps != null && log.steps !== '' ? log.steps : (signal.steps ?? log.steps),
+    water: log.water != null && log.water !== '' ? log.water : (signal.waterOz != null ? +(signal.waterOz / 33.814).toFixed(2) : log.water),
     sleepHours: signal.sleepHours ?? log.sleepHours,
     exerciseMins: signal.exerciseMins ?? log.exerciseMins,
     weight: signal.weight ?? log.weight
@@ -770,7 +856,8 @@ function toggleRoutine(id){
   toast('Routine updated');
 }
 function renderRecentLogs(){
-  const entries = Object.entries(db.logs).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
+  const dates = [...new Set([...Object.keys(db.logs), ...Object.keys(getDailySignals())])];
+  const entries = dates.sort((a,b)=>b.localeCompare(a)).slice(0,7).map(date => [date, getLog(date) || {}]);
   const el = document.getElementById('recent-logs');
   if (!entries.length) { el.innerHTML = '<div class="empty">No logs yet. Start with today.</div>'; return; }
   el.innerHTML = entries.map(([date,log]) => {
@@ -1061,7 +1148,7 @@ function resetData(){
   toast('Health data reset');
 }
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function renderAll() { writeSummary(); renderToday(); }
+function renderAll() { syncWorkHealthSignals(); writeSummary(); renderToday(); }
 async function bootHealth() {
   await syncFromSupabase();
   db = loadData();
