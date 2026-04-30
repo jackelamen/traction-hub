@@ -112,20 +112,23 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .med-full-btn:hover{background:rgba(255,255,255,.22);transform:translateY(-1px)}
 .breath-visual{width:156px;height:156px;position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:2px}
 .breath-visual svg{position:absolute;inset:0;transform:rotate(-90deg)}
-.breath-ring{stroke-dasharray:427;stroke-dashoffset:427;transition:stroke-dashoffset .2s linear,stroke .4s ease}
-.breath-orb{width:76px;height:76px;border-radius:50%;background:radial-gradient(circle at 36% 34%,rgba(255,255,255,.55),rgba(196,181,253,.34) 34%,rgba(14,165,233,.22) 72%);box-shadow:0 0 32px rgba(196,181,253,.24),inset 0 0 28px rgba(255,255,255,.12);transition:transform .22s linear,background .4s ease,box-shadow .4s ease}
+.breath-ring{stroke-dasharray:427;stroke-dashoffset:0;opacity:.28;transition:stroke .6s ease,opacity .6s ease}
+.breath-orb{width:76px;height:76px;border-radius:50%;background:rgba(196,181,253,.24);box-shadow:0 0 30px rgba(196,181,253,.18),inset 0 0 28px rgba(255,255,255,.10);transition:transform .8s ease,background .8s ease,box-shadow .8s ease}
 .breath-count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none}
-.breath-count strong{font-size:36px;line-height:1;font-weight:900;font-variant-numeric:tabular-nums;text-shadow:0 0 24px rgba(255,255,255,.26)}
-.breath-count span{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.48);margin-top:4px}
-.breath-dots{display:flex;gap:8px;margin-top:10px}
-.breath-dots span{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.20);transition:background .2s,transform .2s}
-.breath-dots span.active{background:#c4b5fd;transform:scale(1.25);box-shadow:0 0 12px rgba(196,181,253,.48)}
+.breath-count strong{font-size:20px;line-height:1;font-weight:900;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 0 24px rgba(255,255,255,.20)}
+.breath-count span{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.48);margin-top:8px}
+.breath-presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+.breath-preset{border:1px solid var(--border);background:#fff;border-radius:12px;padding:10px 12px;text-align:left;cursor:pointer;transition:border-color .18s,box-shadow .18s,background .18s,transform .18s}
+.breath-preset:hover{border-color:rgba(124,58,237,.35);box-shadow:0 8px 20px rgba(17,24,39,.08);transform:translateY(-1px)}
+.breath-preset.active{border-color:rgba(124,58,237,.55);background:#f5f3ff;box-shadow:0 0 0 3px rgba(124,58,237,.10)}
+.breath-preset strong{display:block;font-size:13px;font-weight:800;color:var(--text)}
+.breath-preset span{display:block;font-size:11px;font-weight:800;color:var(--text-3);margin-top:3px}
 .meditation-fullscreen{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 28%,rgba(124,58,237,.26),transparent 34%),linear-gradient(135deg,#100b1f,#172554 58%,#052e3f);color:#fff}
 .meditation-fullscreen.open{display:flex}
 .meditation-fullscreen .fs-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;width:min(92vw,720px);min-height:80vh;text-align:center}
 .meditation-fullscreen .breath-visual{width:300px;height:300px}
 .meditation-fullscreen .breath-orb{width:132px;height:132px}
-.meditation-fullscreen .breath-count strong{font-size:78px}
+.meditation-fullscreen .breath-count strong{font-size:42px}
 .meditation-fullscreen .timer-time{font-size:74px;margin-top:0}
 .fs-exit{position:absolute;top:24px;right:24px;width:44px;height:44px;border:none;border-radius:14px;background:rgba(255,255,255,.10);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .fs-exit:hover{background:rgba(255,255,255,.22)}
@@ -141,7 +144,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .toast{position:fixed;right:24px;bottom:24px;background:#111827;color:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(0,0,0,.22);font-size:13px;font-weight:700;display:none;z-index:100}
 .hidden-file{display:none}
 @media(max-width:900px){#sidebar{position:static;width:100%;height:auto}#app{display:block}#main{margin-left:0}.view{padding:22px 18px 70px}.grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.reset-grid,.score-grid{grid-template-columns:1fr}.well-ring{margin:0 auto}}
-@media(max-width:600px){.tabs{width:100%}.tab{flex:1}.timer-time{font-size:38px}.meditation-fullscreen .breath-visual{width:230px;height:230px}.meditation-fullscreen .timer-time{font-size:54px}}
+@media(max-width:600px){.tabs{width:100%}.tab{flex:1}.timer-time{font-size:38px}.breath-presets{grid-template-columns:1fr}.meditation-fullscreen .breath-visual{width:230px;height:230px}.meditation-fullscreen .timer-time{font-size:54px}}
 </style>
 </head>
 <body>
@@ -318,16 +321,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
             </svg>
             <div class="breath-orb" id="breath-orb"></div>
             <div class="breath-count">
-              <strong id="breath-count">--</strong>
+              <strong id="breath-count">Ready</strong>
               <span id="breath-sub">ready</span>
             </div>
           </div>
           <div class="timer-time" id="timer-display">05:00</div>
           <div style="font-size:12px;color:rgba(255,255,255,.55);font-weight:800;letter-spacing:.08em;text-transform:uppercase" id="timer-phase">Ready</div>
-          <div class="breath-dots">
-            <span id="breath-dot-in"></span><span id="breath-dot-hold"></span><span id="breath-dot-out"></span><span id="breath-dot-rest"></span>
-          </div>
         </div>
+        <div class="breath-presets" id="breath-presets"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
           <button class="btn btn-secondary btn-sm" onclick="setDuration(2)">2m</button>
           <button class="btn btn-secondary btn-sm" onclick="setDuration(5)">5m</button>
@@ -352,7 +353,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       <div class="card card-pad">
         <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">Session Note</h2>
         <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Save after a session to build your practice history.</p>
-        <div class="field" style="margin-bottom:12px"><label>Practice Type</label><select id="practice-type"><option>Meditation</option><option>Box Breathing</option><option>Body Scan</option><option>Prayer</option><option>Quiet Sitting</option><option>Other</option></select></div>
+        <div class="field" style="margin-bottom:12px"><label>Practice Type</label><select id="practice-type"><option>Meditation</option><option>2-Minute Breathing</option><option>Box Breathing 4-4-4-4</option><option>4-7-8 Breathing</option><option>Equal Breathing (Sama Vritti)</option><option>5-5-8-2 Breathing</option><option>Body Scan</option><option>Prayer</option><option>Quiet Sitting</option><option>Other</option></select></div>
         <div class="field" style="margin-bottom:12px"><label>After State</label><select id="after-state"><option value="">Choose</option><option>Clearer</option><option>Calmer</option><option>Still Restless</option><option>Sleepy</option><option>Emotional</option><option>Grounded</option></select></div>
         <div class="field"><label>Note</label><textarea id="practice-note" placeholder="What shifted? What did you notice?"></textarea></div>
         <button class="btn btn-primary" style="margin-top:14px" onclick="savePractice()"><span class="icon" style="font-size:17px">save</span>Save Session</button>
@@ -433,15 +434,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </svg>
       <div class="breath-orb" id="breath-orb-fs"></div>
       <div class="breath-count">
-        <strong id="breath-count-fs">--</strong>
+        <strong id="breath-count-fs">Ready</strong>
         <span id="breath-sub-fs">ready</span>
       </div>
     </div>
     <div class="timer-time" id="timer-display-fs">05:00</div>
     <div style="font-size:18px;color:rgba(255,255,255,.62);font-weight:800;letter-spacing:.12em;text-transform:uppercase" id="timer-phase-fs">Ready</div>
-    <div class="breath-dots">
-      <span id="breath-dot-fs-in"></span><span id="breath-dot-fs-hold"></span><span id="breath-dot-fs-out"></span><span id="breath-dot-fs-rest"></span>
-    </div>
     <div class="fs-controls">
       <button class="btn btn-primary" onclick="toggleTimer()" id="timer-btn-fs"><span class="icon" style="font-size:17px">play_arrow</span>Start</button>
       <button class="btn btn-secondary" onclick="resetTimer()"><span class="icon" style="font-size:17px">stop</span>Reset</button>
@@ -547,18 +545,41 @@ const DEFAULTS = { checkins:{}, thoughts:[], practices:[] };
 let db = loadData();
 let currentView = 'today';
 let trendMetric = 'clarityScore';
-let duration = 5 * 60;
+let duration = 2 * 60;
 let remaining = duration;
 let timer = null;
 let breath = null;
 let breathStartedAt = 0;
-const BREATH_PATTERN = [
-  { key:'in', label:'Inhale', sub:'inhale', seconds:4, scaleStart:.72, scaleEnd:1.18, color:'#c4b5fd' },
-  { key:'hold', label:'Hold', sub:'soft hold', seconds:2, scaleStart:1.18, scaleEnd:1.18, color:'#7dd3fc' },
-  { key:'out', label:'Exhale', sub:'exhale', seconds:6, scaleStart:1.18, scaleEnd:.72, color:'#34d399' },
-  { key:'rest', label:'Rest', sub:'settle', seconds:2, scaleStart:.72, scaleEnd:.72, color:'#a78bfa' }
+const BREATH_PRESETS = [
+  { id:'two-minute', label:'2-Minute Breathing', pattern:'4-2-6-2', minutes:2, practiceType:'2-Minute Breathing', phases:[
+    { key:'in', label:'Inhale', seconds:4, scaleStart:.78, scaleEnd:1.14, color:'#c4b5fd' },
+    { key:'hold', label:'Hold', seconds:2, scaleStart:1.14, scaleEnd:1.14, color:'#93c5fd' },
+    { key:'out', label:'Exhale', seconds:6, scaleStart:1.14, scaleEnd:.78, color:'#86efac' },
+    { key:'rest', label:'Hold', seconds:2, scaleStart:.78, scaleEnd:.78, color:'#c4b5fd' }
+  ] },
+  { id:'box', label:'Box Breathing', pattern:'4-4-4-4', minutes:5, practiceType:'Box Breathing 4-4-4-4', phases:[
+    { key:'in', label:'Inhale', seconds:4, scaleStart:.78, scaleEnd:1.14, color:'#c4b5fd' },
+    { key:'hold', label:'Hold', seconds:4, scaleStart:1.14, scaleEnd:1.14, color:'#93c5fd' },
+    { key:'out', label:'Exhale', seconds:4, scaleStart:1.14, scaleEnd:.78, color:'#86efac' },
+    { key:'rest', label:'Hold', seconds:4, scaleStart:.78, scaleEnd:.78, color:'#c4b5fd' }
+  ] },
+  { id:'four-seven-eight', label:'4-7-8 Breathing', pattern:'4-7-8', minutes:5, practiceType:'4-7-8 Breathing', phases:[
+    { key:'in', label:'Inhale', seconds:4, scaleStart:.78, scaleEnd:1.14, color:'#c4b5fd' },
+    { key:'hold', label:'Hold', seconds:7, scaleStart:1.14, scaleEnd:1.14, color:'#93c5fd' },
+    { key:'out', label:'Exhale', seconds:8, scaleStart:1.14, scaleEnd:.78, color:'#86efac' }
+  ] },
+  { id:'sama', label:'Equal Breathing', pattern:'5-5', minutes:5, practiceType:'Equal Breathing (Sama Vritti)', phases:[
+    { key:'in', label:'Inhale', seconds:5, scaleStart:.78, scaleEnd:1.14, color:'#c4b5fd' },
+    { key:'out', label:'Exhale', seconds:5, scaleStart:1.14, scaleEnd:.78, color:'#86efac' }
+  ] },
+  { id:'five-five-eight-two', label:'5-5-8-2', pattern:'5-5-8-2', minutes:5, practiceType:'5-5-8-2 Breathing', phases:[
+    { key:'in', label:'Inhale', seconds:5, scaleStart:.78, scaleEnd:1.14, color:'#c4b5fd' },
+    { key:'hold', label:'Hold', seconds:5, scaleStart:1.14, scaleEnd:1.14, color:'#93c5fd' },
+    { key:'out', label:'Exhale', seconds:8, scaleStart:1.14, scaleEnd:.78, color:'#86efac' },
+    { key:'rest', label:'Hold', seconds:2, scaleStart:.78, scaleEnd:.78, color:'#c4b5fd' }
+  ] }
 ];
-const BREATH_CIRC = 427;
+let currentBreathPreset = BREATH_PRESETS[0];
 
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
@@ -576,7 +597,7 @@ function nav(view){
   if(view==='today') renderToday();
   if(view==='checkin') loadTodayIntoForm();
   if(view==='reset') renderResetTools();
-  if(view==='meditate') renderTimer();
+  if(view==='meditate') { renderTimer(); renderBreathPresets(); updateBreathGuide(); }
   if(view==='inbox') renderThoughts();
   if(view==='trends') renderTrends();
 }
@@ -791,6 +812,28 @@ function startReset(id){
   toast(t.title + ' selected');
 }
 function setDuration(min){ duration=min*60; remaining=duration; renderTimer(); }
+function renderBreathPresets(){
+  const el=document.getElementById('breath-presets');
+  if(!el) return;
+  el.innerHTML=BREATH_PRESETS.map(p=>`<button type="button" class="breath-preset ${p.id===currentBreathPreset.id?'active':''}" onclick="selectBreathPreset('${p.id}')"><strong>${p.label}</strong><span>${p.pattern} · ${p.minutes} min</span></button>`).join('');
+}
+function syncPracticeTypeToPreset(){
+  const practiceType=document.getElementById('practice-type');
+  if(practiceType) practiceType.value=currentBreathPreset.practiceType;
+}
+function selectBreathPreset(id){
+  const preset=BREATH_PRESETS.find(p=>p.id===id);
+  if(!preset) return;
+  currentBreathPreset=preset;
+  if(timer){ clearInterval(timer); timer=null; pauseMeditationAudio(); setTimerButtonHTML('<span class="icon" style="font-size:17px">play_arrow</span>Start'); }
+  duration=preset.minutes*60;
+  remaining=duration;
+  syncPracticeTypeToPreset();
+  breathStartedAt=0;
+  stopBreathGuide(true);
+  renderTimer();
+  renderBreathPresets();
+}
 function renderTimer(){
   const m=String(Math.floor(remaining/60)).padStart(2,'0');
   const s=String(remaining%60).padStart(2,'0');
@@ -810,13 +853,7 @@ function setTimerPhase(text){
   if(el) el.textContent=text;
   if(fs) fs.textContent=text;
 }
-function setBreathDot(key){
-  ['in','hold','out','rest'].forEach(k=>{
-    document.getElementById('breath-dot-'+k)?.classList.toggle('active', k===key);
-    document.getElementById('breath-dot-fs-'+k)?.classList.toggle('active', k===key);
-  });
-}
-function applyBreathVisual(phase, count, progress){
+function applyBreathVisual(phase, progress){
   const scale=phase.scaleStart + ((phase.scaleEnd - phase.scaleStart) * progress);
   ['','-fs'].forEach(suffix=>{
     const orb=document.getElementById('breath-orb'+suffix);
@@ -825,34 +862,33 @@ function applyBreathVisual(phase, count, progress){
     const subEl=document.getElementById('breath-sub'+suffix);
     if(orb) {
       orb.style.transform='scale('+scale.toFixed(3)+')';
-      orb.style.boxShadow=phase.key==='out' ? '0 0 34px rgba(52,211,153,.26),inset 0 0 28px rgba(255,255,255,.10)' : '0 0 42px rgba(196,181,253,.30),inset 0 0 28px rgba(255,255,255,.14)';
+      orb.style.background=phase.key==='out' ? 'rgba(134,239,172,.20)' : 'rgba(196,181,253,.24)';
+      orb.style.boxShadow=phase.key==='out' ? '0 0 28px rgba(134,239,172,.16),inset 0 0 28px rgba(255,255,255,.08)' : '0 0 30px rgba(196,181,253,.18),inset 0 0 28px rgba(255,255,255,.10)';
     }
     if(ring) {
       ring.style.stroke=phase.color;
-      ring.style.strokeDashoffset=BREATH_CIRC*(1-progress);
+      ring.style.strokeDashoffset=0;
     }
-    if(countEl) countEl.textContent=count;
-    if(subEl) subEl.textContent=phase.sub;
+    if(countEl) countEl.textContent=phase.label;
+    if(subEl) subEl.textContent=currentBreathPreset.pattern;
   });
   setTimerPhase(phase.label);
-  setBreathDot(phase.key);
 }
 function updateBreathGuide(){
   if(!breathStartedAt) {
-    applyBreathVisual(BREATH_PATTERN[0], '--', 0);
+    applyBreathVisual(currentBreathPreset.phases[0], 0);
     return;
   }
   const elapsed=(Date.now()-breathStartedAt)/1000;
-  const cycle=BREATH_PATTERN.reduce((sum,p)=>sum+p.seconds,0);
+  const cycle=currentBreathPreset.phases.reduce((sum,p)=>sum+p.seconds,0);
   let t=elapsed%cycle;
-  let phase=BREATH_PATTERN[0];
-  for(const p of BREATH_PATTERN){
+  let phase=currentBreathPreset.phases[0];
+  for(const p of currentBreathPreset.phases){
     if(t < p.seconds){ phase=p; break; }
     t-=p.seconds;
   }
   const progress=Math.max(0,Math.min(1,t/phase.seconds));
-  const count=Math.max(1,Math.ceil(phase.seconds-t));
-  applyBreathVisual(phase,count,progress);
+  applyBreathVisual(phase,progress);
 }
 function startBreathGuide(){
   breathStartedAt=Date.now();
@@ -865,9 +901,8 @@ function stopBreathGuide(reset=false){
   breath=null;
   if(reset) {
     breathStartedAt=0;
-    applyBreathVisual(BREATH_PATTERN[0], '--', 0);
+    applyBreathVisual(currentBreathPreset.phases[0], 0);
     setTimerPhase('Ready');
-    setBreathDot('');
   }
 }
 function openMeditationFullscreen(){
@@ -964,6 +999,9 @@ function resetData(){ if(!confirm('Clear all Wellness module data from this brow
 writeSummary();
 renderToday();
 renderTimer();
+renderBreathPresets();
+syncPracticeTypeToPreset();
+updateBreathGuide();
 
 // ── Boot: pull from Supabase then re-render ──────────────────────
 async function bootWellness() {
