@@ -8039,7 +8039,8 @@ function openDayDetail(dateStr) {
   `;
 
   document.getElementById('day-detail-content').innerHTML = html;
-  document.getElementById('day-detail-backdrop').classList.add('open');
+  const backdrop = document.getElementById('day-detail-backdrop');
+  if (!backdrop.classList.contains('open')) backdrop.classList.add('open');
 }
 
 function closeDayDetail() {
