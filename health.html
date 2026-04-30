@@ -112,6 +112,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .range-row{display:flex;gap:6px;align-items:center}
 .range-row input[type=range]{padding:0;accent-color:var(--accent)}
 .score-pill{width:36px;height:32px;border-radius:9px;background:var(--accent-light);color:var(--accent-dark);display:flex;align-items:center;justify-content:center;font-weight:800}
+.check-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.check-chip{display:flex;align-items:center;gap:7px;padding:9px 10px;border-radius:10px;border:1px solid var(--border-med);background:#f9fafb;font-size:12px;font-weight:800;color:#374151;cursor:pointer}
+.check-chip input{width:15px;height:15px;accent-color:var(--accent);padding:0}
+.check-chip:has(input:checked){background:var(--accent-light);border-color:rgba(14,165,233,.35);color:var(--accent-dark)}
 .habit-list{display:flex;flex-direction:column;gap:8px}
 .habit-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:#f9fafb;border:1px solid var(--border)}
 .habit-row input{width:18px;height:18px;accent-color:var(--accent)}
@@ -207,6 +211,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
   .grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.trend-panel,.score-grid,.trend-detail{grid-template-columns:1fr}
   .log-history-row{grid-template-columns:1fr}
   .log-history-actions{justify-content:flex-start}
+  .check-grid{grid-template-columns:repeat(2,1fr)}
   .micro-grid,.insight-grid{grid-template-columns:1fr}
   .readiness-ring{margin:0 auto}
 }
@@ -360,7 +365,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </div>
       <div class="form-grid" style="margin-top:14px">
         <div class="field"><label>Exercise Minutes</label><input id="exercise-mins" type="number" min="0" step="5" placeholder="30"/></div>
-        <div class="field"><label>Exercise Type</label><select id="exercise-type"><option value="">None</option><option>Walk</option><option>Run</option><option>Strength</option><option>Mobility</option><option>Sport</option><option>Other</option></select></div>
+        <div class="field" style="grid-column:span 2">
+          <label>Exercise Types</label>
+          <div class="check-grid" id="exercise-types">
+            <label class="check-chip"><input type="checkbox" value="Walk"/>Walk</label>
+            <label class="check-chip"><input type="checkbox" value="Run"/>Run</label>
+            <label class="check-chip"><input type="checkbox" value="Strength"/>Strength</label>
+            <label class="check-chip"><input type="checkbox" value="Mobility"/>Mobility</label>
+            <label class="check-chip"><input type="checkbox" value="Sport"/>Sport</label>
+            <label class="check-chip"><input type="checkbox" value="Other"/>Other</label>
+          </div>
+        </div>
         <div class="field"><label>Water (L)</label><input id="water" type="number" min="0" step="0.25" placeholder="e.g. 1.5"/></div>
         <div class="field"><label>Nutrition</label><select id="nutrition"><option value="">Not logged</option><option value="1">Poor</option><option value="2">Light</option><option value="3">Good</option><option value="4">Strong</option><option value="5">Excellent</option></select></div>
       </div>
@@ -945,7 +960,7 @@ function renderLogHistory(){
     return { date, log, source: db.logs[date] ? 'Full log' : 'Synced signal' };
   }).filter(({ date, log, source }) => {
     if (!search) return true;
-    const haystack = [date, source, log.exerciseType, log.notes, log.sleepHours, log.steps, log.water, log.energy, log.pain].join(' ').toLowerCase();
+    const haystack = [date, source, exerciseTypeText(log), log.notes, log.sleepHours, log.steps, log.water, log.energy, log.pain].join(' ').toLowerCase();
     return haystack.includes(search);
   });
   if (!rows.length) {
@@ -958,6 +973,7 @@ function renderLogHistoryRow(date, log, source, active){
   const score = readiness(log);
   const scoreClass = score >= 85 ? 'badge-green' : score >= 70 ? 'badge-blue' : score >= 50 ? 'badge-orange' : 'badge-red';
   const notes = log.notes ? `<div class="log-history-notes">${escapeHTML(log.notes)}</div>` : '';
+  const exerciseLabel = exerciseTypeText(log) || 'Exercise';
   const deleteAction = source === 'Full log'
     ? `<button class="btn btn-danger btn-sm" onclick="deleteLogDate('${date}')"><span class="icon" style="font-size:15px">delete</span></button>`
     : `<span class="badge badge-blue" title="This row came from synced work data. Edit it to save it as a Health log.">Synced</span>`;
@@ -972,7 +988,7 @@ function renderLogHistoryRow(date, log, source, active){
         <span class="log-chip"><span class="icon" style="font-size:14px">bedtime</span>${log.sleepHours || '--'}h</span>
         <span class="log-chip"><span class="icon" style="font-size:14px">directions_walk</span>${Number(log.steps || 0).toLocaleString()}</span>
         <span class="log-chip"><span class="icon" style="font-size:14px">water_drop</span>${log.water ? parseFloat(log.water).toFixed(2) : '--'}L</span>
-        <span class="log-chip"><span class="icon" style="font-size:14px">fitness_center</span>${log.exerciseMins || 0}m</span>
+        <span class="log-chip"><span class="icon" style="font-size:14px">fitness_center</span>${log.exerciseMins || 0}m · ${escapeHTML(exerciseLabel)}</span>
         <span class="log-chip"><span class="icon" style="font-size:14px">battery_4_bar</span>${log.energy || '--'}/5</span>
         <span class="log-chip"><span class="icon" style="font-size:14px">healing</span>${log.pain ?? '--'}/5</span>
       </div>
@@ -1002,7 +1018,7 @@ function loadTodayIntoForm(){
   setVal('steps', log.steps || '');
   setVal('weight', log.weight || '');
   setVal('exercise-mins', log.exerciseMins || '');
-  setVal('exercise-type', log.exerciseType || '');
+  setExerciseTypes(log.exerciseTypes || log.exerciseType || []);
   setVal('water', log.water || '');
   setVal('nutrition', log.nutrition || '');
   setVal('energy', log.energy || 3);
@@ -1012,6 +1028,22 @@ function loadTodayIntoForm(){
   ['energy','sleep-quality','pain'].forEach(syncRangeLabel);
 }
 function setVal(id,v){ document.getElementById(id).value = v; }
+function normalizeExerciseTypes(value){
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (!value) return [];
+  return String(value).split(',').map(v => v.trim()).filter(Boolean);
+}
+function getExerciseTypes(){
+  return [...document.querySelectorAll('#exercise-types input:checked')].map(input => input.value);
+}
+function setExerciseTypes(value){
+  const selected = new Set(normalizeExerciseTypes(value));
+  document.querySelectorAll('#exercise-types input').forEach(input => { input.checked = selected.has(input.value); });
+}
+function exerciseTypeText(log){
+  const types = normalizeExerciseTypes(log?.exerciseTypes || log?.exerciseType);
+  return types.join(', ');
+}
 function syncRangeLabel(id){ document.getElementById(id + '-label').textContent = document.getElementById(id).value; }
 document.addEventListener('change', e => {
   if (e.target && e.target.id === 'log-date') {
@@ -1033,6 +1065,7 @@ function editLogDate(date){
 function saveLog(){
   const date = document.getElementById('log-date').value || todayStr();
   const waterL = numOrNull(val('water'));
+  const exerciseTypes = getExerciseTypes();
   const signalPatch = {
     sleepHours: numOrNull(val('sleep-hours')),
     steps: intOrNull(val('steps')),
@@ -1043,7 +1076,7 @@ function saveLog(){
   };
   db.logs[date] = {
     sleepHours: val('sleep-hours'), steps: val('steps'), weight: val('weight'),
-    exerciseMins: val('exercise-mins'), exerciseType: val('exercise-type'),
+    exerciseMins: val('exercise-mins'), exerciseType: exerciseTypes.join(', '), exerciseTypes,
     water: val('water'), nutrition: val('nutrition'), energy: val('energy'),
     sleepQuality: val('sleep-quality'), pain: val('pain'), notes: val('notes'),
     savedAt: new Date().toISOString()
