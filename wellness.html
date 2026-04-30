@@ -83,6 +83,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .mini-item small{display:block;color:var(--text-2);font-size:12px;margin-top:2px}
 .thought-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff}
 .thought-row.done{opacity:.55;background:#f9fafb}
+.coach-card{border:1px solid var(--border);border-radius:14px;background:#fff;padding:15px}
+.coach-card.soft{background:linear-gradient(135deg,#f8fafc,#f5f3ff);border-color:rgba(124,58,237,.16)}
+.coach-card.blue{background:linear-gradient(135deg,#f8fafc,#eff6ff);border-color:rgba(14,165,233,.16)}
+.coach-kicker{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:5px}
+.coach-title{font-size:16px;font-weight:800;margin-bottom:5px}
+.coach-copy{font-size:13px;color:var(--text-2)}
+.action-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.action-item{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:flex-start;font-size:13px;color:#374151}
+.action-item .icon{font-size:18px;color:var(--accent);margin-top:1px}
+.script-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.script-line{padding:10px 12px;border-radius:12px;background:#f9fafb;border:1px solid var(--border);font-size:13px;color:#374151}
 .timer-face{display:flex;align-items:center;justify-content:center;flex-direction:column;min-height:260px;border-radius:18px;background:linear-gradient(135deg,#17122a,#24335f);color:#fff;position:relative;overflow:hidden}
 .timer-face::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.12),transparent 45%);pointer-events:none}
 .timer-face>*{position:relative;z-index:1}
@@ -160,6 +171,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </div>
     </div>
     <div class="grid-4" id="today-stats" style="margin-bottom:18px"></div>
+    <div class="grid-2" style="margin-bottom:18px">
+      <div class="card card-pad">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px">
+          <div><h2 style="font-size:16px;font-weight:800">Wellbeing Coach</h2><p style="font-size:12px;color:var(--text-2)">A state-aware plan for the next hour.</p></div>
+          <span class="badge badge-purple" id="wellness-coach-badge">Today</span>
+        </div>
+        <div id="wellness-coach"></div>
+      </div>
+      <div class="card card-pad">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px">
+          <div><h2 style="font-size:16px;font-weight:800">Next Regulating Moves</h2><p style="font-size:12px;color:var(--text-2)">Small actions that change the day, not just the chart.</p></div>
+          <button class="btn btn-secondary btn-sm" onclick="nav('reset')"><span class="icon" style="font-size:15px">restart_alt</span>Tools</button>
+        </div>
+        <div id="wellness-actions"></div>
+      </div>
+    </div>
     <div class="grid-2">
       <div class="card card-pad">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -406,12 +433,12 @@ function _startPeriodicSync() {
 }
 
 const RESET_TOOLS = [
-  { id:'breathe', icon:'air', title:'2-Minute Breathing', body:'Slow inhales, longer exhales. Lower the volume before deciding anything.' },
-  { id:'dump', icon:'edit_note', title:'Brain Dump', body:'Write every open loop. No sorting. Just get it out of working memory.' },
-  { id:'name', icon:'label', title:'Name the Feeling', body:'Use plain language: anxious, annoyed, sad, excited, tired, pressured.' },
-  { id:'walk', icon:'directions_walk', title:'Walk Outside', body:'Ten quiet minutes. Let your body metabolize the noise.' },
-  { id:'boundary', icon:'do_not_disturb_on', title:'Boundary Check', body:'Ask what needs a no, a pause, or a later.' },
-  { id:'reach', icon:'forum', title:'Reach Out', body:'Send one honest message to someone steady.' }
+  { id:'breathe', icon:'air', title:'2-Minute Breathing', body:'Slow inhales, longer exhales. Lower the volume before deciding anything.', steps:['Inhale for four, exhale for six.','Relax jaw, shoulders, and hands.','Repeat until the timer ends.'] },
+  { id:'dump', icon:'edit_note', title:'Brain Dump', body:'Write every open loop. No sorting. Just get it out of working memory.', steps:['List every thought as a separate line.','Mark each as hold, action, or release.','Choose one next visible action.'] },
+  { id:'name', icon:'label', title:'Name the Feeling', body:'Use plain language: anxious, annoyed, sad, excited, tired, pressured.', steps:['Say: I notice I feel...','Locate it in the body.','Ask what it is trying to protect.'] },
+  { id:'walk', icon:'directions_walk', title:'Walk Outside', body:'Ten quiet minutes. Let your body metabolize the noise.', steps:['Leave the phone quiet.','Walk at an easy pace.','Return with one simpler next step.'] },
+  { id:'boundary', icon:'do_not_disturb_on', title:'Boundary Check', body:'Ask what needs a no, a pause, or a later.', steps:['Name the demand that feels heavy.','Decide: no, later, smaller, or ask for help.','Write the clean sentence you need to send.'] },
+  { id:'reach', icon:'forum', title:'Reach Out', body:'Send one honest message to someone steady.', steps:['Pick one safe person.','Send a simple true sentence.','Ask for presence, not fixing.'] }
 ];
 const DEFAULTS = { checkins:{}, thoughts:[], practices:[] };
 let db = loadData();
@@ -481,12 +508,66 @@ function renderToday(){
     stat('Clarity', c?.clarity || '--', '1 foggy, 5 clear'),
     stat('Practice', practiceMinutesToday()+'m', 'meditation today')
   ].join('');
+  renderWellnessCoach(c, score);
   renderSuggestedReset(score,c);
   renderRecent();
 }
 function stat(label,value,sub){ return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></div>`; }
 function moodLabel(v){ return {1:'Heavy',2:'Low',3:'Neutral',4:'Good',5:'Bright'}[v] || '--'; }
 function practiceMinutesToday(){ return db.practices.filter(p=>p.date===todayStr()).reduce((s,p)=>s+(p.minutes||0),0); }
+function renderWellnessCoach(c, score){
+  const plan = getWellnessPlan(c, score);
+  document.getElementById('wellness-coach-badge').textContent = plan.badge;
+  document.getElementById('wellness-coach-badge').className = 'badge ' + plan.badgeClass;
+  document.getElementById('wellness-coach').innerHTML = `
+    <div class="coach-card ${plan.tone}">
+      <div class="coach-kicker">${plan.kicker}</div>
+      <div class="coach-title">${plan.title}</div>
+      <p class="coach-copy">${plan.copy}</p>
+      <div class="script-list">
+        ${plan.script.map(line => `<div class="script-line">${line}</div>`).join('')}
+      </div>
+    </div>`;
+  document.getElementById('wellness-actions').innerHTML = `
+    <div class="action-list">
+      ${plan.actions.map(a => `<div class="action-item"><span class="icon">${a.icon}</span><div><strong>${a.title}</strong><br><span style="color:var(--text-2)">${a.body}</span></div></div>`).join('')}
+    </div>`;
+}
+function getWellnessPlan(c, score){
+  if(!c){
+    return {
+      badge:'Check in', badgeClass:'badge-orange', tone:'soft', kicker:'Start here',
+      title:'Name the weather before trying to change it.',
+      copy:'A useful check-in should leave you with one kind next step, not a verdict on your day.',
+      script:['What is most present right now?','What demand can be softened or made clearer?','What would make the next hour 10% easier?'],
+      actions:[
+        {icon:'psychology', title:'Do a plain check-in', body:'Mood, stress, clarity, and one honest sentence are enough.'},
+        {icon:'air', title:'Exhale longer than you inhale', body:'Two minutes changes the physiology before the story takes over.'},
+        {icon:'inbox', title:'Park one open loop', body:'Move the loudest thought into the mental load inbox.'}
+      ]
+    };
+  }
+  const stress = parseInt(c.stress) || 3;
+  const clarity = parseInt(c.clarity) || 3;
+  const grounded = parseInt(c.grounded) || 3;
+  const baseActions = [];
+  if(stress >= 4) baseActions.push({icon:'air', title:'Downshift first', body:'Two minutes of slow breathing before decisions or messages.'});
+  if(clarity <= 2) baseActions.push({icon:'edit_note', title:'Externalize the fog', body:'Write the next three concerns as separate lines.'});
+  if(grounded <= 2) baseActions.push({icon:'directions_walk', title:'Use the body as the anchor', body:'Walk outside or do a brief body scan before more input.'});
+  if(c.loop) baseActions.push({icon:'move_to_inbox', title:'Give the loop a container', body:'Send it to the inbox, then choose hold, action, or release.'});
+  const actions = baseActions.length ? baseActions.slice(0,3) : [
+    {icon:'forum', title:'Use the clear window', body:'Have the honest conversation or make the decision while steady.'},
+    {icon:'do_not_disturb_on', title:'Protect the signal', body:'Reduce one avoidable input for the next hour.'},
+    {icon:'timer', title:'Bank calm', body:'Five minutes of practice keeps the day from becoming only output.'}
+  ];
+  if(score < 50){
+    return { badge:'Regulate', badgeClass:'badge-red', tone:'soft', kicker:'Mode for now', title:'Do not negotiate with a flooded nervous system.', copy:'First lower the internal volume. Then choose one small concrete next step.', script:['Pause input for ten minutes.','Breathe, walk, or write until the body softens slightly.','Pick the smallest useful action, then stop there.'], actions };
+  }
+  if(score < 70){
+    return { badge:'Simplify', badgeClass:'badge-orange', tone:'soft', kicker:'Mode for now', title:'Make the day easier to complete.', copy:'Clarity improves when the next step is specific and the emotional load has somewhere to go.', script:['Name the feeling without arguing with it.','Remove or postpone one nonessential demand.','Choose the next visible action.'], actions };
+  }
+  return { badge:'Steady', badgeClass:score >= 85 ? 'badge-green' : 'badge-blue', tone:'blue', kicker:'Mode for now', title:'Use steadiness to create more steadiness.', copy:'This is a good state for decisions, connection, and thoughtful work. Keep the environment clean enough to preserve it.', script:['Choose one meaningful thing to advance.','Keep transitions quiet and intentional.','End the block before you are depleted.'], actions };
+}
 function renderSuggestedReset(score,c){
   let tool = RESET_TOOLS[0];
   if(c?.state==='Overwhelmed') tool=RESET_TOOLS[1];
@@ -541,7 +622,7 @@ function sendLoopToInbox(){
   toast('Sent to mental load inbox');
 }
 function renderResetTools(){
-  document.getElementById('reset-tools').innerHTML=RESET_TOOLS.map(t=>`<div class="reset-card" onclick="startReset('${t.id}')"><div class="reset-icon"><span class="icon">${t.icon}</span></div><h3 style="font-size:15px;font-weight:800;margin-bottom:4px">${t.title}</h3><p style="font-size:13px;color:var(--text-2);margin-bottom:12px">${t.body}</p><button class="btn btn-secondary btn-sm"><span class="icon" style="font-size:15px">play_arrow</span>Use Reset</button></div>`).join('');
+  document.getElementById('reset-tools').innerHTML=RESET_TOOLS.map(t=>`<div class="reset-card" onclick="startReset('${t.id}')"><div class="reset-icon"><span class="icon">${t.icon}</span></div><h3 style="font-size:15px;font-weight:800;margin-bottom:4px">${t.title}</h3><p style="font-size:13px;color:var(--text-2);margin-bottom:12px">${t.body}</p><div class="script-list">${t.steps.map(step=>`<div class="script-line">${step}</div>`).join('')}</div><button class="btn btn-secondary btn-sm" style="margin-top:12px"><span class="icon" style="font-size:15px">play_arrow</span>Use Reset</button></div>`).join('');
 }
 function startReset(id){
   const t=RESET_TOOLS.find(x=>x.id===id);

@@ -122,10 +122,34 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .trend-bars{display:flex;align-items:flex-end;gap:8px;height:180px;padding:16px 4px 2px}
 .trend-bar{flex:1;min-width:24px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,var(--accent),#22c55e);position:relative;display:flex;align-items:flex-end;justify-content:center}
 .trend-bar span{position:absolute;bottom:-22px;font-size:10px;font-weight:700;color:var(--text-3)}
+.trend-panel{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
+.insight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.insight-card{padding:14px;border:1px solid var(--border);border-radius:14px;background:#fff}
+.insight-card strong{display:block;font-size:20px;font-weight:800;letter-spacing:-.03em}
+.insight-card span{display:block;font-size:11px;font-weight:800;color:var(--text-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.insight-card small{display:block;font-size:12px;color:var(--text-2);margin-top:2px}
+.driver-list{display:flex;flex-direction:column;gap:9px}
+.driver-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#f9fafb}
+.driver-row strong{font-size:13px}
+.driver-meter{width:90px;height:8px;border-radius:99px;background:#e5e7eb;overflow:hidden}
+.driver-meter span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),#22c55e)}
 .mini-list{display:flex;flex-direction:column;gap:10px}
 .mini-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff}
 .mini-item strong{font-size:13px}
 .mini-item small{display:block;color:var(--text-2);font-size:12px;margin-top:2px}
+.coach-card{border:1px solid var(--border);border-radius:14px;background:#fff;padding:15px}
+.coach-card.soft{background:linear-gradient(135deg,#f8fafc,#eff6ff);border-color:rgba(14,165,233,.16)}
+.coach-card.green{background:linear-gradient(135deg,#f8fafc,#ecfdf5);border-color:rgba(16,185,129,.18)}
+.coach-kicker{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:5px}
+.coach-title{font-size:16px;font-weight:800;margin-bottom:5px}
+.coach-copy{font-size:13px;color:var(--text-2)}
+.action-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.action-item{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:flex-start;font-size:13px;color:#374151}
+.action-item .icon{font-size:18px;color:var(--accent);margin-top:1px}
+.micro-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.micro-card{padding:12px;border-radius:12px;background:#f9fafb;border:1px solid var(--border)}
+.micro-card strong{display:block;font-size:12px;margin-bottom:3px}
+.micro-card span{display:block;font-size:12px;color:var(--text-2)}
 .empty{padding:40px 20px;text-align:center;color:var(--text-2)}
 .toast{position:fixed;right:24px;bottom:24px;background:#111827;color:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(0,0,0,.22);font-size:13px;font-weight:700;display:none;z-index:100}
 .hidden-file{display:none}
@@ -134,7 +158,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
   #app{display:block}
   #main{margin-left:0}
   .view{padding:22px 18px 70px}
-  .grid-4,.grid-3,.grid-2,.form-grid,.hero-content{grid-template-columns:1fr}
+  .grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.trend-panel{grid-template-columns:1fr}
+  .micro-grid,.insight-grid{grid-template-columns:1fr}
   .readiness-ring{margin:0 auto}
 }
 @media (max-width:600px){
@@ -200,6 +225,28 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </div>
     </div>
     <div class="grid-4" id="today-stats" style="margin-bottom:18px"></div>
+    <div class="grid-2" style="margin-bottom:18px">
+      <div class="card card-pad">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px">
+          <div>
+            <h2 style="font-size:16px;font-weight:800">Body Coach</h2>
+            <p style="font-size:12px;color:var(--text-2)">A practical plan for the state you are in.</p>
+          </div>
+          <span class="badge badge-blue" id="coach-badge">Today</span>
+        </div>
+        <div id="body-coach"></div>
+      </div>
+      <div class="card card-pad">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px">
+          <div>
+            <h2 style="font-size:16px;font-weight:800">Next Best Moves</h2>
+            <p style="font-size:12px;color:var(--text-2)">Tiny interventions, chosen from today's gaps.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="nav('log')"><span class="icon" style="font-size:15px">edit_note</span>Adjust</button>
+        </div>
+        <div id="health-actions"></div>
+      </div>
+    </div>
     <div class="grid-2">
       <div class="card card-pad">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -297,6 +344,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
           <div class="field"><label>Weekly Exercise Min</label><input id="target-exercise" type="number" min="0" step="15"/></div>
         </div>
         <button class="btn btn-primary" style="margin-top:16px" onclick="saveSettings()"><span class="icon" style="font-size:17px">save</span>Save Targets</button>
+        <div class="coach-card green" style="margin-top:16px">
+          <div class="coach-kicker">Routine design</div>
+          <div class="coach-title">Make routines so small they survive bad days.</div>
+          <p class="coach-copy">A good health routine should be completable when energy is low: walk outside, drink water, prep sleep, or do five minutes of mobility. The point is continuity first, intensity second.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -311,8 +363,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       <button class="tab active" id="trend-readiness" onclick="setTrend('readiness')">Readiness</button>
       <button class="tab" id="trend-sleep" onclick="setTrend('sleep')">Sleep</button>
       <button class="tab" id="trend-steps" onclick="setTrend('steps')">Steps</button>
+      <button class="tab" id="trend-water" onclick="setTrend('water')">Water</button>
       <button class="tab" id="trend-exercise" onclick="setTrend('exercise')">Exercise</button>
+      <button class="tab" id="trend-energy" onclick="setTrend('energy')">Energy</button>
+      <button class="tab" id="trend-pain" onclick="setTrend('pain')">Pain</button>
     </div>
+    <div class="insight-grid" id="trend-insights"></div>
     <div class="card card-pad">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px">
         <div>
@@ -322,6 +378,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <span class="badge badge-blue" id="trend-average">Avg --</span>
       </div>
       <div class="trend-bars" id="trend-bars"></div>
+    </div>
+    <div class="trend-panel">
+      <div class="card card-pad">
+        <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">What Is Driving It</h2>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Readiness inputs averaged across recent logs.</p>
+        <div id="trend-drivers"></div>
+      </div>
+      <div class="card card-pad">
+        <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">Coach Read</h2>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">The plain-English takeaway from this pattern.</p>
+        <div id="trend-coach"></div>
+      </div>
     </div>
   </section>
 
@@ -558,11 +626,65 @@ function renderToday(){
     stat('Exercise', exercise ? exercise + 'm' : '--', weeklyExerciseMinutes() + '/' + s.weeklyExerciseTarget + 'm this week', weeklyExerciseMinutes() >= s.weeklyExerciseTarget ? 'badge-green' : 'badge-blue')
   ].join('');
   document.getElementById('today-actions').innerHTML = `<button class="btn btn-primary" onclick="nav('log')"><span class="icon" style="font-size:17px">edit_note</span>${log ? 'Update Today' : 'Log Today'}</button><button class="btn btn-secondary" onclick="nav('trends')"><span class="icon" style="font-size:17px">query_stats</span>View Trends</button>`;
+  renderHealthCoach(log, score);
   renderTodayHabits();
   renderRecentLogs();
 }
 function stat(label,value,sub,badge){
   return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></div>`;
+}
+function renderHealthCoach(log, score){
+  const coach = getHealthCoach(log, score);
+  document.getElementById('coach-badge').textContent = coach.badge;
+  document.getElementById('coach-badge').className = 'badge ' + coach.badgeClass;
+  document.getElementById('body-coach').innerHTML = `
+    <div class="coach-card ${coach.tone}">
+      <div class="coach-kicker">${coach.kicker}</div>
+      <div class="coach-title">${coach.title}</div>
+      <p class="coach-copy">${coach.copy}</p>
+      <div class="micro-grid">
+        ${coach.blocks.map(b => `<div class="micro-card"><strong>${b.label}</strong><span>${b.text}</span></div>`).join('')}
+      </div>
+    </div>`;
+  document.getElementById('health-actions').innerHTML = `
+    <div class="action-list">
+      ${coach.actions.map(a => `<div class="action-item"><span class="icon">${a.icon}</span><div><strong>${a.title}</strong><br><span style="color:var(--text-2)">${a.body}</span></div></div>`).join('')}
+    </div>`;
+}
+function getHealthCoach(log, score){
+  if (!log) {
+    return {
+      badge:'Needs signal', badgeClass:'badge-orange', tone:'soft', kicker:'Start here',
+      title:'Do a two-minute body scan before logging.',
+      copy:'The goal is not perfect data. It is noticing what your body is asking for before the day becomes automatic.',
+      blocks:[{label:'Notice',text:'Energy, soreness, thirst, hunger.'},{label:'Choose',text:'One low-friction support.'},{label:'Protect',text:'Sleep window and movement minimum.'}],
+      actions:[
+        {icon:'edit_note', title:'Log the basics', body:'Sleep, water, movement, energy, and pain are enough.'},
+        {icon:'directions_walk', title:'Take the floor action', body:'Ten quiet minutes outside if you have not moved yet.'},
+        {icon:'water_drop', title:'Make hydration visible', body:'Put water in reach before starting the next task.'}
+      ]
+    };
+  }
+  const s = db.settings;
+  const gaps = [
+    { key:'sleep', gap:(parseFloat(log.sleepHours)||0) < s.sleepTarget, action:{icon:'bedtime', title:'Protect tonight first', body:'Set a realistic shutdown cue now, not at bedtime.'} },
+    { key:'steps', gap:(parseInt(log.steps)||0) < s.stepTarget * .55, action:{icon:'directions_walk', title:'Add easy movement', body:'A 10-minute walk counts. Keep it embarrassingly doable.'} },
+    { key:'water', gap:(parseFloat(log.water)||0) < s.waterTarget * .6, action:{icon:'water_drop', title:'Hydrate before optimizing', body:'Drink one glass now and pair the next with a meal or break.'} },
+    { key:'pain', gap:(parseInt(log.pain)||0) >= 3, action:{icon:'healing', title:'De-load the plan', body:'Choose mobility, gentle walking, or rest over proving anything.'} },
+    { key:'energy', gap:(parseInt(log.energy)||3) <= 2, action:{icon:'battery_low', title:'Run the low-energy version', body:'Reduce intensity and keep only the health minimums.'} }
+  ].filter(x => x.gap).map(x => x.action);
+  const actions = gaps.length ? gaps.slice(0,3) : [
+    {icon:'fitness_center', title:'Use the good window', body:'Train or do a challenging walk while the signal is strong.'},
+    {icon:'restaurant', title:'Anchor recovery', body:'Get a protein-forward meal before the day gets noisy.'},
+    {icon:'bedtime', title:'Do not spend the whole surplus', body:'Keep tonight easy enough that tomorrow benefits too.'}
+  ];
+  if (score < 50) {
+    return { badge:'Recovery', badgeClass:'badge-red', tone:'soft', kicker:'Mode for today', title:'Lower demand so your body can come back online.', copy:'This is a day to remove friction, not chase a heroic score. Recovery behaviors are productive behaviors.', blocks:[{label:'Training',text:'Gentle only.'},{label:'Work pace',text:'Short blocks, more breaks.'},{label:'Win condition',text:'Sleep, water, walk.'}], actions };
+  }
+  if (score < 70) {
+    return { badge:'Stabilize', badgeClass:'badge-orange', tone:'soft', kicker:'Mode for today', title:'Keep the basics close and avoid overreaching.', copy:'You can still build momentum. Make the plan smaller, cleaner, and easier to finish.', blocks:[{label:'Training',text:'Technique or zone 2.'},{label:'Food',text:'Simple and steady.'},{label:'Evening',text:'Earlier shutdown.'}], actions };
+  }
+  return { badge:'Build', badgeClass:score >= 85 ? 'badge-green' : 'badge-blue', tone:'green', kicker:'Mode for today', title:score >= 85 ? 'Spend the strong signal wisely.' : 'You have enough capacity to build.', copy:'Use this window for meaningful movement, then protect the recovery behaviors that created it.', blocks:[{label:'Training',text:'Challenge with control.'},{label:'Fuel',text:'Protein and water.'},{label:'Tomorrow',text:'Leave some in reserve.'}], actions };
 }
 function renderTodayHabits(){
   const date = todayStr();
@@ -702,30 +824,129 @@ function setTrend(metric){
 function renderTrends(){
   const signalDates = Object.keys(getDailySignals());
   const dates = [...new Set([...Object.keys(db.logs), ...signalDates])].sort().slice(-14);
-  const entries = dates.map(date => [date, getLog(date) || {}]);
-  const metricMeta = {
-    readiness:['Readiness','score',l=>readiness(l)],
-    sleep:['Sleep','hours',l=>parseFloat(l.sleepHours)||0],
-    steps:['Steps','steps',l=>parseInt(l.steps)||0],
-    exercise:['Exercise','minutes',l=>parseInt(l.exerciseMins)||0]
-  }[trendMetric];
-  document.getElementById('trend-title').textContent = metricMeta[0];
+  const entries = dates.map(date => [date, getLog(date)]).filter(([, log]) => log);
+  const metricMeta = getMetricMeta(trendMetric);
+  document.getElementById('trend-title').textContent = metricMeta.label;
   document.getElementById('trend-sub').textContent = 'Last ' + Math.max(entries.length,0) + ' logged days.';
-  const vals = entries.map(([date,log]) => ({ date, val: metricMeta[2](log) || 0 }));
-  const max = Math.max(...vals.map(x=>x.val), trendMetric === 'steps' ? db.settings.stepTarget : 100, 1);
+  const vals = entries.map(([date,log]) => ({ date, val: metricMeta.value(log) })).filter(x => x.val != null);
+  const max = Math.max(...vals.map(x=>x.val), metricMeta.max, 1);
   const avg = vals.length ? vals.reduce((s,x)=>s+x.val,0) / vals.length : 0;
   document.getElementById('trend-average').textContent = 'Avg ' + formatTrend(avg, trendMetric);
   const el = document.getElementById('trend-bars');
+  renderTrendInsights(entries, vals, metricMeta);
+  renderTrendDrivers(entries);
+  renderTrendCoach(entries, vals, metricMeta);
   if (!vals.length) { el.innerHTML = '<div class="empty" style="width:100%">No logs yet.</div>'; return; }
   el.innerHTML = vals.map(x => {
     const h = Math.max(8, Math.round((x.val / max) * 100));
     return `<div class="trend-bar" style="height:${h}%" title="${fmtDate(x.date)}: ${formatTrend(x.val, trendMetric)}"><span>${new Date(x.date+'T12:00:00').getDate()}</span></div>`;
   }).join('');
 }
+function getMetricMeta(metric){
+  return {
+    readiness:{ label:'Readiness', unit:'score', max:100, target:75, value:l=>readiness(l) },
+    sleep:{ label:'Sleep', unit:'hours', max:Math.max(db.settings.sleepTarget, 10), target:db.settings.sleepTarget, value:l=>numOrNull(l.sleepHours) },
+    steps:{ label:'Steps', unit:'steps', max:db.settings.stepTarget, target:db.settings.stepTarget, value:l=>intOrNull(l.steps) },
+    water:{ label:'Water', unit:'liters', max:Math.max(db.settings.waterTarget, 3), target:db.settings.waterTarget, value:l=>numOrNull(l.water) },
+    exercise:{ label:'Exercise', unit:'minutes', max:60, target:30, value:l=>intOrNull(l.exerciseMins) },
+    energy:{ label:'Energy', unit:'score', max:5, target:4, value:l=>intOrNull(l.energy) },
+    pain:{ label:'Pain / Strain', unit:'score', max:5, target:2, lowerIsBetter:true, value:l=>intOrNull(l.pain) }
+  }[metric];
+}
+function renderTrendInsights(entries, vals, meta){
+  const last7 = vals.slice(-7);
+  const prev7 = vals.slice(-14,-7);
+  const lastAvg = avgOf(last7.map(x=>x.val));
+  const prevAvg = avgOf(prev7.map(x=>x.val));
+  const delta = lastAvg == null || prevAvg == null ? null : lastAvg - prevAvg;
+  const hitCount = vals.filter(x => meta.lowerIsBetter ? x.val <= meta.target : x.val >= meta.target).length;
+  const hitRate = vals.length ? Math.round((hitCount / vals.length) * 100) : 0;
+  const loggedDays = entries.length;
+  document.getElementById('trend-insights').innerHTML = [
+    trendInsight('7-day average', lastAvg == null ? '--' : formatTrend(lastAvg, trendMetric), delta == null ? 'Need another week to compare' : trendDeltaText(delta, trendMetric, meta)),
+    trendInsight('Target days', vals.length ? hitRate + '%' : '--', vals.length ? hitCount + ' of ' + vals.length + ' logged days' : 'No logged values yet'),
+    trendInsight('Data coverage', loggedDays + '/14', loggedDays >= 10 ? 'Enough signal for patterns' : 'Log more days to trust the pattern')
+  ].join('');
+}
+function trendInsight(label, value, sub){
+  return `<div class="insight-card"><span>${label}</span><strong>${value}</strong><small>${sub}</small></div>`;
+}
+function trendDeltaText(delta, metric, meta){
+  const abs = Math.abs(delta);
+  const formatted = formatTrend(abs, metric);
+  if (abs < (metric === 'steps' ? 250 : metric === 'readiness' ? 3 : .25)) return 'About flat vs prior week';
+  const better = meta.lowerIsBetter ? delta < 0 : delta > 0;
+  return (better ? 'Improved ' : 'Down ') + formatted + ' vs prior week';
+}
+function renderTrendDrivers(entries){
+  const logs = entries.map(([,log]) => log);
+  const el = document.getElementById('trend-drivers');
+  if (!logs.length) { el.innerHTML = '<div class="empty">No logs yet.</div>'; return; }
+  const s = db.settings;
+  const drivers = [
+    ['Sleep', avgOf(logs.map(l => Math.min(100, ((parseFloat(l.sleepHours)||0) / s.sleepTarget) * 100)))],
+    ['Steps', avgOf(logs.map(l => Math.min(100, ((parseInt(l.steps)||0) / s.stepTarget) * 100)))],
+    ['Water', avgOf(logs.map(l => Math.min(100, ((parseFloat(l.water)||0) / s.waterTarget) * 100)))],
+    ['Energy', avgOf(logs.map(l => ((parseInt(l.energy)||3) / 5) * 100))],
+    ['Sleep quality', avgOf(logs.map(l => ((parseInt(l.sleepQuality)||3) / 5) * 100))],
+    ['Low pain', avgOf(logs.map(l => Math.max(0, 100 - ((parseInt(l.pain)||0) * 20))))]
+  ].sort((a,b)=>a[1]-b[1]);
+  el.innerHTML = `<div class="driver-list">${drivers.map(([label,val]) => `<div class="driver-row"><strong>${label}</strong><div class="driver-meter" title="${Math.round(val)}%"><span style="width:${Math.round(val)}%"></span></div></div>`).join('')}</div>`;
+}
+function renderTrendCoach(entries, vals, meta){
+  const el = document.getElementById('trend-coach');
+  if (!entries.length) { el.innerHTML = '<div class="empty">Log a few days and this will start reading patterns.</div>'; return; }
+  const logs = entries.map(([,log]) => log);
+  const weakest = getWeakestHealthDriver(logs);
+  const avg = vals.length ? avgOf(vals.map(x=>x.val)) : null;
+  const last = vals.length ? vals[vals.length - 1].val : null;
+  let title = 'Keep watching the pattern.';
+  let copy = 'There is not enough movement in this metric yet, so use the driver list to choose the easiest support behavior.';
+  if (trendMetric === 'readiness') {
+    title = 'Your readiness is mostly limited by ' + weakest.label.toLowerCase() + '.';
+    copy = weakest.advice;
+  } else if (avg != null && meta.lowerIsBetter && avg > meta.target) {
+    title = meta.label + ' is above the comfort zone.';
+    copy = 'Treat this as a recovery signal. Reduce intensity and add gentle movement, sleep protection, or mobility.';
+  } else if (avg != null && !meta.lowerIsBetter && avg < meta.target) {
+    title = meta.label + ' is under target.';
+    copy = getMetricAdvice(trendMetric);
+  } else if (last != null) {
+    title = meta.label + ' is in a workable range.';
+    copy = 'The next useful move is consistency. Keep the behavior easy enough to repeat on lower-energy days.';
+  }
+  el.innerHTML = `<div class="coach-card soft"><div class="coach-kicker">Takeaway</div><div class="coach-title">${title}</div><p class="coach-copy">${copy}</p></div>`;
+}
+function getWeakestHealthDriver(logs){
+  const s = db.settings;
+  const drivers = [
+    { label:'sleep', score:avgOf(logs.map(l => Math.min(100, ((parseFloat(l.sleepHours)||0) / s.sleepTarget) * 100))), advice:'Start with the evening. A realistic shutdown cue will help more than trying to force energy tomorrow.' },
+    { label:'movement', score:avgOf(logs.map(l => Math.min(100, ((parseInt(l.steps)||0) / s.stepTarget) * 100))), advice:'Add a small walk to an existing transition. Do not wait for a workout window.' },
+    { label:'hydration', score:avgOf(logs.map(l => Math.min(100, ((parseFloat(l.water)||0) / s.waterTarget) * 100))), advice:'Make water visible and pair it with meals or work starts. The intervention should be almost automatic.' },
+    { label:'energy', score:avgOf(logs.map(l => ((parseInt(l.energy)||3) / 5) * 100)), advice:'Use a lower-friction plan and protect food, light, and breaks before adding intensity.' },
+    { label:'pain or strain', score:avgOf(logs.map(l => Math.max(0, 100 - ((parseInt(l.pain)||0) * 20)))), advice:'De-load for a few days. Gentle mobility and walking beat pushing through a noisy signal.' }
+  ];
+  return drivers.sort((a,b)=>a.score-b.score)[0];
+}
+function getMetricAdvice(metric){
+  return {
+    sleep:'Move the first sleep action earlier: caffeine cutoff, screen boundary, or room setup.',
+    steps:'Attach walking to something already happening: after food, before work, or between tasks.',
+    water:'Put water in reach and use meals as anchors. Do not rely on remembering later.',
+    exercise:'Use a minimum viable session: 10 minutes still keeps the identity alive.',
+    energy:'Reduce the plan to the essentials and look for sleep, food, light, or overload as the lever.'
+  }[metric] || 'Choose one small support behavior and repeat it for the next few logged days.';
+}
+function avgOf(values){
+  const nums = values.filter(v => Number.isFinite(v));
+  return nums.length ? nums.reduce((s,v)=>s+v,0) / nums.length : null;
+}
 function formatTrend(v, metric){
   if (metric === 'sleep') return v.toFixed(1) + 'h';
   if (metric === 'steps') return Math.round(v).toLocaleString();
+  if (metric === 'water') return v.toFixed(1) + 'L';
   if (metric === 'exercise') return Math.round(v) + 'm';
+  if (metric === 'energy' || metric === 'pain') return v.toFixed(1);
   return Math.round(v);
 }
 function writeSummary(){
