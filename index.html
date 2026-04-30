@@ -552,22 +552,36 @@ const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
     if (!s.access_token) { window.location.href = 'login.html'; return; }
     const now = Math.floor(Date.now() / 1000);
-    if (s.expires_at && s.expires_at > now + 60) return; // still valid
-    // Token expired or expiring soon — try to refresh
-    if (!s.refresh_token) { window.location.href = 'login.html'; return; }
-    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
-      method: 'POST',
-      headers: { 'apikey': SB_ANON, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: s.refresh_token })
-    });
-    if (!res.ok) { window.location.href = 'login.html'; return; }
-    const data = await res.json();
-    // Store with same shape as login.html (compute expires_at from expires_in)
-    localStorage.setItem('sb_session', JSON.stringify({
-      access_token:  data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at:    Math.floor(Date.now() / 1000) + (data.expires_in || 3600)
-    }));
+    const expiresAt = s.expires_at || 0;
+    // If token is still good for more than 5 minutes, allow through
+    if (expiresAt > now + 300) return;
+    // Token expired or expiring soon — try to refresh if we have a refresh token
+    if (s.refresh_token) {
+      try {
+        const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST',
+          headers: { 'apikey': SB_ANON, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: s.refresh_token })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.access_token) {
+            localStorage.setItem('sb_session', JSON.stringify({
+              access_token:  data.access_token,
+              refresh_token: data.refresh_token || s.refresh_token,
+              expires_at:    Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+              user:          data.user || s.user
+            }));
+            return; // refreshed successfully — allow through
+          }
+        }
+      } catch(e) {}
+    }
+    // If token is expired and refresh failed/unavailable, redirect
+    if (expiresAt > 0 && expiresAt <= now) {
+      window.location.href = 'login.html';
+    }
+    // If no expires_at at all but we have an access_token, give benefit of the doubt
   } catch(e) { window.location.href = 'login.html'; }
 })();
 
