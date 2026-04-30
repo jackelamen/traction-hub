@@ -94,6 +94,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .action-item .icon{font-size:18px;color:var(--accent);margin-top:1px}
 .script-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .script-line{padding:10px 12px;border-radius:12px;background:#f9fafb;border:1px solid var(--border);font-size:13px;color:#374151}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.score-row{display:grid;grid-template-columns:112px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.score-row:last-child{border-bottom:none}
+.score-row strong{font-size:13px}
+.score-row small{font-size:12px;color:var(--text-2);font-weight:700}
+.score-meter{height:8px;border-radius:99px;background:#e5e7eb;overflow:hidden}
+.score-meter span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--blue))}
+.score-note{padding:14px;border-radius:14px;background:linear-gradient(135deg,#f8fafc,#f5f3ff);border:1px solid rgba(124,58,237,.16)}
+.score-note h3{font-size:15px;font-weight:800;margin-bottom:5px}
+.score-note p{font-size:13px;color:var(--text-2)}
 .timer-face{display:flex;align-items:center;justify-content:center;flex-direction:column;min-height:260px;border-radius:18px;background:linear-gradient(135deg,#17122a,#24335f);color:#fff;position:relative;overflow:hidden}
 .timer-face::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.12),transparent 45%);pointer-events:none}
 .timer-face>*{position:relative;z-index:1}
@@ -106,7 +116,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .empty{padding:40px 20px;text-align:center;color:var(--text-2)}
 .toast{position:fixed;right:24px;bottom:24px;background:#111827;color:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(0,0,0,.22);font-size:13px;font-weight:700;display:none;z-index:100}
 .hidden-file{display:none}
-@media(max-width:900px){#sidebar{position:static;width:100%;height:auto}#app{display:block}#main{margin-left:0}.view{padding:22px 18px 70px}.grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.reset-grid{grid-template-columns:1fr}.well-ring{margin:0 auto}}
+@media(max-width:900px){#sidebar{position:static;width:100%;height:auto}#app{display:block}#main{margin-left:0}.view{padding:22px 18px 70px}.grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.reset-grid,.score-grid{grid-template-columns:1fr}.well-ring{margin:0 auto}}
 @media(max-width:600px){.tabs{width:100%}.tab{flex:1}.timer-time{font-size:46px}}
 </style>
 </head>
@@ -165,12 +175,29 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
           </svg>
           <div class="label">
             <div style="font-size:34px;font-weight:800;letter-spacing:-.04em" id="clarity-score">--</div>
-            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.50);letter-spacing:.08em;text-transform:uppercase">score</div>
+            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.50);letter-spacing:.08em;text-transform:uppercase">signal</div>
           </div>
         </div>
       </div>
     </div>
     <div class="grid-4" id="today-stats" style="margin-bottom:18px"></div>
+    <div class="score-grid">
+      <div class="card card-pad">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:10px">
+          <div>
+            <h2 style="font-size:16px;font-weight:800">Score Breakdown</h2>
+            <p style="font-size:12px;color:var(--text-2)">How today's inner-state signal is being calculated.</p>
+          </div>
+          <span class="badge badge-purple" id="wellness-score-confidence">--</span>
+        </div>
+        <div id="wellness-score-breakdown"></div>
+      </div>
+      <div class="card card-pad">
+        <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">What Would Move It</h2>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">The score points to a regulating lever, not a personal grade.</p>
+        <div id="wellness-score-advice"></div>
+      </div>
+    </div>
     <div class="grid-2" style="margin-bottom:18px">
       <div class="card card-pad">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px">
@@ -212,7 +239,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <h1 class="page-title">Check In</h1>
         <p class="page-sub">Name what is present, then choose what would make today lighter.</p>
       </div>
-      <button class="btn btn-secondary" onclick="loadTodayIntoForm()"><span class="icon" style="font-size:17px">refresh</span>Reload Today</button>
     </div>
     <div class="card card-pad">
       <div class="form-grid">
@@ -472,11 +498,25 @@ function nav(view){
 function getCheckin(date=todayStr()){ return db.checkins[date] || null; }
 function clarityScore(c){
   if(!c) return null;
+  return clarityDetails(c).score;
+}
+function clarityDetails(c){
+  if(!c) return null;
   const mood = parseInt(c.mood) || 3;
   const clarity = parseInt(c.clarity) || 3;
   const grounded = parseInt(c.grounded) || 3;
   const stress = parseInt(c.stress) || 3;
-  return Math.max(0, Math.min(100, Math.round((mood*18)+(clarity*24)+(grounded*22)+((6-stress)*20)-20)));
+  const stressEase = 6 - stress;
+  const score = Math.max(0, Math.min(100, Math.round((mood*18)+(clarity*24)+(grounded*22)+(stressEase*20)-20)));
+  return {
+    score,
+    components:[
+      { key:'mood', label:'Mood', value:(mood/5)*100, detail:moodLabel(mood), advice:'Do one small thing that changes emotional tone: light, music, food, movement, or honest contact.' },
+      { key:'stress', label:'Stress ease', value:(stressEase/5)*100, detail:stress + ' / 5 stress', advice:'Downshift before deciding: longer exhales, fewer inputs, or a ten-minute pause.' },
+      { key:'clarity', label:'Clarity', value:(clarity/5)*100, detail:clarity + ' / 5', advice:'Externalize the fog. Write the next three concerns as separate lines.' },
+      { key:'grounded', label:'Groundedness', value:(grounded/5)*100, detail:grounded + ' / 5', advice:'Use the body as the anchor: walk, stretch, breathe, or name five things you see.' }
+    ]
+  };
 }
 function clarityLabel(score){
   if(score==null) return ['Come back to center','Log mood, stress, clarity, and what is present to see your inner-state signal.'];
@@ -508,6 +548,7 @@ function renderToday(){
     stat('Clarity', c?.clarity || '--', '1 foggy, 5 clear'),
     stat('Practice', practiceMinutesToday()+'m', 'meditation today')
   ].join('');
+  renderClarityBreakdown(c);
   renderWellnessCoach(c, score);
   renderSuggestedReset(score,c);
   renderRecent();
@@ -515,6 +556,30 @@ function renderToday(){
 function stat(label,value,sub){ return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></div>`; }
 function moodLabel(v){ return {1:'Heavy',2:'Low',3:'Neutral',4:'Good',5:'Bright'}[v] || '--'; }
 function practiceMinutesToday(){ return db.practices.filter(p=>p.date===todayStr()).reduce((s,p)=>s+(p.minutes||0),0); }
+function renderClarityBreakdown(c){
+  const confidenceEl=document.getElementById('wellness-score-confidence');
+  const breakdownEl=document.getElementById('wellness-score-breakdown');
+  const adviceEl=document.getElementById('wellness-score-advice');
+  if(!c){
+    confidenceEl.textContent='No signal';
+    confidenceEl.className='badge badge-orange';
+    breakdownEl.innerHTML='<div class="empty">Check in to see what the score is responding to.</div>';
+    adviceEl.innerHTML='<div class="score-note"><h3>Start with naming.</h3><p>Mood, stress, clarity, groundedness, and one honest sentence are enough to make this useful.</p></div>';
+    return;
+  }
+  const details=clarityDetails(c);
+  const filled=['mood','state','stress','clarity','grounded','present','lighter'].filter(k=>c[k]!==''&&c[k]!=null).length;
+  confidenceEl.textContent=filled>=6?'High confidence':filled>=4?'Useful signal':'Thin signal';
+  confidenceEl.className='badge '+(filled>=6?'badge-green':filled>=4?'badge-blue':'badge-orange');
+  const sorted=[...details.components].sort((a,b)=>a.value-b.value);
+  breakdownEl.innerHTML=details.components.map(cmp=>scoreRow(cmp.label,cmp.value,cmp.detail)).join('');
+  const top=sorted.slice(0,2);
+  adviceEl.innerHTML=`<div class="score-note"><h3>${top[0].label} is the main lever right now.</h3><p>${top[0].advice}</p></div><div class="action-list">${top.map(cmp=>`<div class="action-item"><span class="icon">arrow_upward</span><div><strong>${cmp.label}</strong><br><span style="color:var(--text-2)">${cmp.advice}</span></div></div>`).join('')}</div>`;
+}
+function scoreRow(label,value,detail){
+  const pct=Math.max(0,Math.min(100,Math.round(value||0)));
+  return `<div class="score-row"><strong>${label}</strong><div class="score-meter"><span style="width:${pct}%"></span></div><small>${escapeHTML(detail)}</small></div>`;
+}
 function renderWellnessCoach(c, score){
   const plan = getWellnessPlan(c, score);
   document.getElementById('wellness-coach-badge').textContent = plan.badge;

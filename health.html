@@ -150,6 +150,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .micro-card{padding:12px;border-radius:12px;background:#f9fafb;border:1px solid var(--border)}
 .micro-card strong{display:block;font-size:12px;margin-bottom:3px}
 .micro-card span{display:block;font-size:12px;color:var(--text-2)}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.score-row{display:grid;grid-template-columns:100px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.score-row:last-child{border-bottom:none}
+.score-row strong{font-size:13px}
+.score-row small{font-size:12px;color:var(--text-2);font-weight:700}
+.score-meter{height:8px;border-radius:99px;background:#e5e7eb;overflow:hidden}
+.score-meter span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),#22c55e)}
+.score-note{padding:14px;border-radius:14px;background:linear-gradient(135deg,#f8fafc,#eff6ff);border:1px solid rgba(14,165,233,.16)}
+.score-note h3{font-size:15px;font-weight:800;margin-bottom:5px}
+.score-note p{font-size:13px;color:var(--text-2)}
 .empty{padding:40px 20px;text-align:center;color:var(--text-2)}
 .toast{position:fixed;right:24px;bottom:24px;background:#111827;color:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(0,0,0,.22);font-size:13px;font-weight:700;display:none;z-index:100}
 .hidden-file{display:none}
@@ -158,7 +168,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
   #app{display:block}
   #main{margin-left:0}
   .view{padding:22px 18px 70px}
-  .grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.trend-panel{grid-template-columns:1fr}
+  .grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.trend-panel,.score-grid{grid-template-columns:1fr}
   .micro-grid,.insight-grid{grid-template-columns:1fr}
   .readiness-ring{margin:0 auto}
 }
@@ -219,12 +229,29 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
           </svg>
           <div class="label">
             <div style="font-size:34px;font-weight:800;letter-spacing:-.04em" id="readiness-score">--</div>
-            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.50);letter-spacing:.08em;text-transform:uppercase">score</div>
+            <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,.50);letter-spacing:.08em;text-transform:uppercase">signal</div>
           </div>
         </div>
       </div>
     </div>
     <div class="grid-4" id="today-stats" style="margin-bottom:18px"></div>
+    <div class="score-grid">
+      <div class="card card-pad">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:10px">
+          <div>
+            <h2 style="font-size:16px;font-weight:800">Score Breakdown</h2>
+            <p style="font-size:12px;color:var(--text-2)">How today's body signal is being calculated.</p>
+          </div>
+          <span class="badge badge-blue" id="health-score-confidence">--</span>
+        </div>
+        <div id="health-score-breakdown"></div>
+      </div>
+      <div class="card card-pad">
+        <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">What Would Move It</h2>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">The score is a compass, not a grade.</p>
+        <div id="health-score-advice"></div>
+      </div>
+    </div>
     <div class="grid-2" style="margin-bottom:18px">
       <div class="card card-pad">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px">
@@ -278,7 +305,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <h1 class="page-title">Log Health</h1>
         <p class="page-sub">Capture the signals that affect your energy and execution.</p>
       </div>
-      <button class="btn btn-secondary" onclick="loadTodayIntoForm()"><span class="icon" style="font-size:17px">refresh</span>Reload Today</button>
     </div>
     <div class="card card-pad">
       <div class="form-grid">
@@ -582,14 +608,28 @@ function getLog(date = todayStr()){
 }
 function readiness(log){
   if (!log) return null;
+  return readinessDetails(log).score;
+}
+function readinessDetails(log){
+  if (!log) return null;
   const s = db.settings;
   const sleep = Math.min(100, ((parseFloat(log.sleepHours) || 0) / s.sleepTarget) * 100);
   const steps = Math.min(100, ((parseInt(log.steps) || 0) / s.stepTarget) * 100);
   const water = Math.min(100, ((parseFloat(log.water) || 0) / s.waterTarget) * 100);
   const energy = ((parseInt(log.energy) || 3) / 5) * 100;
   const quality = ((parseInt(log.sleepQuality) || 3) / 5) * 100;
-  const painPenalty = (parseInt(log.pain) || 0) * 7;
-  return Math.max(0, Math.min(100, Math.round((sleep*.28)+(steps*.18)+(water*.14)+(energy*.22)+(quality*.18)-painPenalty)));
+  const pain = parseInt(log.pain) || 0;
+  const painScore = Math.max(0, 100 - pain * 20);
+  const components = [
+    { key:'sleepHours', label:'Sleep', value:sleep, weight:.28, detail:(parseFloat(log.sleepHours)||0) + 'h / ' + s.sleepTarget + 'h', advice:'Add an earlier shutdown cue or protect tomorrow morning from late-night drift.' },
+    { key:'steps', label:'Steps', value:steps, weight:.18, detail:Number(log.steps || 0).toLocaleString() + ' / ' + Number(s.stepTarget).toLocaleString(), advice:'Add a 10-minute walk to a transition you already have.' },
+    { key:'water', label:'Water', value:water, weight:.14, detail:(parseFloat(log.water)||0).toFixed(1) + 'L / ' + s.waterTarget + 'L', advice:'Put water in reach and pair the next glass with food or a work start.' },
+    { key:'energy', label:'Energy', value:energy, weight:.22, detail:(parseInt(log.energy)||3) + ' / 5', advice:'Reduce friction: food, daylight, a short walk, or a lower-demand plan.' },
+    { key:'sleepQuality', label:'Sleep quality', value:quality, weight:.18, detail:(parseInt(log.sleepQuality)||3) + ' / 5', advice:'Improve the pre-sleep environment before adding more effort tomorrow.' },
+    { key:'pain', label:'Low pain', value:painScore, weight:.14, detail:pain + ' / 5 strain', advice:'De-load today: mobility, easy walking, or rest instead of forcing intensity.' }
+  ];
+  const score = Math.max(0, Math.min(100, Math.round((sleep*.28)+(steps*.18)+(water*.14)+(energy*.22)+(quality*.18)-(pain*7))));
+  return { score, components };
 }
 function readinessLabel(score){
   if (score == null) return ['Log today to see readiness','Capture your first health signal for today.'];
@@ -626,12 +666,37 @@ function renderToday(){
     stat('Exercise', exercise ? exercise + 'm' : '--', weeklyExerciseMinutes() + '/' + s.weeklyExerciseTarget + 'm this week', weeklyExerciseMinutes() >= s.weeklyExerciseTarget ? 'badge-green' : 'badge-blue')
   ].join('');
   document.getElementById('today-actions').innerHTML = `<button class="btn btn-primary" onclick="nav('log')"><span class="icon" style="font-size:17px">edit_note</span>${log ? 'Update Today' : 'Log Today'}</button><button class="btn btn-secondary" onclick="nav('trends')"><span class="icon" style="font-size:17px">query_stats</span>View Trends</button>`;
+  renderReadinessBreakdown(log);
   renderHealthCoach(log, score);
   renderTodayHabits();
   renderRecentLogs();
 }
 function stat(label,value,sub,badge){
   return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></div>`;
+}
+function renderReadinessBreakdown(log){
+  const confidenceEl = document.getElementById('health-score-confidence');
+  const breakdownEl = document.getElementById('health-score-breakdown');
+  const adviceEl = document.getElementById('health-score-advice');
+  if (!log) {
+    confidenceEl.textContent = 'No signal';
+    confidenceEl.className = 'badge badge-orange';
+    breakdownEl.innerHTML = '<div class="empty">Log today to see what the score is responding to.</div>';
+    adviceEl.innerHTML = '<div class="score-note"><h3>Start with the basics.</h3><p>Sleep, movement, water, energy, sleep quality, and pain are enough to produce a useful read.</p></div>';
+    return;
+  }
+  const details = readinessDetails(log);
+  const filled = ['sleepHours','steps','water','energy','sleepQuality','pain'].filter(k => log[k] !== '' && log[k] != null).length;
+  confidenceEl.textContent = filled >= 5 ? 'High confidence' : filled >= 3 ? 'Partial signal' : 'Thin signal';
+  confidenceEl.className = 'badge ' + (filled >= 5 ? 'badge-green' : filled >= 3 ? 'badge-blue' : 'badge-orange');
+  const sorted = [...details.components].sort((a,b)=>a.value-b.value);
+  breakdownEl.innerHTML = details.components.map(c => scoreRow(c.label, c.value, c.detail)).join('');
+  const top = sorted.slice(0,2);
+  adviceEl.innerHTML = `<div class="score-note"><h3>${top[0].label} is the biggest lever today.</h3><p>${top[0].advice}</p></div><div class="action-list">${top.map(c => `<div class="action-item"><span class="icon">arrow_upward</span><div><strong>${c.label}</strong><br><span style="color:var(--text-2)">${c.advice}</span></div></div>`).join('')}</div>`;
+}
+function scoreRow(label, value, detail){
+  const pct = Math.max(0, Math.min(100, Math.round(value || 0)));
+  return `<div class="score-row"><strong>${label}</strong><div class="score-meter"><span style="width:${pct}%"></span></div><small>${escapeHTML(detail)}</small></div>`;
 }
 function renderHealthCoach(log, score){
   const coach = getHealthCoach(log, score);
