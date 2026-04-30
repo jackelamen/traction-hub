@@ -10051,6 +10051,115 @@ function saveGoals(arr) {
   pushAllToSupabase();
 }
 
+// ── Goal Exempt Days ─────────────────────────────────────────
+// goal-exempt-days-v1: { 'YYYY-MM-DD': 'holiday' | 'rest' | 'travel' | ... }
+// Sick days are automatically pulled from the work module's dayTypes.
+const GOAL_EXEMPT_KEY = 'goal-exempt-days-v1';
+
+function getGoalExemptDays() {
+  let manual = {};
+  try { manual = JSON.parse(localStorage.getItem(GOAL_EXEMPT_KEY) || '{}'); } catch(e) {}
+  // Merge in sick days from the work module (dayTypes)
+  let workTypes = {};
+  try { workTypes = JSON.parse(localStorage.getItem(DAY_TYPES_KEY) || '{}'); } catch(e) {}
+  const merged = { ...manual };
+  Object.entries(workTypes).forEach(([date, type]) => {
+    if (type === 'sick') merged[date] = 'sick'; // work sick days always win
+  });
+  return merged;
+}
+
+function saveGoalExemptDays(obj) {
+  localStorage.setItem(GOAL_EXEMPT_KEY, JSON.stringify(obj));
+}
+
+function toggleGoalExemptDay(dateStr, type) {
+  const exempt = getGoalExemptDays();
+  // Check if this day is a work-module sick day (read-only from work)
+  let workTypes = {};
+  try { workTypes = JSON.parse(localStorage.getItem(DAY_TYPES_KEY) || '{}'); } catch(e) {}
+  if (workTypes[dateStr] === 'sick') {
+    showToast('Sick days are set in the Work module.');
+    return;
+  }
+  let manual = {};
+  try { manual = JSON.parse(localStorage.getItem(GOAL_EXEMPT_KEY) || '{}'); } catch(e) {}
+  if (manual[dateStr] === type) {
+    delete manual[dateStr]; // toggle off
+    showToast('Exempt day removed.');
+  } else {
+    manual[dateStr] = type;
+    showToast(`Day marked as ${type}.`);
+  }
+  saveGoalExemptDays(manual);
+  renderGoalsPage();
+}
+
+function _goalExemptSectionHTML() {
+  const exempt = getGoalExemptDays();
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const monthPrefix = `${yyyy}-${mm}`;
+
+  // Get this month's exempt days, sorted
+  const thisMonth = Object.entries(exempt)
+    .filter(([d]) => d.startsWith(monthPrefix))
+    .sort(([a], [b]) => a.localeCompare(b));
+
+  // Get work sick days for read-only badge
+  let workTypes = {};
+  try { workTypes = JSON.parse(localStorage.getItem(DAY_TYPES_KEY) || '{}'); } catch(e) {}
+
+  const typeConfig = {
+    sick:    { icon: '🤒', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', label: 'Sick' },
+    holiday: { icon: '🏖', color: '#0891b2', bg: 'rgba(8,145,178,0.1)',  label: 'Holiday' },
+    rest:    { icon: '😴', color: '#059669', bg: 'rgba(5,150,105,0.1)',  label: 'Rest Day' },
+    travel:  { icon: '✈',  color: '#f97316', bg: 'rgba(249,115,22,0.1)', label: 'Travel' },
+  };
+
+  const pillsHTML = thisMonth.length
+    ? thisMonth.map(([d, type]) => {
+        const cfg = typeConfig[type] || { icon: '📅', color: '#6b7280', bg: 'rgba(107,114,128,0.1)', label: type };
+        const dayNum = parseInt(d.slice(8), 10);
+        const isWork = workTypes[d] === 'sick';
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-default"
+          style="background:${cfg.bg};color:${cfg.color}"
+          title="${isWork ? 'From Work module' : 'Click to remove'}"
+          ${isWork ? '' : `onclick="toggleGoalExemptDay('${d}', '${type}')"`}>
+          ${cfg.icon} ${dayNum}${isWork ? ' 🔒' : ' ×'}
+        </span>`;
+      }).join('')
+    : `<span class="text-[10px] text-gray-400 italic">None this month</span>`;
+
+  // Quick-add buttons for today
+  const todayStr2 = `${yyyy}-${mm}-${String(today.getDate()).padStart(2,'0')}`;
+  const todayExempt = exempt[todayStr2];
+  const addBtns = Object.entries(typeConfig)
+    .filter(([type]) => type !== 'sick') // sick comes from work module only
+    .map(([type, cfg]) => {
+      const isActive = todayExempt === type;
+      return `<button onclick="toggleGoalExemptDay('${todayStr2}', '${type}')"
+        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors"
+        style="${isActive ? `background:${cfg.bg};border-color:${cfg.color};color:${cfg.color}` : 'border-color:#e5e7eb;color:#9ca3af'}">
+        ${cfg.icon} ${cfg.label}
+      </button>`;
+    }).join('');
+
+  return `
+    <div class="mt-3 pt-3 border-t border-gray-100">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Exempt Days This Month</span>
+        <span class="text-[9px] text-gray-400">Sick days auto-sync from Work</span>
+      </div>
+      <div class="flex flex-wrap gap-1 mb-2">${pillsHTML}</div>
+      <div class="flex items-center gap-1 flex-wrap">
+        <span class="text-[10px] text-gray-400 mr-0.5">Mark today:</span>
+        ${addBtns}
+      </div>
+    </div>`;
+}
+
 // ── Tier config ──────────────────────────────────────────────
 const GOAL_TIERS = [
   { key:'life',  label:'Life Goals',  icon:'explore',       color:'#7c3aed', bg:'#ede9fe', text:'#5b21b6', desc:'Your north stars — the person you want to become' },
@@ -10176,6 +10285,7 @@ function _goalCardHTML(g, cfg) {
           <span class="material-symbols-outlined text-on-surface-variant" style="font-size:14px">edit</span>
         </button>
       </div>
+      ${!isDone ? _goalExemptSectionHTML() : ''}
     </div>`;
 }
 
