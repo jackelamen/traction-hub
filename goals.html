@@ -4273,7 +4273,21 @@ function saveSprint(){
   }));
   const data={goalId,name,outcome:document.getElementById('nss-outcome').value.trim(),startDate:document.getElementById('nss-start').value,endDate:document.getElementById('nss-end').value,phases};
   let savedSprintId;
-  if(id){Object.assign(DB.sprints.find(s=>s.id===id),data); savedSprintId=id;}
+  if(id){
+    const sp = DB.sprints.find(s=>s.id===id);
+    Object.assign(sp, data);
+    // Prune weekChecks: remove any check keys that belong to tactics no longer in the sprint
+    const validTacticIds = new Set(data.phases.flatMap(ph => (ph.tactics||[]).map(t => t.id)));
+    for (const wk of Object.keys(sp.weekChecks||{})) {
+      const wkChecks = sp.weekChecks[wk];
+      for (const key of Object.keys(wkChecks)) {
+        // check keys are either tacticId or tacticId_dayIdx — extract base id
+        const baseId = key.replace(/_\d+$/, '');
+        if (!validTacticIds.has(baseId)) delete wkChecks[key];
+      }
+    }
+    savedSprintId = id;
+  }
   else{savedSprintId=uid(); DB.sprints.push({id:savedSprintId,weekChecks:{},reflections:{},...data});}
   saveDB(DB); syncSprintFull(savedSprintId); closeSheet('sheet-new-sprint');
   if(currentView==='today') renderToday();
