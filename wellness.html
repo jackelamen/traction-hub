@@ -507,14 +507,23 @@ function clarityDetails(c){
   const grounded = parseInt(c.grounded) || 3;
   const stress = parseInt(c.stress) || 3;
   const stressEase = 6 - stress;
-  const score = Math.max(0, Math.min(100, Math.round((mood*18)+(clarity*24)+(grounded*22)+(stressEase*20)-20)));
+  const moodScore = (mood / 5) * 100;
+  const stressScore = (stressEase / 5) * 100;
+  const clarityScore = (clarity / 5) * 100;
+  const groundedScore = (grounded / 5) * 100;
+  const score = Math.max(0, Math.min(100, Math.round(
+    (moodScore * .22) +
+    (stressScore * .24) +
+    (clarityScore * .28) +
+    (groundedScore * .26)
+  )));
   return {
     score,
     components:[
-      { key:'mood', label:'Mood', value:(mood/5)*100, detail:moodLabel(mood), advice:'Do one small thing that changes emotional tone: light, music, food, movement, or honest contact.' },
-      { key:'stress', label:'Stress ease', value:(stressEase/5)*100, detail:stress + ' / 5 stress', advice:'Downshift before deciding: longer exhales, fewer inputs, or a ten-minute pause.' },
-      { key:'clarity', label:'Clarity', value:(clarity/5)*100, detail:clarity + ' / 5', advice:'Externalize the fog. Write the next three concerns as separate lines.' },
-      { key:'grounded', label:'Groundedness', value:(grounded/5)*100, detail:grounded + ' / 5', advice:'Use the body as the anchor: walk, stretch, breathe, or name five things you see.' }
+      { key:'mood', label:'Mood', value:moodScore, detail:moodLabel(mood), advice:'Do one small thing that changes emotional tone: light, music, food, movement, or honest contact.' },
+      { key:'stress', label:'Stress ease', value:stressScore, detail:stress + ' / 5 stress', advice:'Downshift before deciding: longer exhales, fewer inputs, or a ten-minute pause.' },
+      { key:'clarity', label:'Clarity', value:clarityScore, detail:clarity + ' / 5', advice:'Externalize the fog. Write the next three concerns as separate lines.' },
+      { key:'grounded', label:'Groundedness', value:groundedScore, detail:grounded + ' / 5', advice:'Use the body as the anchor: walk, stretch, breathe, or name five things you see.' }
     ]
   };
 }

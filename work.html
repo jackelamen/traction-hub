@@ -3701,7 +3701,12 @@ let dayTypes = {}; // { 'YYYY-MM-DD': 'holiday' | 'sick' | 'travel' | 'ooo' | nu
 (function loadDayTypes() {
   try { dayTypes = JSON.parse(localStorage.getItem(DAY_TYPES_KEY) || '{}'); } catch(e) { dayTypes = {}; }
 })();
-function saveDayTypes() { localStorage.setItem(DAY_TYPES_KEY, JSON.stringify(dayTypes)); }
+function saveDayTypes() {
+  const val = JSON.stringify(dayTypes);
+  _lsSet(DAY_TYPES_KEY, val);          // write directly, bypassing the patched setItem
+  _touchLsTimestamp(DAY_TYPES_KEY);    // mark as locally authoritative so sync never overwrites it
+  if (_sbBootComplete) _sbPushThrottled(); // push to cloud if app is fully booted
+}
 function isExemptDay(dateStr) { return !!dayTypes[dateStr]; }
 function setDayType(dateStr, type) {
   // type: 'holiday' | 'sick' | 'travel' | null (null = clear)
