@@ -252,6 +252,10 @@
     font-size: 16px; line-height: 1; padding: 2px 4px; border-radius: 4px;
   }
   .search-bar-wrap .search-clear:hover { color: var(--text); }
+  .search-range {
+    display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-bottom:12px;
+  }
+  .range-hint { font-size:12px;color:var(--muted);margin-bottom:14px; }
 
   /* Bulk edit toolbar */
   .bulk-toolbar {
@@ -793,6 +797,18 @@
           <input type="text" id="txSearch" placeholder="Search merchant, note, category…" oninput="render()">
           <button class="search-clear" onclick="clearSearch()" title="Clear">×</button>
         </div>
+        <div class="search-range">
+          <div class="form-group">
+            <label>Search from</label>
+            <input type="date" id="txRangeStart" onchange="setSearchRange()">
+          </div>
+          <div class="form-group">
+            <label>Search through</label>
+            <input type="date" id="txRangeEnd" onchange="setSearchRange()">
+          </div>
+          <button class="btn-secondary" onclick="clearSearchRange()">Use month</button>
+        </div>
+        <div class="range-hint" id="txRangeHint"></div>
 
         <!-- Category filters -->
         <div class="filters">
@@ -1606,9 +1622,25 @@ let currentType = 'expense';
 let sortCol = 'date';
 let sortDir = 'desc';
 let selectedIds = new Set();
+let txRangeStart = '';
+let txRangeEnd = '';
 
 function clearSearch() {
   document.getElementById('txSearch').value = '';
+  render();
+}
+
+function setSearchRange() {
+  txRangeStart = document.getElementById('txRangeStart').value;
+  txRangeEnd = document.getElementById('txRangeEnd').value;
+  render();
+}
+
+function clearSearchRange() {
+  txRangeStart = '';
+  txRangeEnd = '';
+  document.getElementById('txRangeStart').value = '';
+  document.getElementById('txRangeEnd').value = '';
   render();
 }
 
@@ -1677,6 +1709,7 @@ function deleteSelected() {
 }
 
 function changeMonth(dir) {
+  if (txRangeStart || txRangeEnd) clearSearchRange();
   currentMonth += dir;
   if (currentMonth > 11) { currentMonth = 0; currentYear++; }
   if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
@@ -1839,12 +1872,37 @@ function getMonthTx() {
   });
 }
 
+function getTrackerTx() {
+  const hasRange = !!(txRangeStart || txRangeEnd);
+  if (!hasRange) return getMonthTx();
+  return data.transactions.filter(t => {
+    if (!t.date) return false;
+    if (txRangeStart && t.date < txRangeStart) return false;
+    if (txRangeEnd && t.date > txRangeEnd) return false;
+    return true;
+  });
+}
+
+function updateRangeHint(txs) {
+  const hint = document.getElementById('txRangeHint');
+  if (!hint) return;
+  if (txRangeStart || txRangeEnd) {
+    const from = txRangeStart ? formatDate(txRangeStart) : 'the beginning';
+    const to = txRangeEnd ? formatDate(txRangeEnd) : 'today';
+    hint.textContent = `Showing ${txs.length} transaction${txs.length !== 1 ? 's' : ''} from ${from} through ${to}. Search and category filters apply inside this range.`;
+  } else {
+    const d = new Date(currentYear, currentMonth, 1);
+    hint.textContent = `Showing the selected month: ${d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}. Choose dates above to search across a wider range.`;
+  }
+}
+
 function render() {
-  const monthTx = getMonthTx();
-  renderSummary(monthTx);
-  renderCategoryBreakdown(monthTx);
-  renderQuickStats(monthTx);
-  renderTransactions(monthTx);
+  const scopedTx = getTrackerTx();
+  updateRangeHint(scopedTx);
+  renderSummary(scopedTx);
+  renderCategoryBreakdown(scopedTx);
+  renderQuickStats(scopedTx);
+  renderTransactions(scopedTx);
   if (activeSection === 'budget') renderBudget();
 }
 
@@ -2144,10 +2202,10 @@ function updateCategory(id, newCat) {
   if (!tx) return;
   tx.category = newCat;
   saveData(tx);
-  const monthTx = getMonthTx();
-  renderSummary(monthTx);
-  renderCategoryBreakdown(monthTx);
-  renderQuickStats(monthTx);
+  const scopedTx = getTrackerTx();
+  renderSummary(scopedTx);
+  renderCategoryBreakdown(scopedTx);
+  renderQuickStats(scopedTx);
   toast(`Category updated to ${CAT_ICONS[newCat]||''} ${newCat}`);
 }
 
