@@ -546,13 +546,23 @@ const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   }
 })();
 
-// ── Auth check ───────────────────────────────────────────────────
-(function checkAuth() {
+// ── Auth check (with token refresh) ─────────────────────────────
+(async function checkAuth() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
-    if (!s.access_token || s.expires_at <= Math.floor(Date.now() / 1000)) {
-      window.location.href = 'login.html';
-    }
+    if (!s.access_token) { window.location.href = 'login.html'; return; }
+    const now = Math.floor(Date.now() / 1000);
+    if (s.expires_at && s.expires_at > now + 60) return; // still valid
+    // Token expired or expiring soon — try to refresh
+    if (!s.refresh_token) { window.location.href = 'login.html'; return; }
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'apikey': SB_ANON, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: s.refresh_token })
+    });
+    if (!res.ok) { window.location.href = 'login.html'; return; }
+    const data = await res.json();
+    localStorage.setItem('sb_session', JSON.stringify(data));
   } catch(e) { window.location.href = 'login.html'; }
 })();
 
