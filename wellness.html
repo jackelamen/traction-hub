@@ -110,6 +110,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .timer-time{font-size:58px;font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
 .breath-dot{width:92px;height:92px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;margin-bottom:18px;transition:transform 1s ease,background 1s ease}
 .breath-dot.expand{transform:scale(1.45);background:rgba(125,211,252,.28)}
+.audio-panel{margin-top:14px;padding:12px;border:1px solid var(--border);border-radius:14px;background:#f9fafb}
+.audio-panel audio{width:100%;height:36px;margin-top:8px}
+.audio-toggle{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text-2);margin-top:8px}
+.audio-toggle input{width:16px;height:16px;accent-color:var(--accent)}
 .trend-bars{display:flex;align-items:flex-end;gap:8px;height:180px;padding:16px 4px 2px}
 .trend-bar{flex:1;min-width:24px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,var(--accent),var(--blue));position:relative;display:flex;align-items:flex-end;justify-content:center}
 .trend-bar span{position:absolute;bottom:-22px;font-size:10px;font-weight:700;color:var(--text-3)}
@@ -296,6 +300,19 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
           <button class="btn btn-secondary btn-sm" onclick="setDuration(10)">10m</button>
           <button class="btn btn-primary" onclick="toggleTimer()" id="timer-btn"><span class="icon" style="font-size:17px">play_arrow</span>Start</button>
           <button class="btn btn-secondary" onclick="resetTimer()"><span class="icon" style="font-size:17px">stop</span>Reset</button>
+        </div>
+        <div class="audio-panel">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div>
+              <h2 style="font-size:13px;font-weight:800">Meditation Music</h2>
+              <p style="font-size:12px;color:var(--text-2)">20 minute deep meditation track.</p>
+            </div>
+            <span class="icon" style="font-size:18px;color:var(--accent)">music_note</span>
+          </div>
+          <audio id="meditation-audio" controls loop preload="metadata">
+            <source src="Assets/Audio/Meditation/20 Minute Deep Meditation Music  Connect with Your Soul Raise Your Energy Vibration.mp3" type="audio/mpeg"/>
+          </audio>
+          <label class="audio-toggle"><input id="audio-sync" type="checkbox" checked/>Start and pause with timer</label>
         </div>
       </div>
       <div class="card card-pad">
@@ -711,19 +728,36 @@ function renderTimer(){
   const s=String(remaining%60).padStart(2,'0');
   document.getElementById('timer-display').textContent=m+':'+s;
 }
+function shouldSyncAudio(){ return document.getElementById('audio-sync')?.checked; }
+function playMeditationAudio(){
+  if(!shouldSyncAudio()) return;
+  const audio=document.getElementById('meditation-audio');
+  if(audio) audio.play().catch(()=>toast('Use the audio controls to start music'));
+}
+function pauseMeditationAudio(){
+  const audio=document.getElementById('meditation-audio');
+  if(audio) audio.pause();
+}
+function stopMeditationAudio(){
+  const audio=document.getElementById('meditation-audio');
+  if(!audio) return;
+  audio.pause();
+  audio.currentTime=0;
+}
 function toggleTimer(){
-  if(timer){ clearInterval(timer); clearInterval(breath); timer=null; breath=null; document.getElementById('timer-btn').innerHTML='<span class="icon" style="font-size:17px">play_arrow</span>Start'; document.getElementById('timer-phase').textContent='Paused'; return; }
+  if(timer){ clearInterval(timer); clearInterval(breath); timer=null; breath=null; pauseMeditationAudio(); document.getElementById('timer-btn').innerHTML='<span class="icon" style="font-size:17px">play_arrow</span>Start'; document.getElementById('timer-phase').textContent='Paused'; return; }
   document.getElementById('timer-btn').innerHTML='<span class="icon" style="font-size:17px">pause</span>Pause';
   document.getElementById('timer-phase').textContent='Breathe';
+  playMeditationAudio();
   let expand=false;
   breath=setInterval(()=>{ expand=!expand; document.getElementById('breath-dot').classList.toggle('expand',expand); document.getElementById('timer-phase').textContent=expand?'Inhale':'Exhale'; },4000);
   timer=setInterval(()=>{
     remaining--;
     renderTimer();
-    if(remaining<=0){ clearInterval(timer); clearInterval(breath); timer=null; breath=null; document.getElementById('timer-btn').innerHTML='<span class="icon" style="font-size:17px">play_arrow</span>Start'; document.getElementById('timer-phase').textContent='Complete'; document.getElementById('breath-dot').classList.remove('expand'); toast('Session complete'); }
+    if(remaining<=0){ clearInterval(timer); clearInterval(breath); timer=null; breath=null; pauseMeditationAudio(); document.getElementById('timer-btn').innerHTML='<span class="icon" style="font-size:17px">play_arrow</span>Start'; document.getElementById('timer-phase').textContent='Complete'; document.getElementById('breath-dot').classList.remove('expand'); toast('Session complete'); }
   },1000);
 }
-function resetTimer(){ if(timer) toggleTimer(); remaining=duration; document.getElementById('timer-phase').textContent='Ready'; document.getElementById('breath-dot').classList.remove('expand'); renderTimer(); }
+function resetTimer(){ if(timer) toggleTimer(); stopMeditationAudio(); remaining=duration; document.getElementById('timer-phase').textContent='Ready'; document.getElementById('breath-dot').classList.remove('expand'); renderTimer(); }
 function savePractice(){
   const minutes=Math.round((duration-remaining)/60) || Math.round(duration/60);
   db.practices.unshift({ id:'p-'+Date.now().toString(36), date:todayStr(), minutes, type:val('practice-type'), after:val('after-state'), note:val('practice-note'), savedAt:new Date().toISOString() });
