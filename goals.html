@@ -2839,6 +2839,50 @@ function saveDB(d) {
 let DB = { visions: {}, goals: [], sprints: [] };
 
 // ─────────────────────────────────────────
+//  GOAL EXEMPT DAYS
+//  { 'YYYY-MM-DD': 'sick' | 'holiday' | 'rest' | 'travel' }
+//  Sick days also auto-pull from work module's dayTypes key.
+// ─────────────────────────────────────────
+const GOAL_EXEMPT_KEY = 'goal-exempt-days-v1';
+const WORK_DAY_TYPES_KEY = '30day-day-types-v1';
+
+function getGoalExemptDays() {
+  let manual = {};
+  try { manual = JSON.parse(localStorage.getItem(GOAL_EXEMPT_KEY) || '{}'); } catch(e) {}
+  let workTypes = {};
+  try { workTypes = JSON.parse(localStorage.getItem(WORK_DAY_TYPES_KEY) || '{}'); } catch(e) {}
+  const merged = { ...manual };
+  Object.entries(workTypes).forEach(([date, type]) => {
+    if (type === 'sick') merged[date] = 'sick';
+  });
+  return merged;
+}
+
+function todayExemptType() {
+  const today = new Date();
+  const key = today.toISOString().slice(0, 10);
+  return getGoalExemptDays()[key] || null;
+}
+
+function setGoalExemptToday(type) {
+  const today = new Date().toISOString().slice(0, 10);
+  let manual = {};
+  try { manual = JSON.parse(localStorage.getItem(GOAL_EXEMPT_KEY) || '{}'); } catch(e) {}
+  // Check if this is a work-module sick day (read-only)
+  let workTypes = {};
+  try { workTypes = JSON.parse(localStorage.getItem(WORK_DAY_TYPES_KEY) || '{}'); } catch(e) {}
+  if (workTypes[today] === 'sick' && type === 'sick') { renderToday(); return; }
+  if (manual[today] === type) {
+    delete manual[today]; // toggle off
+  } else {
+    manual[today] = type;
+  }
+  localStorage.setItem(GOAL_EXEMPT_KEY, JSON.stringify(manual));
+  renderToday();
+  renderTodayEnhancements();
+}
+
+// ─────────────────────────────────────────
 //  ROUTING
 // ─────────────────────────────────────────
 let currentView     = 'today';
@@ -3006,6 +3050,8 @@ function avgExecScore(sp) {
 //   so it's tallied once at end-of-week, not dragging down every day's score.
 //   Exception: if it's already been checked, always show it so progress is visible.
 function todayDoneTotals(sp) {
+  // Exempt days (sick, holiday, rest, travel) don't count against scores
+  if (todayExemptType()) return { done: 0, total: 0 };
   const wk = sprintCurrentWeek(sp);
   const tactics = tacticsForWeek(sp, wk);
   const checks = (sp.weekChecks||{})[wk]||{};
@@ -3147,14 +3193,29 @@ function renderToday() {
       <div class="today-briefing-grid">
         <div style="flex:1">
           <p class="hero-greeting">${todayFmt}</p>
-          <h1 class="hero-title">${greeting} Jack.<br><span style="opacity:0.82;font-size:0.78em;font-weight:600">${openT ? `${openT} action${openT===1?'':'s'} need attention.` : 'The promises are clean for today.'}</span></h1>
+          ${(() => {
+            const exempt = todayExemptType();
+            const exemptLabels = { sick:’🤒 Sick day’, holiday:’🏖 Holiday’, rest:’😴 Rest day’, travel:’✈ Travel day’ };
+            if (exempt) {
+              return `<h1 class="hero-title">${greeting} Jack.<br><span style="opacity:0.82;font-size:0.78em;font-weight:600">${exemptLabels[exempt] || exempt} — actions paused, streak protected.</span></h1>`;
+            }
+            return `<h1 class="hero-title">${greeting} Jack.<br><span style="opacity:0.82;font-size:0.78em;font-weight:600">${openT ? `${openT} action${openT===1?’’:’s’} need attention.` : ‘The promises are clean for today.’}</span></h1>`;
+          })()}
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
             <button class="hero-cta" onclick="resetToToday()">
               <span class="icon fill" style="font-size:17px">bolt</span>Today’s actions
             </button>
-            <span style="font-size:13px;font-weight:800;color:${doneT===totalT&&totalT>0?'#2dd4bf':'rgba(255,255,255,0.62)'}">${todayMood} · ${doneT}/${totalT} done</span>
+            <span style="font-size:13px;font-weight:800;color:${doneT===totalT&&totalT>0?’#2dd4bf’:’rgba(255,255,255,0.62)’}">${todayMood} · ${doneT}/${totalT} done</span>
           </div>
           <div class="today-progress-line"><span style="width:${heroPct || 0}%"></span></div>
+          <!-- Exempt day controls -->
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px">
+            <span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em">Mark today:</span>
+            ${[[‘sick’,’🤒’,’Sick’],[‘holiday’,’🏖’,’Holiday’],[‘rest’,’😴’,’Rest’],[‘travel’,’✈’,’Travel’]].map(([type,icon,label]) => {
+              const active = todayExemptType() === type;
+              return `<button onclick="setGoalExemptToday(‘${type}’)" style="padding:4px 10px;border-radius:20px;border:1.5px solid ${active?’rgba(255,255,255,0.6)’:’rgba(255,255,255,0.2)’};background:${active?’rgba(255,255,255,0.2)’:’transparent’};color:${active?’#fff’:’rgba(255,255,255,0.5)’};font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s">${icon} ${label}</button>`;
+            }).join(‘’)}
+          </div>
         </div>
         <div class="today-note">
           <label for="today-note">Today’s posture</label>
