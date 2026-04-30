@@ -2791,7 +2791,7 @@ async function syncSprintFull(sprintId) {
         const keptUuids = new Set((ph.tactics || []).filter(t => t._uuid).map(t => t._uuid));
         for (const row of existingRows) {
           if (!keptUuids.has(row.id)) {
-            fetch(`${SB_URL}/rest/v1/sprint_tactics?id=eq.${row.id}`, { method: 'DELETE', headers: sbHeaders() });
+            await fetch(`${SB_URL}/rest/v1/sprint_tactics?id=eq.${row.id}`, { method: 'DELETE', headers: sbHeaders() });
           }
         }
       } catch(e) { console.warn('tactic cleanup failed:', e); }
@@ -4328,21 +4328,26 @@ function openEditSprintSheet(sprintId){
   _loadSprintSheetFields(sp,null);
   openSheet('sheet-new-sprint');
 }
-function saveSprint(){
+async function saveSprint(){
   const id=document.getElementById('nss-id').value;
   const name=document.getElementById('nss-name').value.trim();
   if(!name){alert('Please enter a cycle name');return;}
   const goalId=document.getElementById('nss-goal').value;
   if(!goalId){alert('Please select a goal');return;}
-  const phases=[0,1,2].map(i=>({
-    name:document.getElementById(`nss-p${i+1}-name`).value.trim()||['Foundation','Build','Peak'][i],
-    desc:document.getElementById(`nss-p${i+1}-desc`).value.trim(),
-    tactics:phaseTacticRows[i].filter(r=>r.text.trim()),
-  }));
+  const existingSprint = id ? DB.sprints.find(s=>s.id===id) : null;
+  const phases=[0,1,2].map(i=>{
+    const existingPhase = existingSprint?.phases?.[i] || {};
+    return {
+      _uuid: existingPhase._uuid,
+      name:document.getElementById(`nss-p${i+1}-name`).value.trim()||['Foundation','Build','Peak'][i],
+      desc:document.getElementById(`nss-p${i+1}-desc`).value.trim(),
+      tactics:phaseTacticRows[i].filter(r=>r.text.trim()),
+    };
+  });
   const data={goalId,name,outcome:document.getElementById('nss-outcome').value.trim(),startDate:document.getElementById('nss-start').value,endDate:document.getElementById('nss-end').value,phases};
   let savedSprintId;
   if(id){
-    const sp = DB.sprints.find(s=>s.id===id);
+    const sp = existingSprint;
     Object.assign(sp, data);
     // Prune weekChecks: remove any check keys that belong to tactics no longer in the sprint
     const validTacticIds = new Set(data.phases.flatMap(ph => (ph.tactics||[]).map(t => t.id)));
@@ -4357,7 +4362,9 @@ function saveSprint(){
     savedSprintId = id;
   }
   else{savedSprintId=uid(); DB.sprints.push({id:savedSprintId,weekChecks:{},reflections:{},...data});}
-  saveDB(DB); syncSprintFull(savedSprintId); closeSheet('sheet-new-sprint');
+  saveDB(DB);
+  await syncSprintFull(savedSprintId);
+  closeSheet('sheet-new-sprint');
   if(currentView==='today') renderToday();
   if(currentView==='cycles') renderCycles();
   if(currentView==='goal-detail') renderGoalDetail(detailGoalId);
