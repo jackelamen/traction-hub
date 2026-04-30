@@ -124,6 +124,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
   <div class="sidebar-footer">
     <button onclick="nav('checkin')" class="btn btn-primary" style="width:100%"><span class="icon" style="font-size:17px">add</span>Check In</button>
     <a href="index.html" class="nav-item" style="justify-content:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);font-size:11.5px"><span class="icon" style="font-size:14px">apps</span>Switch module</a>
+    <button onclick="doLogout()" class="nav-item" style="justify-content:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);font-size:11.5px;color:#f87171"><span class="icon" style="font-size:14px;color:#f87171">logout</span>Sign out</button>
   </div>
 </nav>
 
@@ -336,13 +337,26 @@ const SB_USER_ID = 'jack_traction_hub_v1';
   } catch(e) { window.location.href = 'login.html'; }
 })();
 
-// ── Supabase sync helpers ────────────────────────────────────────
-async function pushKeysToSupabase(keys) {
-  const rows = keys.map(key => {
-    let value;
-    try { value = JSON.parse(localStorage.getItem(key)); } catch(e) { value = localStorage.getItem(key); }
-    return { user_id: SB_USER_ID, key, value, updated_at: new Date().toISOString() };
-  }).filter(r => r.value !== null);
+// ── Supabase sync ────────────────────────────────────────────────
+const _lsSet = localStorage.setItem.bind(localStorage);
+const _lsGet = localStorage.getItem.bind(localStorage);
+let _sbBootComplete = false;
+const NO_SYNC_KEYS = new Set(['sb_session', '_edgex_ls_timestamps', 'morning-setup-done']);
+const LS_TIMESTAMPS_KEY = '_edgex_ls_timestamps';
+function _getLsTimestamps() { try { return JSON.parse(_lsGet(LS_TIMESTAMPS_KEY) || '{}'); } catch(e) { return {}; } }
+function _touchLsTimestamp(key) {
+  if (key === LS_TIMESTAMPS_KEY) return;
+  const ts = _getLsTimestamps(); ts[key] = Date.now();
+  _lsSet(LS_TIMESTAMPS_KEY, JSON.stringify(ts));
+}
+async function pushAllToSupabase() {
+  const rows = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (NO_SYNC_KEYS.has(key)) continue;
+    let parsed; try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
+    rows.push({ user_id: SB_USER_ID, key, value: parsed, updated_at: new Date().toISOString() });
+  }
   if (!rows.length) return;
   try {
     await fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
@@ -350,8 +364,17 @@ async function pushKeysToSupabase(keys) {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows })
     });
-  } catch(e) { console.warn('[Wellness] Supabase push failed', e); }
+  } catch(e) { console.warn('[Wellness] push failed', e); }
 }
+const _sbPushThrottled = (() => {
+  let busy = false;
+  return () => { if (busy) return; busy = true; pushAllToSupabase().finally(() => { busy = false; }); };
+})();
+localStorage.setItem = function(key, value) {
+  _lsSet(key, value);
+  if (!NO_SYNC_KEYS.has(key)) _touchLsTimestamp(key);
+  if (_sbBootComplete && !NO_SYNC_KEYS.has(key)) _sbPushThrottled();
+};
 async function syncFromSupabase() {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&select=key,value,updated_at`, {
@@ -359,11 +382,27 @@ async function syncFromSupabase() {
     });
     if (!res.ok) return;
     const keys = new Set([STORAGE_KEY, SUMMARY_KEY]);
+    const timestamps = _getLsTimestamps();
     const rows = await res.json();
-    rows.forEach(({ key, value }) => {
-      if (keys.has(key)) localStorage.setItem(key, JSON.stringify(value));
+    rows.forEach(({ key, value, updated_at }) => {
+      if (!keys.has(key)) return;
+      const remoteTs = new Date(updated_at).getTime();
+      const localTs  = timestamps[key] || 0;
+      if (remoteTs > localTs) _lsSet(key, JSON.stringify(value));
     });
-  } catch(e) { console.warn('[Wellness] Supabase sync failed', e); }
+  } catch(e) { console.warn('[Wellness] sync failed', e); }
+}
+async function doLogout() {
+  try {
+    const s = JSON.parse(_lsGet('sb_session') || '{}');
+    if (s.access_token) await fetch(`${SB_URL}/auth/v1/logout`, { method: 'POST', headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${s.access_token}` } });
+  } catch(e) {}
+  localStorage.removeItem('sb_session');
+  window.location.href = 'login.html';
+}
+function _startPeriodicSync() {
+  setInterval(pushAllToSupabase, 60000);
+  setInterval(async () => { await syncFromSupabase(); db = loadData(); writeSummary(); renderToday(); }, 30000);
 }
 
 const RESET_TOOLS = [
@@ -388,7 +427,7 @@ function todayStr(){ return new Date().toISOString().split('T')[0]; }
 function fmtDate(str){ return new Date(str + 'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function loadData(){ try { return { ...clone(DEFAULTS), ...(JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')) }; } catch(e) { return clone(DEFAULTS); } }
-function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); writeSummary(); pushKeysToSupabase([STORAGE_KEY, SUMMARY_KEY]); }
+function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); writeSummary(); }
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>el.style.display='none',2200); }
 function nav(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -590,11 +629,15 @@ renderToday();
 renderTimer();
 
 // ── Boot: pull from Supabase then re-render ──────────────────────
-syncFromSupabase().then(() => {
+async function bootWellness() {
+  await syncFromSupabase();
   db = loadData();
+  _sbBootComplete = true;
   writeSummary();
   renderToday();
-});
+  _startPeriodicSync();
+}
+bootWellness();
 </script>
 </body>
 </html>
