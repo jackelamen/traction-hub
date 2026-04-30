@@ -7638,7 +7638,7 @@ function updatePillarDots() {
 
   const dotMap = {
     'dot-sanctuary': !!log.sanctuary,
-    'dot-ledger':    todayEntries.length > 0,
+    'dot-ledger':    !!log.ledger || todayEntries.length > 0,
     'dot-noconsume': !!log.noConsume,
     'dot-timer':     !!(log.timer || hasSessions),
     'dot-horizon':   !!(log.horizon || effectiveWalks > 0 || horizonCount > 0),
