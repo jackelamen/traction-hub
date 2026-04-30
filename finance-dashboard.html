@@ -185,7 +185,7 @@
   .tx-table colgroup col.col-date      { width: 110px; }
   .tx-table colgroup col.col-source    { width: 90px; }
   .tx-table colgroup col.col-amount    { width: 160px; }
-  .tx-table colgroup col.col-delete    { width: 36px; }
+  .tx-table colgroup col.col-delete    { width: 78px; }
   .tx-table th {
     text-align: left; padding: 8px 12px;
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
@@ -227,6 +227,10 @@
     padding: 4px 8px; border-radius: 6px; font-size: 16px; opacity: 0.4;
   }
   .btn-delete:hover { opacity: 1; color: var(--red); background: rgba(248,113,113,0.1); }
+  .btn-edit-tx {
+    background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 7px;border-radius:6px;font-size:15px;opacity:0.55;
+  }
+  .btn-edit-tx:hover { opacity:1;color:var(--accent);background:rgba(108,138,255,0.10); }
   .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
   .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
 
@@ -545,6 +549,18 @@
   .trend-cat-toggle.off { background:#f3f4f8;color:#9ca3af;text-decoration:line-through; }
   .trend-cat-dot { width:9px;height:9px;border-radius:50%;flex-shrink:0; }
   .trend-filter-note { font-size:12px;color:var(--muted);margin-top:10px; }
+  .modal-backdrop {
+    position:fixed;inset:0;background:rgba(15,23,42,0.45);display:none;align-items:center;justify-content:center;
+    padding:22px;z-index:10000;
+  }
+  .modal-backdrop.open { display:flex; }
+  .modal-sheet {
+    width:min(640px,100%);background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 20px 50px rgba(15,23,42,0.22);
+    padding:22px;
+  }
+  .modal-title { font-size:20px;font-weight:800;letter-spacing:-0.02em;color:var(--text); }
+  .edit-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+  .edit-grid-full { grid-column:1 / -1; }
   .tooltip, .toast {
     background:#111827;color:#fff;border:0;box-shadow:0 10px 24px rgba(0,0,0,.22);
   }
@@ -586,7 +602,7 @@
     #moduleSidebar { position:static;width:100%;height:auto; }
     #moduleMain { margin-left:0; }
     #section-tracker, #section-trends, #section-budget, .topbar { padding-left:18px;padding-right:18px; }
-    .metric-grid, .budget-grid, .inline-form, .savings-form { grid-template-columns:1fr; }
+    .metric-grid, .budget-grid, .inline-form, .savings-form, .edit-grid { grid-template-columns:1fr; }
     .topbar { flex-direction:column; }
   }
 </style>
@@ -1077,6 +1093,64 @@
 </div>
 
 </main>
+</div>
+
+<!-- Edit Transaction Modal -->
+<div class="modal-backdrop" id="editTxModal" onclick="closeEditTransaction(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px">
+      <div>
+        <div class="page-kicker">Transaction</div>
+        <h2 class="modal-title">Edit Transaction</h2>
+      </div>
+      <button class="icon-btn" onclick="closeEditTransaction()" title="Close"><span class="icon" style="font-size:18px">close</span></button>
+    </div>
+    <input type="hidden" id="editTxId">
+    <div class="edit-grid">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="editTxType" onchange="refreshEditCategoryOptions()">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="editTxDate">
+      </div>
+      <div class="form-group edit-grid-full">
+        <label>Merchant / Source</label>
+        <input type="text" id="editTxMerchant" placeholder="Merchant or source">
+      </div>
+      <div class="form-group">
+        <label>Amount</label>
+        <input type="number" id="editTxAmount" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Currency</label>
+        <select id="editTxCurrency" onchange="document.getElementById('editTxRateWrap').style.display = this.value === 'USD' ? '' : 'none'">
+          <option value="KRW">KRW (₩)</option>
+          <option value="USD">USD ($)</option>
+        </select>
+      </div>
+      <div class="form-group" id="editTxRateWrap" style="display:none">
+        <label>USD→KRW Rate</label>
+        <input type="number" id="editTxRate" min="0" step="0.01" value="1380">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="editTxCategory"></select>
+      </div>
+      <div class="form-group edit-grid-full">
+        <label>Note</label>
+        <input type="text" id="editTxNote" placeholder="Optional note">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn-secondary" onclick="closeEditTransaction()">Cancel</button>
+      <button class="btn-add" onclick="saveTransactionEdit()">Save changes</button>
+    </div>
+  </div>
 </div>
 
 <!-- Toast -->
@@ -1680,6 +1754,74 @@ function deleteTransaction(id) {
   toast('Transaction deleted.');
 }
 
+function refreshEditCategoryOptions() {
+  const type = document.getElementById('editTxType').value;
+  const catSel = document.getElementById('editTxCategory');
+  const cats = type === 'income' ? ['Income'] : ALL_CATEGORIES.filter(c => c !== 'Income');
+  catSel.innerHTML = cats.map(c => `<option value="${c}">${CAT_ICONS[c]||''} ${c}</option>`).join('');
+}
+
+function openEditTransaction(id) {
+  const tx = data.transactions.find(t => t.id === id);
+  if (!tx) { toast('Transaction not found.', 'error'); return; }
+  document.getElementById('editTxId').value = tx.id;
+  document.getElementById('editTxType').value = tx.type || 'expense';
+  refreshEditCategoryOptions();
+  document.getElementById('editTxMerchant').value = tx.merchant || '';
+  document.getElementById('editTxAmount').value = tx.amount || '';
+  document.getElementById('editTxCurrency').value = tx.currency || 'KRW';
+  document.getElementById('editTxRate').value = tx.currency === 'USD' && tx.amount ? Math.round((tx.amountKRW || 0) / tx.amount) || 1380 : 1380;
+  document.getElementById('editTxRateWrap').style.display = (tx.currency || 'KRW') === 'USD' ? '' : 'none';
+  document.getElementById('editTxCategory').value = tx.type === 'income' ? 'Income' : (tx.category || 'Other');
+  document.getElementById('editTxDate').value = tx.date || today();
+  document.getElementById('editTxNote').value = tx.note || '';
+  document.getElementById('editTxModal').classList.add('open');
+}
+
+function closeEditTransaction(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('editTxModal').classList.remove('open');
+}
+
+function saveTransactionEdit() {
+  const id = document.getElementById('editTxId').value;
+  const tx = data.transactions.find(t => t.id === id);
+  if (!tx) { toast('Transaction not found.', 'error'); return; }
+
+  const type = document.getElementById('editTxType').value;
+  const merchant = document.getElementById('editTxMerchant').value.trim();
+  const amount = parseFloat(document.getElementById('editTxAmount').value);
+  const currency = document.getElementById('editTxCurrency').value;
+  const rate = parseFloat(document.getElementById('editTxRate').value) || 1380;
+  const category = document.getElementById('editTxCategory').value;
+  const date = document.getElementById('editTxDate').value;
+  const note = document.getElementById('editTxNote').value.trim();
+
+  if (!merchant) { toast('Please enter a merchant or source name.', 'error'); return; }
+  if (!amount || amount <= 0) { toast('Please enter a valid amount.', 'error'); return; }
+  if (!date) { toast('Please select a date.', 'error'); return; }
+
+  tx.type = type;
+  tx.merchant = merchant;
+  tx.amount = amount;
+  tx.currency = currency;
+  tx.amountKRW = currency === 'USD' ? Math.round(amount * rate) : amount;
+  tx.category = type === 'income' ? 'Income' : category;
+  tx.date = date;
+  tx.note = note;
+  tx.updatedAt = new Date().toISOString();
+  data.lastUpdated = tx.updatedAt;
+
+  const d = new Date(date + 'T00:00:00');
+  currentYear = d.getFullYear();
+  currentMonth = d.getMonth();
+  updateMonthLabel();
+  saveData(tx);
+  closeEditTransaction();
+  render();
+  toast('Transaction updated.', 'success');
+}
+
 function setFilter(f, btn) {
   currentFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -2067,7 +2209,10 @@ function renderTransactions(monthTx) {
       <td class="tx-date">${formatDate(t.date)}</td>
       <td class="tx-source">${sourceLabel(t.source)}</td>
       <td class="tx-amount ${t.type}">${sign}${displayAmt}</td>
-      <td><button class="btn-delete" onclick="deleteTransaction('${t.id}')" title="Delete">×</button></td>
+      <td style="white-space:nowrap">
+        <button class="btn-edit-tx" onclick="openEditTransaction('${t.id}')" title="Edit"><span class="icon" style="font-size:15px">edit</span></button>
+        <button class="btn-delete" onclick="deleteTransaction('${t.id}')" title="Delete">×</button>
+      </td>
     </tr>`;
   }).join('');
 }
