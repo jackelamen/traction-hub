@@ -223,11 +223,11 @@
     transform: translateY(-1px);
     box-shadow: 0 6px 14px rgba(124,58,237,.10);
   }
-  .day-type-btn.active {
+  .day-type-btn.is-selected {
     background: rgba(124,58,237,.15); border-color: rgba(124,58,237,.50); color: #7c3aed;
     box-shadow: inset 0 0 0 1px rgba(124,58,237,.16);
   }
-  .day-type-btn.active:hover {
+  .day-type-btn.is-selected:hover {
     background: rgba(124,58,237,.20); border-color: rgba(124,58,237,.65); color: #6d28d9;
   }
   .day-type-clear {
@@ -3743,16 +3743,27 @@ function dayTypeLabel(type) {
 function dayTypeIcon(type) {
   return { holiday:'🏖', sick:'🤒', travel:'✈', ooo:'🏢' }[type] || '';
 }
+function updateDayTypeSelectors(selectedType) {
+  document.querySelectorAll('[data-day-type-option]').forEach(btn => {
+    const isSelected = btn.dataset.dayTypeOption === selectedType;
+    btn.classList.toggle('is-selected', isSelected);
+    btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+  });
+  document.querySelectorAll('[data-day-type-clear]').forEach(btn => {
+    btn.classList.toggle('hidden', !selectedType);
+  });
+}
 function setDayType(dateStr, type) {
   // type: 'holiday' | 'sick' | 'travel' | null (null = clear)
   if (!type) delete dayTypes[dateStr];
   else dayTypes[dateStr] = type;
   saveDayTypes();
+  updateDayTypeSelectors(type);
   renderHeatmap();
   renderStats();
   renderHistory();
   if (detailDate === dateStr) openDayDetail(dateStr); // refresh if open
-  const label = type ? `Day marked as ${type}.` : 'Day type cleared.';
+  const label = type ? `Day marked as ${dayTypeLabel(type)}.` : 'Day type cleared.';
   showToast(label);
 }
 
@@ -7947,7 +7958,8 @@ function openDayDetail(dateStr) {
       </span>` : '';
   const dayTypeButton = (type, label) => `
     <button onclick="setDayType('${dateStr}', '${type}')"
-      class="day-type-btn ${exemptType === type ? 'active' : ''}"
+      class="day-type-btn ${exemptType === type ? 'is-selected' : ''}"
+      data-day-type-option="${type}"
       aria-pressed="${exemptType === type ? 'true' : 'false'}"
       title="Mark ${fmtShort(dateStr)} as ${label}">
       ${dayTypeIcon(type)} ${label}
@@ -7972,6 +7984,7 @@ function openDayDetail(dateStr) {
       ${dayTypeButton('ooo', 'Out of Office')}
       ${exemptType ? `<button onclick="setDayType('${dateStr}', null)"
         class="day-type-btn day-type-clear"
+        data-day-type-clear="true"
         title="Clear day type for ${fmtShort(dateStr)}">
         Clear
       </button>` : ''}
