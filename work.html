@@ -7925,19 +7925,23 @@ function openDayDetail(dateStr) {
     <div class="flex items-center gap-2 flex-wrap pb-1 border-b border-gray-100">
       <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Mark as:</span>
       <button onclick="setDayType('${dateStr}', 'holiday')"
-        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors ${exemptType==='holiday' ? 'bg-[#7C3AED]/15 border-[#7C3AED]/30 text-[#7C3AED]' : 'bg-surface-container border-outline-variant/20 text-on-surface-variant hover:bg-[#7C3AED]/10 hover:border-[#7C3AED]/20 hover:text-[#7C3AED]'}">
+        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors"
+        style="${exemptType==='holiday' ? 'background:rgba(124,58,237,0.15);border-color:rgba(124,58,237,0.4);color:#7C3AED;' : ''}">
         🏖 Holiday
       </button>
       <button onclick="setDayType('${dateStr}', 'sick')"
-        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors ${exemptType==='sick' ? 'bg-[#7C3AED]/15 border-[#7C3AED]/30 text-[#7C3AED]' : 'bg-surface-container border-outline-variant/20 text-on-surface-variant hover:bg-[#7C3AED]/10 hover:border-[#7C3AED]/20 hover:text-[#7C3AED]'}">
+        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors"
+        style="${exemptType==='sick' ? 'background:rgba(124,58,237,0.15);border-color:rgba(124,58,237,0.4);color:#7C3AED;' : ''}">
         🤒 Sick Day
       </button>
       <button onclick="setDayType('${dateStr}', 'travel')"
-        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors ${exemptType==='travel' ? 'bg-[#7C3AED]/15 border-[#7C3AED]/30 text-[#7C3AED]' : 'bg-surface-container border-outline-variant/20 text-on-surface-variant hover:bg-[#7C3AED]/10 hover:border-[#7C3AED]/20 hover:text-[#7C3AED]'}">
+        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors"
+        style="${exemptType==='travel' ? 'background:rgba(124,58,237,0.15);border-color:rgba(124,58,237,0.4);color:#7C3AED;' : ''}">
         ✈ Travel Day
       </button>
       <button onclick="setDayType('${dateStr}', 'ooo')"
-        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors ${exemptType==='ooo' ? 'bg-[#7C3AED]/15 border-[#7C3AED]/30 text-[#7C3AED]' : 'bg-surface-container border-outline-variant/20 text-on-surface-variant hover:bg-[#7C3AED]/10 hover:border-[#7C3AED]/20 hover:text-[#7C3AED]'}">
+        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors"
+        style="${exemptType==='ooo' ? 'background:rgba(124,58,237,0.15);border-color:rgba(124,58,237,0.4);color:#7C3AED;' : ''}">
         🏢 Out of Office
       </button>
       ${exemptType ? `<button onclick="setDayType('${dateStr}', null)"
