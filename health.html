@@ -243,7 +243,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       <div class="form-grid" style="margin-top:14px">
         <div class="field"><label>Exercise Minutes</label><input id="exercise-mins" type="number" min="0" step="5" placeholder="30"/></div>
         <div class="field"><label>Exercise Type</label><select id="exercise-type"><option value="">None</option><option>Walk</option><option>Run</option><option>Strength</option><option>Mobility</option><option>Sport</option><option>Other</option></select></div>
-        <div class="field"><label>Water</label><input id="water" type="number" min="0" step="1" placeholder="oz or cups"/></div>
+        <div class="field"><label>Water (L)</label><input id="water" type="number" min="0" step="0.25" placeholder="e.g. 1.5"/></div>
         <div class="field"><label>Nutrition</label><select id="nutrition"><option value="">Not logged</option><option value="1">Poor</option><option value="2">Light</option><option value="3">Good</option><option value="4">Strong</option><option value="5">Excellent</option></select></div>
       </div>
       <div class="grid-3" style="margin-top:16px">
@@ -293,7 +293,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <div class="form-grid" style="grid-template-columns:1fr 1fr">
           <div class="field"><label>Sleep Target</label><input id="target-sleep" type="number" min="1" max="12" step=".25"/></div>
           <div class="field"><label>Step Target</label><input id="target-steps" type="number" min="1000" step="500"/></div>
-          <div class="field"><label>Water Target</label><input id="target-water" type="number" min="1" step="1"/></div>
+          <div class="field"><label>Water Target (L)</label><input id="target-water" type="number" min="0.5" step="0.25"/></div>
           <div class="field"><label>Weekly Exercise Min</label><input id="target-exercise" type="number" min="0" step="15"/></div>
         </div>
         <button class="btn btn-primary" style="margin-top:16px" onclick="saveSettings()"><span class="icon" style="font-size:17px">save</span>Save Targets</button>
@@ -370,7 +370,7 @@ const SB_USER_ID = 'jack_traction_hub_v1';
   } catch(e) { window.location.href = 'login.html'; }
 })();
 const DEFAULTS = {
-  settings: { sleepTarget: 7.5, stepTarget: 10000, waterTarget: 68, weeklyExerciseTarget: 150 },
+  settings: { sleepTarget: 7.5, stepTarget: 10000, waterTarget: 2, weeklyExerciseTarget: 150 },
   routines: [
     { id: 'morning-walk', name: 'Morning walk', meta: '10+ minutes outside' },
     { id: 'mobility', name: 'Mobility reset', meta: 'hips, back, neck' },
@@ -505,7 +505,7 @@ function getLog(date = todayStr()){
   const merged = {
     ...log,
     steps: signal.steps ?? log.steps,
-    water: signal.waterOz ?? log.water,
+    water: signal.waterOz != null ? +(signal.waterOz / 33.814).toFixed(2) : log.water,
     sleepHours: signal.sleepHours ?? log.sleepHours,
     exerciseMins: signal.exerciseMins ?? log.exerciseMins,
     weight: signal.weight ?? log.weight
@@ -554,7 +554,7 @@ function renderToday(){
   document.getElementById('today-stats').innerHTML = [
     stat('Sleep', sleep ? sleep + 'h' : '--', s.sleepTarget + 'h target', sleep >= s.sleepTarget ? 'badge-green' : 'badge-blue'),
     stat('Steps', steps ? Number(steps).toLocaleString() : '--', Math.round((steps / s.stepTarget) * 100 || 0) + '% of target', steps >= s.stepTarget ? 'badge-green' : 'badge-blue'),
-    stat('Water', water ? water : '--', s.waterTarget + ' target', water >= s.waterTarget ? 'badge-green' : 'badge-blue'),
+    stat('Water', water ? parseFloat(water).toFixed(2) + 'L' : '--', s.waterTarget + 'L target', water >= s.waterTarget ? 'badge-green' : 'badge-blue'),
     stat('Exercise', exercise ? exercise + 'm' : '--', weeklyExerciseMinutes() + '/' + s.weeklyExerciseTarget + 'm this week', weeklyExerciseMinutes() >= s.weeklyExerciseTarget ? 'badge-green' : 'badge-blue')
   ].join('');
   document.getElementById('today-actions').innerHTML = `<button class="btn btn-primary" onclick="nav('log')"><span class="icon" style="font-size:17px">edit_note</span>${log ? 'Update Today' : 'Log Today'}</button><button class="btn btn-secondary" onclick="nav('trends')"><span class="icon" style="font-size:17px">query_stats</span>View Trends</button>`;
@@ -623,12 +623,14 @@ function syncRangeLabel(id){ document.getElementById(id + '-label').textContent 
 document.addEventListener('change', e => { if (e.target && e.target.id === 'log-date') loadTodayIntoForm(); });
 function saveLog(){
   const date = document.getElementById('log-date').value || todayStr();
+  const waterL = numOrNull(val('water'));
   const signalPatch = {
     sleepHours: numOrNull(val('sleep-hours')),
     steps: intOrNull(val('steps')),
     weight: numOrNull(val('weight')),
     exerciseMins: intOrNull(val('exercise-mins')),
-    waterOz: numOrNull(val('water'))
+    waterOz: waterL != null ? +(waterL * 33.814).toFixed(1) : null,
+    waterL: waterL
   };
   db.logs[date] = {
     sleepHours: val('sleep-hours'), steps: val('steps'), weight: val('weight'),

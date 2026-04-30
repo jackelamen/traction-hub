@@ -6883,8 +6883,14 @@ function getStepsForDate(dateStr) {
   if (logs[dateStr]?.steps) return logs[dateStr].steps;
   try {
     const stepsOnly = JSON.parse(localStorage.getItem('30day-steps-only-v1') || '{}');
-    return stepsOnly[dateStr]?.steps || 0;
-  } catch { return 0; }
+    if (stepsOnly[dateStr]?.steps) return stepsOnly[dateStr].steps;
+  } catch {}
+  // Fall back to shared daily signals (written by health.html)
+  try {
+    const signal = getDailySignals()[dateStr];
+    if (signal?.steps) return signal.steps;
+  } catch {}
+  return 0;
 }
 
 // When EOD is saved, merge any steps-only entry into the full log so it's consolidated.
