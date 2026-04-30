@@ -530,6 +530,21 @@
   .bulk-toolbar { background:#eef2ff;border-color:#c7d2fe; }
   .trends-tabs { background:#fff;border-color:var(--border);box-shadow:var(--shadow-sm); }
   .ttab.active { background:#eef2ff;color:#3730a3; }
+  .trend-filter-card {
+    background:#fff;border:1px solid var(--border);box-shadow:var(--shadow-sm);border-radius:14px;
+    padding:14px 16px;margin-bottom:18px;
+  }
+  .trend-filter-head { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap; }
+  .trend-filter-title { font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em; }
+  .trend-filter-actions { display:flex;gap:8px;flex-wrap:wrap; }
+  .trend-cat-toggles { display:flex;gap:8px;flex-wrap:wrap; }
+  .trend-cat-toggle {
+    display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--border-med);background:#fff;color:var(--text);
+    border-radius:999px;padding:7px 11px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;
+  }
+  .trend-cat-toggle.off { background:#f3f4f8;color:#9ca3af;text-decoration:line-through; }
+  .trend-cat-dot { width:9px;height:9px;border-radius:50%;flex-shrink:0; }
+  .trend-filter-note { font-size:12px;color:var(--muted);margin-top:10px; }
   .tooltip, .toast {
     background:#111827;color:#fff;border:0;box-shadow:0 10px 24px rgba(0,0,0,.22);
   }
@@ -943,6 +958,20 @@
     <button class="ttab" onclick="showTrendsTab('heatmap', this)">Heatmap</button>
   </div>
 
+  <div class="trend-filter-card">
+    <div class="trend-filter-head">
+      <div>
+        <div class="trend-filter-title">Included Categories</div>
+        <div class="trend-filter-note" id="trendFilterNote" style="margin-top:3px">All spending categories are included.</div>
+      </div>
+      <div class="trend-filter-actions">
+        <button class="btn-secondary" onclick="setAllTrendCategories(true)">Select all</button>
+        <button class="btn-secondary" onclick="toggleTrendCategory('Transfer')">Toggle transfers</button>
+      </div>
+    </div>
+    <div class="trend-cat-toggles" id="trendCategoryToggles"></div>
+  </div>
+
   <!-- Overview -->
   <div id="ttab-overview">
     <div class="grid-4" id="tSummaryStats"></div>
@@ -1062,6 +1091,7 @@
 const STORAGE_KEY = 'finance_tracker_data_v1';
 const MIGRATE_KEY = 'finance_sb_migrated_v1';
 const FINANCE_GOALS_SYNC_KEY = 'edgex_finance_savings_goals';
+const TREND_HIDDEN_CATS_KEY = 'finance_trend_hidden_categories_v1';
 
 // ════════════════════════════════════════════════════════════════════
 // SUPABASE CONFIG & AUTH
@@ -1480,6 +1510,7 @@ window.onload = async () => {
   const recSel = document.getElementById('recCategory');
   recSel.innerHTML = ALL_CATEGORIES.filter(c => c !== 'Income')
     .map(c => `<option value="${c}">${CAT_ICONS[c]||''} ${c}</option>`).join('');
+  loadTrendCategoryPrefs();
   updateMonthLabel();
   render();
   renderBudget();
@@ -2118,13 +2149,76 @@ function monthLabel(ym) {
 let activeTrendsTab = 'overview';
 let selectedMonth = null;
 let selectedCat = 'Food';
+let hiddenTrendCategories = new Set();
 
-function getExpenses() { return data.transactions.filter(t => t.type === 'expense'); }
+function loadTrendCategoryPrefs() {
+  try {
+    hiddenTrendCategories = new Set(JSON.parse(localStorage.getItem(TREND_HIDDEN_CATS_KEY) || '[]'));
+  } catch(e) {
+    hiddenTrendCategories = new Set();
+  }
+}
+
+function saveTrendCategoryPrefs() {
+  try { localStorage.setItem(TREND_HIDDEN_CATS_KEY, JSON.stringify([...hiddenTrendCategories])); } catch(e) {}
+}
+
+function getAllExpenses() { return data.transactions.filter(t => t.type === 'expense'); }
+function getExpenses() { return getAllExpenses().filter(t => !hiddenTrendCategories.has(t.category)); }
 function getMonths() {
   const s = new Set(data.transactions.map(t => t.date.slice(0, 7)));
   return [...s].sort();
 }
 function txForMonth(ym) { return getExpenses().filter(t => t.date.startsWith(ym)); }
+
+function getExpenseCategories() {
+  const cats = [...new Set(getAllExpenses().map(t => t.category))].filter(c => c && c !== 'Income');
+  return cats.sort((a, b) => {
+    const ai = ALL_CATEGORIES.indexOf(a), bi = ALL_CATEGORIES.indexOf(b);
+    if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+    return a.localeCompare(b);
+  });
+}
+
+function renderTrendCategoryControls() {
+  const wrap = document.getElementById('trendCategoryToggles');
+  if (!wrap) return;
+  const cats = getExpenseCategories();
+  const allExpenses = getAllExpenses();
+  if (!cats.length) {
+    wrap.innerHTML = '<span class="small-note">No spending categories yet.</span>';
+    document.getElementById('trendFilterNote').textContent = 'Add expenses to filter analytics by category.';
+    return;
+  }
+  wrap.innerHTML = cats.map(cat => {
+    const isOff = hiddenTrendCategories.has(cat);
+    const color = CAT_COLORS[cat] || '#64748b';
+    return `<button class="trend-cat-toggle ${isOff ? 'off' : ''}" onclick="toggleTrendCategory('${cat}')">
+      <span class="trend-cat-dot" style="background:${isOff ? '#d1d5db' : color}"></span>
+      ${CAT_ICONS[cat]||''} ${cat}
+    </button>`;
+  }).join('');
+  const hiddenTx = allExpenses.filter(t => hiddenTrendCategories.has(t.category));
+  const hiddenTotal = hiddenTx.reduce((s, t) => s + t.amountKRW, 0);
+  const hiddenCats = cats.filter(c => hiddenTrendCategories.has(c));
+  const note = document.getElementById('trendFilterNote');
+  note.textContent = hiddenCats.length
+    ? `Hidden: ${hiddenCats.join(', ')} · ${hiddenTx.length} transactions · ₩${fmt(hiddenTotal)} excluded`
+    : 'All spending categories are included.';
+}
+
+function toggleTrendCategory(cat) {
+  if (hiddenTrendCategories.has(cat)) hiddenTrendCategories.delete(cat);
+  else hiddenTrendCategories.add(cat);
+  saveTrendCategoryPrefs();
+  renderTrendsTab(activeTrendsTab);
+}
+
+function setAllTrendCategories(on) {
+  if (on) hiddenTrendCategories.clear();
+  saveTrendCategoryPrefs();
+  renderTrendsTab(activeTrendsTab);
+}
 
 // ════════════════════════════════════════════════════════════════════
 // TRENDS — TABS
@@ -2138,6 +2232,7 @@ function showTrendsTab(name, btn) {
   renderTrendsTab(name);
 }
 function renderTrendsTab(name) {
+  renderTrendCategoryControls();
   if (name === 'overview')    renderTrendsOverview();
   else if (name === 'monthly')    renderTrendsMonthly();
   else if (name === 'categories') renderTrendsCategories();
@@ -2425,8 +2520,9 @@ function renderTrendsCategories() {
   expenses.forEach(t => catTotals[t.category] = (catTotals[t.category] || 0) + t.amountKRW);
   const total = expenses.reduce((s,t) => s + t.amountKRW, 0);
   const sorted = Object.entries(catTotals).sort((a,b) => b[1]-a[1]);
+  if (sorted.length && !sorted.some(([cat]) => cat === selectedCat)) selectedCat = sorted[0][0];
 
-  document.getElementById('tAllCatsList').innerHTML = sorted.map(([cat, amt]) => {
+  document.getElementById('tAllCatsList').innerHTML = sorted.length ? sorted.map(([cat, amt]) => {
     const pct = total > 0 ? Math.round(amt/total*100) : 0;
     const color = CAT_COLORS[cat] || '#64748b';
     return `<div class="tcat-row" style="cursor:pointer" onclick="selectTrendsCat('${cat}')">
@@ -2436,7 +2532,7 @@ function renderTrendsCategories() {
       <div class="tcat-amount">₩${fmt(amt)}</div>
       <div class="tcat-pct">${pct}%</div>
     </div>`;
-  }).join('');
+  }).join('') : '<div class="empty-msg">No included expense categories</div>';
 
   document.getElementById('tCatTrendSelect').innerHTML = sorted.map(([cat]) =>
     `<button onclick="selectTrendsCat('${cat}')" style="padding:4px 10px;border-radius:20px;border:1px solid ${cat===selectedCat?CAT_COLORS[cat]:'var(--border)'};background:${cat===selectedCat?(CAT_COLORS[cat]+'22'):'var(--surface2)'};color:${cat===selectedCat?CAT_COLORS[cat]:'var(--muted)'};font-size:11px;cursor:pointer;margin:2px">${CAT_ICONS[cat]||''} ${cat}</button>`
@@ -2478,6 +2574,10 @@ function selectTrendsCat(cat) {
 
 function renderCatTrend() {
   const months = getMonths();
+  if (!selectedCat || hiddenTrendCategories.has(selectedCat)) {
+    document.getElementById('tCatTrendChart').innerHTML = '<div class="empty-msg">Choose an included category</div>';
+    return;
+  }
   const monthTotals = months.map(m => ({
     m, total: txForMonth(m).filter(t => t.category === selectedCat).reduce((s,t) => s + t.amountKRW, 0)
   }));
