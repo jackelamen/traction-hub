@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finance Tracker</title>
+<title>The EDGEx Finance</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -391,9 +393,217 @@
     .grid-2, .grid-4 { grid-template-columns: 1fr; }
     .primary-nav { display: none; }
   }
+
+  /* ── EDGE module shell refresh ─────────────────────────────────────────── */
+  :root {
+    --bg: #f8f9fc;
+    --surface: #fff;
+    --surface2: #f3f4f8;
+    --border: rgba(0,0,0,0.06);
+    --border-med: #e5e7eb;
+    --accent: #4f46e5;
+    --accent2: #0ea5e9;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f97316;
+    --text: #111827;
+    --muted: #6b7280;
+    --card-radius: 14px;
+    --sidebar-bg: #1a1a2e;
+    --sidebar-hover: rgba(255,255,255,0.07);
+    --sidebar-active: rgba(79,70,229,0.25);
+    --sidebar-text: rgba(255,255,255,0.55);
+    --sidebar-text-hi: rgba(255,255,255,0.90);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter','Manrope',system-ui,sans-serif;
+    line-height: 1.5;
+  }
+  .icon {
+    font-family: 'Material Symbols Rounded';
+    font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+    line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
+    user-select: none;
+  }
+  .icon.fill { font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
+  #app { display: flex; min-height: 100vh; }
+  #moduleSidebar {
+    width: 256px;
+    flex-shrink: 0;
+    position: fixed;
+    inset: 0 auto 0 0;
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 20px 20px;
+    z-index: 50;
+  }
+  .sidebar-brand {
+    margin-bottom: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+  .edge-wordmark { display:flex;align-items:baseline;gap:0;line-height:1;margin-bottom:2px; }
+  .edge-wordmark span { font-family:'Manrope',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;line-height:1; }
+  .edge-module-mark { display:flex;align-items:center;gap:6px; }
+  .edge-module-icon {
+    display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;
+    border-radius:5px;background:rgba(79,70,229,0.25);
+  }
+  .edge-module-icon .icon { font-size:12px;color:#a5b4fc;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .edge-module-name { font-weight:700;font-size:11px;letter-spacing:0.04em;color:rgba(255,255,255,0.70); }
+  .nav-group { display:flex;flex-direction:column;gap:1px;flex:1; }
+  .nav-section-label {
+    font-size:9.5px;font-weight:700;color:rgba(255,255,255,0.25);
+    letter-spacing:0.10em;text-transform:uppercase;padding:4px 14px 2px;margin-bottom:2px;margin-top:20px;
+  }
+  .nav-section-label:first-of-type { margin-top:0; }
+  .module-nav-item {
+    display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:none;background:transparent;
+    color:var(--sidebar-text);font-size:13.5px;font-weight:500;font-family:inherit;cursor:pointer;width:100%;
+    text-align:left;transition:background .18s,color .18s;text-decoration:none;
+  }
+  .module-nav-item .icon { font-size:19px;color:inherit;flex-shrink:0; }
+  .module-nav-item:hover { background:var(--sidebar-hover);color:var(--sidebar-text-hi); }
+  .module-nav-item.active { background:var(--sidebar-active);color:#fff; }
+  .module-nav-item.active .icon { font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .sidebar-footer { margin-top:20px;display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(255,255,255,0.07);padding-top:16px; }
+  #moduleMain { margin-left:256px;flex:1;min-height:100vh; }
+  .topbar {
+    height:auto;position:static;background:transparent;border:0;padding:28px 32px 0;
+    align-items:flex-start;gap:16px;
+  }
+  .topbar h1 { font-size:28px;font-weight:800;letter-spacing:-0.02em;color:var(--text); }
+  .topbar .right { flex-wrap:wrap;justify-content:flex-end; }
+  .topbar a[title="Back to Home"], .primary-nav { display:none !important; }
+  .page-kicker { font-size:12px;font-weight:500;color:#9ca3af;margin-bottom:4px; }
+  .page-sub { font-size:14px;color:var(--muted);margin-top:4px;font-weight:400; }
+  #section-tracker, #section-trends, #section-budget { padding: 20px 32px 80px; max-width: 1180px; }
+  #section-tracker { min-height:auto; }
+  #section-trends { margin:0; }
+  .tracker-subbar {
+    background:transparent;border:0;padding:0;margin-bottom:18px;
+  }
+  .month-nav button, .btn-secondary, .filter-btn, .month-pill, .ttab {
+    background:#fff;border:1.5px solid var(--border-med);color:#374151;border-radius:10px;font-family:inherit;font-weight:700;
+  }
+  .month-nav button:hover, .btn-secondary:hover, .filter-btn:hover, .month-pill:hover { background:var(--surface2); }
+  .filter-btn.active, .month-pill.active {
+    background:#eef2ff;border-color:#c7d2fe;color:#3730a3;
+  }
+  .main { grid-template-columns: 290px 1fr; gap: 18px; }
+  .sidebar {
+    background:transparent;border-right:0;padding:0;height:auto;position:static;gap:18px;
+  }
+  .summary-card, .add-section, .tcard, .stat-card, .budget-card {
+    background:#fff;border:1px solid var(--border);box-shadow:var(--shadow-sm);border-radius:var(--card-radius);
+  }
+  .summary-card .amount { color:var(--text); }
+  .content { padding:0;overflow:visible; }
+  .add-section { margin-bottom:20px; }
+  .form-group input, .form-group select, .search-bar-wrap input, .bulk-cat-select, input, select, textarea {
+    background:#f9fafb;border:1.5px solid var(--border-med);color:var(--text);border-radius:10px;font-family:inherit;
+  }
+  .form-group input:focus, .form-group select:focus, .search-bar-wrap input:focus, input:focus, select:focus, textarea:focus {
+    border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,0.10);
+  }
+  .type-btn { background:#fff;border:1.5px solid var(--border-med);border-radius:10px;font-family:inherit;font-weight:700; }
+  .type-btn.active.expense { background:#fef2f2;border-color:#fecaca;color:#dc2626; }
+  .type-btn.active.income { background:#ecfdf5;border-color:#bbf7d0;color:#059669; }
+  .btn-add, .btn-primary {
+    background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;border:none;border-radius:10px;
+    box-shadow:0 4px 12px rgba(79,70,229,0.28);font-family:inherit;font-weight:700;cursor:pointer;
+  }
+  .btn-primary { display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;font-size:13px;text-decoration:none; }
+  .tx-table th { color:var(--muted);border-bottom:1px solid var(--border-med); }
+  .tx-table td { border-bottom:1px solid var(--border); }
+  .tx-table tr:hover td { background:#f9fafb; }
+  .cat-select { background-image:none; }
+  .bulk-toolbar { background:#eef2ff;border-color:#c7d2fe; }
+  .trends-tabs { background:#fff;border-color:var(--border);box-shadow:var(--shadow-sm); }
+  .ttab.active { background:#eef2ff;color:#3730a3; }
+  .tooltip, .toast {
+    background:#111827;color:#fff;border:0;box-shadow:0 10px 24px rgba(0,0,0,.22);
+  }
+
+  #section-budget { display:none; }
+  .budget-grid { display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-bottom:16px; }
+  .budget-card { padding:20px; }
+  .budget-card h2 { font-size:15px;font-weight:800;margin-bottom:14px;letter-spacing:-0.01em; }
+  .budget-card h3 { font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px; }
+  .metric-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px; }
+  .metric-card { background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden; }
+  .metric-card::before { content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--accent),#0ea5e9); }
+  .metric-label { font-size:12px;font-weight:700;color:var(--muted); }
+  .metric-value { font-size:25px;font-weight:800;letter-spacing:-0.03em;margin-top:3px; }
+  .metric-sub { font-size:11px;color:#9ca3af;font-weight:600;margin-top:1px; }
+  .budget-table { width:100%;border-collapse:collapse; }
+  .budget-table th { text-align:left;padding:8px 8px;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);border-bottom:1px solid var(--border-med); }
+  .budget-table td { padding:9px 8px;border-bottom:1px solid var(--border);vertical-align:middle; }
+  .budget-table input, .budget-table select { padding:8px 10px;font-size:13px; }
+  .budget-row-name { display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px; }
+  .progress-track { height:7px;background:#eef2ff;border-radius:99px;overflow:hidden; }
+  .progress-fill { height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),#0ea5e9); }
+  .inline-form { display:grid;grid-template-columns:1fr 130px 120px auto;gap:10px;align-items:end;margin-bottom:14px; }
+  .savings-form { grid-template-columns:1fr 120px 120px 140px auto; }
+  .form-label { font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block; }
+  .icon-btn {
+    width:36px;height:36px;border-radius:10px;border:1.5px solid var(--border-med);background:#fff;color:var(--muted);
+    display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .icon-btn:hover { background:var(--surface2);color:var(--text); }
+  .savings-list { display:flex;flex-direction:column;gap:10px; }
+  .saving-item { border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff; }
+  .saving-head { display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px; }
+  .saving-title { font-weight:800;font-size:14px; }
+  .saving-meta { color:var(--muted);font-size:12px;margin-top:2px; }
+  .small-note { color:var(--muted);font-size:12px;line-height:1.5; }
+  @media (max-width: 900px) {
+    #app { display:block; }
+    #moduleSidebar { position:static;width:100%;height:auto; }
+    #moduleMain { margin-left:0; }
+    #section-tracker, #section-trends, #section-budget, .topbar { padding-left:18px;padding-right:18px; }
+    .metric-grid, .budget-grid, .inline-form, .savings-form { grid-template-columns:1fr; }
+    .topbar { flex-direction:column; }
+  }
 </style>
 </head>
 <body>
+
+<div id="app">
+<nav id="moduleSidebar">
+  <div class="sidebar-brand">
+    <div class="edge-wordmark">
+      <span style="color:#ffffff">EDG</span><span style="background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">E</span><span style="color:rgba(255,255,255,0.25)">x</span>
+    </div>
+    <div class="edge-module-mark">
+      <span class="edge-module-icon"><span class="icon">account_balance_wallet</span></span>
+      <span class="edge-module-name">Finance Room</span>
+    </div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-section-label">Main</div>
+    <button class="module-nav-item active" onclick="switchSection('tracker', this)"><span class="icon">receipt_long</span>Transactions</button>
+    <button class="module-nav-item" onclick="switchSection('budget', this)"><span class="icon">savings</span>Budget</button>
+    <button class="module-nav-item" onclick="switchSection('trends', this)"><span class="icon">query_stats</span>Trends</button>
+  </div>
+  <div class="sidebar-footer">
+    <button class="btn-primary" style="width:100%" onclick="switchSection('budget', document.querySelectorAll('.module-nav-item')[1])">
+      <span class="icon" style="font-size:17px">add</span>Plan Budget
+    </button>
+    <a href="index.html" class="module-nav-item" style="justify-content:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);font-size:11.5px"><span class="icon" style="font-size:14px">apps</span>Switch module</a>
+    <button onclick="lockFinance()" class="module-nav-item" style="justify-content:center;font-size:11.5px;color:rgba(255,255,255,0.35)"><span class="icon" style="font-size:14px">lock</span>Lock Finance</button>
+  </div>
+</nav>
+<main id="moduleMain">
 
 <!-- Top Bar -->
 <div class="topbar">
@@ -401,10 +611,15 @@
     <a href="index.html" style="display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;font-weight:500;text-decoration:none;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);white-space:nowrap" title="Back to Home">
       ← Home
     </a>
-    <h1>💰 Finance Tracker</h1>
+    <div>
+      <div class="page-kicker">Money layer</div>
+      <h1>Finance Room</h1>
+      <p class="page-sub">Track spending, plan the month, and fund the things you care about.</p>
+    </div>
   </div>
   <div class="primary-nav">
     <button class="pnav-btn active" onclick="switchSection('tracker', this)">📋 Transactions</button>
+    <button class="pnav-btn" onclick="switchSection('budget', this)">Budget</button>
     <button class="pnav-btn" onclick="switchSection('trends', this)">📈 Trends</button>
   </div>
   <div class="right" id="topbarRight">
@@ -611,6 +826,111 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- BUDGET SECTION                                                            -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div id="section-budget">
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">Planned income</div>
+      <div class="metric-value" id="budgetIncomeStat">₩0</div>
+      <div class="metric-sub">Your monthly baseline</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Category plan</div>
+      <div class="metric-value" id="budgetPlannedStat">₩0</div>
+      <div class="metric-sub">Speculative spending</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Regular charges</div>
+      <div class="metric-value" id="budgetRecurringStat">₩0</div>
+      <div class="metric-sub">Bills and fixed monthly costs</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Projected left</div>
+      <div class="metric-value" id="budgetLeftStat">₩0</div>
+      <div class="metric-sub" id="budgetLeftSub">After planned costs</div>
+    </div>
+  </div>
+
+  <div class="budget-grid">
+    <div class="budget-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+        <div>
+          <h2 style="margin-bottom:4px">Speculative Monthly Budget</h2>
+          <p class="small-note">Set the numbers you want to test for this month. Regular charges are added below so the plan does not forget the boring stuff.</p>
+        </div>
+        <div style="min-width:190px">
+          <label class="form-label" for="budgetIncome">Monthly income</label>
+          <input type="number" id="budgetIncome" min="0" placeholder="0" onchange="updateBudgetIncome()">
+        </div>
+      </div>
+      <table class="budget-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th style="width:150px;text-align:right">Budget</th>
+            <th style="width:150px;text-align:right">Regular</th>
+            <th style="width:150px;text-align:right">Spent</th>
+            <th style="width:130px">Pace</th>
+          </tr>
+        </thead>
+        <tbody id="budgetCategoryBody"></tbody>
+      </table>
+    </div>
+
+    <div class="budget-card">
+      <h2>Regular Spending</h2>
+      <div class="inline-form">
+        <div>
+          <label class="form-label">Name</label>
+          <input type="text" id="recName" placeholder="Insurance, rent, phone">
+        </div>
+        <div>
+          <label class="form-label">Amount</label>
+          <input type="number" id="recAmount" min="0" placeholder="0">
+        </div>
+        <div>
+          <label class="form-label">Category</label>
+          <select id="recCategory"></select>
+        </div>
+        <button class="btn-add" onclick="addRecurring()">Add</button>
+      </div>
+      <div id="recurringList"></div>
+    </div>
+  </div>
+
+  <div class="budget-card">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+      <div>
+        <h2 style="margin-bottom:4px">Savings Targets</h2>
+        <p class="small-note">Create buckets for trips, purchases, or anything you want to fund. These also appear in Goals.</p>
+      </div>
+      <a class="btn-primary" href="goals.html"><span class="icon" style="font-size:17px">flag</span>Open Goals</a>
+    </div>
+    <div class="inline-form savings-form">
+      <div>
+        <label class="form-label">Target</label>
+        <input type="text" id="saveName" placeholder="Japan trip, new laptop">
+      </div>
+      <div>
+        <label class="form-label">Goal amount</label>
+        <input type="number" id="saveTarget" min="0" placeholder="0">
+      </div>
+      <div>
+        <label class="form-label">Saved</label>
+        <input type="number" id="saveCurrent" min="0" placeholder="0">
+      </div>
+      <div>
+        <label class="form-label">By date</label>
+        <input type="date" id="saveDue">
+      </div>
+      <button class="btn-add" onclick="addSavingsGoal()">Add</button>
+    </div>
+    <div class="savings-list" id="savingsList"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
 <!-- TRENDS SECTION                                                            -->
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div id="section-trends">
@@ -727,6 +1047,9 @@
 
 </div>
 
+</main>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 <!-- Tooltip -->
@@ -738,6 +1061,7 @@
 // ════════════════════════════════════════════════════════════════════
 const STORAGE_KEY = 'finance_tracker_data_v1';
 const MIGRATE_KEY = 'finance_sb_migrated_v1';
+const FINANCE_GOALS_SYNC_KEY = 'edgex_finance_savings_goals';
 
 // ════════════════════════════════════════════════════════════════════
 // SUPABASE CONFIG & AUTH
@@ -841,6 +1165,66 @@ function rowToTx(r) {
   };
 }
 
+function budgetToRow(monthKey, budget) {
+  return {
+    user_id: getSbUserId(),
+    month_key: monthKey,
+    income: budget.income || 0,
+    categories: budget.categories || {},
+  };
+}
+
+function rowToBudget(r) {
+  return {
+    income: parseFloat(r.income) || 0,
+    categories: r.categories || {},
+  };
+}
+
+function recurringToRow(r) {
+  return {
+    id: r.id,
+    user_id: getSbUserId(),
+    name: r.name,
+    amount: parseFloat(r.amount) || 0,
+    category: r.category,
+    active: r.active !== false,
+  };
+}
+
+function rowToRecurring(r) {
+  return {
+    id: r.id,
+    name: r.name,
+    amount: parseFloat(r.amount) || 0,
+    category: r.category,
+    active: r.active !== false,
+    createdAt: r.created_at,
+  };
+}
+
+function savingsToRow(g) {
+  return {
+    id: g.id,
+    user_id: getSbUserId(),
+    name: g.name,
+    target: parseFloat(g.target) || 0,
+    current: parseFloat(g.current) || 0,
+    due_date: g.due || null,
+  };
+}
+
+function rowToSavings(r) {
+  return {
+    id: r.id,
+    name: r.name,
+    target: parseFloat(r.target) || 0,
+    current: parseFloat(r.current) || 0,
+    due: r.due_date || '',
+    createdAt: r.created_at,
+  };
+}
+
 const CAT_COLORS = {
   Food: '#f97316', Transport: '#3b82f6', Shopping: '#a855f7',
   Utilities: '#06b6d4', Health: '#ec4899', Entertainment: '#eab308',
@@ -859,11 +1243,12 @@ const DAYS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // ════════════════════════════════════════════════════════════════════
 // SHARED STATE & HELPERS
 // ════════════════════════════════════════════════════════════════════
-let data = { transactions: [], budgets: {}, lastUpdated: null, version: '1.0' };
+let data = { transactions: [], budgets: {}, recurring: [], savingsGoals: [], lastUpdated: null, version: '1.1' };
 
 const fmt = n => Math.round(n).toLocaleString('ko-KR');
 const fmtShort = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(0)+'K' : String(Math.round(n));
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const escAttr = s => esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
 function today() { return new Date().toISOString().split('T')[0]; }
 
@@ -894,6 +1279,93 @@ async function sbDeleteTx(id) {
   } catch(e) { console.warn('Supabase delete error:', e); }
 }
 
+async function sbLoadPlanning() {
+  try {
+    const headers = { ...getAuthHeaders(), 'Accept': 'application/json' };
+    const uid = encodeURIComponent(getSbUserId());
+    const [budgetRes, recurringRes, savingsRes] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/finance_budgets?user_id=eq.${uid}&select=month_key,income,categories`, { headers }),
+      fetch(`${SB_URL}/rest/v1/finance_recurring_charges?user_id=eq.${uid}&select=id,name,amount,category,active,created_at&order=created_at.asc`, { headers }),
+      fetch(`${SB_URL}/rest/v1/finance_savings_goals?user_id=eq.${uid}&select=id,name,target,current,due_date,created_at&order=created_at.asc`, { headers }),
+    ]);
+    if (budgetRes.ok) {
+      const rows = await budgetRes.json();
+      if (rows.length) {
+        data.budgets = {};
+        rows.forEach(r => { data.budgets[r.month_key] = rowToBudget(r); });
+      }
+    }
+    if (recurringRes.ok) {
+      const rows = await recurringRes.json();
+      if (rows.length) data.recurring = rows.map(rowToRecurring);
+    }
+    if (savingsRes.ok) {
+      const rows = await savingsRes.json();
+      if (rows.length) data.savingsGoals = rows.map(rowToSavings);
+    }
+    saveLocal();
+    syncSavingsGoalsToGoals();
+  } catch(e) {
+    console.warn('Supabase planning load skipped (tables may not exist yet):', e);
+  }
+}
+
+async function sbUpsertBudget(monthKey) {
+  const budget = data.budgets?.[monthKey];
+  if (!budget) return;
+  try {
+    await fetch(`${SB_URL}/rest/v1/finance_budgets?on_conflict=user_id,month_key`, {
+      method: 'POST',
+      headers: { ...getAuthHeaders(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(budgetToRow(monthKey, budget)),
+    });
+  } catch(e) { console.warn('Supabase budget upsert error:', e); }
+}
+
+async function sbUpsertRecurring(item) {
+  try {
+    await fetch(`${SB_URL}/rest/v1/finance_recurring_charges`, {
+      method: 'POST',
+      headers: { ...getAuthHeaders(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(recurringToRow(item)),
+    });
+  } catch(e) { console.warn('Supabase recurring upsert error:', e); }
+}
+
+async function sbDeleteRecurring(id) {
+  try {
+    await fetch(`${SB_URL}/rest/v1/finance_recurring_charges?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+  } catch(e) { console.warn('Supabase recurring delete error:', e); }
+}
+
+async function sbUpsertSavingsGoal(goal) {
+  try {
+    await fetch(`${SB_URL}/rest/v1/finance_savings_goals`, {
+      method: 'POST',
+      headers: { ...getAuthHeaders(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(savingsToRow(goal)),
+    });
+  } catch(e) { console.warn('Supabase savings goal upsert error:', e); }
+}
+
+async function sbDeleteSavingsGoal(id) {
+  try {
+    await fetch(`${SB_URL}/rest/v1/finance_savings_goals?id=eq.${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+  } catch(e) { console.warn('Supabase savings goal delete error:', e); }
+}
+
+function pushLocalPlanningToSupabase() {
+  Object.keys(data.budgets || {}).forEach(sbUpsertBudget);
+  (data.recurring || []).forEach(sbUpsertRecurring);
+  (data.savingsGoals || []).forEach(sbUpsertSavingsGoal);
+}
+
 // ── Save: write locally + push to Supabase ───────────────────────
 function saveData(changedTx = null, deletedId = null) {
   saveLocal();
@@ -916,6 +1388,11 @@ async function loadData() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) { const p = JSON.parse(stored); if (p.transactions) data = p; }
   } catch(e) { console.warn('localStorage load error:', e); }
+  data.transactions = data.transactions || [];
+  data.budgets = data.budgets || {};
+  data.recurring = data.recurring || [];
+  data.savingsGoals = data.savingsGoals || [];
+  data.version = data.version || '1.1';
 
   // Then fetch from Supabase using auth token (source of truth)
   try {
@@ -932,6 +1409,7 @@ async function loadData() {
       }
     }
   } catch(e) { console.warn('Supabase load error (using local):', e); }
+  await sbLoadPlanning();
 }
 
 // ── One-time migration: push existing localStorage data to Supabase
@@ -976,10 +1454,12 @@ let activeSection = 'tracker';
 function switchSection(name, btn) {
   activeSection = name;
   document.getElementById('section-tracker').style.display = name === 'tracker' ? 'flex' : 'none';
+  document.getElementById('section-budget').style.display  = name === 'budget'  ? 'block' : 'none';
   document.getElementById('section-trends').style.display  = name === 'trends'  ? 'block' : 'none';
-  document.querySelectorAll('.pnav-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  document.querySelectorAll('.pnav-btn, .module-nav-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
   if (name === 'trends') renderTrendsTab('overview');
+  if (name === 'budget') renderBudget();
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -988,6 +1468,7 @@ function switchSection(name, btn) {
 window.onload = async () => {
   await loadData();
   await migrateLocalToSupabase();
+  pushLocalPlanningToSupabase();
   document.getElementById('fDate').value = today();
   document.getElementById('fCurrency').addEventListener('change', e => {
     document.getElementById('rateGroup').style.display = e.target.value === 'USD' ? '' : 'none';
@@ -996,8 +1477,18 @@ window.onload = async () => {
   const bulkSel = document.getElementById('bulkCatSelect');
   bulkSel.innerHTML = ALL_CATEGORIES.filter(c => c !== 'Income')
     .map(c => `<option value="${c}">${CAT_ICONS[c]||''} ${c}</option>`).join('');
+  const recSel = document.getElementById('recCategory');
+  recSel.innerHTML = ALL_CATEGORIES.filter(c => c !== 'Income')
+    .map(c => `<option value="${c}">${CAT_ICONS[c]||''} ${c}</option>`).join('');
   updateMonthLabel();
   render();
+  renderBudget();
+  const params = new URLSearchParams(window.location.search);
+  const requestedSection = params.get('section') || window.location.hash.replace('#', '');
+  if (['tracker','budget','trends'].includes(requestedSection)) {
+    const idx = { tracker: 0, budget: 1, trends: 2 }[requestedSection];
+    switchSection(requestedSection, document.querySelectorAll('.module-nav-item')[idx]);
+  }
 };
 
 // ════════════════════════════════════════════════════════════════════
@@ -1181,6 +1672,232 @@ function render() {
   renderCategoryBreakdown(monthTx);
   renderQuickStats(monthTx);
   renderTransactions(monthTx);
+  if (activeSection === 'budget') renderBudget();
+}
+
+// ════════════════════════════════════════════════════════════════════
+// BUDGETS — CATEGORY PLAN, REGULAR SPENDING, SAVINGS TARGETS
+// ════════════════════════════════════════════════════════════════════
+function getBudgetMonthKey() {
+  return `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+}
+
+function ensureBudgetMonth() {
+  const key = getBudgetMonthKey();
+  if (!data.budgets) data.budgets = {};
+  if (!data.budgets[key]) data.budgets[key] = { income: 0, categories: {} };
+  if (!data.budgets[key].categories) data.budgets[key].categories = {};
+  return data.budgets[key];
+}
+
+function saveBudgetData(monthKey = null) {
+  data.lastUpdated = new Date().toISOString();
+  saveLocal();
+  syncSavingsGoalsToGoals();
+  if (monthKey) sbUpsertBudget(monthKey);
+}
+
+function updateBudgetIncome() {
+  const key = getBudgetMonthKey();
+  const b = ensureBudgetMonth();
+  b.income = parseFloat(document.getElementById('budgetIncome').value) || 0;
+  saveBudgetData(key);
+  renderBudget();
+}
+
+function updateCategoryBudget(cat, value) {
+  const key = getBudgetMonthKey();
+  const b = ensureBudgetMonth();
+  b.categories[cat] = Math.max(0, parseFloat(value) || 0);
+  saveBudgetData(key);
+  renderBudget();
+}
+
+function recurringByCategory() {
+  const out = {};
+  (data.recurring || []).filter(r => r.active !== false).forEach(r => {
+    out[r.category] = (out[r.category] || 0) + (parseFloat(r.amount) || 0);
+  });
+  return out;
+}
+
+function addRecurring() {
+  const name = document.getElementById('recName').value.trim();
+  const amount = parseFloat(document.getElementById('recAmount').value);
+  const category = document.getElementById('recCategory').value;
+  if (!name) { toast('Name the regular charge.', 'error'); return; }
+  if (!amount || amount <= 0) { toast('Enter a regular charge amount.', 'error'); return; }
+  const item = { id: Date.now().toString(), name, amount, category, active: true, createdAt: new Date().toISOString() };
+  data.recurring.push(item);
+  document.getElementById('recName').value = '';
+  document.getElementById('recAmount').value = '';
+  saveBudgetData();
+  sbUpsertRecurring(item);
+  renderBudget();
+  toast('Regular charge added.', 'success');
+}
+
+function deleteRecurring(id) {
+  data.recurring = (data.recurring || []).filter(r => r.id !== id);
+  saveBudgetData();
+  sbDeleteRecurring(id);
+  renderBudget();
+}
+
+function toggleRecurring(id, checked) {
+  const item = (data.recurring || []).find(r => r.id === id);
+  if (!item) return;
+  item.active = checked;
+  saveBudgetData();
+  sbUpsertRecurring(item);
+  renderBudget();
+}
+
+function addSavingsGoal() {
+  const name = document.getElementById('saveName').value.trim();
+  const target = parseFloat(document.getElementById('saveTarget').value);
+  const current = parseFloat(document.getElementById('saveCurrent').value) || 0;
+  const due = document.getElementById('saveDue').value;
+  if (!name) { toast('Name the savings target.', 'error'); return; }
+  if (!target || target <= 0) { toast('Enter a target amount.', 'error'); return; }
+  const goal = { id: Date.now().toString(), name, target, current, due, createdAt: new Date().toISOString() };
+  data.savingsGoals.push(goal);
+  ['saveName','saveTarget','saveCurrent','saveDue'].forEach(id => document.getElementById(id).value = '');
+  saveBudgetData();
+  sbUpsertSavingsGoal(goal);
+  renderBudget();
+  toast('Savings target added and synced to Goals.', 'success');
+}
+
+function updateSavingsGoal(id, field, value) {
+  const goal = (data.savingsGoals || []).find(g => g.id === id);
+  if (!goal) return;
+  goal[field] = field === 'name' || field === 'due' ? value : Math.max(0, parseFloat(value) || 0);
+  saveBudgetData();
+  sbUpsertSavingsGoal(goal);
+  renderBudget();
+}
+
+function deleteSavingsGoal(id) {
+  data.savingsGoals = (data.savingsGoals || []).filter(g => g.id !== id);
+  saveBudgetData();
+  sbDeleteSavingsGoal(id);
+  renderBudget();
+}
+
+function monthsUntil(dateStr) {
+  if (!dateStr) return null;
+  const due = new Date(dateStr + 'T12:00:00');
+  if (Number.isNaN(due.getTime())) return null;
+  const now = new Date();
+  const months = (due.getFullYear() - now.getFullYear()) * 12 + (due.getMonth() - now.getMonth()) + 1;
+  return Math.max(1, months);
+}
+
+function syncSavingsGoalsToGoals() {
+  const synced = (data.savingsGoals || []).map(g => {
+    const left = Math.max(0, (parseFloat(g.target) || 0) - (parseFloat(g.current) || 0));
+    const months = monthsUntil(g.due);
+    return {
+      id: g.id,
+      title: g.name,
+      target: parseFloat(g.target) || 0,
+      current: parseFloat(g.current) || 0,
+      remaining: left,
+      due: g.due || '',
+      monthlyNeeded: months ? Math.ceil(left / months) : null,
+      source: 'finance',
+      updatedAt: new Date().toISOString(),
+    };
+  });
+  try { localStorage.setItem(FINANCE_GOALS_SYNC_KEY, JSON.stringify(synced)); } catch(e) {}
+}
+
+function renderBudget() {
+  if (!document.getElementById('budgetCategoryBody')) return;
+  const b = ensureBudgetMonth();
+  const monthTx = getMonthTx();
+  const spentByCat = {};
+  monthTx.filter(t => t.type === 'expense').forEach(t => spentByCat[t.category] = (spentByCat[t.category] || 0) + t.amountKRW);
+  const recurring = recurringByCategory();
+  const categories = ALL_CATEGORIES.filter(c => c !== 'Income');
+  const planned = categories.reduce((sum, c) => sum + (parseFloat(b.categories[c]) || 0), 0);
+  const recurringTotal = Object.values(recurring).reduce((sum, v) => sum + v, 0);
+  const savingsMonthly = (data.savingsGoals || []).reduce((sum, g) => {
+    const left = Math.max(0, (parseFloat(g.target) || 0) - (parseFloat(g.current) || 0));
+    const months = monthsUntil(g.due);
+    return sum + (months ? Math.ceil(left / months) : 0);
+  }, 0);
+  const totalPlan = planned + recurringTotal + savingsMonthly;
+  const left = (parseFloat(b.income) || 0) - totalPlan;
+
+  document.getElementById('budgetIncome').value = b.income || '';
+  document.getElementById('budgetIncomeStat').textContent = '₩' + fmt(b.income || 0);
+  document.getElementById('budgetPlannedStat').textContent = '₩' + fmt(planned);
+  document.getElementById('budgetRecurringStat').textContent = '₩' + fmt(recurringTotal);
+  document.getElementById('budgetLeftStat').textContent = (left < 0 ? '-₩' : '₩') + fmt(Math.abs(left));
+  document.getElementById('budgetLeftStat').style.color = left < 0 ? 'var(--red)' : 'var(--green)';
+  document.getElementById('budgetLeftSub').textContent = savingsMonthly ? `Includes ₩${fmt(savingsMonthly)} monthly savings pace` : 'After planned costs';
+
+  document.getElementById('budgetCategoryBody').innerHTML = categories.map(cat => {
+    const catBudget = parseFloat(b.categories[cat]) || 0;
+    const fixed = recurring[cat] || 0;
+    const spent = spentByCat[cat] || 0;
+    const fullPlan = catBudget + fixed;
+    const pct = fullPlan ? Math.min(140, Math.round(spent / fullPlan * 100)) : 0;
+    const color = pct > 100 ? 'var(--red)' : (CAT_COLORS[cat] || 'var(--accent)');
+    return `<tr>
+      <td><div class="budget-row-name"><span style="color:${CAT_COLORS[cat] || '#64748b'}">${CAT_ICONS[cat] || ''}</span>${cat}</div></td>
+      <td><input type="number" min="0" value="${catBudget || ''}" style="text-align:right" onchange="updateCategoryBudget('${cat}', this.value)"></td>
+      <td style="text-align:right;font-weight:700;color:var(--muted)">₩${fmt(fixed)}</td>
+      <td style="text-align:right;font-weight:800;color:${color}">₩${fmt(spent)}</td>
+      <td><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, pct)}%;background:${color}"></div></div></td>
+    </tr>`;
+  }).join('');
+
+  const recs = data.recurring || [];
+  document.getElementById('recurringList').innerHTML = recs.length ? recs.map(r => `
+    <div class="mini-item">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <input type="checkbox" ${r.active !== false ? 'checked' : ''} onchange="toggleRecurring('${r.id}', this.checked)" style="width:16px;height:16px;accent-color:var(--accent)">
+        <div style="min-width:0">
+          <strong>${esc(r.name)}</strong>
+          <small>${CAT_ICONS[r.category] || ''} ${r.category}</small>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <strong>₩${fmt(r.amount)}</strong>
+        <button class="icon-btn" onclick="deleteRecurring('${r.id}')" title="Delete"><span class="icon" style="font-size:17px">delete</span></button>
+      </div>
+    </div>`).join('') : '<div class="empty-msg">No regular charges yet.</div>';
+
+  const goals = data.savingsGoals || [];
+  document.getElementById('savingsList').innerHTML = goals.length ? goals.map(g => {
+    const target = parseFloat(g.target) || 0;
+    const current = parseFloat(g.current) || 0;
+    const remaining = Math.max(0, target - current);
+    const pct = target ? Math.min(100, Math.round(current / target * 100)) : 0;
+    const months = monthsUntil(g.due);
+    const monthly = months ? Math.ceil(remaining / months) : null;
+    return `<div class="saving-item">
+      <div class="saving-head">
+        <div style="flex:1;min-width:0">
+          <input value="${escAttr(g.name)}" onchange="updateSavingsGoal('${g.id}', 'name', this.value)" class="saving-title" style="padding:6px 8px;background:#fff">
+          <div class="saving-meta">${g.due ? `By ${formatDate(g.due)} · ` : ''}${monthly !== null ? `₩${fmt(monthly)} / month needed` : 'Add a date to calculate monthly pace'}</div>
+        </div>
+        <button class="icon-btn" onclick="deleteSavingsGoal('${g.id}')" title="Delete"><span class="icon" style="font-size:17px">delete</span></button>
+      </div>
+      <div class="progress-track" style="height:9px;margin-bottom:10px"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div><label class="form-label">Saved</label><input type="number" min="0" value="${current || ''}" onchange="updateSavingsGoal('${g.id}', 'current', this.value)"></div>
+        <div><label class="form-label">Target</label><input type="number" min="0" value="${target || ''}" onchange="updateSavingsGoal('${g.id}', 'target', this.value)"></div>
+        <div><label class="form-label">Due</label><input type="date" value="${g.due || ''}" onchange="updateSavingsGoal('${g.id}', 'due', this.value)"></div>
+      </div>
+      <div class="small-note" style="margin-top:8px">₩${fmt(remaining)} remaining · ${pct}% funded</div>
+    </div>`;
+  }).join('') : '<div class="empty-msg">No savings targets yet.</div>';
+
+  syncSavingsGoalsToGoals();
 }
 
 function renderSummary(txs) {

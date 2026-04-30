@@ -2095,6 +2095,7 @@ body {
     <div id="goal-filters" class="filter-tabs"></div>
   </div>
   <div id="goals-list"></div>
+  <div id="finance-savings-goals"></div>
 </div>
 
 <!-- GOAL DETAIL -->
@@ -2549,10 +2550,20 @@ const AREAS = [
 const SB_URL  = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
 
+function getSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (s.access_token && s.expires_at > Math.floor(Date.now() / 1000)) return s;
+  } catch(e) {}
+  return null;
+}
+
 function sbHeaders() {
+  const session = getSession();
+  const token = session ? session.access_token : SB_ANON;
   return {
     'apikey': SB_ANON,
-    'Authorization': `Bearer ${SB_ANON}`,
+    'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
     'Prefer': 'return=representation'
   };
@@ -2835,7 +2846,7 @@ function nav(view, extra) {
   currentView = view;
   window.scrollTo(0, 0);
   if (view === 'today')        { renderToday(); renderTodayEnhancements(); if (todayViewMode === 'list') renderTodayActionList(); }
-  if (view === 'goals')        renderGoals();
+  if (view === 'goals')        { renderGoals(); renderFinanceSavingsGoals(); }
   if (view === 'cycles')       renderCycles();
   if (view === 'roadmap')      renderRoadmap();
   if (view === 'vision-board') renderVisionBoard();
@@ -3711,7 +3722,85 @@ function toggleCheck(sprintId, week, tacticId, el, key) {
 // ─────────────────────────────────────────
 //  GOALS
 // ─────────────────────────────────────────
-function renderGoals() { renderGoalFilters(); renderGoalsList(); }
+function renderGoals() { renderGoalFilters(); renderGoalsList(); renderFinanceSavingsGoals(); }
+
+let _financeSavingsCloudLoaded = false;
+
+async function loadFinanceSavingsGoalsFromSupabase() {
+  if (_financeSavingsCloudLoaded) return;
+  _financeSavingsCloudLoaded = true;
+  const session = getSession();
+  if (!session) return;
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/finance_savings_goals?select=id,name,target,current,due_date,created_at&order=created_at.asc`, {
+      headers: { ...sbHeaders(), 'Accept': 'application/json' }
+    });
+    if (!res.ok) return;
+    const rows = await res.json();
+    const items = rows.map(r => {
+      const target = parseFloat(r.target) || 0;
+      const current = parseFloat(r.current) || 0;
+      const remaining = Math.max(0, target - current);
+      let monthlyNeeded = null;
+      if (r.due_date) {
+        const due = new Date(r.due_date + 'T12:00:00');
+        const now = new Date();
+        const months = Math.max(1, (due.getFullYear() - now.getFullYear()) * 12 + (due.getMonth() - now.getMonth()) + 1);
+        monthlyNeeded = Math.ceil(remaining / months);
+      }
+      return { id: r.id, title: r.name, target, current, remaining, due: r.due_date || '', monthlyNeeded, source: 'finance' };
+    });
+    localStorage.setItem('edgex_finance_savings_goals', JSON.stringify(items));
+    renderFinanceSavingsGoals();
+  } catch(e) {
+    console.warn('Finance savings sync skipped:', e);
+  }
+}
+
+function renderFinanceSavingsGoals() {
+  const el = document.getElementById('finance-savings-goals');
+  if (!el) return;
+  let items = [];
+  try { items = JSON.parse(localStorage.getItem('edgex_finance_savings_goals') || '[]'); } catch(_) {}
+  loadFinanceSavingsGoalsFromSupabase();
+  if (!items.length) { el.innerHTML = ''; return; }
+  const fmtMoney = n => Math.round(n || 0).toLocaleString('ko-KR');
+  el.innerHTML = `
+    <div style="margin-top:28px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+        <div>
+          <div class="page-date">Finance sync</div>
+          <h2 style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:var(--text)">Savings Targets</h2>
+          <p class="page-sub">Funding goals created in the Finance Room.</p>
+        </div>
+        <a href="finance-dashboard.html" class="btn btn-secondary"><span class="icon" style="font-size:16px">account_balance_wallet</span>Open Finance</a>
+      </div>
+      <div class="goals-grid">
+        ${items.map(g => {
+          const pct = g.target ? Math.min(100, Math.round((g.current || 0) / g.target * 100)) : 0;
+          return `<div class="goal-card" style="cursor:default">
+            <div class="goal-card-bar career"></div>
+            <div class="goal-card-content">
+              <div class="goal-card-top">
+                <span class="badge badge-career"><span class="icon" style="font-size:13px">savings</span>Finance</span>
+                <span style="font-size:12px;font-weight:800;color:var(--blue)">${pct}%</span>
+              </div>
+              <h3 class="goal-title">${String(g.title || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</h3>
+              <p class="goal-why">${g.due ? `Target date: ${g.due}` : 'No target date set yet.'}</p>
+              <div style="margin-top:14px">
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;font-weight:700;color:var(--text-2)">
+                  <span>₩${fmtMoney(g.current)} saved</span>
+                  <span>₩${fmtMoney(g.target)}</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+                <div style="font-size:12px;color:var(--text-3);margin-top:7px">${g.monthlyNeeded ? `₩${fmtMoney(g.monthlyNeeded)} per month needed` : `₩${fmtMoney(g.remaining)} remaining`}</div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
 
 function renderVisionPanels() {
   document.getElementById('vision-panels').innerHTML = AREAS.map(area => {
