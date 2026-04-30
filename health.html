@@ -119,19 +119,33 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .habit-row .name{font-weight:700;flex:1}
 .habit-row .meta{font-size:12px;color:var(--text-2)}
 .routine-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.trend-bars{display:flex;align-items:flex-end;gap:8px;height:180px;padding:16px 4px 2px}
-.trend-bar{flex:1;min-width:24px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,var(--accent),#22c55e);position:relative;display:flex;align-items:flex-end;justify-content:center}
-.trend-bar span{position:absolute;bottom:-22px;font-size:10px;font-weight:700;color:var(--text-3)}
+.trend-detail{display:grid;grid-template-columns:1fr 1.15fr;gap:18px;align-items:stretch}
+.trend-chart{min-height:230px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,#f8fafc,#fff);padding:14px;display:flex;flex-direction:column;gap:12px}
+.trend-chart svg{width:100%;height:160px;overflow:visible}
+.trend-chart .axis{stroke:#dbe3ef;stroke-width:1}
+.trend-chart .target{stroke:#f97316;stroke-width:1.5;stroke-dasharray:5 5}
+.trend-chart .line{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.trend-chart .dot{fill:#fff;stroke:var(--accent);stroke-width:2}
+.trend-chart-footer{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em}
+.trend-table{display:flex;flex-direction:column;gap:8px}
+.trend-day{display:grid;grid-template-columns:82px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.trend-day-date{font-size:12px;font-weight:800}
+.trend-day-sub{font-size:11px;color:var(--text-3);margin-top:1px}
+.trend-day-track{height:8px;border-radius:99px;background:#e5e7eb;overflow:hidden}
+.trend-day-track span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),#22c55e)}
+.trend-day-value{font-size:13px;font-weight:900;text-align:right;min-width:72px}
+.trend-day.miss .trend-day-track span{background:linear-gradient(90deg,#fb923c,#f97316)}
 .trend-panel{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
-.insight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.insight-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
 .insight-card{padding:14px;border:1px solid var(--border);border-radius:14px;background:#fff}
 .insight-card strong{display:block;font-size:20px;font-weight:800;letter-spacing:-.03em}
 .insight-card span{display:block;font-size:11px;font-weight:800;color:var(--text-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
 .insight-card small{display:block;font-size:12px;color:var(--text-2);margin-top:2px}
 .driver-list{display:flex;flex-direction:column;gap:9px}
-.driver-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#f9fafb}
+.driver-row{display:grid;grid-template-columns:1fr 110px 48px;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#f9fafb}
 .driver-row strong{font-size:13px}
-.driver-meter{width:90px;height:8px;border-radius:99px;background:#e5e7eb;overflow:hidden}
+.driver-row small{font-size:11px;color:var(--text-3);display:block;margin-top:1px}
+.driver-meter{width:110px;height:8px;border-radius:99px;background:#e5e7eb;overflow:hidden}
 .driver-meter span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),#22c55e)}
 .mini-list{display:flex;flex-direction:column;gap:10px}
 .mini-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff}
@@ -168,7 +182,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
   #app{display:block}
   #main{margin-left:0}
   .view{padding:22px 18px 70px}
-  .grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.trend-panel,.score-grid{grid-template-columns:1fr}
+  .grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.trend-panel,.score-grid,.trend-detail{grid-template-columns:1fr}
   .micro-grid,.insight-grid{grid-template-columns:1fr}
   .readiness-ring{margin:0 auto}
 }
@@ -403,7 +417,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         </div>
         <span class="badge badge-blue" id="trend-average">Avg --</span>
       </div>
-      <div class="trend-bars" id="trend-bars"></div>
+      <div class="trend-detail" id="trend-bars"></div>
     </div>
     <div class="trend-panel">
       <div class="card card-pad">
@@ -982,17 +996,14 @@ function renderTrends(){
   document.getElementById('trend-sub').textContent = 'Last ' + Math.max(entries.length,0) + ' logged days.';
   const vals = entries.map(([date,log]) => ({ date, val: metricMeta.value(log) })).filter(x => x.val != null);
   const max = Math.max(...vals.map(x=>x.val), metricMeta.max, 1);
-  const avg = vals.length ? vals.reduce((s,x)=>s+x.val,0) / vals.length : 0;
-  document.getElementById('trend-average').textContent = 'Avg ' + formatTrend(avg, trendMetric);
+  const avg = vals.length ? vals.reduce((s,x)=>s+x.val,0) / vals.length : null;
+  document.getElementById('trend-average').textContent = avg == null ? 'Avg --' : 'Avg ' + formatTrend(avg, trendMetric);
   const el = document.getElementById('trend-bars');
   renderTrendInsights(entries, vals, metricMeta);
   renderTrendDrivers(entries);
   renderTrendCoach(entries, vals, metricMeta);
   if (!vals.length) { el.innerHTML = '<div class="empty" style="width:100%">No logs yet.</div>'; return; }
-  el.innerHTML = vals.map(x => {
-    const h = Math.max(8, Math.round((x.val / max) * 100));
-    return `<div class="trend-bar" style="height:${h}%" title="${fmtDate(x.date)}: ${formatTrend(x.val, trendMetric)}"><span>${new Date(x.date+'T12:00:00').getDate()}</span></div>`;
-  }).join('');
+  el.innerHTML = renderTrendDetail(vals, metricMeta, max);
 }
 function getMetricMeta(metric){
   return {
@@ -1013,11 +1024,13 @@ function renderTrendInsights(entries, vals, meta){
   const delta = lastAvg == null || prevAvg == null ? null : lastAvg - prevAvg;
   const hitCount = vals.filter(x => meta.lowerIsBetter ? x.val <= meta.target : x.val >= meta.target).length;
   const hitRate = vals.length ? Math.round((hitCount / vals.length) * 100) : 0;
-  const loggedDays = entries.length;
+  const best = vals.length ? [...vals].sort((a,b)=> meta.lowerIsBetter ? a.val-b.val : b.val-a.val)[0] : null;
+  const latest = vals[vals.length - 1];
   document.getElementById('trend-insights').innerHTML = [
     trendInsight('7-day average', lastAvg == null ? '--' : formatTrend(lastAvg, trendMetric), delta == null ? 'Need another week to compare' : trendDeltaText(delta, trendMetric, meta)),
-    trendInsight('Target days', vals.length ? hitRate + '%' : '--', vals.length ? hitCount + ' of ' + vals.length + ' logged days' : 'No logged values yet'),
-    trendInsight('Data coverage', loggedDays + '/14', loggedDays >= 10 ? 'Enough signal for patterns' : 'Log more days to trust the pattern')
+    trendInsight('Target days', vals.length ? hitRate + '%' : '--', vals.length ? hitCount + ' of ' + vals.length + ' days hit' : 'No logged values yet'),
+    trendInsight('Latest', latest ? formatTrend(latest.val, trendMetric) : '--', latest ? fmtDate(latest.date) : 'No current value'),
+    trendInsight('Best day', best ? formatTrend(best.val, trendMetric) : '--', best ? fmtDate(best.date) : 'No best day yet')
   ].join('');
 }
 function trendInsight(label, value, sub){
@@ -1030,20 +1043,64 @@ function trendDeltaText(delta, metric, meta){
   const better = meta.lowerIsBetter ? delta < 0 : delta > 0;
   return (better ? 'Improved ' : 'Down ') + formatted + ' vs prior week';
 }
+function renderTrendDetail(vals, meta, max){
+  const chart = renderTrendLine(vals, meta, max);
+  const rows = [...vals].reverse().slice(0,10).map(x => {
+    const pct = Math.max(2, Math.min(100, Math.round((x.val / max) * 100)));
+    const hit = meta.lowerIsBetter ? x.val <= meta.target : x.val >= meta.target;
+    return `<div class="trend-day ${hit ? '' : 'miss'}">
+      <div>
+        <div class="trend-day-date">${fmtDate(x.date).replace(',', '')}</div>
+        <div class="trend-day-sub">${hit ? 'On target' : 'Needs support'}</div>
+      </div>
+      <div class="trend-day-track"><span style="width:${pct}%"></span></div>
+      <div class="trend-day-value">${formatTrend(x.val, trendMetric)}</div>
+    </div>`;
+  }).join('');
+  return `<div class="trend-chart">${chart}</div><div class="trend-table">${rows}</div>`;
+}
+function renderTrendLine(vals, meta, max){
+  const w = 520, h = 160, pad = 18;
+  const scaleX = i => vals.length === 1 ? w / 2 : pad + (i * ((w - pad * 2) / (vals.length - 1)));
+  const scaleY = v => pad + ((max - v) / max) * (h - pad * 2);
+  const points = vals.map((x,i) => `${scaleX(i).toFixed(1)},${scaleY(x.val).toFixed(1)}`).join(' ');
+  const targetY = Math.max(pad, Math.min(h - pad, scaleY(meta.target)));
+  const circles = vals.map((x,i) => `<circle class="dot" cx="${scaleX(i).toFixed(1)}" cy="${scaleY(x.val).toFixed(1)}" r="4"><title>${fmtDate(x.date)}: ${formatTrend(x.val, trendMetric)}</title></circle>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="${meta.label} trend">
+      <line class="axis" x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}"></line>
+      <line class="target" x1="${pad}" y1="${targetY.toFixed(1)}" x2="${w-pad}" y2="${targetY.toFixed(1)}"></line>
+      <polyline class="line" points="${points}"></polyline>
+      ${circles}
+    </svg>
+    <div class="trend-chart-footer"><span>${fmtDate(vals[0].date)}</span><span>Target ${formatTrend(meta.target, trendMetric)}</span><span>${fmtDate(vals[vals.length - 1].date)}</span></div>`;
+}
 function renderTrendDrivers(entries){
   const logs = entries.map(([,log]) => log);
   const el = document.getElementById('trend-drivers');
   if (!logs.length) { el.innerHTML = '<div class="empty">No logs yet.</div>'; return; }
   const s = db.settings;
   const drivers = [
-    ['Sleep', avgOf(logs.map(l => Math.min(100, ((parseFloat(l.sleepHours)||0) / s.sleepTarget) * 100)))],
-    ['Steps', avgOf(logs.map(l => Math.min(100, ((parseInt(l.steps)||0) / s.stepTarget) * 100)))],
-    ['Water', avgOf(logs.map(l => Math.min(100, ((parseFloat(l.water)||0) / s.waterTarget) * 100)))],
-    ['Energy', avgOf(logs.map(l => ((parseInt(l.energy)||3) / 5) * 100))],
-    ['Sleep quality', avgOf(logs.map(l => ((parseInt(l.sleepQuality)||3) / 5) * 100))],
-    ['Low pain', avgOf(logs.map(l => Math.max(0, 100 - ((parseInt(l.pain)||0) * 20))))]
-  ].sort((a,b)=>a[1]-b[1]);
-  el.innerHTML = `<div class="driver-list">${drivers.map(([label,val]) => `<div class="driver-row"><strong>${label}</strong><div class="driver-meter" title="${Math.round(val)}%"><span style="width:${Math.round(val)}%"></span></div></div>`).join('')}</div>`;
+    driverScore('Sleep', logs, l => parseFloat(l.sleepHours), s.sleepTarget, v => v >= s.sleepTarget, v => v.toFixed(1) + 'h avg'),
+    driverScore('Steps', logs, l => parseInt(l.steps), s.stepTarget, v => v >= s.stepTarget, v => Math.round(v).toLocaleString() + ' avg'),
+    driverScore('Water', logs, l => parseFloat(l.water), s.waterTarget, v => v >= s.waterTarget, v => v.toFixed(1) + 'L avg'),
+    driverScore('Energy', logs, l => parseInt(l.energy), 4, v => v >= 4, v => v.toFixed(1) + '/5 avg', 5),
+    driverScore('Sleep quality', logs, l => parseInt(l.sleepQuality), 4, v => v >= 4, v => v.toFixed(1) + '/5 avg', 5),
+    driverScore('Low pain', logs, l => parseInt(l.pain), 2, v => v <= 2, v => v.toFixed(1) + '/5 avg', 5, true)
+  ].sort((a,b)=>a.score-b.score);
+  el.innerHTML = `<div class="driver-list">${drivers.map(d => `<div class="driver-row"><div><strong>${d.label}</strong><small>${d.detail}</small></div><div class="driver-meter" title="${Math.round(d.score)}%"><span style="width:${Math.round(d.score)}%"></span></div><span class="badge ${d.hitRate >= 70 ? 'badge-green' : d.hitRate >= 40 ? 'badge-orange' : 'badge-red'}">${d.hitRate}%</span></div>`).join('')}</div>`;
+}
+function driverScore(label, logs, valueFn, target, hitFn, detailFn, maxOverride, lowerIsBetter = false){
+  const values = logs.map(valueFn).filter(v => Number.isFinite(v));
+  const avg = avgOf(values);
+  const max = maxOverride || target;
+  const raw = avg == null ? 0 : lowerIsBetter ? Math.max(0, 100 - ((avg / max) * 100)) : Math.min(100, (avg / max) * 100);
+  const hits = values.filter(hitFn).length;
+  return {
+    label,
+    score: raw,
+    hitRate: values.length ? Math.round((hits / values.length) * 100) : 0,
+    detail: avg == null ? 'No logged values' : detailFn(avg)
+  };
 }
 function renderTrendCoach(entries, vals, meta){
   const el = document.getElementById('trend-coach');
