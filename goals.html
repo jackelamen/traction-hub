@@ -2972,6 +2972,16 @@ function xpwDoneCount(t, checks) {
   for (let i=0;i<n;i++) { if (checks[`${t.id}_${i}`]) c++; }
   return c;
 }
+function xpwDoneToday(t, checks) {
+  const n = xpwTarget(t);
+  const today = localDateKey();
+  let c = 0;
+  for (let i=0;i<n;i++) { if (checks[`${t.id}_${i}`] === today) c++; }
+  return c;
+}
+function xpwDidToday(t, checks) {
+  return xpwDoneToday(t, checks) > 0;
+}
 
 // For a tactic, returns how many checkpoints exist in a week
 // daily → 7, custom → days.length, xperweek → timesPerWeek, weekly/onetime → 1
@@ -3069,9 +3079,12 @@ function todayDoneTotals(sp) {
         if (checks[checkKey(t, todayIdx)]) done++;
       }
     } else if (freq === 'xperweek') {
-      // Always shows — counts total quota vs how many logged so far this week
       const n = xpwTarget(t), c = xpwDoneCount(t, checks);
-      total += n; done += Math.min(c, n);
+      const didToday = xpwDidToday(t, checks);
+      if (didToday || c < n) {
+        total++;
+        if (didToday) done++;
+      }
     } else {
       // weekly / onetime: appear in today only on Sunday, or if already checked
       const checked = !!checks[t.id];
@@ -3332,13 +3345,14 @@ function renderToday() {
         // N-times-per-week: show N tappable slots, fill them as you log completions
         const n = xpwTarget(t);
         const c = xpwDoneCount(t, checks);
+        const didToday = xpwDidToday(t, checks);
         const allFilled = c >= n;
         const slots = Array.from({length:n},(_,i) => {
           const key = `${t.id}_${i}`;
           const filled = !!checks[key];
           // Allow un-checking a filled slot, or filling the next empty slot in order
           const isNext = !filled && i === c; // next available slot
-          const clickable = filled || isNext;
+          const clickable = filled || (isNext && !didToday);
           const bg = filled ? 'var(--green)' : isNext ? 'var(--blue-dim)' : 'var(--bg)';
           const border = filled ? 'var(--green)' : isNext ? 'var(--blue)' : 'var(--border-med)';
           const color = filled ? '#fff' : isNext ? 'var(--blue)' : 'var(--text-3)';
@@ -3548,7 +3562,7 @@ function renderTodayActionList() {
       else if (freq === 'custom') dueToday = (t.days || []).includes(todayIdx);
       else if (freq === 'xperweek') {
         const done = xpwDoneCount(t, checks);
-        dueToday = done < xpwTarget(t); // still has quota to fill this week
+        dueToday = xpwDidToday(t, checks) || done < xpwTarget(t); // show if available today or completed today
       } else {
         // weekly / onetime: due if not yet checked
         dueToday = !checks[t.id];
@@ -3571,7 +3585,7 @@ function renderTodayActionList() {
     const freq = t.freq || 'weekly';
     if (freq === 'daily') return !!checks[checkKey(t, todayIdx)];
     if (freq === 'custom') return (t.days || []).includes(todayIdx) ? !!checks[checkKey(t, todayIdx)] : true;
-    if (freq === 'xperweek') return xpwDoneCount(t, checks) >= xpwTarget(t);
+    if (freq === 'xperweek') return xpwDidToday(t, checks);
     return !!checks[t.id];
   }
 
@@ -3611,11 +3625,12 @@ function renderTodayActionList() {
     } else if (freq === 'xperweek') {
       const n = xpwTarget(t);
       const c = xpwDoneCount(t, checks);
+      const didToday = xpwDidToday(t, checks);
       const slots = Array.from({length: n}, (_, i) => {
         const key = `${t.id}_${i}`;
         const filled = !!checks[key];
         const isNext = !filled && i === c;
-        const clickable = filled || isNext;
+        const clickable = filled || (isNext && !didToday);
         const bg = filled ? 'var(--green)' : isNext ? 'var(--blue-dim)' : 'var(--bg)';
         const border = filled ? 'var(--green)' : isNext ? 'var(--blue)' : 'var(--border-med)';
         const color = filled ? '#fff' : isNext ? 'var(--blue)' : 'var(--text-3)';
@@ -3744,7 +3759,13 @@ function toggleXpw(sprintId, week, tacticId, slotIdx, el) {
   if(!sp.weekChecks[week]) sp.weekChecks[week]={};
   const key = `${tacticId}_${slotIdx}`;
   const was = !!sp.weekChecks[week][key];
-  sp.weekChecks[week][key] = !was;
+  if (was) {
+    delete sp.weekChecks[week][key];
+  } else {
+    const tactic = tacticsForWeek(sp, week).find(t => t.id === tacticId);
+    if (tactic && xpwDidToday(tactic, sp.weekChecks[week])) return;
+    sp.weekChecks[week][key] = localDateKey();
+  }
   saveDB(DB); syncSprint(sprintId);
   refreshToday(200);
 }
