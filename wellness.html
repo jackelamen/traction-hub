@@ -104,12 +104,32 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .score-note{padding:14px;border-radius:14px;background:linear-gradient(135deg,#f8fafc,#f5f3ff);border:1px solid rgba(124,58,237,.16)}
 .score-note h3{font-size:15px;font-weight:800;margin-bottom:5px}
 .score-note p{font-size:13px;color:var(--text-2)}
-.timer-face{display:flex;align-items:center;justify-content:center;flex-direction:column;min-height:260px;border-radius:18px;background:linear-gradient(135deg,#17122a,#24335f);color:#fff;position:relative;overflow:hidden}
+.timer-face{display:flex;align-items:center;justify-content:center;flex-direction:column;min-height:300px;border-radius:18px;background:linear-gradient(135deg,#17122a,#24335f);color:#fff;position:relative;overflow:hidden}
 .timer-face::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.12),transparent 45%);pointer-events:none}
 .timer-face>*{position:relative;z-index:1}
-.timer-time{font-size:58px;font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
-.breath-dot{width:92px;height:92px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;margin-bottom:18px;transition:transform 1s ease,background 1s ease}
-.breath-dot.expand{transform:scale(1.45);background:rgba(125,211,252,.28)}
+.timer-time{font-size:46px;font-weight:800;letter-spacing:0;font-variant-numeric:tabular-nums;margin-top:8px}
+.med-full-btn{position:absolute;top:12px;right:12px;z-index:2;width:34px;height:34px;border:none;border-radius:10px;background:rgba(255,255,255,.10);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .18s,transform .18s}
+.med-full-btn:hover{background:rgba(255,255,255,.22);transform:translateY(-1px)}
+.breath-visual{width:156px;height:156px;position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:2px}
+.breath-visual svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.breath-ring{stroke-dasharray:427;stroke-dashoffset:427;transition:stroke-dashoffset .2s linear,stroke .4s ease}
+.breath-orb{width:76px;height:76px;border-radius:50%;background:radial-gradient(circle at 36% 34%,rgba(255,255,255,.55),rgba(196,181,253,.34) 34%,rgba(14,165,233,.22) 72%);box-shadow:0 0 32px rgba(196,181,253,.24),inset 0 0 28px rgba(255,255,255,.12);transition:transform .22s linear,background .4s ease,box-shadow .4s ease}
+.breath-count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none}
+.breath-count strong{font-size:36px;line-height:1;font-weight:900;font-variant-numeric:tabular-nums;text-shadow:0 0 24px rgba(255,255,255,.26)}
+.breath-count span{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.48);margin-top:4px}
+.breath-dots{display:flex;gap:8px;margin-top:10px}
+.breath-dots span{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.20);transition:background .2s,transform .2s}
+.breath-dots span.active{background:#c4b5fd;transform:scale(1.25);box-shadow:0 0 12px rgba(196,181,253,.48)}
+.meditation-fullscreen{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 28%,rgba(124,58,237,.26),transparent 34%),linear-gradient(135deg,#100b1f,#172554 58%,#052e3f);color:#fff}
+.meditation-fullscreen.open{display:flex}
+.meditation-fullscreen .fs-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;width:min(92vw,720px);min-height:80vh;text-align:center}
+.meditation-fullscreen .breath-visual{width:300px;height:300px}
+.meditation-fullscreen .breath-orb{width:132px;height:132px}
+.meditation-fullscreen .breath-count strong{font-size:78px}
+.meditation-fullscreen .timer-time{font-size:74px;margin-top:0}
+.fs-exit{position:absolute;top:24px;right:24px;width:44px;height:44px;border:none;border-radius:14px;background:rgba(255,255,255,.10);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.fs-exit:hover{background:rgba(255,255,255,.22)}
+.fs-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .audio-panel{margin-top:14px;padding:12px;border:1px solid var(--border);border-radius:14px;background:#f9fafb}
 .audio-panel audio{width:100%;height:36px;margin-top:8px}
 .audio-toggle{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text-2);margin-top:8px}
@@ -121,7 +141,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .toast{position:fixed;right:24px;bottom:24px;background:#111827;color:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(0,0,0,.22);font-size:13px;font-weight:700;display:none;z-index:100}
 .hidden-file{display:none}
 @media(max-width:900px){#sidebar{position:static;width:100%;height:auto}#app{display:block}#main{margin-left:0}.view{padding:22px 18px 70px}.grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.reset-grid,.score-grid{grid-template-columns:1fr}.well-ring{margin:0 auto}}
-@media(max-width:600px){.tabs{width:100%}.tab{flex:1}.timer-time{font-size:46px}}
+@media(max-width:600px){.tabs{width:100%}.tab{flex:1}.timer-time{font-size:38px}.meditation-fullscreen .breath-visual{width:230px;height:230px}.meditation-fullscreen .timer-time{font-size:54px}}
 </style>
 </head>
 <body>
@@ -290,9 +310,23 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <div class="grid-2">
       <div class="card card-pad">
         <div class="timer-face">
-          <div class="breath-dot" id="breath-dot"><span class="icon" style="font-size:36px">spa</span></div>
+          <button class="med-full-btn" onclick="openMeditationFullscreen()" title="Full screen"><span class="icon" style="font-size:20px">fullscreen</span></button>
+          <div class="breath-visual">
+            <svg viewBox="0 0 156 156">
+              <circle cx="78" cy="78" r="68" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7"/>
+              <circle class="breath-ring" id="breath-ring" cx="78" cy="78" r="68" fill="none" stroke="#c4b5fd" stroke-width="7" stroke-linecap="round"/>
+            </svg>
+            <div class="breath-orb" id="breath-orb"></div>
+            <div class="breath-count">
+              <strong id="breath-count">--</strong>
+              <span id="breath-sub">ready</span>
+            </div>
+          </div>
           <div class="timer-time" id="timer-display">05:00</div>
           <div style="font-size:12px;color:rgba(255,255,255,.55);font-weight:800;letter-spacing:.08em;text-transform:uppercase" id="timer-phase">Ready</div>
+          <div class="breath-dots">
+            <span id="breath-dot-in"></span><span id="breath-dot-hold"></span><span id="breath-dot-out"></span><span id="breath-dot-rest"></span>
+          </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
           <button class="btn btn-secondary btn-sm" onclick="setDuration(2)">2m</button>
@@ -387,6 +421,32 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     </div>
   </section>
 </main>
+</div>
+<div class="meditation-fullscreen" id="meditation-fullscreen">
+  <button class="fs-exit" onclick="closeMeditationFullscreen()" title="Exit full screen"><span class="icon" style="font-size:24px">fullscreen_exit</span></button>
+  <div class="fs-inner">
+    <div style="font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55)">Meditation Timer</div>
+    <div class="breath-visual">
+      <svg viewBox="0 0 156 156">
+        <circle cx="78" cy="78" r="68" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7"/>
+        <circle class="breath-ring" id="breath-ring-fs" cx="78" cy="78" r="68" fill="none" stroke="#c4b5fd" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+      <div class="breath-orb" id="breath-orb-fs"></div>
+      <div class="breath-count">
+        <strong id="breath-count-fs">--</strong>
+        <span id="breath-sub-fs">ready</span>
+      </div>
+    </div>
+    <div class="timer-time" id="timer-display-fs">05:00</div>
+    <div style="font-size:18px;color:rgba(255,255,255,.62);font-weight:800;letter-spacing:.12em;text-transform:uppercase" id="timer-phase-fs">Ready</div>
+    <div class="breath-dots">
+      <span id="breath-dot-fs-in"></span><span id="breath-dot-fs-hold"></span><span id="breath-dot-fs-out"></span><span id="breath-dot-fs-rest"></span>
+    </div>
+    <div class="fs-controls">
+      <button class="btn btn-primary" onclick="toggleTimer()" id="timer-btn-fs"><span class="icon" style="font-size:17px">play_arrow</span>Start</button>
+      <button class="btn btn-secondary" onclick="resetTimer()"><span class="icon" style="font-size:17px">stop</span>Reset</button>
+    </div>
+  </div>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -491,6 +551,14 @@ let duration = 5 * 60;
 let remaining = duration;
 let timer = null;
 let breath = null;
+let breathStartedAt = 0;
+const BREATH_PATTERN = [
+  { key:'in', label:'Inhale', sub:'inhale', seconds:4, scaleStart:.72, scaleEnd:1.18, color:'#c4b5fd' },
+  { key:'hold', label:'Hold', sub:'soft hold', seconds:2, scaleStart:1.18, scaleEnd:1.18, color:'#7dd3fc' },
+  { key:'out', label:'Exhale', sub:'exhale', seconds:6, scaleStart:1.18, scaleEnd:.72, color:'#34d399' },
+  { key:'rest', label:'Rest', sub:'settle', seconds:2, scaleStart:.72, scaleEnd:.72, color:'#a78bfa' }
+];
+const BREATH_CIRC = 427;
 
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
@@ -727,6 +795,88 @@ function renderTimer(){
   const m=String(Math.floor(remaining/60)).padStart(2,'0');
   const s=String(remaining%60).padStart(2,'0');
   document.getElementById('timer-display').textContent=m+':'+s;
+  const fs=document.getElementById('timer-display-fs');
+  if(fs) fs.textContent=m+':'+s;
+}
+function setTimerButtonHTML(html){
+  const btn=document.getElementById('timer-btn');
+  const fsBtn=document.getElementById('timer-btn-fs');
+  if(btn) btn.innerHTML=html;
+  if(fsBtn) fsBtn.innerHTML=html;
+}
+function setTimerPhase(text){
+  const el=document.getElementById('timer-phase');
+  const fs=document.getElementById('timer-phase-fs');
+  if(el) el.textContent=text;
+  if(fs) fs.textContent=text;
+}
+function setBreathDot(key){
+  ['in','hold','out','rest'].forEach(k=>{
+    document.getElementById('breath-dot-'+k)?.classList.toggle('active', k===key);
+    document.getElementById('breath-dot-fs-'+k)?.classList.toggle('active', k===key);
+  });
+}
+function applyBreathVisual(phase, count, progress){
+  const scale=phase.scaleStart + ((phase.scaleEnd - phase.scaleStart) * progress);
+  ['','-fs'].forEach(suffix=>{
+    const orb=document.getElementById('breath-orb'+suffix);
+    const ring=document.getElementById('breath-ring'+suffix);
+    const countEl=document.getElementById('breath-count'+suffix);
+    const subEl=document.getElementById('breath-sub'+suffix);
+    if(orb) {
+      orb.style.transform='scale('+scale.toFixed(3)+')';
+      orb.style.boxShadow=phase.key==='out' ? '0 0 34px rgba(52,211,153,.26),inset 0 0 28px rgba(255,255,255,.10)' : '0 0 42px rgba(196,181,253,.30),inset 0 0 28px rgba(255,255,255,.14)';
+    }
+    if(ring) {
+      ring.style.stroke=phase.color;
+      ring.style.strokeDashoffset=BREATH_CIRC*(1-progress);
+    }
+    if(countEl) countEl.textContent=count;
+    if(subEl) subEl.textContent=phase.sub;
+  });
+  setTimerPhase(phase.label);
+  setBreathDot(phase.key);
+}
+function updateBreathGuide(){
+  if(!breathStartedAt) {
+    applyBreathVisual(BREATH_PATTERN[0], '--', 0);
+    return;
+  }
+  const elapsed=(Date.now()-breathStartedAt)/1000;
+  const cycle=BREATH_PATTERN.reduce((sum,p)=>sum+p.seconds,0);
+  let t=elapsed%cycle;
+  let phase=BREATH_PATTERN[0];
+  for(const p of BREATH_PATTERN){
+    if(t < p.seconds){ phase=p; break; }
+    t-=p.seconds;
+  }
+  const progress=Math.max(0,Math.min(1,t/phase.seconds));
+  const count=Math.max(1,Math.ceil(phase.seconds-t));
+  applyBreathVisual(phase,count,progress);
+}
+function startBreathGuide(){
+  breathStartedAt=Date.now();
+  updateBreathGuide();
+  clearInterval(breath);
+  breath=setInterval(updateBreathGuide,200);
+}
+function stopBreathGuide(reset=false){
+  clearInterval(breath);
+  breath=null;
+  if(reset) {
+    breathStartedAt=0;
+    applyBreathVisual(BREATH_PATTERN[0], '--', 0);
+    setTimerPhase('Ready');
+    setBreathDot('');
+  }
+}
+function openMeditationFullscreen(){
+  document.getElementById('meditation-fullscreen')?.classList.add('open');
+  renderTimer();
+  updateBreathGuide();
+}
+function closeMeditationFullscreen(){
+  document.getElementById('meditation-fullscreen')?.classList.remove('open');
 }
 function shouldSyncAudio(){ return document.getElementById('audio-sync')?.checked; }
 function playMeditationAudio(){
@@ -745,19 +895,17 @@ function stopMeditationAudio(){
   audio.currentTime=0;
 }
 function toggleTimer(){
-  if(timer){ clearInterval(timer); clearInterval(breath); timer=null; breath=null; pauseMeditationAudio(); document.getElementById('timer-btn').innerHTML='<span class="icon" style="font-size:17px">play_arrow</span>Start'; document.getElementById('timer-phase').textContent='Paused'; return; }
-  document.getElementById('timer-btn').innerHTML='<span class="icon" style="font-size:17px">pause</span>Pause';
-  document.getElementById('timer-phase').textContent='Breathe';
+  if(timer){ clearInterval(timer); timer=null; stopBreathGuide(false); pauseMeditationAudio(); setTimerButtonHTML('<span class="icon" style="font-size:17px">play_arrow</span>Start'); setTimerPhase('Paused'); return; }
+  setTimerButtonHTML('<span class="icon" style="font-size:17px">pause</span>Pause');
   playMeditationAudio();
-  let expand=false;
-  breath=setInterval(()=>{ expand=!expand; document.getElementById('breath-dot').classList.toggle('expand',expand); document.getElementById('timer-phase').textContent=expand?'Inhale':'Exhale'; },4000);
+  startBreathGuide();
   timer=setInterval(()=>{
     remaining--;
     renderTimer();
-    if(remaining<=0){ clearInterval(timer); clearInterval(breath); timer=null; breath=null; pauseMeditationAudio(); document.getElementById('timer-btn').innerHTML='<span class="icon" style="font-size:17px">play_arrow</span>Start'; document.getElementById('timer-phase').textContent='Complete'; document.getElementById('breath-dot').classList.remove('expand'); toast('Session complete'); }
+    if(remaining<=0){ clearInterval(timer); timer=null; stopBreathGuide(false); pauseMeditationAudio(); setTimerButtonHTML('<span class="icon" style="font-size:17px">play_arrow</span>Start'); setTimerPhase('Complete'); toast('Session complete'); }
   },1000);
 }
-function resetTimer(){ if(timer) toggleTimer(); stopMeditationAudio(); remaining=duration; document.getElementById('timer-phase').textContent='Ready'; document.getElementById('breath-dot').classList.remove('expand'); renderTimer(); }
+function resetTimer(){ if(timer) toggleTimer(); stopMeditationAudio(); stopBreathGuide(true); remaining=duration; renderTimer(); }
 function savePractice(){
   const minutes=Math.round((duration-remaining)/60) || Math.round(duration/60);
   db.practices.unshift({ id:'p-'+Date.now().toString(36), date:todayStr(), minutes, type:val('practice-type'), after:val('after-state'), note:val('practice-note'), savedAt:new Date().toISOString() });
