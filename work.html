@@ -3312,6 +3312,7 @@ async function doLogout() {
 
 // Keys that are purely ephemeral and should NOT be synced
 const NO_SYNC_KEYS = new Set([
+  'sb_session',              // auth token — never sync, would overwrite current login session
   'traction-device-id',      // old device ID, no longer used
   'morning-setup-done',      // sessionStorage flag, not relevant cross-device
   '_edgex_ls_timestamps',    // local write-time metadata — never push to cloud
