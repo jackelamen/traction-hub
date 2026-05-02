@@ -1,0 +1,14 @@
+﻿com.samsung.health.device_profile,6320001,9
+manufacturer,providing_step_goal,create_sh_ver,step_source_group,device_type,backsync_step_goal,capability,modify_sh_ver,device_group,update_time,create_time,name,model,legacy_deviceuuid,connectivity_type,deviceuuid,pkg_name,accessory_type,fixed_name,datauuid
+Samsung,,,,,,,,360001,2024-09-11 19:31:02.966,2024-09-11 19:31:02.966,My Device,SM-F956N,,,4FEhL4nduw,com.sec.android.app.shealth,,Jack's Z Fold6,1217bfea-8552-5edf-ccb0-1c83d608e975,
+Samsung,,,,,,,,360001,2023-04-13 13:18:10.422,2023-04-13 12:57:52.060,My Device,SM-S918N,,,sLWoup9uSz,com.sec.android.app.shealth,,Jack's S23 Ultra,f4e74635-ed28-8d9f-397f-6de5e1a99693,
+Samsung Electronics,1,,18,10045,1,93bc2344-e2f8-ddf9-7a9a-95d271e03bf0.capability.json,,360003,2023-06-17 12:12:57.372,2019-09-25 04:46:19.256,Galaxy Watch,,,,eSltdGxx7w,com.sec.android.app.shealth,,Galaxy Note10+ 5G,93bc2344-e2f8-ddf9-7a9a-95d271e03bf0,
+Samsung,,,,,,,,360001,2022-02-24 06:16:15.287,2022-02-24 06:09:19.905,My Device,SM-S908N,,,P2bFQ7/2cI,com.sec.android.app.shealth,,Ultra Zilla,2eefd2f5-e4f0-3f9e-a1b8-d403c73e141c,
+Samsung,,,,,,,,360001,2019-08-20 19:45:14.504,2019-08-20 19:45:14.504,My Device,SM-N976N,,,X92ED7c0ra,com.sec.android.app.shealth,,Galaxy Note10+ 5G,dd516016-4cde-cc0f-065c-11a119d99f4a,
+Samsung Electronics,1,,18,10045,1,938876c6-048c-0bc1-db9a-b752c5c39c52.capability.json,,360003,2019-09-22 08:33:12.639,2019-08-20 19:45:14.543,Galaxy Watch,,,,6fBBpnPaJ6,com.sec.android.app.shealth,,Galaxy Note10+ 5G,938876c6-048c-0bc1-db9a-b752c5c39c52,
+Combined,,,,,,,,0,2019-08-20 19:45:14.761,2019-08-20 19:45:14.761,Combined,Combined,,,VfS0qUERdZ,com.sec.android.app.shealth,,Galaxy Note10+ 5G,7af9722c-cd99-07b7-853a-43ce58e819c5,
+Samsung,,,,,,,,360001,2018-05-27 12:57:53.318,2018-05-27 12:57:53.318,My Device,SM-N950N,,,v7IxjSR0Ie,com.sec.android.app.shealth,,Note Zilla,121308bd-95ca-00f6-1ee0-18e04e11ea79,
+Samsung,,,,10009,,,,360001,2015-02-01 00:00:00.000,2015-02-01 00:00:00.000,Shealth2.5,Shealth2.5,,4,uVwC9SChYX,com.sec.android.app.shealth,,,b95c02f5-20a1-617d-c2c2-47902f09fc75,
+Samsung,,,,10008,,,,360001,2015-03-31 15:44:32.261,2015-03-31 15:44:32.261,SM-N916L,SM-N916L,,4,lL7rPbzxJN,com.sec.android.app.shealth,,,94beeb3d-bcf1-24d2-1538-18bec38363a7,
+all_target,,,,,,,,0,2016-10-27 16:52:55.186,2016-10-27 16:52:55.186,all_target,all_target,,,Mk66SbFqK1,com.sec.android.app.shealth,,Galaxy Note4 S-LTE,471ca32b-a665-1e9e-7c27-7ac69485dc05,
+Samsung Electronics,1,,105,10056,1,84e02bce-2138-4a2f-b076-44115a2400ff.capability.json,63200010,360003,2026-04-20 12:55:33.695,2023-04-24 11:38:28.466,Galaxy Watch5 Pro,SM-R925N,,,SiE8w+zjCP,com.sec.android.app.shealth,,,84e02bce-2138-4a2f-b076-44115a2400ff,

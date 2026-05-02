@@ -1,0 +1,11 @@
+﻿com.samsung.shealth.goal_history,6320001,1
+update_time,create_time,type,time_offset,deviceuuid,pkg_name,set_time,controller_id,datauuid
+2019-08-20 19:45:16.565,2019-08-20 19:45:16.565,1,UTC+0900,X92ED7c0ra,com.sec.android.app.shealth,1566330312902,goal.activity,9c1177ed-a2a5-497b-861d-94063a3beb05,
+2018-09-08 14:07:06.285,2018-09-08 14:07:06.285,2,UTC+0900,v7IxjSR0Ie,com.sec.android.app.shealth,1536415626247,goal.activity,88d352df-04e9-4207-8fc9-e44390654e15,
+2018-09-08 14:08:20.983,2018-09-08 14:08:20.983,1,UTC+0900,v7IxjSR0Ie,com.sec.android.app.shealth,1536415700949,goal.weightmanagement,3b714930-4509-4a40-8bee-75c2d2e928ae,
+2018-09-08 14:11:23.414,2018-09-08 14:11:23.414,1,UTC+0900,v7IxjSR0Ie,com.sec.android.app.shealth,1536415883391,goal.weightmanagement,f82cf6d4-e0e3-4b30-a3ed-334c7fd9927a,
+2018-09-19 10:17:22.365,2018-09-19 10:17:22.365,1,UTC+0900,v7IxjSR0Ie,com.sec.android.app.shealth,1537352242242,goal.activity,8a60fb47-e3a1-444c-8d4e-6c71019257fa,
+2018-09-20 16:53:01.423,2018-09-20 16:53:01.423,2,UTC+0900,v7IxjSR0Ie,com.sec.android.app.shealth,1537462381233,goal.weightmanagement,532342eb-735f-4b5b-aef2-62539ec819ac,
+2020-04-12 18:16:45.601,2020-04-12 18:16:45.601,1,UTC+0900,X92ED7c0ra,com.sec.android.app.shealth,1586715405435,goal.activity,5cfc9298-929c-4965-84db-79c9523ce768,
+2015-04-17 08:07:57.455,2015-04-17 08:07:57.455,1,UTC+0900,uVwC9SChYX,com.sec.android.app.shealth,1429258077445,goal.activity,52201128-5511-429f-bcb4-0319b0b7c2a9,
+2015-04-17 08:07:57.628,2015-04-17 08:07:57.628,1,UTC+0900,uVwC9SChYX,com.sec.android.app.shealth,1429258077623,goal.activity,d237f550-dfe2-492e-abe2-3622bc4afbc4,

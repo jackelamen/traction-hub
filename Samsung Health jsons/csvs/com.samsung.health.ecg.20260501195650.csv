@@ -1,0 +1,4 @@
+﻿com.samsung.health.ecg,6320001,6
+sample_frequency,create_sh_ver,start_time,custom,mean_heart_rate,modify_sh_ver,max_heart_rate,update_time,create_time,data_mime,data,min_heart_rate,classification,sample_count,shm_data_id,time_offset,shm_device_uuid,deviceuuid,comment,pkg_name,shm_update_time,end_time,chart_data,datauuid,shm_create_time,symptoms,ecg_version
+500,,2023-07-06 22:52:32.707,,67.0,,,2023-09-07 16:30:39.022,2023-09-07 16:30:39.022,application/pdf,89a1e2b1-c003-4699-b86b-b5dd29075954.data.pdf,,,15000,,UTC+0900,,0ef97fa2-fe56-4e41-bbaa-972d80b38218,,com.samsung.android.shealthmonitor,,2023-07-06 22:53:02.707,,89a1e2b1-c003-4699-b86b-b5dd29075954,,,,
+500,,2023-08-18 13:48:28.687,,74.0,,,2023-09-07 16:30:41.384,2023-09-07 16:30:41.384,application/pdf,04fd5d32-e3d7-46b2-89e4-46421792aa79.data.pdf,,,15000,,UTC+0900,,0ef97fa2-fe56-4e41-bbaa-972d80b38218,,com.samsung.android.shealthmonitor,,2023-08-18 13:48:58.687,,04fd5d32-e3d7-46b2-89e4-46421792aa79,,,,

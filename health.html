@@ -278,6 +278,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </div>
     </div>
     <div class="grid-4" id="today-stats" style="margin-bottom:18px"></div>
+    <div id="wearable-signals" style="margin-bottom:18px"></div>
     <div class="score-grid">
       <div class="card card-pad">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:10px">
@@ -472,12 +473,27 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       <button class="tab" id="trend-energy" onclick="setTrend('energy')">Energy</button>
       <button class="tab" id="trend-pain" onclick="setTrend('pain')">Pain</button>
     </div>
+    <div class="card card-pad" style="margin-bottom:18px">
+      <div style="display:flex;align-items:end;justify-content:space-between;gap:14px;flex-wrap:wrap">
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(140px,1fr));gap:12px;max-width:360px;flex:1">
+          <div class="field" style="margin:0"><label>From</label><input id="trend-start" type="date" onchange="setTrendRangeFromInputs()"/></div>
+          <div class="field" style="margin:0"><label>To</label><input id="trend-end" type="date" onchange="setTrendRangeFromInputs()"/></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="setTrendQuickRange(14)">14d</button>
+          <button class="btn btn-secondary btn-sm" onclick="setTrendQuickRange(30)">30d</button>
+          <button class="btn btn-secondary btn-sm" onclick="setTrendQuickRange(90)">90d</button>
+          <button class="btn btn-secondary btn-sm" onclick="setTrendQuickRange(183)">6mo</button>
+          <button class="btn btn-secondary btn-sm" onclick="setTrendQuickRange('all')">All</button>
+        </div>
+      </div>
+    </div>
     <div class="insight-grid" id="trend-insights"></div>
     <div class="card card-pad">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px">
         <div>
           <h2 style="font-size:16px;font-weight:800" id="trend-title">Health Score</h2>
-          <p style="font-size:12px;color:var(--text-2)" id="trend-sub">Last 14 logged days.</p>
+          <p style="font-size:12px;color:var(--text-2)" id="trend-sub">Selected date range.</p>
         </div>
         <span class="badge badge-blue" id="trend-average">Avg --</span>
       </div>
@@ -486,7 +502,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <div class="trend-panel">
       <div class="card card-pad">
         <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">What Is Driving It</h2>
-        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Health Score inputs averaged across recent logs.</p>
+        <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Health Score inputs averaged across the selected range.</p>
         <div id="trend-drivers"></div>
       </div>
       <div class="card card-pad">
@@ -559,6 +575,8 @@ const DEFAULTS = {
 let db = clone(DEFAULTS);
 let currentView = 'today';
 let trendMetric = 'readiness';
+let trendStartDate = null;
+let trendEndDate = null;
 
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
@@ -830,6 +848,7 @@ function renderToday(){
     stat('Exercise', exercise ? exercise + 'm' : '--', weeklyExerciseMinutes() + '/' + s.weeklyExerciseTarget + 'm this week', weeklyExerciseMinutes() >= s.weeklyExerciseTarget ? 'badge-green' : 'badge-blue')
   ].join('');
   document.getElementById('today-actions').innerHTML = `<button class="btn btn-primary" onclick="nav('log')"><span class="icon" style="font-size:17px">edit_note</span>${log ? 'Update Today' : 'Log Today'}</button><button class="btn btn-secondary" onclick="nav('trends')"><span class="icon" style="font-size:17px">query_stats</span>View Trends</button>`;
+  renderWearableSignals(todayStr());
   renderReadinessBreakdown(log);
   renderHealthCoach(log, score);
   renderTodayHabits();
@@ -837,6 +856,35 @@ function renderToday(){
 }
 function stat(label,value,sub,badge){
   return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></div>`;
+}
+function renderWearableSignals(date){
+  const el = document.getElementById('wearable-signals');
+  if (!el) return;
+  const signal = getSignal(date);
+  const items = [
+    signal.hrvRmssd != null ? { icon:'ecg_heart', label:'HRV', value:Number(signal.hrvRmssd).toFixed(1) + ' ms', sub:'RMSSD' } : null,
+    signal.respiratoryRate != null ? { icon:'air', label:'Respiration', value:Number(signal.respiratoryRate).toFixed(1), sub:'breaths/min' } : null,
+    signal.spo2 != null ? { icon:'spo2', label:'Oxygen', value:Math.round(signal.spo2) + '%', sub:signal.spo2Min != null ? 'min ' + Math.round(signal.spo2Min) + '%' : 'SpO2' } : null,
+    signal.stressScore != null ? { icon:'psychology', label:'Stress', value:Number(signal.stressScore).toFixed(0), sub:'Samsung score' } : null,
+    signal.skinTemperatureC != null ? { icon:'device_thermostat', label:'Skin temp', value:Number(signal.skinTemperatureC).toFixed(1) + 'C', sub:'wearable avg' } : null
+  ].filter(Boolean);
+  if (!items.length) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = `
+    <div class="card card-pad">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px">
+        <div>
+          <h2 style="font-size:16px;font-weight:800">Wearable Signals</h2>
+          <p style="font-size:12px;color:var(--text-2)">Imported from Samsung Health when dated signal data is available.</p>
+        </div>
+        <span class="badge badge-blue">Samsung</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:0 18px">
+        ${items.map(item => `<div style="padding:12px 0;border-top:1px solid rgba(255,255,255,.08)"><div class="stat-label"><span class="icon" style="font-size:14px;vertical-align:-2px">${item.icon}</span> ${escapeHTML(item.label)}</div><div class="stat-value">${escapeHTML(item.value)}</div><div class="stat-sub">${escapeHTML(item.sub)}</div></div>`).join('')}
+      </div>
+    </div>`;
 }
 function renderReadinessBreakdown(log){
   const confidenceEl = document.getElementById('health-score-confidence');
@@ -1151,21 +1199,80 @@ function setTrend(metric){
   document.getElementById('trend-' + metric).classList.add('active');
   renderTrends();
 }
+function allHealthDates(){
+  return [...new Set([...Object.keys(db.logs), ...Object.keys(getDailySignals())])].sort();
+}
+function addDays(date, days){
+  const d = new Date(date + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0,10);
+}
+function clampDate(date, min, max){
+  if (!date) return date;
+  if (min && date < min) return min;
+  if (max && date > max) return max;
+  return date;
+}
+function syncTrendRangeInputs(dates){
+  const startEl = document.getElementById('trend-start');
+  const endEl = document.getElementById('trend-end');
+  if (!startEl || !endEl) return;
+  const min = dates[0] || '';
+  const max = dates[dates.length - 1] || todayStr();
+  startEl.min = min;
+  startEl.max = max;
+  endEl.min = min;
+  endEl.max = max;
+  startEl.value = trendStartDate || '';
+  endEl.value = trendEndDate || '';
+}
+function ensureTrendRange(dates){
+  if (!dates.length) {
+    trendStartDate = null;
+    trendEndDate = null;
+    syncTrendRangeInputs(dates);
+    return;
+  }
+  const min = dates[0];
+  const max = dates[dates.length - 1];
+  trendEndDate = clampDate(trendEndDate || max, min, max);
+  trendStartDate = clampDate(trendStartDate || addDays(trendEndDate, -29), min, max);
+  if (trendStartDate > trendEndDate) [trendStartDate, trendEndDate] = [trendEndDate, trendStartDate];
+  syncTrendRangeInputs(dates);
+}
+function setTrendRangeFromInputs(){
+  const start = document.getElementById('trend-start')?.value;
+  const end = document.getElementById('trend-end')?.value;
+  if (start) trendStartDate = start;
+  if (end) trendEndDate = end;
+  if (trendStartDate && trendEndDate && trendStartDate > trendEndDate) [trendStartDate, trendEndDate] = [trendEndDate, trendStartDate];
+  renderTrends();
+}
+function setTrendQuickRange(days){
+  const dates = allHealthDates();
+  if (!dates.length) return;
+  trendEndDate = dates[dates.length - 1];
+  trendStartDate = days === 'all' ? dates[0] : clampDate(addDays(trendEndDate, 1 - days), dates[0], trendEndDate);
+  renderTrends();
+}
 function renderTrends(){
-  const signalDates = Object.keys(getDailySignals());
-  const dates = [...new Set([...Object.keys(db.logs), ...signalDates])].sort().slice(-14);
-  const entries = dates.map(date => [date, getLog(date)]).filter(([, log]) => log);
+  const dates = allHealthDates();
+  ensureTrendRange(dates);
+  const rangeDates = dates.filter(date => (!trendStartDate || date >= trendStartDate) && (!trendEndDate || date <= trendEndDate));
+  const rangeEntries = rangeDates.map(date => [date, getLog(date)]).filter(([, log]) => log);
   const metricMeta = getMetricMeta(trendMetric);
   document.getElementById('trend-title').textContent = metricMeta.label;
-  document.getElementById('trend-sub').textContent = 'Last ' + Math.max(entries.length,0) + ' logged days.';
-  const vals = entries.map(([date,log]) => ({ date, val: metricMeta.value(log) })).filter(x => x.val != null);
+  document.getElementById('trend-sub').textContent = rangeEntries.length
+    ? `${fmtDate(rangeEntries[0][0])} to ${fmtDate(rangeEntries[rangeEntries.length - 1][0])} · ${rangeEntries.length} days with data`
+    : 'No data in selected range.';
+  const vals = rangeEntries.map(([date,log]) => ({ date, val: metricMeta.value(log) })).filter(x => x.val != null);
   const max = Math.max(...vals.map(x=>x.val), metricMeta.max, 1);
   const avg = vals.length ? vals.reduce((s,x)=>s+x.val,0) / vals.length : null;
   document.getElementById('trend-average').textContent = avg == null ? 'Avg --' : 'Avg ' + formatTrend(avg, trendMetric);
   const el = document.getElementById('trend-bars');
-  renderTrendInsights(entries, vals, metricMeta);
-  renderTrendDrivers(entries);
-  renderTrendCoach(entries, vals, metricMeta);
+  renderTrendInsights(rangeEntries, vals, metricMeta);
+  renderTrendDrivers(rangeEntries);
+  renderTrendCoach(rangeEntries, vals, metricMeta);
   if (!vals.length) { el.innerHTML = '<div class="empty" style="width:100%">No logs yet.</div>'; return; }
   el.innerHTML = renderTrendDetail(vals, metricMeta, max);
 }
@@ -1367,6 +1474,28 @@ function exportData(){
   a.click();
   URL.revokeObjectURL(url);
 }
+function mergeImportedDailySignals(importedSignals){
+  if (!importedSignals || typeof importedSignals !== 'object') return 0;
+  const existing = getDailySignals();
+  let count = 0;
+  Object.entries(importedSignals).forEach(([date, signal]) => {
+    if (!date || !signal || typeof signal !== 'object') return;
+    existing[date] = { ...(existing[date] || {}), ...signal, updatedAt: signal.updatedAt || new Date().toISOString() };
+    count += 1;
+  });
+  if (count) localStorage.setItem(DAILY_SIGNALS_KEY, JSON.stringify(existing));
+  return count;
+}
+function mergeImportedLogs(importedLogs){
+  if (!importedLogs || typeof importedLogs !== 'object') return 0;
+  let count = 0;
+  Object.entries(importedLogs).forEach(([date, log]) => {
+    if (!date || !log || typeof log !== 'object') return;
+    db.logs[date] = { ...(db.logs[date] || {}), ...log };
+    count += 1;
+  });
+  return count;
+}
 function importData(input){
   const file = input.files[0];
   if (!file) return;
@@ -1374,15 +1503,24 @@ function importData(input){
   reader.onload = e => {
     try {
       const imported = JSON.parse(e.target.result);
-      db = {
-        settings: { ...DEFAULTS.settings, ...(imported.settings || {}) },
-        routines: imported.routines || clone(DEFAULTS.routines),
-        logs: imported.logs || {},
-        checks: imported.checks || {}
-      };
+      if (imported.merge || imported.dailySignals) {
+        const signalCount = mergeImportedDailySignals(imported.dailySignals);
+        const logCount = mergeImportedLogs(imported.logs);
+        if (imported.settings) db.settings = { ...db.settings, ...imported.settings };
+        if (imported.routines) db.routines = imported.routines;
+        if (imported.checks) db.checks = { ...db.checks, ...imported.checks };
+        toast(`Imported ${signalCount + logCount} health days`);
+      } else {
+        db = {
+          settings: { ...DEFAULTS.settings, ...(imported.settings || {}) },
+          routines: imported.routines || clone(DEFAULTS.routines),
+          logs: imported.logs || {},
+          checks: imported.checks || {}
+        };
+        toast('Health data imported');
+      }
       saveData();
       renderToday();
-      toast('Health data imported');
     } catch(err) { alert('Could not import that file.'); }
   };
   reader.readAsText(file);

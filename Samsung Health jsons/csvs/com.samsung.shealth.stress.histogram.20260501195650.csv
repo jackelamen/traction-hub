@@ -1,0 +1,7 @@
+﻿com.samsung.shealth.stress.histogram,6320001,2
+update_time,create_time,base_hr,decay_time,deviceuuid,pkg_name,histogram,datauuid
+2018-09-15 03:09:30.346,2018-09-08 14:02:03.766,72898,1536980969,6fBBpnPaJ6,com.sec.android.app.shealth,5337596a-5cd1-3f7f-7b42-ae20bea036eb.histogram.json,5337596a-5cd1-3f7f-7b42-ae20bea036eb,
+2020-08-23 12:41:08.711,2019-12-11 07:36:27.870,89673,1598186468,eSltdGxx7w,com.sec.android.app.shealth,6f3ddbe1-4c53-0b86-7966-60d42e43a79f.histogram.json,6f3ddbe1-4c53-0b86-7966-60d42e43a79f,
+2022-01-07 07:11:12.161,2020-11-04 12:01:01.394,87588,1641539472,eSltdGxx7w,com.sec.android.app.shealth,b320b42e-5869-7c18-ffbc-5a1f7604a00f.histogram.json,b320b42e-5869-7c18-ffbc-5a1f7604a00f,
+2022-06-09 03:14:51.717,2022-03-31 13:38:05.931,83674,1654744491,eSltdGxx7w,com.sec.android.app.shealth,dfef1736-7ecc-0a09-b5be-3992ef4501bf.histogram.json,dfef1736-7ecc-0a09-b5be-3992ef4501bf,
+2026-05-01 10:55:24.825,2023-09-23 10:11:51.420,72721,1777632924,SiE8w+zjCP,com.sec.android.app.shealth,a0ec7344-b56b-4165-ae1a-287c2b975fef.histogram.json,a0ec7344-b56b-4165-ae1a-287c2b975fef,

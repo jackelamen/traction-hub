@@ -1,0 +1,12 @@
+﻿com.samsung.shealth.library_subscription,6320001,1
+subscription_state,update_time,create_time,tile_controller_id,type,deviceuuid,pkg_name,datauuid,provider_pkg_name
+1,2016-04-09 07:10:29.281,2016-04-09 07:10:29.281,tracker.sport_walking,0,uVwC9SChYX,com.sec.android.app.shealth,e4245291-c935-4a18-9b2b-391e307bf71b,com.sec.android.app.shealth,
+1,2015-04-17 08:07:58.403,2015-04-17 08:07:58.403,tracker.heartrate,0,uVwC9SChYX,com.sec.android.app.shealth,e278ac8c-e743-4de2-afde-c0764751b2c3,com.sec.android.app.shealth,
+1,2015-04-17 08:07:58.422,2015-04-17 08:07:58.422,tracker.weight,0,uVwC9SChYX,com.sec.android.app.shealth,14625343-ef1a-4b45-9954-68cfb043d73e,com.sec.android.app.shealth,
+1,2015-06-21 11:20:34.099,2015-06-21 11:20:34.099,tracker.uv,0,uVwC9SChYX,com.sec.android.app.shealth,6c586a68-987b-4068-a346-88c3eb220c87,com.sec.android.app.shealth,
+1,2015-04-17 08:07:57.418,2015-04-17 08:07:57.418,tracker.sport_running,0,uVwC9SChYX,com.sec.android.app.shealth,fdcb734f-191f-4101-b47b-121a8a01df70,com.sec.android.app.shealth,
+1,2015-04-18 16:00:02.296,2015-04-18 16:00:02.296,tracker.sport_cycling,0,uVwC9SChYX,com.sec.android.app.shealth,7efd2cb1-b3ed-4576-b353-974a708bf011,com.sec.android.app.shealth,
+1,2015-04-17 08:07:57.598,2015-04-17 08:07:57.598,tracker.suggestion,0,uVwC9SChYX,com.sec.android.app.shealth,2f83b6f2-80ec-4b0b-9434-564d6a005aa3,com.sec.android.app.shealth,
+1,2015-04-17 08:07:57.688,2015-04-17 08:07:57.545,goal.activity,1,uVwC9SChYX,com.sec.android.app.shealth,2911e1af-5060-42a9-949a-2e51721ef98b,com.sec.android.app.shealth,
+1,2015-04-17 08:07:57.573,2015-04-17 08:07:57.573,goal.suggestion,1,uVwC9SChYX,com.sec.android.app.shealth,99a167ee-ce06-4c60-a711-9ece11b014e1,com.sec.android.app.shealth,
+1,2015-04-17 08:07:57.380,2015-04-17 08:07:57.380,tracker.pedometer,0,uVwC9SChYX,com.sec.android.app.shealth,139575e0-0118-47f9-86f8-a0ae5010d011,com.sec.android.app.shealth,

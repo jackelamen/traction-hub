@@ -1,0 +1,4 @@
+﻿com.samsung.shealth.mood,6320001,2
+create_sh_ver,start_time,factors,mood_type,modify_sh_ver,update_time,create_time,data_version,notes,place,time_offset,deviceuuid,company,pkg_name,emotions,datauuid
+63070031,2026-01-20 13:37:13.652,7,2,63070031,2026-01-20 13:37:13.671,2026-01-20 13:37:13.671,2,,,UTC+0900,SiE8w+zjCP,,com.sec.android.app.shealth,9,c9a333a3-9146-4b05-85b6-80824cb98d72,
+63130130,2026-04-08 12:41:51.308,"16, 14, 15, 1",2,63130130,2026-04-08 12:41:51.312,2026-04-08 12:41:51.312,2,,,UTC+0900,4FEhL4nduw,,com.sec.android.app.shealth,"1, 3, 4, 7, 8, 9, 30",c6eacdaa-d4e1-48cc-b582-fa0bf91cc143,
