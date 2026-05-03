@@ -209,9 +209,11 @@ create table if not exists sprints (
   end_date date,
   week_checks jsonb not null default '{}',
   reflections jsonb not null default '{}',
+  retro jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+alter table sprints add column if not exists retro jsonb;
 
 create table if not exists sprint_phases (
   id uuid primary key default gen_random_uuid(),

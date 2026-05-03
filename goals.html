@@ -2644,7 +2644,7 @@ async function loadDB() {
     sbGet('goals',         '?select=id,local_id,title,area,why,status&order=created_at.asc'),
     sbGet('goal_metrics',  '?select=id,local_id,goal_id,name,type,target,sort_order&order=sort_order.asc'),
     sbGet('metric_logs',   '?select=id,metric_id,goal_id,log_date,value,note&order=log_date.asc'),
-    sbGet('sprints',       '?select=id,local_id,goal_id,name,outcome,start_date,end_date,week_checks,reflections&order=created_at.asc'),
+    sbGet('sprints',       '?select=id,local_id,goal_id,name,outcome,start_date,end_date,week_checks,reflections,retro&order=created_at.asc'),
     sbGet('sprint_phases', '?select=id,sprint_id,phase_index,name,description&order=phase_index.asc'),
     sbGet('sprint_tactics','?select=id,local_id,sprint_id,phase_id,text,freq,days,times_per_week,sort_order&order=sort_order.asc'),
   ]);
@@ -2708,6 +2708,7 @@ async function loadDB() {
       startDate: s.start_date, endDate: s.end_date,
       weekChecks: s.week_checks || {},
       reflections: s.reflections || {},
+      retro: s.retro || null,
       phases: [], tactics: []
     };
     sprintByUuid[s.id] = obj;
@@ -2754,6 +2755,7 @@ async function syncSprint(sprintId) {
     await sbPatch('sprints', { id: sp._uuid }, {
       week_checks: sp.weekChecks,
       reflections: sp.reflections,
+      retro: sp.retro || null,
     });
   } catch(e) { console.error('syncSprint failed:', e); }
 }
@@ -2798,7 +2800,7 @@ async function syncSprintFull(sprintId) {
       local_id: sp.id, goal_id: goalObj._uuid,
       name: sp.name, outcome: sp.outcome || null,
       start_date: sp.startDate || null, end_date: sp.endDate || null,
-      week_checks: sp.weekChecks || {}, reflections: sp.reflections || {}
+      week_checks: sp.weekChecks || {}, reflections: sp.reflections || {}, retro: sp.retro || null
     }, 'local_id');
     if (!sp._uuid && rows?.[0]?.id) sp._uuid = rows[0].id;
 
