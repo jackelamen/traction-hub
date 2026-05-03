@@ -1868,7 +1868,7 @@ function addTransaction() {
 
   const amountKRW = currency === 'USD' ? Math.round(amount * rate) : amount;
   const tx = {
-    id: Date.now().toString(),
+    id: uid('tx'),
     type: currentType, merchant, amount, currency, amountKRW,
     category: currentType === 'income' ? 'Income' : category,
     date, note, source: 'manual', createdAt: new Date().toISOString(),
