@@ -842,18 +842,30 @@ setText('work-status', 'Ready for a 50 minute focus block');
 // Goals ring: pull from Supabase if available, else use demo 25%
 (async () => {
   await authReady;
-  let pct = 25, done = 6, total = 24;
   const d = await readSummary('edgex_goals_summary');
-  if (d) {
-    done  = d.done  ?? done;
-    total = d.total ?? total;
-    pct   = total > 0 ? Math.round((done / total) * 100) : 0;
-  }
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isToday = d?.updatedAt && d.updatedAt.slice(0, 10) === todayStr;
 
-  document.getElementById('goals-pct').textContent  = pct + '%';
-  document.getElementById('goals-meta').textContent = done + '/' + total + ' done';
-  setText('goals-status', total > 0 ? done + ' of ' + total + ' goals complete' : 'No goals tracked yet');
-  animateRing('.goals-ring', pct, 600);
+  if (d && isToday && d.total > 0) {
+    const done  = d.done  ?? 0;
+    const total = d.total;
+    const pct   = Math.round((done / total) * 100);
+    document.getElementById('goals-pct').textContent  = pct + '%';
+    document.getElementById('goals-meta').textContent = done + '/' + total + ' done';
+    setText('goals-status', done + ' of ' + total + ' tactics done today');
+    animateRing('.goals-ring', pct, 600);
+  } else if (d && d.activeCycles > 0) {
+    // Summary exists but is stale or today has no tactics — show active cycles
+    document.getElementById('goals-pct').textContent  = d.activeCycles;
+    document.getElementById('goals-meta').textContent = 'active cycles';
+    setText('goals-status', d.activeCycles + ' active sprint' + (d.activeCycles === 1 ? '' : 's') + ' running');
+    animateRing('.goals-ring', 60, 600);
+  } else {
+    document.getElementById('goals-pct').textContent  = '—';
+    document.getElementById('goals-meta').textContent = 'no data';
+    setText('goals-status', 'Open Goals to sync');
+    animateRing('.goals-ring', 0, 600);
+  }
 })();
 
 // Finance ring: read this month's spend from Supabase, then localStorage
