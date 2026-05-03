@@ -140,7 +140,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .trend-bars{display:flex;align-items:flex-end;gap:8px;height:180px;padding:16px 4px 2px}
 .trend-bar{flex:1;min-width:24px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,var(--accent),var(--blue));position:relative;display:flex;align-items:flex-end;justify-content:center}
 .trend-bar span{position:absolute;bottom:-22px;font-size:10px;font-weight:700;color:var(--text-3)}
-.empty{padding:40px 20px;text-align:center;color:var(--text-2)}
+.empty{padding:48px 24px;text-align:center;color:var(--text-2);display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty .empty-icon{width:48px;height:48px;border-radius:14px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+.empty .empty-icon .icon{font-size:22px;color:var(--accent)}
+.empty strong{font-size:15px;font-weight:700;color:var(--text);display:block}
+.empty span{font-size:13px;line-height:1.5}
 .toast{position:fixed;right:24px;bottom:24px;background:#111827;color:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(0,0,0,.22);font-size:13px;font-weight:700;display:none;z-index:100}
 .hidden-file{display:none}
 @media(max-width:900px){#sidebar{position:static;width:100%;height:auto}#app{display:block}#main{margin-left:0}.view{padding:22px 18px 70px}.grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.reset-grid,.score-grid{grid-template-columns:1fr}.well-ring{margin:0 auto}}
@@ -829,7 +833,7 @@ function renderSuggestedReset(score,c){
 function renderRecent(){
   const entries=Object.entries(db.checkins).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
   const el=document.getElementById('recent-checkins');
-  if(!entries.length){ el.innerHTML='<div class="empty">No check-ins yet. Start with today.</div>'; return; }
+  if(!entries.length){ el.innerHTML='<div class="empty"><div class="empty-icon"><span class="icon">self_improvement</span></div><strong>No check-ins yet</strong><span>Hit Check In to record your first entry.</span></div>'; return; }
   el.innerHTML=entries.map(([date,c])=>{
     const score=clarityScore(c);
     return `<div class="mini-item"><div><strong>${fmtDate(date)}</strong><small>${escapeHTML(c.state||'Unlabeled')} · stress ${c.stress||'--'} · clarity ${c.clarity||'--'}</small></div><span class="badge ${score>=80?'badge-green':score>=60?'badge-blue':score>=40?'badge-orange':'badge-red'}">${score}</span></div>`;
@@ -1080,7 +1084,7 @@ function addThought(){
 }
 function renderThoughts(){
   const el=document.getElementById('thought-list');
-  if(!db.thoughts.length){ el.innerHTML='<div class="empty">No open loops right now.</div>'; return; }
+  if(!db.thoughts.length){ el.innerHTML='<div class="empty"><div class="empty-icon"><span class="icon">loop</span></div><strong>No open loops</strong><span>Clear mind. Add a thought above if something keeps circling.</span></div>'; return; }
   el.innerHTML=db.thoughts.map(t=>`<div class="thought-row ${t.done?'done':''}"><div><strong>${escapeHTML(t.text)}</strong><small>${escapeHTML(t.type)} · ${new Date(t.createdAt).toLocaleDateString()}</small></div><div style="display:flex;gap:6px"><button class="btn btn-icon" onclick="toggleThought('${t.id}')" title="Toggle"><span class="icon">${t.done?'undo':'check'}</span></button><button class="btn btn-icon" onclick="deleteThought('${t.id}')" title="Delete"><span class="icon">close</span></button></div></div>`).join('');
 }
 function toggleThought(id){ const t=db.thoughts.find(x=>x.id===id); if(t) t.done=!t.done; saveData(); renderThoughts(); }

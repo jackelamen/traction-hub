@@ -200,7 +200,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .score-note{padding:14px;border-radius:14px;background:linear-gradient(135deg,#f8fafc,#eff6ff);border:1px solid rgba(14,165,233,.16)}
 .score-note h3{font-size:15px;font-weight:800;margin-bottom:5px}
 .score-note p{font-size:13px;color:var(--text-2)}
-.empty{padding:40px 20px;text-align:center;color:var(--text-2)}
+.empty{padding:48px 24px;text-align:center;color:var(--text-2);display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty .empty-icon{width:48px;height:48px;border-radius:14px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+.empty .empty-icon .icon{font-size:22px;color:var(--accent)}
+.empty strong{font-size:15px;font-weight:700;color:var(--text);display:block}
+.empty span{font-size:13px;line-height:1.5}
 .toast{position:fixed;right:24px;bottom:24px;background:#111827;color:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(0,0,0,.22);font-size:13px;font-weight:700;display:none;z-index:100}
 .hidden-file{display:none}
 @media (max-width:900px){
@@ -1038,7 +1042,7 @@ function renderTodayHabits(){
   const date = todayStr();
   const checks = db.checks[date] || {};
   const el = document.getElementById('today-habits');
-  if (!db.routines.length) { el.innerHTML = '<div class="empty">No routines yet.</div>'; return; }
+  if (!db.routines.length) { el.innerHTML = '<div class="empty"><div class="empty-icon"><span class="icon">checklist</span></div><strong>No routines yet</strong><span>Add daily habits in the Routines tab to track them here.</span></div>'; return; }
   el.innerHTML = db.routines.map(r => {
     const done = !!checks[r.id];
     return `<label class="habit-row ${done ? 'done' : ''}"><input type="checkbox" ${done ? 'checked' : ''} onchange="toggleRoutine('${r.id}')"/><span class="name">${escapeHTML(r.name)}</span><span class="meta">${escapeHTML(r.meta || '')}</span></label>`;
@@ -1056,7 +1060,7 @@ function renderRecentLogs(){
   const dates = [...new Set([...Object.keys(db.logs), ...Object.keys(getDailySignals())])];
   const entries = dates.sort((a,b)=>b.localeCompare(a)).slice(0,7).map(date => [date, getLog(date) || {}]);
   const el = document.getElementById('recent-logs');
-  if (!entries.length) { el.innerHTML = '<div class="empty">No logs yet. Start with today.</div>'; return; }
+  if (!entries.length) { el.innerHTML = '<div class="empty"><div class="empty-icon"><span class="icon">calendar_today</span></div><strong>No logs yet</strong><span>Hit Log Today to record your first entry.</span></div>'; return; }
   el.innerHTML = entries.map(([date,log]) => {
     const score = readiness(log);
     return `<div class="mini-item"><div><strong>${fmtDate(date)}</strong><small>${log.sleepHours || '--'}h sleep · ${Number(log.steps || 0).toLocaleString()} steps · ${log.exerciseMins || 0}m exercise</small></div><span class="badge ${score >= 80 ? 'badge-green' : score >= 60 ? 'badge-blue' : score >= 40 ? 'badge-orange' : 'badge-red'}">${score}</span></div>`;
@@ -1472,7 +1476,7 @@ function driverScore(label, logs, valueFn, target, hitFn, detailFn, maxOverride,
 }
 function renderTrendCoach(entries, vals, meta){
   const el = document.getElementById('trend-coach');
-  if (!entries.length) { el.innerHTML = '<div class="empty">Log a few days and this will start reading patterns.</div>'; return; }
+  if (!entries.length) { el.innerHTML = '<div class="empty"><div class="empty-icon"><span class="icon">insights</span></div><strong>No patterns yet</strong><span>Log a few days and this will start reading your trends.</span></div>'; return; }
   const logs = entries.map(([,log]) => log);
   const weakest = getWeakestHealthDriver(logs);
   const avg = vals.length ? avgOf(vals.map(x=>x.val)) : null;
