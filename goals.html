@@ -5657,10 +5657,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       DB = cloudDB;
     }
-    await withTimeout(syncGoalExtrasFromSupabase(), 8000, 'Goals extras load');
   } catch(e) {
     console.error('Failed to load from Supabase, falling back to localStorage:', e);
     DB = loadLocalDB();
+  }
+
+  try {
+    await withTimeout(syncGoalExtrasFromSupabase(), 8000, 'Goals extras load');
+  } catch(e) {
+    console.warn('Goals extras load skipped:', e);
   }
 
   const first = DB.sprints.find(s => isSprintActive(s));
