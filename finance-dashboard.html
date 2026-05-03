@@ -1209,6 +1209,7 @@ const STORAGE_KEY = 'finance_tracker_data_v1';
 const MIGRATE_KEY = 'finance_sb_migrated_v1';
 const FINANCE_GOALS_SYNC_KEY = 'edgex_finance_savings_goals';
 const TREND_HIDDEN_CATS_KEY = 'finance_trend_hidden_categories_v1';
+const DELETED_TX_KEY = 'finance_deleted_transactions_v1';
 const DELETED_RECURRING_KEY = 'finance_deleted_recurring_v1';
 const DELETED_SAVINGS_KEY = 'finance_deleted_savings_v1';
 
@@ -1622,7 +1623,8 @@ async function loadData() {
     if (res.ok) {
       const rows = await res.json();
       if (rows.length) {
-        data.transactions = mergeLoadedTransactions(localTransactions, rows.map(rowToTx));
+        const deletedTx = deletedIdSet(DELETED_TX_KEY);
+        data.transactions = mergeLoadedTransactions(localTransactions, rows.map(rowToTx).filter(tx => !deletedTx.has(tx.id)));
         data.lastUpdated  = new Date().toISOString();
         saveLocal();
       }
@@ -1883,6 +1885,7 @@ function addTransaction() {
 }
 
 function deleteTransaction(id) {
+  rememberDeletedId(DELETED_TX_KEY, id);
   data.transactions = data.transactions.filter(t => t.id !== id);
   data.lastUpdated = new Date().toISOString();
   saveData(null, id); render();
