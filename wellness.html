@@ -232,30 +232,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <div id="wellness-score-advice"></div>
       </div>
     </div>
-    <div class="grid-2" style="margin-bottom:18px">
-      <div class="card card-pad">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px">
-          <div><h2 style="font-size:16px;font-weight:800">Wellbeing Coach</h2><p style="font-size:12px;color:var(--text-2)">A state-aware plan for the next hour.</p></div>
+    <div class="grid-2" style="margin-bottom:0">
+      <!-- Unified plan card -->
+      <div class="card card-pad" style="display:flex;flex-direction:column;gap:0">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px">
+          <div><h2 style="font-size:16px;font-weight:800">Your Plan</h2><p style="font-size:12px;color:var(--text-2)">State-aware moves for the next hour.</p></div>
           <span class="badge badge-purple" id="wellness-coach-badge">Today</span>
         </div>
         <div id="wellness-coach"></div>
-      </div>
-      <div class="card card-pad">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px">
-          <div><h2 style="font-size:16px;font-weight:800">Next Regulating Moves</h2><p style="font-size:12px;color:var(--text-2)">Small actions that change the day, not just the chart.</p></div>
-          <button class="btn btn-secondary btn-sm" onclick="nav('reset')"><span class="icon" style="font-size:15px">restart_alt</span>Tools</button>
-        </div>
         <div id="wellness-actions"></div>
+        <div id="wellness-reset-strip" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)"></div>
       </div>
-    </div>
-    <div class="grid-2">
-      <div class="card card-pad">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div><h2 style="font-size:16px;font-weight:800">Suggested Reset</h2><p style="font-size:12px;color:var(--text-2)">Fast path when the signal is noisy.</p></div>
-          <button class="btn btn-secondary btn-sm" onclick="nav('reset')"><span class="icon" style="font-size:15px">restart_alt</span>All Tools</button>
-        </div>
-        <div id="suggested-reset"></div>
-      </div>
+      <!-- Recent check-ins -->
       <div class="card card-pad">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div><h2 style="font-size:16px;font-weight:800">Recent Check-Ins</h2><p style="font-size:12px;color:var(--text-2)">Last seven entries.</p></div>
@@ -841,7 +829,15 @@ function renderSuggestedReset(score,c){
   else if(c?.state==='Anxious') tool=RESET_TOOLS[0];
   else if(c?.state==='Restless') tool=RESET_TOOLS[3];
   else if(score!=null && score<50) tool=RESET_TOOLS[4];
-  document.getElementById('suggested-reset').innerHTML = `<div class="reset-card" onclick="startReset('${tool.id}')"><div class="reset-icon"><span class="icon">${tool.icon}</span></div><h3 style="font-size:15px;font-weight:800;margin-bottom:4px">${tool.title}</h3><p style="font-size:13px;color:var(--text-2)">${tool.body}</p></div>`;
+  const strip = document.getElementById('wellness-reset-strip');
+  if (!strip) return;
+  strip.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer" onclick="startReset('${tool.id}')">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:30px;height:30px;border-radius:9px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="icon" style="font-size:16px">${tool.icon}</span></div>
+      <div><div style="font-size:12px;font-weight:700;color:var(--text-2);letter-spacing:.04em;text-transform:uppercase;margin-bottom:1px">Suggested Reset</div><div style="font-size:13px;font-weight:700;color:var(--text)">${tool.title}</div></div>
+    </div>
+    <button class="btn btn-secondary btn-sm" style="flex-shrink:0" onclick="event.stopPropagation();nav('reset')"><span class="icon" style="font-size:15px">restart_alt</span>All Tools</button>
+  </div>`;
 }
 function renderRecent(){
   const entries=Object.entries(db.checkins).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);

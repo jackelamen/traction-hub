@@ -122,8 +122,9 @@ body::after {
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: #34d399;
-  box-shadow: 0 0 12px rgba(52,211,153,0.7);
+  background: #6b7280;
+  box-shadow: none;
+  transition: background 0.4s ease, box-shadow 0.4s ease;
 }
 
 /* ── Module cards ── */
@@ -494,8 +495,8 @@ body::after {
       <div class="brand-sub">Every Day Growth Experience</div>
     </div>
     <div class="dashboard-status" aria-label="Dashboard status">
-      <div class="status-pill"><span class="status-dot"></span><span id="today-label">Today</span></div>
-      <div class="status-pill">Signed in</div>
+      <div class="status-pill"><span class="status-dot" id="sys-dot"></span><span id="today-label">Today</span></div>
+      <div class="status-pill" id="sys-state-pill">Loading...</div>
     </div>
   </header>
 
@@ -729,6 +730,41 @@ async function doLogout() {
 const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.3
 const EDGEX_KV_USER_ID = 'jack_traction_hub_v1';
 
+// ── System status tracker ─────────────────────────────────────────
+// Each module reports: 'fresh' (data exists for today), 'stale' (data but old), or 'empty' (no data)
+const moduleStatus = { work: 'ready', goals: null, finance: null, health: null, wellness: null };
+
+function reportModuleStatus(module, state) {
+  moduleStatus[module] = state; // 'fresh' | 'stale' | 'empty'
+  updateSystemStatus();
+}
+
+function updateSystemStatus() {
+  const states = Object.values(moduleStatus).filter(v => v !== null && v !== 'ready');
+  const total = 4; // goals, finance, health, wellness (work is always 'ready')
+  if (states.length < total) return; // not all modules reported yet
+
+  const fresh  = states.filter(s => s === 'fresh').length;
+  const stale  = states.filter(s => s === 'stale').length;
+  const dot    = document.getElementById('sys-dot');
+  const pill   = document.getElementById('sys-state-pill');
+  if (!dot || !pill) return;
+
+  if (fresh >= 3) {
+    dot.style.background  = '#34d399';
+    dot.style.boxShadow   = '0 0 12px rgba(52,211,153,0.7)';
+    pill.textContent       = 'All synced';
+  } else if (fresh >= 1 || stale >= 1) {
+    dot.style.background  = '#fbbf24';
+    dot.style.boxShadow   = '0 0 10px rgba(251,191,36,0.6)';
+    pill.textContent       = fresh + ' of 4 synced today';
+  } else {
+    dot.style.background  = '#6b7280';
+    dot.style.boxShadow   = 'none';
+    pill.textContent       = 'Open modules to sync';
+  }
+}
+
 const todayLabel = document.getElementById('today-label');
 if (todayLabel) {
   todayLabel.textContent = new Date().toLocaleDateString('en-US', {
@@ -854,17 +890,20 @@ setText('work-status', 'Ready for a 50 minute focus block');
     document.getElementById('goals-meta').textContent = done + '/' + total + ' done';
     setText('goals-status', done + ' of ' + total + ' tactics done today');
     animateRing('.goals-ring', pct, 600);
+    reportModuleStatus('goals', 'fresh');
   } else if (d && d.activeCycles > 0) {
     // Summary exists but is stale or today has no tactics — show active cycles
     document.getElementById('goals-pct').textContent  = d.activeCycles;
     document.getElementById('goals-meta').textContent = 'active cycles';
     setText('goals-status', d.activeCycles + ' active sprint' + (d.activeCycles === 1 ? '' : 's') + ' running');
     animateRing('.goals-ring', 60, 600);
+    reportModuleStatus('goals', 'stale');
   } else {
     document.getElementById('goals-pct').textContent  = '—';
     document.getElementById('goals-meta').textContent = 'no data';
     setText('goals-status', 'Open Goals to sync');
     animateRing('.goals-ring', 0, 600);
+    reportModuleStatus('goals', 'empty');
   }
 })();
 
@@ -878,6 +917,7 @@ setText('work-status', 'Ready for a 50 minute focus block');
       if (!stored) {
         setText('finance-status', 'No month data yet');
         animateRing('.finance-ring', 0, 800);
+        reportModuleStatus('finance', 'empty');
         return;
       }
       summary = financeSummaryFromTransactions(JSON.parse(stored).transactions || []);
@@ -889,9 +929,11 @@ setText('work-status', 'Ready for a 50 minute focus block');
     document.getElementById('finance-meta').textContent = income > 0 ? 'of income' : 'this month';
     setText('finance-status', income > 0 ? '₩' + fmt(expense) + ' spent this month' : '₩' + fmt(expense) + ' tracked this month');
     animateRing('.finance-ring', pct || (expense > 0 ? 60 : 0), 800);
+    reportModuleStatus('finance', expense > 0 || income > 0 ? 'fresh' : 'empty');
   } catch(e) {
     setText('finance-status', 'Finance summary unavailable');
     animateRing('.finance-ring', 0, 800);
+    reportModuleStatus('finance', 'empty');
   }
 })();
 
@@ -902,6 +944,7 @@ setText('work-status', 'Ready for a 50 minute focus block');
   if (!data) {
     setText('health-status', 'No health check-in yet');
     animateRing('.health-ring', 0, 1000);
+    reportModuleStatus('health', 'empty');
     return;
   }
   const completed = data.checked ?? 0;
@@ -911,6 +954,9 @@ setText('work-status', 'Ready for a 50 minute focus block');
   document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
   setText('health-status', completed + ' of ' + total + ' routines complete');
   animateRing('.health-ring', pct, 1000);
+  const todayStrH = new Date().toISOString().slice(0, 10);
+  const isTodayH  = data.updatedAt && data.updatedAt.slice(0, 10) === todayStrH;
+  reportModuleStatus('health', isTodayH ? 'fresh' : 'stale');
 })();
 
 // Wellness ring: read clarity score from edgex_wellness_summary
@@ -920,18 +966,23 @@ setText('work-status', 'Ready for a 50 minute focus block');
   if (!data) {
     setText('wellness-status', 'No wellness check-in yet');
     animateRing('.wellness-ring', 0, 1200);
+    reportModuleStatus('wellness', 'empty');
     return;
   }
   const score = data.score ?? null;
   if (score == null) {
     setText('wellness-status', 'Clarity not logged yet');
     animateRing('.wellness-ring', 0, 1200);
+    reportModuleStatus('wellness', 'stale');
     return;
   }
   document.getElementById('wellness-pct').textContent = score;
   document.getElementById('wellness-meta').textContent = 'clarity';
   setText('wellness-status', 'Clarity score is ' + score + ' today');
   animateRing('.wellness-ring', score, 1200);
+  const todayStrW = new Date().toISOString().slice(0, 10);
+  const isTodayW  = data.updatedAt && data.updatedAt.slice(0, 10) === todayStrW;
+  reportModuleStatus('wellness', isTodayW ? 'fresh' : 'stale');
 })();
 </script>
 </body>
