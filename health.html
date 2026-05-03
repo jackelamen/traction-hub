@@ -603,6 +603,10 @@ let trendEndDate = null;
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
 function fmtDate(str){ return new Date(str + 'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
+function uid(prefix){
+  if (globalThis.crypto?.randomUUID) return `${prefix}-${globalThis.crypto.randomUUID()}`;
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+}
 // ── Supabase sync ────────────────────────────────────────────────
 const _lsSet = localStorage.setItem.bind(localStorage);
 const _lsGet = localStorage.getItem.bind(localStorage);
@@ -1199,7 +1203,7 @@ function addRoutine(){
   const input = document.getElementById('new-routine');
   const name = input.value.trim();
   if (!name) return;
-  db.routines.push({ id: 'r-' + Date.now().toString(36), name, meta: 'custom' });
+  db.routines.push({ id: uid('r'), name, meta: 'custom' });
   input.value = '';
   saveData();
   renderRoutines();

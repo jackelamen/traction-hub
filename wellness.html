@@ -618,6 +618,10 @@ function clone(x){ return JSON.parse(JSON.stringify(x)); }
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
 function fmtDate(str){ return new Date(str + 'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function uid(prefix){
+  if (globalThis.crypto?.randomUUID) return `${prefix}-${globalThis.crypto.randomUUID()}`;
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+}
 function loadData(){ try { return { ...clone(DEFAULTS), ...(JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')) }; } catch(e) { return clone(DEFAULTS); } }
 function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); writeSummary(); }
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>el.style.display='none',2200); }
@@ -830,7 +834,7 @@ function deleteCheckin(){
 function sendLoopToInbox(){
   const text=val('loop').trim();
   if(!text){ toast('No looping thought to send'); return; }
-  db.thoughts.unshift({ id:'t-'+Date.now().toString(36), text, type:'Hold', done:false, createdAt:new Date().toISOString() });
+  db.thoughts.unshift({ id:uid('t'), text, type:'Hold', done:false, createdAt:new Date().toISOString() });
   saveData();
   toast('Sent to mental load inbox');
 }
@@ -1031,14 +1035,14 @@ function toggleTimer(){
 function resetTimer(){ clearMeditationTimers(); stopMeditationAudio(); breathStartedAt=0; stopBreathGuide(true); remaining=duration; setTimerButtonHTML('<span class="icon" style="font-size:17px">play_arrow</span>Start'); renderTimer(); }
 function savePractice(){
   const minutes=Math.round((duration-remaining)/60) || Math.round(duration/60);
-  db.practices.unshift({ id:'p-'+Date.now().toString(36), date:todayStr(), minutes, type:val('practice-type'), after:val('after-state'), note:val('practice-note'), savedAt:new Date().toISOString() });
+  db.practices.unshift({ id:uid('p'), date:todayStr(), minutes, type:val('practice-type'), after:val('after-state'), note:val('practice-note'), savedAt:new Date().toISOString() });
   setVal('practice-note',''); setVal('after-state','');
   saveData(); renderToday(); toast('Practice saved');
 }
 function addThought(){
   const text=val('thought-input').trim();
   if(!text) return;
-  db.thoughts.unshift({ id:'t-'+Date.now().toString(36), text, type:val('thought-type'), done:false, createdAt:new Date().toISOString() });
+  db.thoughts.unshift({ id:uid('t'), text, type:val('thought-type'), done:false, createdAt:new Date().toISOString() });
   setVal('thought-input',''); saveData(); renderThoughts(); toast('Loop added');
 }
 function renderThoughts(){
