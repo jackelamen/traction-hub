@@ -285,6 +285,8 @@ async function doLogin() {
       return;
     }
 
+    localStorage.removeItem('finance_session_ts');
+
     // Store session
     localStorage.setItem('sb_session', JSON.stringify({
       access_token:  data.access_token,
