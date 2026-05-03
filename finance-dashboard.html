@@ -617,7 +617,13 @@
     #moduleMain { margin-left:0; }
     #section-tracker, #section-trends, #section-budget, .topbar { padding-left:18px;padding-right:18px; }
     .metric-grid, .budget-grid, .inline-form, .savings-form, .edit-grid, .compare-controls, .compare-grid { grid-template-columns:1fr; }
-    .topbar { flex-direction:column; }
+    .topbar { flex-direction:column;height:auto;padding:12px 18px;gap:10px; }
+    /* Lock + Sign Out live in sidebar on mobile — hide topbar duplicates */
+    #topbarRight button[onclick="lockFinance()"],
+    #topbarRight button[onclick="doLogout()"] { display:none; }
+    /* Prevent transaction table from overflowing narrow screens */
+    .tx-table { table-layout:auto; }
+    #section-tracker .card { overflow-x:auto; }
   }
 </style>
 </head>
