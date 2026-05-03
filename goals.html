@@ -2550,6 +2550,8 @@ const AREAS = [
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const GOALS_KV_USER_ID = 'jack_traction_hub_v1';
+const VB_IMAGES_KEY = 'gs2_vb';
+const VB_IMAGES_UPDATED_KEY = 'gs2_vb_updated_at';
 
 // ── Auth gate ────────────────────────────────────────────────────
 const authReady = (async function checkAuth() {
@@ -4725,13 +4727,14 @@ const VB_AREAS = [
 ];
 
 function loadVBImages() {
-  try { return JSON.parse(localStorage.getItem('gs2_vb') || '[]'); }
+  try { return JSON.parse(localStorage.getItem(VB_IMAGES_KEY) || '[]'); }
   catch(e) { return []; }
 }
 function saveVBImages(arr) {
   try {
-    localStorage.setItem('gs2_vb', JSON.stringify(arr));
-    syncGoalExtraToSupabase('gs2_vb', arr);
+    localStorage.setItem(VB_IMAGES_KEY, JSON.stringify(arr));
+    localStorage.setItem(VB_IMAGES_UPDATED_KEY, new Date().toISOString());
+    syncGoalExtraToSupabase(VB_IMAGES_KEY, arr);
   } catch(e) {
     alert('Could not save: storage is full. Try removing some existing images first.');
     throw e;
@@ -4767,6 +4770,11 @@ function setGoalExtraLocal(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+function setVBImagesLocal(images, updatedAt) {
+  localStorage.setItem(VB_IMAGES_KEY, JSON.stringify(images || []));
+  if (updatedAt) localStorage.setItem(VB_IMAGES_UPDATED_KEY, updatedAt);
+}
+
 async function syncGoalExtraToSupabase(key, value) {
   try {
     await fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
@@ -4780,7 +4788,7 @@ async function syncGoalExtraToSupabase(key, value) {
 }
 
 async function syncGoalExtrasFromSupabase() {
-  const keys = ['gs2_vb', ...AREAS.map(a => visionMetaKey(a.id))];
+  const keys = [VB_IMAGES_KEY, ...AREAS.map(a => visionMetaKey(a.id))];
   try {
     const keyFilter = keys.join(',');
     const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(GOALS_KV_USER_ID)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
@@ -4789,15 +4797,18 @@ async function syncGoalExtrasFromSupabase() {
     if (!res.ok) return;
     const rows = await res.json();
     const cloud = Object.fromEntries(rows.map(r => [r.key, r.value]));
+    const rowByKey = Object.fromEntries(rows.map(r => [r.key, r]));
 
     const localImages = loadVBImages();
-    const cloudImages = Array.isArray(cloud.gs2_vb) ? cloud.gs2_vb : [];
-    const imageMap = new Map();
-    [...cloudImages, ...localImages].forEach(img => { if (img?.id) imageMap.set(img.id, img); });
-    const mergedImages = [...imageMap.values()].sort((a,b) => (a.addedAt || 0) - (b.addedAt || 0));
-    if (mergedImages.length) {
-      setGoalExtraLocal('gs2_vb', mergedImages);
-      if (mergedImages.length !== cloudImages.length) syncGoalExtraToSupabase('gs2_vb', mergedImages);
+    const cloudImageRow = rowByKey[VB_IMAGES_KEY];
+    const cloudImages = Array.isArray(cloud[VB_IMAGES_KEY]) ? cloud[VB_IMAGES_KEY] : [];
+    const localImagesUpdated = localStorage.getItem(VB_IMAGES_UPDATED_KEY) || '';
+    const localImageTime = localImagesUpdated ? new Date(localImagesUpdated).getTime() : 0;
+    const cloudImageTime = cloudImageRow?.updated_at ? new Date(cloudImageRow.updated_at).getTime() : 0;
+    if (cloudImageRow && cloudImageTime >= localImageTime) {
+      setVBImagesLocal(cloudImages, cloudImageRow.updated_at);
+    } else if (localImages.length || localImageTime > cloudImageTime) {
+      syncGoalExtraToSupabase(VB_IMAGES_KEY, localImages);
     }
 
     AREAS.forEach(area => {
