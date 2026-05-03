@@ -2550,6 +2550,37 @@ const AREAS = [
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 
+// ── Auth gate ────────────────────────────────────────────────────
+(async function checkAuth() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (!s.access_token) { window.location.href = 'login.html'; return; }
+    const now = Math.floor(Date.now() / 1000);
+    const expiresAt = s.expires_at || 0;
+    if (expiresAt > now + 300) return;
+    if (s.refresh_token) {
+      const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: s.refresh_token })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.access_token) {
+          localStorage.setItem('sb_session', JSON.stringify({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token || s.refresh_token,
+            expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+            user: data.user || s.user
+          }));
+          return;
+        }
+      }
+    }
+    if (expiresAt > 0 && expiresAt <= now) window.location.href = 'login.html';
+  } catch(e) { window.location.href = 'login.html'; }
+})();
+
 function getSession() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
@@ -2576,9 +2607,9 @@ async function sbGet(table, params = '') {
 }
 
 async function sbUpsert(table, body, onConflict) {
-  const url = `${SB_URL}/rest/v1/${table}`;
+  const conflictParam = onConflict ? `?on_conflict=${encodeURIComponent(onConflict)}` : '';
+  const url = `${SB_URL}/rest/v1/${table}${conflictParam}`;
   const headers = { ...sbHeaders(), 'Prefer': `resolution=merge-duplicates,return=representation` };
-  if (onConflict) headers['Prefer'] += `,on_conflict=${onConflict}`;
   const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
   if (!res.ok) throw new Error(`SB UPSERT ${table}: ${res.status} ${await res.text()}`);
   return res.json();
