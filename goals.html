@@ -2894,6 +2894,7 @@ function saveDB(d) {
   // Data now lives in Supabase. Targeted sync functions handle writes.
   // localStorage write kept as offline fallback.
   try { localStorage.setItem('gs2_db', JSON.stringify(d)); } catch(_) {}
+  writeGoalsSummary();
 }
 
 function loadLocalDB() {
@@ -3185,6 +3186,28 @@ function todayDoneTotals(sp) {
   });
   return { done, total };
 }
+
+function goalsTodayTotals() {
+  let done = 0, total = 0;
+  DB.sprints.filter(s => isSprintActive(s)).forEach(sp => {
+    const r = todayDoneTotals(sp);
+    done += r.done;
+    total += r.total;
+  });
+  return { done, total };
+}
+
+function writeGoalsSummary() {
+  try {
+    const { done, total } = goalsTodayTotals();
+    localStorage.setItem('edgex_goals_summary', JSON.stringify({
+      done,
+      total,
+      activeCycles: DB.sprints.filter(s => isSprintActive(s)).length,
+      updatedAt: new Date().toISOString()
+    }));
+  } catch(e) {}
+}
 function scoreColor(s) {
   if (s===null) return 'var(--text-3)';
   return s>=85?'var(--accent)':s>=65?'var(--orange)':'var(--red)';
@@ -3274,6 +3297,7 @@ function renderToday() {
   const toggleEl = document.getElementById('today-view-toggle');
   const actionListEl = document.getElementById('today-action-list');
   const cyclesWrapEl = document.getElementById('today-cycles-wrap');
+  writeGoalsSummary();
 
   if (!active.length) {
     heroEl.innerHTML=''; statsEl.innerHTML=''; cyclesEl.innerHTML='';
