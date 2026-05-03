@@ -2833,11 +2833,13 @@ async function syncSprintFull(sprintId) {
       for (let ti = 0; ti < (ph.tactics || []).length; ti++) {
         const t = ph.tactics[ti];
         if (!t?.text?.trim()) continue;
+        const freq = t.freq === 'weekdays' ? 'custom' : (t.freq || 'weekly');
+        const days = t.freq === 'weekdays' ? [0,1,2,3,4] : (t.days || []);
         const tRows = await sbUpsert('sprint_tactics', {
           ...(t._uuid ? { id: t._uuid } : {}),
           local_id: t.id, sprint_id: sp._uuid, phase_id: ph._uuid,
-          text: t.text, freq: t.freq || 'weekly',
-          days: t.days || [], times_per_week: t.timesPerWeek || null, sort_order: ti
+          text: t.text, freq,
+          days, times_per_week: t.timesPerWeek || null, sort_order: ti
         }, 'local_id');
         if (!t._uuid && tRows?.[0]?.id) t._uuid = tRows[0].id;
       }
