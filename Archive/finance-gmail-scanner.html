@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance — Gmail Scanner</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+    --border: #2e3350; --accent: #6c8aff; --green: #34d399;
+    --red: #f87171; --yellow: #fbbf24; --text: #e2e8f0; --muted: #64748b;
+    --card-radius: 14px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; padding: 32px; max-width: 900px; margin: 0 auto; }
+
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: var(--muted); margin-bottom: 32px; font-size: 14px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+
+  .form-row { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 12px; flex-wrap: wrap; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+  .form-group input, .form-group select {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 9px 12px; font-size: 14px; outline: none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+
+  .btn {
+    padding: 9px 20px; border-radius: 8px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-success { background: var(--green); color: #000; }
+  .btn-success:hover { opacity: 0.9; }
+
+  .progress-bar-wrap { height: 6px; background: var(--border); border-radius: 3px; margin: 12px 0; }
+  .progress-bar { height: 6px; background: var(--accent); border-radius: 3px; transition: width 0.3s; width: 0%; }
+
+  .status-log {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; font-size: 12px; color: var(--muted); font-family: monospace;
+    max-height: 200px; overflow-y: auto; margin-top: 12px;
+  }
+  .log-line { margin-bottom: 4px; }
+  .log-line.ok { color: var(--green); }
+  .log-line.warn { color: var(--yellow); }
+  .log-line.err { color: var(--red); }
+
+  .results-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  .results-table th { text-align: left; padding: 8px 10px; font-size: 11px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .results-table td { padding: 10px 10px; border-bottom: 1px solid rgba(46,51,80,0.4); font-size: 13px; vertical-align: middle; }
+  .results-table tr:last-child td { border-bottom: none; }
+
+  .check { color: var(--green); } .skip { color: var(--muted); } .warn-icon { color: var(--yellow); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; }
+  .badge-krw { background: rgba(108,138,255,0.15); color: var(--accent); }
+  .badge-usd { background: rgba(52,211,153,0.15); color: var(--green); }
+
+  .summary-row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; flex: 1; min-width: 120px; }
+  .stat .val { font-size: 22px; font-weight: 700; }
+  .stat .lbl { color: var(--muted); font-size: 11px; margin-top: 3px; }
+
+  .empty { text-align: center; padding: 40px; color: var(--muted); }
+
+  .conflict-row { background: rgba(251,191,36,0.05); }
+  input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+  .instructions { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .instructions strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<h1>📧 Gmail Transaction Scanner</h1>
+<p class="subtitle">Scans your Gmail for payment and receipt emails, extracts transactions, and exports them for your Finance Dashboard.</p>
+
+<!-- Config -->
+<div class="card">
+  <h2>Scan Settings</h2>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Date Range — From</label>
+      <input type="date" id="dateFrom" />
+    </div>
+    <div class="form-group">
+      <label>Date Range — To</label>
+      <input type="date" id="dateTo" />
+    </div>
+    <div class="form-group">
+      <label>USD → KRW Rate</label>
+      <input type="number" id="usdRate" value="1380" style="width:120px" />
+    </div>
+    <div class="form-group">
+      <label>&nbsp;</label>
+      <button class="btn btn-primary" id="scanBtn" onclick="startScan()">🔍 Scan Gmail</button>
+    </div>
+  </div>
+  <div class="progress-bar-wrap" id="progressWrap" style="display:none">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <div class="status-log" id="statusLog" style="display:none"></div>
+</div>
+
+<!-- Results -->
+<div class="card" id="resultsCard" style="display:none">
+  <h2>Found Transactions</h2>
+  <div class="summary-row">
+    <div class="stat"><div class="val" id="statFound">0</div><div class="lbl">Emails scanned</div></div>
+    <div class="stat"><div class="val" id="statParsed">0</div><div class="lbl">Transactions found</div></div>
+    <div class="stat"><div class="val" id="statDupes">0</div><div class="lbl">Duplicates skipped</div></div>
+    <div class="stat"><div class="val" id="statTotal">₩0</div><div class="lbl">Total KRW equivalent</div></div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+    <button class="btn btn-secondary" onclick="selectAll(true)">Select All</button>
+    <button class="btn btn-secondary" onclick="selectAll(false)">Deselect All</button>
+    <span style="color:var(--muted);font-size:12px;margin-left:8px;" id="selectedCount">0 selected</span>
+    <div style="flex:1"></div>
+    <button class="btn btn-success" id="exportBtn" onclick="exportSelected()">Export Selected → Dashboard</button>
+  </div>
+
+  <table class="results-table">
+    <thead>
+      <tr>
+        <th style="width:32px"><input type="checkbox" id="checkAll" onchange="selectAll(this.checked)"></th>
+        <th>Merchant</th>
+        <th>Amount</th>
+        <th>Date</th>
+        <th>Category</th>
+        <th>Source Email</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="resultsBody"></tbody>
+  </table>
+  <div class="empty" id="resultsEmpty" style="display:none">No transactions found in this date range.</div>
+</div>
+
+<!-- How to use with Dashboard -->
+<div class="card">
+  <h2>How to use with the Dashboard</h2>
+  <div class="instructions">
+    <strong>Step 1:</strong> Set your date range and click Scan Gmail above.<br>
+    <strong>Step 2:</strong> Review the found transactions — uncheck any you want to exclude.<br>
+    <strong>Step 3:</strong> Click "Export Selected → Dashboard" to download a JSON file.<br>
+    <strong>Step 4:</strong> Open your <strong>Finance Dashboard</strong>, click "Import JSON" in the top bar, and select the exported file.<br>
+    <strong>Step 5:</strong> The dashboard will merge the new transactions, skipping any duplicates.<br><br>
+    <strong>Tip:</strong> Run this scanner monthly to keep your dashboard up to date. You can re-scan the same period safely — duplicates are always detected and skipped.
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let foundTransactions = [];
+let existingData = { transactions: [] };
+const USD_RATE_DEFAULT = 1380;
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  const now = new Date();
+  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  document.getElementById('dateFrom').value = firstOfMonth.toISOString().split('T')[0];
+  document.getElementById('dateTo').value = now.toISOString().split('T')[0];
+};
+
+// ── Logging ───────────────────────────────────────────────────────────────────
+function log(msg, type='') {
+  const el = document.getElementById('statusLog');
+  el.style.display = 'block';
+  const line = document.createElement('div');
+  line.className = 'log-line ' + type;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setProgress(pct) {
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+// ── Scan ─────────────────────────────────────────────────────────────────────
+// NOTE: This scanner is designed to be driven by Claude's Gmail MCP tool.
+// The actual scanning runs server-side via Claude. This page handles:
+// 1. Configuration input
+// 2. Displaying pre-parsed results (injected via loadResults)
+// 3. Export to dashboard-compatible JSON
+
+// When Claude scans Gmail and parses results, it calls loadResults(txArray)
+function loadResults(transactions, stats) {
+  foundTransactions = transactions;
+  const usdRate = parseFloat(document.getElementById('usdRate').value) || USD_RATE_DEFAULT;
+
+  // Enrich with KRW equivalents
+  foundTransactions.forEach(t => {
+    if (t.currency === 'USD' && !t.amountKRW) {
+      t.amountKRW = Math.round(t.amount * usdRate);
+    } else if (!t.amountKRW) {
+      t.amountKRW = t.amount;
+    }
+    if (!t.id) t.id = `gmail_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    if (!t.source) t.source = 'gmail';
+    if (!t.createdAt) t.createdAt = new Date().toISOString();
+  });
+
+  document.getElementById('resultsCard').style.display = 'block';
+  document.getElementById('statFound').textContent  = stats?.scanned || transactions.length;
+  document.getElementById('statParsed').textContent = transactions.length;
+  document.getElementById('statDupes').textContent  = stats?.dupes || 0;
+
+  const totalKRW = transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amountKRW,0);
+  document.getElementById('statTotal').textContent = '₩' + fmt(totalKRW);
+
+  renderResults();
+  updateSelectedCount();
+  log(`Loaded ${transactions.length} transactions.`, 'ok');
+}
+
+function renderResults() {
+  const tbody = document.getElementById('resultsBody');
+  const usdRate = parseFloat(document.getElementById('usdRate').value) || USD_RATE_DEFAULT;
+
+  if (!foundTransactions.length) {
+    document.getElementById('resultsEmpty').style.display = 'block';
+    tbody.innerHTML = '';
+    return;
+  }
+  document.getElementById('resultsEmpty').style.display = 'none';
+
+  tbody.innerHTML = foundTransactions.map((t, i) => {
+    const amtDisplay = t.currency === 'USD'
+      ? `<span class="badge badge-usd">$${t.amount.toFixed(2)}</span> <span style="color:var(--muted);font-size:11px;">≈ ₩${fmt(t.amountKRW)}</span>`
+      : `<span class="badge badge-krw">₩${fmt(t.amount)}</span>`;
+
+    const catOptions = ['Food','Transport','Shopping','Utilities','Health','Entertainment','Other','Income']
+      .map(c => `<option value="${c}" ${t.category===c?'selected':''}>${c}</option>`).join('');
+
+    return `<tr id="row_${i}" class="${t.isDupe?'conflict-row':''}">
+      <td><input type="checkbox" class="tx-check" data-idx="${i}" ${t.isDupe?'':'checked'} onchange="updateSelectedCount()"></td>
+      <td><strong>${esc(t.merchant)}</strong><br><span style="color:var(--muted);font-size:11px;">${esc(t.note||'')}</span></td>
+      <td>${amtDisplay}</td>
+      <td style="color:var(--muted);font-size:12px;">${formatDate(t.date)}</td>
+      <td>
+        <select style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-size:12px;" onchange="foundTransactions[${i}].category=this.value">
+          ${catOptions}
+        </select>
+      </td>
+      <td style="color:var(--muted);font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(t.emailSubject||'')}">${esc(t.emailSender||'')}</td>
+      <td>${t.isDupe ? '<span class="warn-icon">⚠️ Possible dupe</span>' : '<span class="check">✓ New</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function selectAll(checked) {
+  document.querySelectorAll('.tx-check').forEach(cb => cb.checked = checked);
+  document.getElementById('checkAll').checked = checked;
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const n = document.querySelectorAll('.tx-check:checked').length;
+  document.getElementById('selectedCount').textContent = n + ' selected';
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+function exportSelected() {
+  const selected = [];
+  document.querySelectorAll('.tx-check:checked').forEach(cb => {
+    const idx = parseInt(cb.dataset.idx);
+    selected.push(foundTransactions[idx]);
+  });
+
+  if (!selected.length) { alert('No transactions selected.'); return; }
+
+  const exportData = {
+    transactions: selected,
+    exportedAt: new Date().toISOString(),
+    source: 'gmail-scanner',
+    count: selected.length,
+  };
+
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().split('T')[0];
+  a.href = url; a.download = `gmail-transactions-${date}.json`; a.click();
+  URL.revokeObjectURL(url);
+
+  log(`Exported ${selected.length} transactions. Now import this file into your Finance Dashboard.`, 'ok');
+}
+
+// ── startScan placeholder ─────────────────────────────────────────────────────
+// This button is disabled in standalone mode — scanning is done by Claude directly.
+// Claude reads the date inputs and runs the scan, then calls loadResults().
+function startScan() {
+  const from = document.getElementById('dateFrom').value;
+  const to   = document.getElementById('dateTo').value;
+  if (!from || !to) { alert('Please set both date range fields.'); return; }
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('statusLog').style.display = 'block';
+  document.getElementById('statusLog').innerHTML = '';
+  log('Scan requested. Ask Claude to scan Gmail for transactions in this date range.', 'warn');
+  log(`Date range: ${from} → ${to}`, '');
+  log('Claude will parse the emails and load the results into this page.', '');
+  setProgress(100);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
+function formatDate(str) {
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Parser Library (used by Claude when scanning) ────────────────────────────
+// These regexes are tuned to the actual email formats observed in Jack's Gmail.
+
+window.PARSERS = {
+
+  // NHN KCP (Korean payment gateway — e.g. Adobe Korea, Korean merchants)
+  // Subject: "NHN KCP - [Merchant]의 결제 내역입니다."
+  // Body snippet: "결제금액 47300 원"
+  kcp: {
+    test: (sender, subject) => sender.includes('kcp.co.kr') || subject.includes('결제 내역'),
+    parse: (subject, body, date, sender) => {
+      const merchant = subject.match(/NHN KCP\s*-\s*(.+?)의\s*결제/)?.[1]
+                    || subject.match(/([^\s-]+)의\s*결제/)?.[1]
+                    || '(Korean merchant)';
+      const amt = body.match(/결제금액\s*([\d,]+)\s*원/)?.[1]?.replace(/,/g,'');
+      if (!amt) return null;
+      return { merchant, amount: parseInt(amt), currency: 'KRW', type: 'expense', category: 'Other' };
+    }
+  },
+
+  // Google Play receipts
+  // Subject: "Your Google Play Order Receipt from ..."
+  // Body: "Total: $19.99/month" or "Total: ₩30,000"
+  googlePlay: {
+    test: (sender, subject) => sender.includes('googleplay-noreply') || subject.includes('Google Play Order Receipt'),
+    parse: (subject, body, date, sender) => {
+      // Extract merchant (subscription provider)
+      const merchantMatch = body.match(/subscription from\s+(.+?)\s+on Google Play/i)
+                         || body.match(/from\s+(.+?)\s+on Google Play/i);
+      const merchant = merchantMatch?.[1] || 'Google Play';
+
+      // Try USD first, then KRW
+      const usdMatch = body.match(/Total:\s*\$([0-9.]+)/i);
+      const krwMatch = body.match(/Total:\s*₩([0-9,]+)/i);
+      if (usdMatch) {
+        return { merchant, amount: parseFloat(usdMatch[1]), currency: 'USD', type: 'expense', category: 'Entertainment' };
+      }
+      if (krwMatch) {
+        return { merchant, amount: parseInt(krwMatch[1].replace(/,/g,'')), currency: 'KRW', type: 'expense', category: 'Entertainment' };
+      }
+      return null;
+    }
+  },
+
+  // Google Cloud payments
+  // Subject: "Google: We've received your payment for ..."
+  // Body: "Your payment amount of $3.11 to Google was received"
+  googleCloud: {
+    test: (sender, subject) => sender.includes('payments-noreply@google.com') || subject.includes("We've received your payment"),
+    parse: (subject, body, date, sender) => {
+      const usd = body.match(/payment amount of \$([0-9.]+)/i)?.[1];
+      if (!usd) return null;
+      return { merchant: 'Google Cloud', amount: parseFloat(usd), currency: 'USD', type: 'expense', category: 'Utilities' };
+    }
+  },
+
+  // Generic KRW ₩ amount emails (Asana, etc.)
+  // Body: "₩30,400 payment" or "payment of ₩30400"
+  genericKRW: {
+    test: (sender, subject, body) => /₩[\d,]+/.test(body) || /₩[\d,]+/.test(subject),
+    parse: (subject, body, date, sender) => {
+      const match = (body || subject).match(/₩([0-9,]+)/);
+      if (!match) return null;
+      const amount = parseInt(match[1].replace(/,/g,''));
+      // Guess merchant from sender domain
+      const domain = sender.match(/@([^.]+)\./)?.[1] || 'Unknown';
+      const merchant = domain.charAt(0).toUpperCase() + domain.slice(1);
+      return { merchant, amount, currency: 'KRW', type: 'expense', category: 'Other' };
+    }
+  },
+
+  // Generic USD $ amount emails
+  genericUSD: {
+    test: (sender, subject, body) => /\$[0-9]+\.[0-9]{2}/.test(body) || /\$[0-9]+\.[0-9]{2}/.test(subject),
+    parse: (subject, body, date, sender) => {
+      // Look for total/charged/payment amount patterns
+      const patterns = [
+        /total[:\s]+\$([0-9.]+)/i,
+        /charged[:\s]+\$([0-9.]+)/i,
+        /payment of \$([0-9.]+)/i,
+        /amount of \$([0-9.]+)/i,
+        /you've been charged \$([0-9.]+)/i,
+        /\$([0-9]+\.[0-9]{2})\s*(?:USD|\/month|payment|charge)/i,
+      ];
+      let amt = null;
+      for (const p of patterns) {
+        const m = body.match(p);
+        if (m) { amt = parseFloat(m[1]); break; }
+      }
+      if (!amt) return null;
+      const domain = sender.match(/@([^.]+)\./)?.[1] || 'Unknown';
+      const merchant = domain.charAt(0).toUpperCase() + domain.slice(1);
+      return { merchant, amount: amt, currency: 'USD', type: 'expense', category: 'Other' };
+    }
+  },
+
+  // Paygate / international wire transfers (income)
+  // Subject: "[페이게이트]소액해외송금 – 입금 성공 안내"
+  paygate: {
+    test: (sender, subject) => sender.includes('paygate') || subject.includes('페이게이트') || subject.includes('입금 성공'),
+    parse: (subject, body, date, sender) => {
+      if (!subject.includes('입금 성공') && !subject.includes('입금완료')) return null;
+      const amount = body.match(/송금금액[:\s]*([\d,]+)/)?.[1]?.replace(/,/g,'')
+                  || body.match(/입금금액[:\s]*([\d,]+)/)?.[1]?.replace(/,/g,'');
+      const currency = body.includes('USD') ? 'USD' : 'KRW';
+      return {
+        merchant: 'Wire Transfer (Paygate)',
+        amount: amount ? parseFloat(amount) : 0,
+        currency, type: 'income', category: 'Income'
+      };
+    }
+  },
+
+  // KB Card statements (monthly — skip, not individual transactions)
+  kbCard: {
+    test: (sender, subject) => sender.includes('kbcard') || subject.includes('KB국민'),
+    parse: () => null  // Statement emails — skip, not individual tx
+  },
+};
+
+// Main parse function — tries all parsers in order
+window.parseEmail = function(sender, subject, body, date) {
+  const text = body || '';
+  for (const [name, parser] of Object.entries(window.PARSERS)) {
+    if (parser.test(sender, subject, text)) {
+      try {
+        const result = parser.parse(subject, text, date, sender);
+        if (result) return { ...result, parserUsed: name };
+      } catch(e) { /* skip */ }
+    }
+  }
+  return null;
+};
+</script>
+</body>
+</html>

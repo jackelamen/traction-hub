@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The EDGEx</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='10' fill='%231a1a2e'/><text x='16' y='23' font-size='20' text-anchor='middle' font-family='sans-serif' font-weight='bold' fill='white'>E</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; height: 100%; }
+
+body {
+  font-family: 'Inter', 'Manrope', system-ui, sans-serif;
+  background: #0d0d1a;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle background texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(79,70,229,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(5,150,105,0.10) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Grid lines */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+.icon {
+  font-family: 'Material Symbols Rounded';
+  font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+  user-select: none;
+}
+
+/* ── Logo ── */
+.logo-wrap {
+  text-align: center;
+  margin-bottom: 64px;
+  position: relative;
+  z-index: 1;
+}
+.logo-the {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 300;
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.logo-mark {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 64px;
+  letter-spacing: -2px;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0;
+}
+.logo-edg { color: #ffffff; }
+.logo-e   {
+  background: linear-gradient(135deg, #818cf8, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.logo-x   { color: rgba(255,255,255,0.25); font-size: 52px; }
+
+.logo-tagline {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.20em;
+  color: rgba(255,255,255,0.20);
+  text-transform: uppercase;
+  margin-top: 14px;
+}
+
+/* ── Module cards ── */
+.modules {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 680px;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 560px) {
+  .modules { grid-template-columns: 1fr; max-width: 360px; }
+  .logo-mark { font-size: 48px; }
+  .logo-x    { font-size: 40px; }
+}
+
+.module-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 32px 28px 28px;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: background 0.2s, border-color 0.2s, transform 0.18s;
+  position: relative;
+  overflow: hidden;
+}
+.module-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 20px 20px 0 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.module-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255,255,255,0.14);
+}
+.module-card:hover::before { opacity: 1; }
+
+/* Work card — indigo */
+.module-card.work { background: rgba(79,70,229,0.06); }
+.module-card.work::before { background: linear-gradient(90deg, #4f46e5, #818cf8); }
+.module-card.work:hover { background: rgba(79,70,229,0.10); border-color: rgba(79,70,229,0.3); }
+
+/* Goals card — emerald */
+.module-card.goals { background: rgba(5,150,105,0.06); }
+.module-card.goals::before { background: linear-gradient(90deg, #059669, #0d9488); }
+.module-card.goals:hover { background: rgba(5,150,105,0.10); border-color: rgba(5,150,105,0.3); }
+
+.module-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+.work  .module-icon { background: rgba(79,70,229,0.20); }
+.goals .module-icon { background: rgba(5,150,105,0.20); }
+
+.module-system {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.work  .module-system { color: #818cf8; }
+.goals .module-system { color: #34d399; }
+
+.module-name {
+  font-family: 'Manrope', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+
+.module-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.6;
+  font-weight: 400;
+  flex: 1;
+}
+
+.module-arrow {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: gap 0.18s;
+}
+.work  .module-arrow { color: #818cf8; }
+.goals .module-arrow { color: #34d399; }
+.module-card:hover .module-arrow { gap: 10px; }
+.module-arrow .icon { font-size: 16px; }
+
+/* ── Footer ── */
+.footer {
+  margin-top: 56px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.15);
+  letter-spacing: 0.06em;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+  <!-- Logo -->
+  <div class="logo-wrap">
+    <div class="logo-the">The</div>
+    <div class="logo-mark">
+      <span class="logo-edg">EDG</span><span class="logo-e">E</span><span class="logo-x">x</span>
+    </div>
+    <div class="logo-tagline">Every Day Growth Experience</div>
+  </div>
+
+  <!-- Module selector -->
+  <div class="modules">
+
+    <!-- The EDGE Work -->
+    <a class="module-card work" href="index.html">
+      <div class="module-icon">
+        <span class="icon" style="color:#818cf8;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">bolt</span>
+      </div>
+      <div class="module-system">The EDGE</div>
+      <div class="module-name">Work</div>
+      <div class="module-desc">Daily traction, deep work sessions, time blocks, and your 30-day execution map.</div>
+      <div class="module-arrow">
+        Open module <span class="icon">arrow_forward</span>
+      </div>
+    </a>
+
+    <!-- The EDGE Goals -->
+    <a class="module-card goals" href="goals.html">
+      <div class="module-icon">
+        <span class="icon" style="color:#34d399;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">flag</span>
+      </div>
+      <div class="module-system">The EDGE</div>
+      <div class="module-name">Goals</div>
+      <div class="module-desc">12-week focus cycles, goal tracking, vision board, and progress metrics.</div>
+      <div class="module-arrow">
+        Open module <span class="icon">arrow_forward</span>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="footer">theedgex.com &nbsp;&middot;&nbsp; personal operating system</div>
+
+</body>
+</html>

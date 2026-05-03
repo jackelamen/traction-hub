@@ -575,9 +575,21 @@ const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
             return; // refreshed successfully — allow through
           }
         }
-      } catch(e) {}
+        // Refresh request failed — only redirect if token is actually expired
+        if (expiresAt > 0 && expiresAt <= now) {
+          window.location.href = 'login.html';
+        }
+        // If token not yet expired (or no expires_at), allow through
+        return;
+      } catch(e) {
+        // Network error during refresh — allow through if token not clearly expired
+        if (expiresAt > 0 && expiresAt <= now) {
+          window.location.href = 'login.html';
+        }
+        return;
+      }
     }
-    // If token is expired and refresh failed/unavailable, redirect
+    // No refresh token — only redirect if token is confirmed expired
     if (expiresAt > 0 && expiresAt <= now) {
       window.location.href = 'login.html';
     }

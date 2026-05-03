@@ -1,0 +1,2674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Jack — Goals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=DM+Serif+Display:ital@0;1&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=Geist:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --canvas: #FAF7F1;          /* warm off-white */
+  --canvas-2: #F2EEE5;        /* soft tonal step */
+  --paper:  #FFFFFF;
+  --ink:    #1A1916;          /* near-black, warm */
+  --ink-2:  #4F4A42;          /* secondary text */
+  --ink-3:  #8B847A;          /* tertiary */
+  --rule:   #E8E2D5;          /* hairline */
+  --rule-2: #DDD5C4;
+  --accent: #FF4D2E;          /* electric coral */
+  --accent-d:#E33A1C;
+  --accent-soft: #FFE4DC;
+  --font-display: var(--font-display);
+  --font-body:    var(--font-body);
+  --font-mono:    var(--font-mono);
+  --good:   #2F7D3F;          /* deep moss for "done" */
+  --warn:   #B8761A;          /* amber */
+
+  /* Per-area accents — toned, single-chroma family */
+  --health:   #2F7D3F;
+  --career:   #1F4ED8;
+  --family:   #C2410C;
+  --personal: #7C5BD9;
+
+  --radius: 14px;
+  --radius-lg: 22px;
+}
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-feature-settings: 'ss01','cv11';
+  line-height: 1.55;
+  min-height: 100vh;
+}
+.serif { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.01em; }
+.mono  { font-family: var(--font-mono); }
+
+.icon {
+  font-family: 'Material Symbols Rounded';
+  font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+  line-height: 1; display: inline-block; vertical-align: middle; user-select:none;
+}
+.icon.fill { font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 99px; }
+
+/* ═══════════ APP SHELL ═══════════ */
+#app { min-height: 100vh; }
+
+/* Top bar — quiet and minimal */
+#topbar {
+  position: sticky; top: 0; z-index: 80;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--rule);
+  padding: 18px 36px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px;
+}
+#topbar.scrolled { box-shadow: 0 1px 0 var(--rule); }
+.brand-mark {
+  font-family: var(--font-display);
+  font-size: 22px; font-style: italic;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.brand-mark .dot { color: var(--accent); }
+#topbar-actions { display: flex; align-items: center; gap: 8px; }
+
+.nav-btn {
+  width: 42px; height: 42px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  border-radius: 11px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.nav-btn:hover { background: var(--canvas-2); }
+.nav-btn .icon { font-size: 22px; }
+
+.crumb {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--ink-2);
+}
+.crumb::before { content: '— '; opacity:.5; }
+
+/* ═══════════ MENU OVERLAY (hamburger expand) ═══════════ */
+#menu {
+  position: fixed; inset: 0; z-index: 200;
+  background: var(--canvas);
+  display: flex; flex-direction: column;
+  padding: 24px 36px 48px;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease;
+}
+#menu.open { opacity: 1; pointer-events: auto; }
+.menu-top { display: flex; align-items: center; justify-content: space-between; }
+.menu-body {
+  flex: 1; display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 40px 0;
+}
+.menu-list { display: flex; flex-direction: column; gap: 4px; }
+.menu-link {
+  display: flex; align-items: baseline; gap: 18px;
+  padding: 14px 0;
+  border: none; background: transparent;
+  font-family: var(--font-display);
+  font-size: 64px;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+  transition: color .2s, padding-left .25s ease;
+}
+.menu-link:hover { color: var(--accent); padding-left: 16px; }
+.menu-link.active { color: var(--accent); font-style: italic; }
+.menu-link .num {
+  font-family: var(--font-mono);
+  font-size: 11px; color: var(--ink-3);
+  letter-spacing: 0.1em;
+}
+.menu-side {
+  border-left: 1px solid var(--rule);
+  padding-left: 48px;
+}
+.menu-side h4 {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: 18px; font-weight: 500;
+}
+.menu-side p {
+  font-family: var(--font-display);
+  font-size: 22px; line-height: 1.4;
+  color: var(--ink-2); font-style: italic;
+}
+@media (max-width: 800px) {
+  .menu-body { grid-template-columns: 1fr; }
+  .menu-side { border-left: none; padding-left: 0; border-top: 1px solid var(--rule); padding-top: 32px; }
+  .menu-link { font-size: 44px; }
+}
+
+/* ═══════════ MAIN ═══════════ */
+#main { max-width: 1080px; margin: 0 auto; padding: 56px 36px 120px; }
+.view { display: none; }
+.view.active { display: block; }
+@media (max-width: 700px) {
+  #topbar { padding: 16px 20px; }
+  #main { padding: 32px 20px 80px; }
+}
+
+/* ═══════════ TYPOGRAPHY HELPERS ═══════════ */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 500;
+}
+.eyebrow .accent { color: var(--accent); }
+h1.display, .display {
+  font-family: var(--font-display);
+  font-size: clamp(48px, 7vw, 88px);
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  font-weight: 400;
+  color: var(--ink);
+}
+h1.display em, .display em { font-style: italic; color: var(--accent); }
+h2.section {
+  font-family: var(--font-display);
+  font-size: 38px; letter-spacing: -0.025em; line-height: 1.05;
+  font-weight: 400;
+}
+h3.card-title {
+  font-family: var(--font-body);
+  font-weight: 700; font-size: 18px; letter-spacing: -0.01em;
+}
+.lead {
+  font-family: var(--font-display);
+  font-size: 22px; line-height: 1.45; color: var(--ink-2);
+  font-style: italic; letter-spacing: -0.005em;
+}
+.subtle { color: var(--ink-3); font-size: 13px; }
+.divider { height:1px; background: var(--rule); margin: 32px 0; border: none; }
+.divider-thick { height:1px; background: var(--ink); margin: 24px 0; opacity:.85; }
+
+/* ═══════════ BUTTONS ═══════════ */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: none;
+  font-family: var(--font-body);
+  font-weight: 600; font-size: 14px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--ink); color: var(--canvas);
+}
+.btn-primary:hover { background: var(--accent); }
+.btn-accent {
+  background: var(--accent); color: #fff;
+}
+.btn-accent:hover { background: var(--accent-d); }
+.btn-ghost {
+  background: transparent; color: var(--ink-2);
+  border: 1px solid var(--rule-2);
+}
+.btn-ghost:hover { background: var(--canvas-2); color: var(--ink); }
+.btn-link {
+  background: transparent; color: var(--ink); padding: 4px 0;
+  border-bottom: 1px solid var(--ink);
+  border-radius: 0; font-weight: 600;
+}
+.btn-link:hover { color: var(--accent); border-color: var(--accent); }
+.btn-danger {
+  background: transparent; color: var(--accent-d);
+  border: 1px solid var(--accent-soft);
+}
+.btn-danger:hover { background: var(--accent-soft); }
+.btn-sm { padding: 7px 14px; font-size: 13px; }
+.btn-xs { padding: 5px 11px; font-size: 12px; }
+
+.btn-icon {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-2);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .15s;
+}
+.btn-icon:hover { background: var(--canvas-2); color: var(--ink); border-color: var(--rule-2); }
+.btn-icon .icon { font-size: 17px; }
+
+/* ═══════════ CARDS ═══════════ */
+.card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+}
+.card-flat {
+  background: var(--canvas-2);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.card-inner { background: var(--canvas-2); border-radius: var(--radius); padding: 16px; }
+.card-inner2 { background: var(--canvas); border-radius: 10px; padding: 12px 14px; border: 1px solid var(--rule); }
+
+/* ═══════════ INPUTS ═══════════ */
+.inp {
+  width: 100%;
+  background: var(--canvas-2);
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  transition: all .15s;
+  resize: vertical;
+}
+.inp:focus { border-color: var(--ink); background: var(--paper); }
+.inp::placeholder { color: var(--ink-3); }
+select.inp { appearance: none; cursor: pointer; }
+label.lbl {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 500;
+  color: var(--ink-3); margin-bottom: 7px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+}
+
+/* ═══════════ TODAY ═══════════ */
+.today-mast {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 32px;
+  padding-bottom: 36px;
+  border-bottom: 1px solid var(--ink);
+  margin-bottom: 40px;
+}
+.today-greet { font-family: var(--font-display); }
+.today-greet .hello {
+  font-size: clamp(56px, 8vw, 96px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.today-greet .hello em { font-style: italic; color: var(--accent); }
+.today-greet .date {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-3);
+  margin-top: 14px;
+}
+.today-prog {
+  text-align: right;
+  font-family: var(--font-display);
+}
+.today-prog .num {
+  font-size: 84px; line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-style: italic;
+  color: var(--ink);
+}
+.today-prog .num.done { color: var(--good); }
+.today-prog .lbl {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-3); margin-top: 4px;
+}
+@media (max-width: 700px) {
+  .today-mast { grid-template-columns: 1fr; gap: 12px; align-items: start; }
+  .today-prog { text-align: left; }
+  .today-prog .num { font-size: 64px; }
+}
+
+/* Cycle card — quiet, full-width, editorial */
+.cycle {
+  border-top: 1px solid var(--rule);
+  padding: 32px 0;
+}
+.cycle:first-of-type { border-top: none; padding-top: 0; }
+.cycle-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.cycle-name {
+  font-family: var(--font-display);
+  font-size: 32px; letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin-bottom: 8px;
+}
+.cycle-meta {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.cycle-meta .sep { opacity:.4; }
+.cycle-progress {
+  display: flex; align-items: baseline; gap: 8px;
+  font-family: var(--font-display);
+}
+.cycle-progress .pct { font-size: 56px; line-height: 0.9; letter-spacing: -0.03em; font-style: italic; }
+.cycle-progress .pct.done { color: var(--good); }
+.cycle-progress .of {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.bar-track {
+  height: 4px; background: var(--rule);
+  border-radius: 99px; overflow: hidden;
+  margin-top: 6px;
+}
+.bar-fill {
+  height: 100%; background: var(--ink);
+  border-radius: 99px;
+  transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+.bar-fill.accent { background: var(--accent); }
+.bar-fill.good { background: var(--good); }
+
+/* Action rows — large, tappable, calm */
+.action {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px 0;
+  border-top: 1px dashed var(--rule);
+  cursor: pointer;
+  transition: padding-left .2s ease;
+}
+.action:first-of-type { border-top: 1px solid var(--rule); }
+.action:hover { padding-left: 8px; }
+.action .check {
+  width: 26px; height: 26px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  background: transparent;
+  transition: all .18s;
+}
+.action.done .check { background: var(--ink); border-color: var(--ink); }
+.action.done .check::after {
+  content: ''; width: 10px; height: 5px;
+  border-left: 2px solid var(--canvas);
+  border-bottom: 2px solid var(--canvas);
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+.action .text {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.action.done .text { color: var(--ink-3); text-decoration: line-through; text-decoration-thickness: 1px; }
+.action .freq {
+  font-family: var(--font-mono);
+  font-size: 11px; color: var(--ink-3);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+/* Day strip for daily/custom tactics */
+.day-strip { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.day-pip {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--rule-2);
+  background: transparent;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 600;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all .15s;
+}
+.day-pip:hover { border-color: var(--ink); color: var(--ink); }
+.day-pip.today { border-color: var(--accent); color: var(--accent); border-width: 2px; }
+.day-pip.done { background: var(--ink); border-color: var(--ink); color: var(--canvas); }
+.day-pip.done.today { background: var(--accent); border-color: var(--accent); color: #fff; }
+.day-pip.inactive { opacity: 0.25; cursor: not-allowed; }
+.day-pip.xpw-empty { background: transparent; }
+
+/* Week navigator */
+.week-nav {
+  display: inline-flex; align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-2);
+  border: 1px solid var(--rule);
+  border-radius: 99px;
+  padding: 2px;
+  gap: 0;
+}
+.week-nav button {
+  background: transparent; border: none;
+  width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; border-radius: 99px;
+  color: var(--ink-2);
+}
+.week-nav button:hover:not(:disabled) { background: var(--canvas-2); color: var(--ink); }
+.week-nav button:disabled { opacity: 0.3; cursor: default; }
+.week-nav .label { padding: 0 10px; font-weight: 600; }
+
+/* 12-week dot row */
+.weeks-row { display: flex; gap: 5px; }
+.week-dot {
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  background: var(--canvas-2);
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 9px; font-weight: 600;
+  color: var(--ink-3);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.week-dot.partial { background: var(--accent-soft); color: var(--accent-d); }
+.week-dot.done { background: var(--good); color: #fff; }
+.week-dot.current { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Expand/collapse toggle */
+.cycle-foot {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 22px;
+}
+.expand-btn {
+  background: transparent; border: none;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-3); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.expand-btn:hover { color: var(--ink); }
+.expand-btn .icon { font-size: 16px; transition: transform .25s; }
+.expand-btn.open .icon { transform: rotate(180deg); }
+.expandable { overflow: hidden; max-height: 0; opacity: 0; transition: max-height .35s ease, opacity .25s; }
+.expandable.open { max-height: 2000px; opacity: 1; margin-top: 24px; }
+
+/* Empty state */
+.empty {
+  text-align: center; padding: 80px 24px;
+}
+.empty h3 { font-family: var(--font-display); font-size: 42px; letter-spacing: -0.02em; margin-bottom: 12px; }
+.empty p { color: var(--ink-2); font-size: 16px; margin-bottom: 24px; max-width: 420px; margin-left:auto; margin-right:auto; }
+
+/* ═══════════ GOALS LIST (editorial rows) ═══════════ */
+.goal-row {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: 28px;
+  align-items: start;
+  padding: 32px 0;
+  border-top: 1px solid var(--rule);
+  cursor: pointer;
+  transition: padding-left .2s ease;
+}
+.goal-row:hover { padding-left: 12px; }
+.goal-row:last-child { border-bottom: 1px solid var(--rule); }
+.goal-num {
+  font-family: var(--font-mono);
+  font-size: 12px; color: var(--ink-3);
+  letter-spacing: 0.14em; padding-top: 10px;
+}
+.goal-row .area {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  margin-bottom: 8px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.goal-row .area::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+  display: inline-block;
+}
+.area.health { color: var(--health); }
+.area.career { color: var(--career); }
+.area.family { color: var(--family); }
+.area.personal { color: var(--personal); }
+.goal-row .title {
+  font-family: var(--font-display);
+  font-size: 36px; letter-spacing: -0.02em; line-height: 1.05;
+  margin-bottom: 12px;
+}
+.goal-row:hover .title { color: var(--accent); }
+.goal-row .why {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 17px; line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 540px;
+}
+.goal-row .meta-line {
+  margin-top: 14px;
+  display: flex; gap: 14px; flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.goal-row .actions { display: flex; gap: 6px; opacity: 0; transition: opacity .2s; }
+.goal-row:hover .actions { opacity: 1; }
+.goal-row .pct-mini {
+  font-family: var(--font-display);
+  font-size: 32px; font-style: italic; letter-spacing: -0.02em;
+  color: var(--ink);
+  text-align: right;
+  line-height: 1;
+}
+.goal-row .pct-mini .small { font-family:var(--font-mono); font-style:normal; font-size: 10px; color: var(--ink-3); display:block; letter-spacing:0.14em; margin-top:6px; text-transform: uppercase;}
+
+/* New goal row */
+.new-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 24px 0;
+  border-top: 1px solid var(--rule);
+  cursor: pointer; color: var(--ink-3);
+  transition: color .2s, padding-left .2s;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+}
+.new-row:hover { color: var(--accent); padding-left: 12px; }
+.new-row .plus {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1.5px solid currentColor;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* Filter tabs */
+.filters {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  margin: 28px 0 12px;
+  border-bottom: 1px solid var(--rule);
+}
+.filter {
+  background: transparent; border: none;
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 14px; font-weight: 500;
+  color: var(--ink-3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s, border-color .15s;
+}
+.filter:hover { color: var(--ink); }
+.filter.active { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+
+/* ═══════════ VISIONS — editorial, bleed ═══════════ */
+.vision-section {
+  padding: 80px 0;
+  border-top: 1px solid var(--rule);
+}
+.vision-section:first-of-type { border-top: none; padding-top: 24px; }
+.vision-area-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: end;
+  margin-bottom: 48px;
+}
+.vision-area-head .label-col {}
+.vision-area-head .label-col .area {
+  margin-bottom: 12px;
+}
+.vision-area-head .label-col h2 {
+  font-family: var(--font-display);
+  font-size: clamp(56px, 9vw, 110px);
+  letter-spacing: -0.04em; line-height: 0.92;
+  font-weight: 400;
+}
+.vision-area-head .label-col h2 em { font-style: italic; }
+.vision-area-head .label-col h2.health em { color: var(--health); }
+.vision-area-head .label-col h2.career em { color: var(--career); }
+.vision-area-head .label-col h2.family em { color: var(--family); }
+.vision-area-head .label-col h2.personal em { color: var(--personal); }
+
+.vision-statement {
+  font-family: var(--font-display);
+  font-size: 24px; line-height: 1.45; font-style: italic;
+  color: var(--ink-2);
+  position: relative;
+  padding-left: 24px;
+  border-left: 2px solid var(--ink);
+}
+.vision-statement.empty {
+  font-style: normal; color: var(--ink-3);
+  cursor: pointer; border-left-color: var(--rule-2);
+}
+.vision-statement.empty:hover { color: var(--ink); border-left-color: var(--accent); }
+
+.vision-goals {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  margin-top: 28px;
+}
+.vision-goal-chip {
+  padding: 10px 16px;
+  border: 1px solid var(--rule-2);
+  border-radius: 99px;
+  font-size: 14px; font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: all .15s;
+}
+.vision-goal-chip:hover { border-color: var(--ink); color: var(--ink); }
+.vision-goal-chip .wk {
+  font-family: var(--font-mono);
+  font-size: 10px; color: var(--ink-3);
+  letter-spacing: 0.14em;
+}
+
+.photo-masonry { columns: 3; column-gap: 14px; }
+.photo-masonry.cols-1 { columns: 1; }
+.photo-masonry.cols-2 { columns: 2; }
+@media (max-width: 800px) { .photo-masonry { columns: 2; } }
+@media (max-width: 500px) { .photo-masonry { columns: 1; } }
+
+.photo {
+  break-inside: avoid;
+  margin-bottom: 14px;
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--canvas-2);
+  display: block;
+}
+.photo img {
+  width: 100%; height: auto; display: block;
+  transition: transform .5s ease;
+}
+.photo:hover img { transform: scale(1.04); }
+.photo .cap {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  color: #fff; padding: 24px 14px 12px;
+  font-size: 12px; font-weight: 500;
+  opacity: 0; transition: opacity .2s;
+}
+.photo:hover .cap { opacity: 1; }
+
+.photo-add {
+  break-inside: avoid;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  border: 1.5px dashed var(--rule-2);
+  height: 140px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-3);
+  transition: all .15s;
+}
+.photo-add:hover { border-color: var(--accent); color: var(--accent); }
+
+.photo-empty {
+  border-radius: 14px;
+  border: 1.5px dashed var(--rule-2);
+  padding: 60px 24px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--ink-3);
+  transition: all .15s;
+}
+.photo-empty:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Visions hero */
+.vision-hero {
+  padding: 32px 0 64px;
+  border-bottom: 1px solid var(--ink);
+  margin-bottom: 32px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: end;
+}
+.vision-hero h1 { font-family: var(--font-display); font-size: clamp(64px, 11vw, 140px); letter-spacing: -0.045em; line-height: 0.9; }
+.vision-hero h1 em { font-style: italic; color: var(--accent); }
+.vision-hero .lead { max-width: 480px; margin-top: 12px; }
+.vision-hero .meta {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.vision-hero .meta strong { color: var(--ink); font-weight: 600; }
+
+.view-tabs {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: 99px;
+  padding: 3px;
+  gap: 0;
+}
+.view-tab {
+  padding: 7px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-3);
+  background: transparent; border: none;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.view-tab.active { background: var(--ink); color: var(--canvas); }
+
+/* ═══════════ MODALS ═══════════ */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(26,25,22,0.5);
+  backdrop-filter: blur(8px);
+  z-index: 300;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 0 16px 16px;
+}
+.modal-backdrop.hidden { display: none; }
+.modal-sheet {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 24px 24px 20px 20px;
+  width: 100%; max-width: 580px;
+  max-height: 92vh; overflow-y: auto;
+  padding: 24px 28px 32px;
+  animation: sheetUp .3s cubic-bezier(.34,1.3,.64,1);
+}
+.modal-sheet.wide { max-width: 720px; }
+@keyframes sheetUp { from { opacity:0; transform: translateY(28px); } to { opacity:1; transform: translateY(0); } }
+.modal-handle {
+  width: 32px; height: 3px;
+  background: var(--rule-2);
+  border-radius: 99px;
+  margin: 0 auto 18px;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 32px; letter-spacing: -0.025em; font-weight: 400;
+  margin-bottom: 16px;
+}
+
+/* ═══════════ ROADMAP ═══════════ */
+.rm-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+.rm-row { display: contents; }
+.rm-row > div { padding: 18px 0; border-bottom: 1px solid var(--rule); }
+.rm-label { padding-right: 24px; }
+.rm-label .t {
+  font-family: var(--font-display);
+  font-size: 22px; line-height: 1.1; letter-spacing: -0.015em;
+}
+.rm-label .a {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-3); margin-top: 4px;
+}
+.rm-track { position: relative; min-height: 56px; }
+.rm-axis {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.12em;
+  color: var(--ink-3); padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+  text-transform: uppercase;
+}
+.rm-bar {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center;
+  padding: 0 10px;
+  font-family: var(--font-body);
+  font-size: 12px; font-weight: 600;
+  color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rm-today {
+  position: absolute; top: 0; bottom: 0;
+  width: 1px; background: var(--accent);
+  z-index: 5;
+}
+.rm-today::before {
+  content: 'TODAY';
+  position: absolute; top: -12px; left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.18em;
+  color: var(--accent); font-weight: 600;
+  background: var(--canvas);
+  padding: 0 4px;
+}
+
+/* Retros */
+.retro-card {
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  padding: 28px;
+  background: var(--paper);
+  margin-bottom: 16px;
+}
+.retro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 18px; }
+.retro-pull {
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.retro-pull .l {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: 6px;
+}
+.retro-pull .v {
+  font-family: var(--font-display);
+  font-size: 15px; line-height: 1.4; font-style: italic;
+  color: var(--ink);
+}
+
+/* MetricLog history */
+.mlog-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+/* Misc legacy hooks */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 99px; font-weight: 600;
+  background: var(--canvas-2); color: var(--ink-2);
+}
+.badge-good { background: #E8F2EA; color: var(--good); }
+.badge-warn { background: #FCF1DD; color: var(--warn); }
+.badge-bad { background: var(--accent-soft); color: var(--accent-d); }
+.badge-accent { background: var(--accent-soft); color: var(--accent-d); }
+
+/* fade-up animation */
+@keyframes fadeUp { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+.fade-up { animation: fadeUp .35s ease forwards; }
+
+/* Sheet legacy classes used in JS */
+.cycle-toggle-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: transparent; border: 1px solid var(--rule);
+  padding: 6px 10px;
+  border-radius: 99px;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-2); cursor: pointer;
+}
+.cycle-toggle-btn:hover { background: var(--canvas-2); color: var(--ink); }
+.cycle-toggle-btn.open .icon { transform: rotate(180deg); }
+
+/* Lightbox */
+#sheet-lightbox { align-items: center; padding: 24px; }
+
+/* Meditation overlay */
+#meditation-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #0a0a0a;
+  display: none; flex-direction: column; overflow: hidden;
+}
+#meditation-overlay.open { display: flex; animation: fadeUp 1s ease forwards; }
+.medit-mosaic { flex: 1; display: grid; gap: 3px; overflow: hidden; }
+.medit-tile { overflow: hidden; position: relative; }
+.medit-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.medit-tile:nth-child(odd) img  { animation: kbIn 18s ease-in-out infinite alternate; }
+.medit-tile:nth-child(even) img { animation: kbOut 22s ease-in-out infinite alternate; }
+@keyframes kbIn { from { transform: scale(1); } to { transform: scale(1.08); } }
+@keyframes kbOut { from { transform: scale(1.06); } to { transform: scale(1); } }
+.medit-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%); z-index: 2; }
+.medit-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 10; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); transition: opacity .6s; }
+.medit-bar.hidden-ui { opacity: 0; pointer-events: none; }
+.medit-title { font-family: var(--font-display); font-style: italic; font-size: 22px; color: rgba(255,255,255,0.7); }
+.medit-hint { font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.16em; text-transform: uppercase; margin-top: 4px; }
+.medit-close { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 99px; padding: 9px 18px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.medit-close:hover { background: rgba(255,255,255,0.2); }
+
+/* Streak chart wrap (legacy) */
+.streak-chart-wrap {
+  background: var(--canvas-2);
+  border-radius: 14px;
+  padding: 18px 18px 14px;
+  margin-top: 18px;
+}
+.streak-chart-title {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: 14px; font-weight: 500;
+}
+.prog-track { height: 4px; background: var(--rule); border-radius: 99px; overflow: hidden; }
+.prog-fill { height: 100%; background: var(--ink); border-radius: 99px; transition: width .6s; }
+
+/* Hide scrollbar in nav animations */
+html.menu-open { overflow: hidden; }
+
+/* Side bg deco */
+.deco-quote {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-3);
+  border-left: 2px solid var(--accent);
+  padding-left: 14px;
+  margin-top: 32px;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ══════════ TOPBAR ══════════ -->
+<header id="topbar">
+  <div style="display:flex;align-items:center;gap:18px">
+    <button class="nav-btn" onclick="toggleMenu()" aria-label="Menu">
+      <span class="icon" style="font-size:24px">menu</span>
+    </button>
+    <div class="brand-mark">Goals<span class="dot">.</span></div>
+    <span id="topbar-crumb" class="crumb"></span>
+  </div>
+  <div id="topbar-actions">
+    <button class="btn btn-ghost btn-sm" onclick="openNewGoalSheet()">
+      <span class="icon" style="font-size:16px">add</span>New goal
+    </button>
+  </div>
+</header>
+
+<!-- ══════════ MENU ══════════ -->
+<div id="menu">
+  <div class="menu-top">
+    <div class="brand-mark">Goals<span class="dot">.</span></div>
+    <button class="nav-btn" onclick="toggleMenu()" aria-label="Close">
+      <span class="icon" style="font-size:24px">close</span>
+    </button>
+  </div>
+  <div class="menu-body">
+    <nav class="menu-list">
+      <button class="menu-link active" id="nav-today" onclick="nav('today')">
+        <span class="num">01</span>Today
+      </button>
+      <button class="menu-link" id="nav-goals" onclick="nav('goals')">
+        <span class="num">02</span>Goals
+      </button>
+      <button class="menu-link" id="nav-cycles" onclick="nav('cycles')">
+        <span class="num">03</span>Cycles
+      </button>
+      <button class="menu-link" id="nav-roadmap" onclick="nav('roadmap')">
+        <span class="num">04</span>Roadmap
+      </button>
+      <button class="menu-link" id="nav-vision-board" onclick="nav('vision-board')">
+        <span class="num">05</span><em>Visions</em>
+      </button>
+      <button class="menu-link" id="nav-retros" onclick="nav('retros')">
+        <span class="num">06</span>Retros
+      </button>
+    </nav>
+    <aside class="menu-side">
+      <h4>Index</h4>
+      <p>A small system for staying honest with yourself across twelve weeks at a time.</p>
+      <div class="deco-quote">
+        "What gets measured gets managed — but what gets <em>witnessed</em> gets transformed."
+      </div>
+      <div style="margin-top:32px;display:flex;gap:8px;flex-wrap:wrap">
+        <a href="index.html" class="btn btn-ghost btn-sm" style="text-decoration:none">
+          <span class="icon" style="font-size:15px">grid_view</span>Dashboard
+        </a>
+        <button class="btn btn-accent btn-sm" onclick="openNewGoalSheet();toggleMenu()">
+          <span class="icon" style="font-size:15px">add</span>Start a goal
+        </button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ══════════ MAIN ══════════ -->
+<div id="main">
+
+<!-- TODAY -->
+<div id="view-today" class="view active">
+  <div id="today-hero"></div>
+  <div id="today-stats"></div>
+  <div id="today-cycles-wrap">
+    <div id="today-cycles"></div>
+  </div>
+  <div id="today-empty" class="empty" style="display:none">
+    <h3>Nothing in motion yet.</h3>
+    <p>Start a 12-week focus cycle and your daily actions will show up here, calmly and clearly.</p>
+    <button class="btn btn-accent" onclick="openNewSprintSheet()">
+      <span class="icon" style="font-size:17px">add</span>Start a cycle
+    </button>
+  </div>
+</div>
+
+<!-- GOALS -->
+<div id="view-goals" class="view">
+  <div style="margin-bottom:36px">
+    <div class="eyebrow"><span class="accent">●</span>&nbsp;&nbsp;Your life, designed</div>
+    <h1 class="display" style="margin-top:18px"><em>Goals.</em></h1>
+    <p class="lead" style="margin-top:18px;max-width:560px">What you're committed to building over the long arc.</p>
+  </div>
+  <div id="goal-filters" class="filters"></div>
+  <div id="goals-list"></div>
+</div>
+
+<!-- GOAL DETAIL -->
+<div id="view-goal-detail" class="view">
+  <button class="btn btn-ghost btn-sm" onclick="nav('goals')" style="margin-bottom:32px">
+    <span class="icon" style="font-size:15px">arrow_back</span>All goals
+  </button>
+  <div id="goal-detail-body"></div>
+</div>
+
+<!-- CYCLES -->
+<div id="view-cycles" class="view">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:36px">
+    <div>
+      <div class="eyebrow">12 weeks at a time</div>
+      <h1 class="display" style="margin-top:18px"><em>Cycles.</em></h1>
+      <p class="lead" style="margin-top:18px">Deliberate blocks of effort toward one goal.</p>
+    </div>
+    <button class="btn btn-accent" onclick="openNewSprintSheet()">
+      <span class="icon" style="font-size:17px">add</span>New cycle
+    </button>
+  </div>
+  <div id="cycles-list" style="display:flex;flex-direction:column;gap:16px"></div>
+</div>
+
+<!-- ROADMAP -->
+<div id="view-roadmap" class="view">
+  <div style="margin-bottom:36px">
+    <div class="eyebrow">Big picture</div>
+    <h1 class="display" style="margin-top:18px"><em>Roadmap.</em></h1>
+    <p class="lead" style="margin-top:18px">Goals and cycles, on one timeline.</p>
+  </div>
+  <div id="roadmap-body"></div>
+</div>
+
+<!-- VISIONS -->
+<div id="view-vision-board" class="view"><div id="visions-body"></div></div>
+
+<!-- RETROS -->
+<div id="view-retros" class="view">
+  <div style="margin-bottom:36px">
+    <div class="eyebrow">Close the loop</div>
+    <h1 class="display" style="margin-top:18px"><em>Retros.</em></h1>
+    <p class="lead" style="margin-top:18px">What twelve weeks taught you.</p>
+  </div>
+  <div id="retros-list"></div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+
+<!-- ══════════ MODALS ══════════ -->
+<!-- NEW/EDIT GOAL -->
+<div id="sheet-new-goal" class="modal-backdrop hidden" onclick="closeBdrop(event,'sheet-new-goal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 id="ngs-title" class="modal-title" style="margin-bottom:0">New goal</h2>
+      <button class="btn-icon" onclick="closeSheet('sheet-new-goal')"><span class="icon" style="font-size:18px">close</span></button>
+    </div>
+    <input type="hidden" id="ngs-id"/>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div><label class="lbl">What's the goal?</label>
+        <input id="ngs-title-inp" type="text" class="inp" placeholder="e.g. Improve cardiovascular health"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label class="lbl">Life area</label>
+          <select id="ngs-area" class="inp">
+            <option value="health">Health &amp; Fitness</option>
+            <option value="career">Career &amp; Business</option>
+            <option value="family">Family</option>
+            <option value="personal">Personal Development</option>
+          </select></div>
+        <div><label class="lbl">Status</label>
+          <select id="ngs-status" class="inp">
+            <option value="active">Active</option><option value="paused">Paused</option><option value="completed">Completed</option>
+          </select></div>
+      </div>
+      <div><label class="lbl">Why does this matter?</label>
+        <textarea id="ngs-why" class="inp" rows="3" placeholder="Be honest. This is what keeps you going."></textarea></div>
+      <div><label class="lbl">Targets <span style="text-transform:none;letter-spacing:0;color:var(--ink-3)">(optional)</span></label>
+        <div id="ngs-metrics" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+        <button class="btn btn-ghost btn-sm" onclick="addMetricRow('ngs-metrics')">
+          <span class="icon" style="font-size:15px">add</span>Add target
+        </button></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px">
+      <button onclick="saveGoal()" class="btn btn-primary" style="flex:1;justify-content:center">Save goal</button>
+      <button onclick="closeSheet('sheet-new-goal')" class="btn btn-ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- VISION -->
+<div id="sheet-vision" class="modal-backdrop hidden" onclick="closeBdrop(event,'sheet-vision')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h2 class="modal-title" id="vis-area-title" style="margin-bottom:0">Vision</h2>
+      <button class="btn-icon" onclick="closeSheet('sheet-vision')"><span class="icon" style="font-size:18px">close</span></button>
+    </div>
+    <input type="hidden" id="vis-area"/>
+    <p style="color:var(--ink-2);font-size:14px;margin-bottom:18px;line-height:1.6">Write what you want this area of your life to look like. Present tense, specific, vivid.</p>
+    <textarea id="vis-text" class="inp" rows="5" placeholder='"I move through life with real energy. My resting heart rate is below 60. I hike without fatigue."'></textarea>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button onclick="saveVision()" class="btn btn-primary" style="flex:1;justify-content:center">Save vision</button>
+      <button onclick="closeSheet('sheet-vision')" class="btn btn-ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW/EDIT CYCLE -->
+<div id="sheet-new-sprint" class="modal-backdrop hidden" onclick="closeBdrop(event,'sheet-new-sprint')">
+  <div class="modal-sheet wide">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 class="modal-title" id="nss-sheet-title" style="margin-bottom:0">New focus cycle</h2>
+      <button class="btn-icon" onclick="closeSheet('sheet-new-sprint')"><span class="icon" style="font-size:18px">close</span></button>
+    </div>
+    <input type="hidden" id="nss-id"/>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label class="lbl">Cycle name</label>
+          <input id="nss-name" type="text" class="inp" placeholder="e.g. Q3 Foundation Build"/></div>
+        <div><label class="lbl">Goal</label><select id="nss-goal" class="inp"></select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label class="lbl">Start date</label>
+          <input id="nss-start" type="date" class="inp" onchange="autoEndDate()"/></div>
+        <div><label class="lbl">End date <span style="text-transform:none;letter-spacing:0;color:var(--ink-3)">(auto)</span></label>
+          <input id="nss-end" type="date" class="inp" readonly style="opacity:.55"/></div>
+      </div>
+      <div><label class="lbl">What does success look like at week 12?</label>
+        <input id="nss-outcome" type="text" class="inp" placeholder="e.g. Running 3× per week consistently"/></div>
+      <div><label class="lbl">Phases &amp; weekly actions</label>
+        <div id="phase-blocks" style="display:flex;flex-direction:column;gap:10px">
+          <div class="card-inner" style="padding:16px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <span class="badge">Weeks 1–4</span>
+              <input id="nss-p1-name" type="text" class="inp" value="Foundation" style="max-width:150px;padding:6px 10px;font-size:13px;font-weight:600"/>
+            </div>
+            <textarea id="nss-p1-desc" class="inp" rows="2" placeholder="Focus for this phase..." style="margin-bottom:10px;font-size:13px"></textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span class="lbl" style="margin:0">Actions</span>
+              <button class="btn btn-ghost btn-xs" onclick="addPhaseTactic(0)"><span class="icon" style="font-size:13px">add</span>Add</button>
+            </div>
+            <div id="nss-p1-tactics" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+          <div class="card-inner" style="padding:16px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <span class="badge">Weeks 5–8</span>
+              <input id="nss-p2-name" type="text" class="inp" value="Build" style="max-width:150px;padding:6px 10px;font-size:13px;font-weight:600"/>
+            </div>
+            <textarea id="nss-p2-desc" class="inp" rows="2" placeholder="Focus for this phase..." style="margin-bottom:10px;font-size:13px"></textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span class="lbl" style="margin:0">Actions</span>
+              <button class="btn btn-ghost btn-xs" onclick="addPhaseTactic(1)"><span class="icon" style="font-size:13px">add</span>Add</button>
+            </div>
+            <div id="nss-p2-tactics" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+          <div class="card-inner" style="padding:16px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <span class="badge">Weeks 9–12</span>
+              <input id="nss-p3-name" type="text" class="inp" value="Peak" style="max-width:150px;padding:6px 10px;font-size:13px;font-weight:600"/>
+            </div>
+            <textarea id="nss-p3-desc" class="inp" rows="2" placeholder="Focus for this phase..." style="margin-bottom:10px;font-size:13px"></textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span class="lbl" style="margin:0">Actions</span>
+              <button class="btn btn-ghost btn-xs" onclick="addPhaseTactic(2)"><span class="icon" style="font-size:13px">add</span>Add</button>
+            </div>
+            <div id="nss-p3-tactics" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px">
+      <button onclick="saveSprint()" id="nss-save-btn" class="btn btn-primary" style="flex:1;justify-content:center">Start this cycle</button>
+      <button onclick="closeSheet('sheet-new-sprint')" class="btn btn-ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- REFLECTION -->
+<div id="sheet-reflection" class="modal-backdrop hidden" onclick="closeBdrop(event,'sheet-reflection')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="margin-bottom:20px">
+      <div class="eyebrow">Week <span id="ref-week-num">1</span> · <span id="ref-sprint-name"></span></div>
+      <h2 class="modal-title" style="margin-top:6px;margin-bottom:0">Weekly reflection</h2>
+    </div>
+    <input type="hidden" id="ref-sprint-id"/><input type="hidden" id="ref-week"/>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div><label class="lbl">What went well?</label>
+        <textarea id="ref-well" class="inp" rows="3" placeholder="Celebrate the wins — even the small ones."></textarea></div>
+      <div><label class="lbl">What got in the way?</label>
+        <textarea id="ref-obstacles" class="inp" rows="3" placeholder="Be honest about the friction."></textarea></div>
+      <div><label class="lbl">One adjustment for next week</label>
+        <input id="ref-adjust" type="text" class="inp" placeholder="One specific thing to do differently."/></div>
+      <div><label class="lbl">Intention for next week</label>
+        <input id="ref-next" type="text" class="inp" placeholder="One clear commitment."/></div>
+    </div>
+    <button onclick="saveReflection()" class="btn btn-primary" style="margin-top:22px;justify-content:center;width:100%">Save reflection</button>
+  </div>
+</div>
+
+<!-- SPRINT RETROSPECTIVE -->
+<div id="sheet-retro" class="modal-backdrop hidden" onclick="closeBdrop(event,'sheet-retro')">
+  <div class="modal-sheet wide">
+    <div class="modal-handle"></div>
+    <div style="margin-bottom:8px">
+      <div class="eyebrow">Cycle complete · <span id="retro-sprint-name"></span></div>
+      <h2 class="modal-title" style="margin-top:6px;margin-bottom:0">Cycle retrospective</h2>
+    </div>
+    <p style="color:var(--ink-2);font-size:14px;margin-bottom:20px;line-height:1.6">12 weeks done. Take 5 minutes to close this chapter intentionally.</p>
+    <input type="hidden" id="retro-sprint-id"/>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div><label class="lbl">Did you achieve what you set out to?</label>
+        <div id="retro-outcome-opts" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <button class="retro-opt-btn" data-val="yes" onclick="selectRetroOpt('outcome','yes',this)" style="padding:8px 16px;border-radius:99px;border:1.5px solid var(--rule-2);background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Yes, fully</button>
+          <button class="retro-opt-btn" data-val="mostly" onclick="selectRetroOpt('outcome','mostly',this)" style="padding:8px 16px;border-radius:99px;border:1.5px solid var(--rule-2);background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Mostly</button>
+          <button class="retro-opt-btn" data-val="partial" onclick="selectRetroOpt('outcome','partial',this)" style="padding:8px 16px;border-radius:99px;border:1.5px solid var(--rule-2);background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Partially</button>
+          <button class="retro-opt-btn" data-val="no" onclick="selectRetroOpt('outcome','no',this)" style="padding:8px 16px;border-radius:99px;border:1.5px solid var(--rule-2);background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Not really</button>
+        </div>
+        <input type="hidden" id="retro-outcome"/></div>
+      <div><label class="lbl">Biggest win of the cycle</label>
+        <textarea id="retro-win" class="inp" rows="2"></textarea></div>
+      <div><label class="lbl">Biggest lesson learned</label>
+        <textarea id="retro-lesson" class="inp" rows="2"></textarea></div>
+      <div><label class="lbl">What will you carry forward?</label>
+        <textarea id="retro-carry" class="inp" rows="2"></textarea></div>
+      <div><label class="lbl">Overall rating</label>
+        <div id="retro-rating-opts" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="retro-opt-btn" data-val="1" onclick="selectRetroOpt('rating','1',this)" style="width:48px;height:48px;border-radius:14px;border:1.5px solid var(--rule-2);background:transparent;font-size:20px;cursor:pointer">😞</button>
+          <button class="retro-opt-btn" data-val="2" onclick="selectRetroOpt('rating','2',this)" style="width:48px;height:48px;border-radius:14px;border:1.5px solid var(--rule-2);background:transparent;font-size:20px;cursor:pointer">😐</button>
+          <button class="retro-opt-btn" data-val="3" onclick="selectRetroOpt('rating','3',this)" style="width:48px;height:48px;border-radius:14px;border:1.5px solid var(--rule-2);background:transparent;font-size:20px;cursor:pointer">🙂</button>
+          <button class="retro-opt-btn" data-val="4" onclick="selectRetroOpt('rating','4',this)" style="width:48px;height:48px;border-radius:14px;border:1.5px solid var(--rule-2);background:transparent;font-size:20px;cursor:pointer">💪</button>
+          <button class="retro-opt-btn" data-val="5" onclick="selectRetroOpt('rating','5',this)" style="width:48px;height:48px;border-radius:14px;border:1.5px solid var(--rule-2);background:transparent;font-size:20px;cursor:pointer">🔥</button>
+        </div>
+        <input type="hidden" id="retro-rating"/></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px">
+      <button onclick="saveRetro()" class="btn btn-accent" style="flex:1;justify-content:center">Save retrospective</button>
+      <button onclick="closeSheet('sheet-retro')" class="btn btn-ghost">Later</button>
+    </div>
+  </div>
+</div>
+
+<!-- METRIC PROGRESS LOG -->
+<div id="sheet-metric-log" class="modal-backdrop hidden" onclick="closeBdrop(event,'sheet-metric-log')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="margin-bottom:18px">
+      <div class="eyebrow">Log progress</div>
+      <h2 class="modal-title" style="margin-top:6px;margin-bottom:0" id="mlog-metric-name">Metric</h2>
+    </div>
+    <input type="hidden" id="mlog-goal-id"/><input type="hidden" id="mlog-metric-id"/>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label class="lbl">Value</label><input id="mlog-value" type="number" step="any" class="inp"/></div>
+        <div><label class="lbl">Date</label><input id="mlog-date" type="date" class="inp"/></div>
+      </div>
+      <div><label class="lbl">Note <span style="text-transform:none;letter-spacing:0;color:var(--ink-3)">(optional)</span></label>
+        <input id="mlog-note" type="text" class="inp"/></div>
+      <div id="mlog-history" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button onclick="saveMetricLog()" class="btn btn-primary" style="flex:1;justify-content:center">Log entry</button>
+      <button onclick="closeSheet('sheet-metric-log')" class="btn btn-ghost">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div id="sheet-confirm" class="modal-backdrop hidden" onclick="closeBdrop(event,'sheet-confirm')">
+  <div class="modal-sheet" style="max-width:420px">
+    <div class="modal-handle"></div>
+    <h2 id="confirm-title" class="modal-title">Delete this?</h2>
+    <p id="confirm-body" style="color:var(--ink-2);font-size:14px;margin-bottom:24px;line-height:1.6">This cannot be undone.</p>
+    <div style="display:flex;gap:10px">
+      <button id="confirm-yes" class="btn btn-accent" style="flex:1;justify-content:center">Delete</button>
+      <button onclick="closeSheet('sheet-confirm')" class="btn btn-ghost" style="flex:1;justify-content:center">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD IMAGE -->
+<div id="sheet-add-image" class="modal-backdrop hidden" onclick="closeBdrop(event,'sheet-add-image')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 class="modal-title" style="margin-bottom:0">Add a photo</h2>
+      <button class="btn-icon" onclick="closeSheet('sheet-add-image')"><span class="icon" style="font-size:18px">close</span></button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div><label class="lbl">Life area</label>
+        <select id="vb-area" class="inp">
+          <option value="health">Health &amp; Fitness</option>
+          <option value="career">Career &amp; Business</option>
+          <option value="family">Family</option>
+          <option value="personal">Personal Development</option>
+        </select></div>
+      <div><label class="lbl">Caption <span style="text-transform:none;letter-spacing:0;color:var(--ink-3)">(optional)</span></label>
+        <input id="vb-caption" type="text" class="inp"/></div>
+      <div><label class="lbl">Upload</label>
+        <label id="vb-upload-label" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:1.5px dashed var(--rule-2);border-radius:16px;padding:32px;cursor:pointer;background:var(--canvas-2)">
+          <span class="icon" style="font-size:32px;color:var(--ink-3)">add_photo_alternate</span>
+          <span style="font-size:14px;color:var(--ink-2);font-weight:500">Click to upload or drag &amp; drop</span>
+          <span style="font-size:12px;color:var(--ink-3)">JPG, PNG, GIF, WebP</span>
+          <input type="file" id="vb-file-input" accept="image/*" style="display:none" onchange="previewVBImage(this)"/>
+        </label>
+        <div id="vb-preview" style="display:none;margin-top:12px;position:relative">
+          <img id="vb-preview-img" style="width:100%;border-radius:12px;max-height:200px;object-fit:cover" alt="preview"/>
+          <button onclick="clearVBPreview()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff"><span class="icon" style="font-size:14px">close</span></button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px">
+      <button onclick="saveVBImage()" class="btn btn-primary" style="flex:1;justify-content:center">Save</button>
+      <button onclick="closeSheet('sheet-add-image')" class="btn btn-ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEDITATION OVERLAY -->
+<div id="meditation-overlay">
+  <div class="medit-vignette"></div>
+  <div class="medit-bar" id="medit-bar">
+    <div>
+      <div class="medit-title">The Manifest.</div>
+      <div class="medit-hint">Move to show controls</div>
+    </div>
+    <button class="medit-close" onclick="closeMeditation()">
+      <span class="icon" style="font-size:16px">close_fullscreen</span>Exit
+    </button>
+  </div>
+  <div class="medit-mosaic" id="medit-mosaic"></div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="sheet-lightbox" class="modal-backdrop hidden" onclick="closeSheet('sheet-lightbox')">
+  <div style="position:relative;max-width:840px;width:100%">
+    <img id="lb-img" style="width:100%;border-radius:16px;max-height:80vh;object-fit:contain" alt=""/>
+    <p id="lb-caption" style="color:#fff;text-align:center;margin-top:14px;font-size:15px;font-weight:500"></p>
+    <button id="lb-delete" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);border-radius:99px;padding:8px 16px;color:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;letter-spacing:0.06em;text-transform:uppercase">
+      <span class="icon" style="font-size:14px">delete</span>Remove
+    </button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+//  DATA
+// ─────────────────────────────────────────
+const AREAS = [
+  { id:'health',   label:'Health & Fitness',     short:'Health',   barClass:'health'   },
+  { id:'career',   label:'Career & Business',    short:'Career',   barClass:'career'   },
+  { id:'family',   label:'Family',               short:'Family',   barClass:'family'   },
+  { id:'personal', label:'Personal Development', short:'Personal', barClass:'personal' },
+];
+function loadDB() { return JSON.parse(localStorage.getItem('gs2_db') || 'null') || { visions:{}, goals:[], sprints:[] }; }
+function saveDB(d) { localStorage.setItem('gs2_db', JSON.stringify(d)); }
+let DB = loadDB();
+
+// ─────────────────────────────────────────
+//  MENU + ROUTING
+// ─────────────────────────────────────────
+let currentView='today', scorecardWeek=1, scorecardSprintId=null, goalFilterArea='all', detailGoalId=null;
+const expandedSprints = new Set();
+
+function toggleMenu() {
+  const m = document.getElementById('menu');
+  const open = m.classList.toggle('open');
+  document.documentElement.classList.toggle('menu-open', open);
+}
+function nav(view, extra) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.menu-link').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-'+view)?.classList.add('active');
+  document.getElementById('nav-'+view)?.classList.add('active');
+  currentView = view;
+  // Update crumb
+  const labels = {today:'Today', goals:'Goals', cycles:'Cycles', roadmap:'Roadmap', 'vision-board':'Visions', retros:'Retros','goal-detail':'Goal'};
+  const crumb = document.getElementById('topbar-crumb');
+  if (crumb) crumb.textContent = view==='today' ? '' : labels[view] || '';
+  // Close menu when navigating
+  document.getElementById('menu').classList.remove('open');
+  document.documentElement.classList.remove('menu-open');
+  window.scrollTo(0,0);
+  if (view==='today')        { renderToday(); checkPendingRetros(); }
+  if (view==='goals')        renderGoals();
+  if (view==='cycles')       renderCycles();
+  if (view==='roadmap')      renderRoadmap();
+  if (view==='vision-board') renderVisionBoard();
+  if (view==='retros')       renderRetros();
+  if (view==='goal-detail' && extra) { detailGoalId = extra; renderGoalDetail(extra); }
+}
+
+// Scroll shadow on topbar
+window.addEventListener('scroll', () => {
+  document.getElementById('topbar').classList.toggle('scrolled', window.scrollY > 4);
+});
+
+// ─────────────────────────────────────────
+//  HELPERS (preserved from original)
+// ─────────────────────────────────────────
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function fmtDate(d) { return d ? new Date(d+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'; }
+function fmtShort(d) { return d ? new Date(d+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''; }
+function getArea(id) { return AREAS.find(a => a.id === id); }
+function getGoal(id) { return DB.goals.find(g => g.id === id); }
+function sprintCurrentWeek(sp) {
+  if (!sp.startDate) return 1;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const start = new Date(sp.startDate+'T00:00:00'); start.setHours(0,0,0,0);
+  const daysDiff = Math.floor((today - start) / (24*3600*1000));
+  return Math.min(Math.max(Math.floor(daysDiff / 7) + 1, 1), 12);
+}
+function sprintProgressPct(sp) { return Math.round((sprintCurrentWeek(sp)/12)*100); }
+function isSprintActive(sp) {
+  if (!sp.startDate || !sp.endDate) return false;
+  const now=new Date(), s=new Date(sp.startDate+'T12:00'), e=new Date(sp.endDate+'T12:00');
+  return s<=now && now<=e;
+}
+function isSprintUpcoming(sp) {
+  if (!sp.startDate) return false;
+  return new Date(sp.startDate+'T12:00') > new Date();
+}
+function phaseIdxForWeek(w) { return w<=4?0:w<=8?1:2; }
+function tacticsForWeek(sp, week) {
+  const ph = sp.phases?.[phaseIdxForWeek(week)];
+  const raw = ph?.tactics?.length ? ph.tactics : (sp.tactics || []);
+  return raw.map(normTactic);
+}
+const DAY_LABELS=['M','T','W','T','F','S','S'];
+function todayDayIdx() { return (new Date().getDay() + 6) % 7; }
+function normTactic(t) {
+  if (t.freq === 'weekdays') return {...t, freq:'custom', days:[0,1,2,3,4]};
+  return t;
+}
+function xpwTarget(t) { return Math.max(1, parseInt(t.timesPerWeek)||1); }
+function xpwDoneCount(t, checks) {
+  const n = xpwTarget(t); let c = 0;
+  for (let i=0;i<n;i++) if (checks[`${t.id}_${i}`]) c++;
+  return c;
+}
+function tacticCheckpointCount(t) {
+  if (t.freq === 'daily') return 7;
+  if (t.freq === 'custom') return (t.days||[]).length || 1;
+  if (t.freq === 'xperweek') return xpwTarget(t);
+  return 1;
+}
+function checkKey(t, dayIdx) {
+  if (t.freq === 'daily' || t.freq === 'custom') return `${t.id}_${dayIdx}`;
+  return t.id;
+}
+function execScore(sp, week) {
+  const tactics = tacticsForWeek(sp, week); if (!tactics.length) return null;
+  const checks = (sp.weekChecks||{})[week]||{};
+  const cw = sprintCurrentWeek(sp); const isCurrentWeek = week === cw;
+  let possible = 0, done = 0;
+  tactics.forEach(t => {
+    const freq = t.freq || 'weekly';
+    if (freq === 'daily') { for (let d=0;d<7;d++) { possible++; if (checks[checkKey(t,d)]) done++; } }
+    else if (freq === 'custom') { (t.days||[]).forEach(d => { possible++; if (checks[checkKey(t,d)]) done++; }); }
+    else if (freq === 'xperweek') { const n = xpwTarget(t), c = xpwDoneCount(t, checks); possible += n; done += Math.min(c, n); }
+    else { if (!isCurrentWeek) { possible++; if (checks[t.id]) done++; } else if (checks[t.id]) { possible++; done++; } }
+  });
+  return possible ? Math.round(done/possible*100) : null;
+}
+function avgExecScore(sp) {
+  const cw = sprintCurrentWeek(sp); let sum=0, cnt=0;
+  for (let w=1; w<=cw; w++) {
+    const s = execScore(sp, w); if (s === null) continue;
+    const isPast = w < cw;
+    const hasSomeChecks = Object.keys((sp.weekChecks||{})[w]||{}).length > 0;
+    if (isPast || hasSomeChecks) { sum += s; cnt++; }
+  }
+  return cnt ? Math.round(sum/cnt) : null;
+}
+function todayDoneTotals(sp) {
+  const wk = sprintCurrentWeek(sp); const tactics = tacticsForWeek(sp, wk);
+  const checks = (sp.weekChecks||{})[wk]||{};
+  const todayIdx = todayDayIdx(); const isSunday = todayIdx === 6;
+  let done = 0, total = 0;
+  tactics.forEach(t => {
+    const freq = t.freq || 'weekly';
+    if (freq === 'daily') { total++; if (checks[checkKey(t, todayIdx)]) done++; }
+    else if (freq === 'custom') { if ((t.days||[]).includes(todayIdx)) { total++; if (checks[checkKey(t, todayIdx)]) done++; } }
+    else if (freq === 'xperweek') { const n = xpwTarget(t), c = xpwDoneCount(t, checks); total += n; done += Math.min(c, n); }
+    else { const checked = !!checks[t.id]; if (isSunday || checked) { total++; if (checked) done++; } }
+  });
+  return { done, total };
+}
+function tacticStreak(sp, tactic) {
+  const cw = sprintCurrentWeek(sp); let streak = 0;
+  for (let w = cw; w >= 1; w--) {
+    const checks = (sp.weekChecks || {})[w] || {};
+    const freq = tactic.freq || 'weekly';
+    let hit = false;
+    if (freq === 'daily') hit = [0,1,2,3,4,5,6].some(d => checks[checkKey(tactic, d)]);
+    else if (freq === 'custom') hit = (tactic.days || []).some(d => checks[checkKey(tactic, d)]);
+    else if (freq === 'xperweek') hit = xpwDoneCount(tactic, checks) >= xpwTarget(tactic);
+    else hit = !!checks[tactic.id];
+    if (hit) streak++;
+    else if (w < cw) break;
+  }
+  return streak;
+}
+
+// ─────────────────────────────────────────
+//  TODAY
+// ─────────────────────────────────────────
+function renderToday() {
+  const hour = new Date().getHours();
+  const greeting = hour<5?'Still up,':hour<12?'Good morning,':hour<17?'Good afternoon,':'Good evening,';
+  const todayFmt = new Date().toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric', year:'numeric'});
+
+  const active = DB.sprints.filter(s=>isSprintActive(s));
+  const empty = document.getElementById('today-empty');
+  const heroEl = document.getElementById('today-hero');
+  const statsEl = document.getElementById('today-stats');
+  const cyclesEl = document.getElementById('today-cycles');
+
+  if (!active.length) {
+    heroEl.innerHTML = `<div style="margin-bottom:24px"><div class="eyebrow">${todayFmt}</div>
+      <h1 class="display" style="margin-top:14px">Hi, <em>Jack.</em></h1>
+      <p class="lead" style="margin-top:14px;max-width:520px">Your day is waiting. Start a 12-week cycle to bring your goals into daily focus.</p></div>`;
+    statsEl.innerHTML='';
+    cyclesEl.innerHTML='';
+    empty.style.display='block';
+    return;
+  }
+  empty.style.display='none';
+
+  // Today totals
+  let totalT = 0, doneT = 0;
+  active.forEach(sp => { const r = todayDoneTotals(sp); totalT += r.total; doneT += r.done; });
+  const allDone = totalT > 0 && doneT === totalT;
+  const heroPct = totalT ? Math.round(doneT/totalT*100) : 0;
+
+  heroEl.innerHTML = `
+    <div class="today-mast fade-up">
+      <div class="today-greet">
+        <div class="hello">${greeting.replace(',','')}, <em>Jack.</em></div>
+        <div class="date">${todayFmt}</div>
+      </div>
+      <div class="today-prog">
+        <div class="num ${allDone?'done':''}">${doneT}<span style="opacity:.4">/${totalT}</span></div>
+        <div class="lbl">${allDone ? 'Day complete' : 'Done today'}</div>
+      </div>
+    </div>`;
+
+  statsEl.innerHTML = '';
+
+  cyclesEl.innerHTML = active.map(sp => {
+    const goal = getGoal(sp.goalId);
+    const area = goal ? getArea(goal.areaId) : null;
+    const currentWk = sprintCurrentWeek(sp);
+    const viewWk = (scorecardSprintId===sp.id && scorecardWeek!=null) ? scorecardWeek : currentWk;
+    const isCurrentWk = viewWk === currentWk;
+
+    const tactics = tacticsForWeek(sp, viewWk);
+    const checks = (sp.weekChecks||{})[viewWk]||{};
+
+    // Week totals
+    let done = 0, total = 0;
+    tactics.forEach(t => {
+      const freq = t.freq || 'weekly';
+      if (freq === 'daily') { for (let d=0;d<7;d++) { total++; if (checks[checkKey(t,d)]) done++; } }
+      else if (freq === 'custom') { (t.days||[]).forEach(d => { total++; if (checks[checkKey(t,d)]) done++; }); if (!(t.days||[]).length) { total++; if (checks[t.id]) done++; } }
+      else if (freq === 'xperweek') { const n = xpwTarget(t), c = xpwDoneCount(t, checks); total += n; done += Math.min(c, n); }
+      else { total++; if (checks[t.id]) done++; }
+    });
+    const wkPct = total ? Math.round(done/total*100) : 0;
+
+    const phaseIdx = phaseIdxForWeek(viewWk);
+    const phaseName = sp.phases?.[phaseIdx]?.name || ['Foundation','Build','Peak'][phaseIdx];
+    const cycPct = sprintProgressPct(sp);
+
+    const todayR = isCurrentWk ? todayDoneTotals(sp) : { done, total };
+    const headlinePct = isCurrentWk
+      ? (todayR.total ? Math.round(todayR.done/todayR.total*100) : 0)
+      : wkPct;
+    const headlineDone = isCurrentWk ? todayR.done : done;
+    const headlineTotal = isCurrentWk ? todayR.total : total;
+
+    const tacticRows = tactics.map(t => {
+      const freq = t.freq || 'weekly';
+      const streak = tacticStreak(sp, t);
+      const streakBadge = streak >= 2 ? `<span class="badge badge-accent" style="margin-left:8px">${streak}-wk streak</span>` : '';
+
+      if (freq === 'daily' || freq === 'custom') {
+        const todayIdx = todayDayIdx();
+        const activeDays = freq === 'daily' ? [0,1,2,3,4,5,6] : (t.days||[]);
+        const dayChips = [0,1,2,3,4,5,6].map(di => {
+          if (!activeDays.includes(di)) return `<span class="day-pip inactive">${DAY_LABELS[di]}</span>`;
+          const key = checkKey(t, di);
+          const isDone = !!checks[key];
+          const isToday = di === todayIdx && isCurrentWk;
+          const cls = `day-pip${isDone?' done':''}${isToday?' today':''}`;
+          return `<span class="${cls}" data-key="${key}" onclick="event.stopPropagation();toggleCheck('${sp.id}',${viewWk},'${t.id}',this,'${key}')" title="${DAY_LABELS[di]}">${DAY_LABELS[di]}</span>`;
+        }).join('');
+        const freqLbl = freq==='daily' ? 'Daily' : (JSON.stringify((t.days||[]).slice().sort((a,b)=>a-b))==='[0,1,2,3,4]') ? 'Weekdays' : 'Custom';
+        return `<div class="action" style="cursor:default;flex-direction:column;align-items:flex-start;gap:10px">
+          <div style="display:flex;align-items:center;gap:14px;width:100%">
+            <div class="text">${t.text} ${streakBadge}</div>
+            <span class="freq" style="margin-left:auto">${freqLbl}</span>
+          </div>
+          <div class="day-strip">${dayChips}</div>
+        </div>`;
+      } else if (freq === 'xperweek') {
+        const n = xpwTarget(t), c = xpwDoneCount(t, checks);
+        const allFilled = c >= n;
+        const slots = Array.from({length:n},(_,i) => {
+          const key = `${t.id}_${i}`;
+          const filled = !!checks[key];
+          const isNext = !filled && i === c;
+          const cls = `day-pip${filled?' done':''}${isNext?' today':''}${!filled&&!isNext?' xpw-empty':''}`;
+          const click = (filled || isNext) ? `onclick="event.stopPropagation();toggleXpw('${sp.id}',${viewWk},'${t.id}',${i},this)"` : 'style="opacity:.35;cursor:default"';
+          return `<span class="${cls}" ${click}>${filled?'✓':i+1}</span>`;
+        }).join('');
+        return `<div class="action${allFilled?' done':''}" style="cursor:default;flex-direction:column;align-items:flex-start;gap:10px">
+          <div style="display:flex;align-items:center;gap:14px;width:100%">
+            <div class="text">${t.text} ${streakBadge}</div>
+            <span class="freq" style="margin-left:auto">${c}/${n}× / wk</span>
+          </div>
+          <div class="day-strip">${slots}</div>
+        </div>`;
+      } else {
+        const checked = !!checks[t.id];
+        const freqLbl = freq === 'onetime' ? 'One-time' : 'Weekly';
+        return `<div class="action${checked?' done':''}" onclick="toggleCheck('${sp.id}',${viewWk},'${t.id}',this,'${t.id}')">
+          <div class="check"></div>
+          <div class="text">${t.text} ${streakBadge}</div>
+          <span class="freq">${freqLbl}</span>
+        </div>`;
+      }
+    }).join('');
+
+    const isExpanded = expandedSprints.has(sp.id);
+
+    const ref = (sp.reflections||{})[viewWk];
+    const refSection = ref ? `
+      <div class="card-inner" style="margin-top:14px">
+        <div class="lbl" style="margin-bottom:8px">Week ${viewWk} reflection</div>
+        ${ref.well?`<p style="font-size:14px;color:var(--ink-2);line-height:1.55;margin-bottom:6px"><strong style="color:var(--ink);font-weight:600">Win.</strong> ${ref.well}</p>`:''}
+        ${ref.adjust?`<p style="font-size:14px;color:var(--ink-2);line-height:1.55;margin-bottom:6px"><strong style="color:var(--ink);font-weight:600">Adjust.</strong> ${ref.adjust}</p>`:''}
+        ${ref.next?`<p style="font-size:14px;color:var(--ink-2);line-height:1.55"><strong style="color:var(--ink);font-weight:600">Next.</strong> ${ref.next}</p>`:''}
+        <button class="btn btn-link btn-xs" style="margin-top:10px" onclick="openReflection('${sp.id}',${viewWk},'${(sp.name||'').replace(/'/g,"\\'")}')">Edit reflection</button>
+      </div>` : `
+      <button class="btn btn-ghost btn-sm" style="margin-top:14px" onclick="openReflection('${sp.id}',${viewWk},'${(sp.name||'').replace(/'/g,"\\'")}')">
+        <span class="icon" style="font-size:15px">edit_note</span>Write reflection
+      </button>`;
+
+    return `<section class="cycle fade-up" id="cc-${sp.id}">
+      <div class="cycle-head">
+        <div style="flex:1;min-width:0">
+          <div class="cycle-meta" style="margin-bottom:14px">
+            ${area?`<span class="area ${area.barClass}">${area.short}</span><span class="sep">·</span>`:''}
+            <span>${phaseName} · Wk ${currentWk}/12</span>
+            ${!isCurrentWk?`<span class="sep">·</span><span style="color:var(--accent)">Viewing wk ${viewWk}</span>`:''}
+          </div>
+          <h2 class="cycle-name">${sp.name}</h2>
+          ${goal?`<p class="subtle" style="margin-top:6px">↳ ${goal.title}</p>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="cycle-progress" style="justify-content:flex-end">
+            <span class="pct ${headlinePct===100?'done':''}">${headlinePct}<span style="font-size:.4em;letter-spacing:0">%</span></span>
+          </div>
+          <div class="of">${headlineDone}/${headlineTotal} ${isCurrentWk?'today':'this week'}</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+        <div class="week-nav">
+          <button onclick="scWeekAdj(-1,'${sp.id}')" ${viewWk<=1?'disabled':''}><span class="icon" style="font-size:14px">chevron_left</span></button>
+          <span class="label">Wk ${viewWk} of 12</span>
+          <button onclick="scWeekAdj(1,'${sp.id}')" ${viewWk>=12?'disabled':''}><span class="icon" style="font-size:14px">chevron_right</span></button>
+        </div>
+        ${!isCurrentWk?`<button class="btn btn-ghost btn-xs" onclick="scGoToToday('${sp.id}')">Back to today</button>`:''}
+        <div style="flex:1;margin-left:8px">
+          <div class="bar-track"><div class="bar-fill ${cycPct>=100?'good':'accent'}" style="width:${cycPct}%"></div></div>
+          <div class="of" style="margin-top:6px">Cycle ${cycPct}% complete</div>
+        </div>
+      </div>
+
+      ${total===0
+        ? `<p class="subtle" style="font-style:italic">No actions for ${phaseName}. <button class="btn-link btn btn-xs" onclick="openEditSprintSheet('${sp.id}')">Add some.</button></p>`
+        : `<div>${tacticRows}</div>`}
+
+      <div class="cycle-foot">
+        <button class="expand-btn ${isExpanded?'open':''}" onclick="toggleCycleExpand('${sp.id}')">
+          <span class="icon">expand_more</span>${isExpanded?'Less':'More'}
+        </button>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-ghost btn-xs" onclick="openEditSprintSheet('${sp.id}')">
+            <span class="icon" style="font-size:13px">edit</span>Edit
+          </button>
+          <button class="btn btn-ghost btn-xs" onclick="confirmDelete('sprint','${sp.id}')" style="color:var(--accent-d);border-color:var(--accent-soft)">
+            <span class="icon" style="font-size:13px">delete</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="expandable${isExpanded?' open':''}" id="ce-${sp.id}">
+        <div class="lbl" style="margin-bottom:14px">12-week overview</div>
+        <div style="display:flex;gap:18px;margin-bottom:24px">
+          ${[0,1,2].map(pi => {
+            const pn = sp.phases?.[pi]?.name || ['Foundation','Build','Peak'][pi];
+            const weeks = [1,2,3,4].map(x=>x+pi*4);
+            return `<div style="flex:1">
+              <div class="lbl" style="margin-bottom:8px;font-size:9px">${pn}</div>
+              <div class="weeks-row">
+                ${weeks.map(w => {
+                  const s = execScore(sp,w);
+                  const isCur = viewWk===w;
+                  let cls='week-dot';
+                  if(s!==null&&s>=85) cls+=' done';
+                  else if(s!==null) cls+=' partial';
+                  if(isCur) cls+=' current';
+                  return `<div class="${cls}" title="Week ${w}${s!==null?': '+s+'%':''}" onclick="jumpToWeek('${sp.id}',${w})">${w}</div>`;
+                }).join('')}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="lbl" style="margin-bottom:10px">Reflection</div>
+        ${refSection}
+      </div>
+    </section>`;
+  }).join('');
+}
+
+function toggleCycleExpand(sprintId) {
+  if (expandedSprints.has(sprintId)) expandedSprints.delete(sprintId); else expandedSprints.add(sprintId);
+  const expEl = document.getElementById('ce-'+sprintId);
+  const btnEl = document.querySelector(`#cc-${sprintId} .expand-btn`);
+  if (expEl) expEl.classList.toggle('open', expandedSprints.has(sprintId));
+  if (btnEl) {
+    btnEl.classList.toggle('open', expandedSprints.has(sprintId));
+    btnEl.innerHTML = `<span class="icon">expand_more</span>${expandedSprints.has(sprintId)?'Less':'More'}`;
+  }
+}
+function scWeekAdj(delta, sprintId) {
+  if (!scorecardSprintId || scorecardSprintId!==sprintId) {
+    scorecardSprintId = sprintId;
+    const sp = DB.sprints.find(s=>s.id===sprintId);
+    scorecardWeek = sp ? sprintCurrentWeek(sp) : 1;
+  }
+  scorecardWeek = Math.min(Math.max(scorecardWeek+delta, 1), 12);
+  renderToday();
+}
+function scGoToToday(sprintId) {
+  scorecardSprintId = sprintId;
+  const sp = DB.sprints.find(s=>s.id===sprintId);
+  scorecardWeek = sp ? sprintCurrentWeek(sp) : 1;
+  renderToday();
+}
+function jumpToWeek(sprintId, week) { scorecardSprintId=sprintId; scorecardWeek=week; renderToday(); }
+function toggleXpw(sprintId, week, tacticId, slotIdx) {
+  const sp = DB.sprints.find(s=>s.id===sprintId); if(!sp) return;
+  if(!sp.weekChecks) sp.weekChecks={};
+  if(!sp.weekChecks[week]) sp.weekChecks[week]={};
+  const key = `${tacticId}_${slotIdx}`;
+  sp.weekChecks[week][key] = !sp.weekChecks[week][key];
+  saveDB(DB);
+  renderToday();
+}
+function toggleCheck(sprintId, week, tacticId, el, key) {
+  const sp = DB.sprints.find(s=>s.id===sprintId); if(!sp) return;
+  if(!sp.weekChecks) sp.weekChecks={};
+  if(!sp.weekChecks[week]) sp.weekChecks[week]={};
+  const storeKey = key || tacticId;
+  sp.weekChecks[week][storeKey] = !sp.weekChecks[week][storeKey];
+  saveDB(DB);
+  renderToday();
+}
+
+// ─────────────────────────────────────────
+//  GOALS
+// ─────────────────────────────────────────
+function renderGoals() { renderGoalFilters(); renderGoalsList(); }
+function renderGoalFilters() {
+  const opts=[['all','All'],['health','Health'],['career','Career'],['family','Family'],['personal','Personal']];
+  document.getElementById('goal-filters').innerHTML = opts.map(([id,label])=>
+    `<button class="filter${goalFilterArea===id?' active':''}" onclick="filterGoals('${id}')">${label}</button>`
+  ).join('');
+}
+function filterGoals(areaId) { goalFilterArea = areaId; renderGoalFilters(); renderGoalsList(); }
+
+function renderGoalsList() {
+  const el = document.getElementById('goals-list');
+  const goals = goalFilterArea==='all' ? DB.goals : DB.goals.filter(g=>g.areaId===goalFilterArea);
+  const newRow = `<div class="new-row" onclick="openNewGoalSheet()">
+    <span class="plus"><span class="icon" style="font-size:18px">add</span></span>Add a new goal
+  </div>`;
+  if (!goals.length) { el.innerHTML = newRow; return; }
+  const rows = goals.map((g, i) => {
+    const area = getArea(g.areaId);
+    const activeSp = DB.sprints.find(s=>s.goalId===g.id && isSprintActive(s));
+    const pct = activeSp ? sprintProgressPct(activeSp) : null;
+    const wk = activeSp ? sprintCurrentWeek(activeSp) : null;
+    const score = activeSp ? avgExecScore(activeSp) : null;
+    return `<div class="goal-row" onclick="nav('goal-detail','${g.id}')">
+      <div class="goal-num">N°&nbsp;${String(i+1).padStart(2,'0')}</div>
+      <div>
+        ${area?`<div class="area ${area.barClass}">${area.short}</div>`:''}
+        <h3 class="title">${g.title}</h3>
+        ${g.why?`<p class="why">"${g.why}"</p>`:''}
+        <div class="meta-line">
+          <span>${activeSp ? `Week ${wk} of 12` : 'No active cycle'}</span>
+          ${score!==null?`<span>· ${score}% exec</span>`:''}
+          ${g.metrics?.length?`<span>· ${g.metrics.length} target${g.metrics.length>1?'s':''}</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:14px">
+        ${pct!==null?`<div class="pct-mini">${pct}<span style="font-size:.4em;letter-spacing:0">%</span><span class="small">cycle progress</span></div>`:`<div class="subtle" style="font-style:italic">— start a cycle</div>`}
+        <div class="actions">
+          <button class="btn-icon" onclick="event.stopPropagation();openEditGoalSheet('${g.id}')"><span class="icon" style="font-size:14px">edit</span></button>
+          <button class="btn-icon" onclick="event.stopPropagation();confirmDelete('goal','${g.id}')" style="color:var(--accent-d);border-color:var(--accent-soft)"><span class="icon" style="font-size:14px">delete</span></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = rows + newRow;
+}
+
+// ─────────────────────────────────────────
+//  GOAL DETAIL
+// ─────────────────────────────────────────
+function renderGoalDetail(goalId) {
+  const g = getGoal(goalId); if(!g) return;
+  const area = getArea(g.areaId);
+  const sprints = DB.sprints.filter(s=>s.goalId===g.id);
+  document.getElementById('goal-detail-body').innerHTML = `
+    <div style="margin-bottom:32px">
+      ${area?`<div class="area ${area.barClass}" style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;margin-bottom:18px">${area.short}</div>`:''}
+      <h1 class="display" style="font-size:clamp(48px,7vw,80px)">${g.title}</h1>
+      <div style="display:flex;gap:8px;margin-top:24px">
+        <button class="btn btn-ghost btn-sm" onclick="openEditGoalSheet('${g.id}')"><span class="icon" style="font-size:15px">edit</span>Edit</button>
+        <button class="btn btn-accent btn-sm" onclick="openNewSprintSheet('${g.id}')"><span class="icon" style="font-size:15px">add</span>New cycle</button>
+      </div>
+    </div>
+    ${g.why?`<blockquote class="lead" style="border-left:2px solid var(--accent);padding-left:24px;margin-bottom:40px;max-width:700px">"${g.why}"</blockquote>`:''}
+    ${g.metrics?.length?`<div style="margin-bottom:48px">
+      <div class="lbl" style="margin-bottom:14px">Targets &amp; progress</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+        ${g.metrics.map(m=>{
+          const logs=(g.metricLogs||{})[m.id]||[]; const latest=logs.length?logs[logs.length-1]:null;
+          return`<div class="card-inner" style="cursor:pointer" onclick="openMetricLog('${g.id}','${m.id}','${(m.name||'Target').replace(/'/g,"\\'")}')">
+            <div class="lbl" style="margin-bottom:6px">${m.name||'Target'}</div>
+            <div style="display:flex;align-items:baseline;gap:14px">
+              <div><div class="subtle" style="font-size:10px;text-transform:uppercase;letter-spacing:0.14em;font-family:var(--font-mono);margin-bottom:2px">Target</div>
+                <div class="serif" style="font-size:26px;font-style:italic">${m.target||'—'}</div></div>
+              ${latest?`<div><div class="subtle" style="font-size:10px;text-transform:uppercase;letter-spacing:0.14em;font-family:var(--font-mono);color:var(--good);margin-bottom:2px">Latest</div>
+                <div class="serif" style="font-size:26px;font-style:italic;color:var(--good)">${latest.value}</div></div>`:''}
+            </div>
+            <div class="subtle" style="margin-top:10px;font-size:12px;color:var(--accent)">${logs.length?`${logs.length} entr${logs.length===1?'y':'ies'} · tap to log`:'Tap to log progress'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`:''}
+    <div class="lbl" style="margin-bottom:14px">Focus cycles</div>
+    ${sprints.length===0
+      ? `<div class="empty"><h3>No cycles yet.</h3><p>Start a 12-week cycle to turn this goal into daily action.</p>
+          <button class="btn btn-accent" onclick="openNewSprintSheet('${g.id}')"><span class="icon" style="font-size:17px">add</span>Start a cycle</button></div>`
+      : sprints.map(sp=>renderCycleCardCompact(sp)).join('')
+    }
+  `;
+}
+
+function renderCycleCardCompact(sp) {
+  const goal = getGoal(sp.goalId);
+  const area = goal ? getArea(goal.areaId) : null;
+  const act = isSprintActive(sp), up = isSprintUpcoming(sp);
+  const wk = sprintCurrentWeek(sp), avg = avgExecScore(sp), prog = sprintProgressPct(sp);
+  const status = act ? 'Active' : up ? 'Upcoming' : 'Completed';
+  return `<div class="card" style="padding:24px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <div class="cycle-meta" style="margin-bottom:8px">
+          <span style="color:${act?'var(--accent)':'var(--ink-3)'}">${status}</span>
+          ${area?`<span class="sep">·</span><span class="area ${area.barClass}">${area.short}</span>`:''}
+          ${avg!==null?`<span class="sep">·</span><span>${avg}% avg</span>`:''}
+        </div>
+        <h3 class="serif" style="font-size:24px;letter-spacing:-0.02em">${sp.name}</h3>
+        ${sp.outcome?`<p class="lead" style="font-size:16px;margin-top:6px">"${sp.outcome}"</p>`:''}
+        <p class="subtle" style="margin-top:8px">${fmtDate(sp.startDate)} – ${fmtDate(sp.endDate)}</p>
+        ${act?`<div style="margin-top:14px;max-width:380px">
+          <div class="bar-track"><div class="bar-fill accent" style="width:${prog}%"></div></div>
+          <div class="of" style="margin-top:6px">Week ${wk} of 12 · ${prog}%</div>
+        </div>`:''}
+      </div>
+      <div style="display:flex;gap:6px;align-items:flex-start;flex-shrink:0">
+        ${act?`<button class="btn btn-primary btn-sm" onclick="scorecardSprintId='${sp.id}';scorecardWeek=${wk};nav('today')"><span class="icon" style="font-size:14px">arrow_forward</span>Check in</button>`:''}
+        ${!act&&!up?`<button class="btn btn-ghost btn-sm" onclick="openRetro('${sp.id}')"><span class="icon" style="font-size:14px">workspace_premium</span>${sp.retro?.savedAt?'View retro':'Write retro'}</button>`:''}
+        <button class="btn-icon" onclick="openEditSprintSheet('${sp.id}')"><span class="icon" style="font-size:15px">edit</span></button>
+        <button class="btn-icon" onclick="confirmDelete('sprint','${sp.id}')" style="color:var(--accent-d);border-color:var(--accent-soft)"><span class="icon" style="font-size:15px">delete</span></button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─────────────────────────────────────────
+//  CYCLES
+// ─────────────────────────────────────────
+function renderCycles() {
+  const el = document.getElementById('cycles-list');
+  if (!DB.sprints.length) {
+    el.innerHTML = `<div class="empty"><h3>No focus cycles yet.</h3><p>Pick a goal and commit 12 weeks of deliberate effort to it.</p>
+      <button class="btn btn-accent" onclick="openNewSprintSheet()"><span class="icon" style="font-size:17px">add</span>Start a cycle</button></div>`;
+    return;
+  }
+  const active = DB.sprints.filter(s=>isSprintActive(s));
+  const upcoming = DB.sprints.filter(s=>isSprintUpcoming(s));
+  const completed = DB.sprints.filter(s=>!isSprintActive(s)&&!isSprintUpcoming(s)&&s.startDate);
+  let html='';
+  if (active.length)    { html += `<div class="lbl" style="margin:8px 0">Active</div>` + active.map(renderCycleCardCompact).join(''); }
+  if (upcoming.length)  { html += `<div class="lbl" style="margin:24px 0 8px">Upcoming</div>` + upcoming.map(renderCycleCardCompact).join(''); }
+  if (completed.length) { html += `<div class="lbl" style="margin:24px 0 8px">Completed</div>` + completed.map(renderCycleCardCompact).join(''); }
+  el.innerHTML = html;
+}
+
+// ─────────────────────────────────────────
+//  VISION
+// ─────────────────────────────────────────
+function openVisionSheet(areaId){
+  const area=getArea(areaId);
+  document.getElementById('vis-area-title').textContent=(area?area.label+' ':'')+'Vision';
+  document.getElementById('vis-area').value=areaId;
+  document.getElementById('vis-text').value=DB.visions[areaId]||'';
+  openSheet('sheet-vision');
+}
+function saveVision(){
+  const areaId=document.getElementById('vis-area').value;
+  DB.visions[areaId]=document.getElementById('vis-text').value.trim();
+  saveDB(DB); closeSheet('sheet-vision');
+  if(currentView==='vision-board') renderVisionBoard();
+}
+
+// ─────────────────────────────────────────
+//  GOAL FORM
+// ─────────────────────────────────────────
+let metricData={};
+function addMetricRow(cid,val){
+  if(!metricData[cid]) metricData[cid]=[];
+  const id=uid();
+  metricData[cid].push({id,type:val?.type||'Number',name:val?.name||'',target:val?.target||''});
+  renderMetricRows(cid);
+}
+function removeMetricRow(cid,id){ metricData[cid]=(metricData[cid]||[]).filter(x=>x.id!==id); renderMetricRows(cid); }
+function renderMetricRows(cid){
+  const rows=metricData[cid]||[]; const el=document.getElementById(cid); if(!el) return;
+  el.innerHTML=rows.map((r,i)=>`
+    <div class="card-inner2" style="display:grid;grid-template-columns:90px 1fr 1fr auto;gap:8px;align-items:end">
+      <div><label class="lbl" style="font-size:9px">Type</label>
+        <select onchange="metricData['${cid}'][${i}].type=this.value" class="inp" style="padding:8px 10px;font-size:13px">
+          ${['Number','Percentage','Duration','Frequency','Currency'].map(t=>`<option ${r.type===t?'selected':''}>${t}</option>`).join('')}
+        </select></div>
+      <div><label class="lbl" style="font-size:9px">Name</label>
+        <input type="text" value="${r.name}" oninput="metricData['${cid}'][${i}].name=this.value" placeholder="e.g. Resting HR" class="inp" style="padding:8px 10px;font-size:13px"/></div>
+      <div><label class="lbl" style="font-size:9px">Target</label>
+        <input type="text" value="${r.target}" oninput="metricData['${cid}'][${i}].target=this.value" placeholder="e.g. 65bpm" class="inp" style="padding:8px 10px;font-size:13px"/></div>
+      <button onclick="removeMetricRow('${cid}','${r.id}')" class="btn-icon" style="color:var(--accent-d);border-color:var(--accent-soft)"><span class="icon" style="font-size:15px">remove</span></button>
+    </div>`).join('');
+}
+function openNewGoalSheet(areaId){
+  document.getElementById('ngs-title').textContent='New goal';
+  document.getElementById('ngs-id').value='';
+  document.getElementById('ngs-title-inp').value='';
+  document.getElementById('ngs-why').value='';
+  document.getElementById('ngs-status').value='active';
+  if(areaId) document.getElementById('ngs-area').value=areaId;
+  metricData['ngs-metrics']=[]; renderMetricRows('ngs-metrics');
+  openSheet('sheet-new-goal');
+}
+function openEditGoalSheet(goalId){
+  const g=getGoal(goalId); if(!g) return;
+  document.getElementById('ngs-title').textContent='Edit goal';
+  document.getElementById('ngs-id').value=g.id;
+  document.getElementById('ngs-title-inp').value=g.title;
+  document.getElementById('ngs-area').value=g.areaId;
+  document.getElementById('ngs-why').value=g.why||'';
+  document.getElementById('ngs-status').value=g.status||'active';
+  metricData['ngs-metrics']=(g.metrics||[]).map(x=>({...x}));
+  renderMetricRows('ngs-metrics');
+  openSheet('sheet-new-goal');
+}
+function saveGoal(){
+  const id=document.getElementById('ngs-id').value;
+  const title=document.getElementById('ngs-title-inp').value.trim();
+  if(!title){alert('Please enter a goal title');return;}
+  const data={title,areaId:document.getElementById('ngs-area').value,why:document.getElementById('ngs-why').value.trim(),status:document.getElementById('ngs-status').value,metrics:(metricData['ngs-metrics']||[]).filter(r=>r.name.trim())};
+  if(id){Object.assign(DB.goals.find(g=>g.id===id),data);}
+  else{DB.goals.push({id:uid(),...data});}
+  saveDB(DB); closeSheet('sheet-new-goal');
+  if(currentView==='goals') renderGoals();
+  if(currentView==='goal-detail') renderGoalDetail(detailGoalId);
+  if(currentView==='today') renderToday();
+}
+
+// ─────────────────────────────────────────
+//  CYCLE FORM (preserved)
+// ─────────────────────────────────────────
+let phaseTacticRows=[[],[],[]];
+function addPhaseTactic(pi,val){
+  const id=uid();
+  phaseTacticRows[pi].push({id,text:val?.text||'',freq:val?.freq||'daily',days:val?.days||[],timesPerWeek:val?.timesPerWeek||3});
+  renderPhaseTactics(pi);
+}
+function removePhaseTactic(pi,id){ phaseTacticRows[pi]=phaseTacticRows[pi].filter(x=>x.id!==id); renderPhaseTactics(pi); }
+function autoEndDate(){
+  const s=document.getElementById('nss-start').value; if(!s) return;
+  const d=new Date(s+'T12:00'); d.setDate(d.getDate()+12*7-1);
+  document.getElementById('nss-end').value=d.toISOString().split('T')[0];
+}
+function renderPhaseTactics(pi){
+  const rows=phaseTacticRows[pi]; const el=document.getElementById(`nss-p${pi+1}-tactics`); if(!el) return;
+  el.innerHTML=rows.map((r,idx)=>{
+    const freq=r.freq||'daily';
+    let dayPicker='';
+    if(freq==='custom'){
+      dayPicker=`<div style="display:flex;gap:4px;margin-top:8px;align-items:center">
+        ${['M','T','W','T','F','S','S'].map((lbl,di)=>{
+          const sel=(r.days||[]).includes(di);
+          return `<span onclick="ptToggleDay(${pi},${idx},${di})" style="width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;background:${sel?'var(--ink)':'transparent'};color:${sel?'var(--canvas)':'var(--ink-2)'};border:1.5px solid ${sel?'var(--ink)':'var(--rule-2)'}">${lbl}</span>`;
+        }).join('')}
+      </div>`;
+    } else if(freq==='xperweek'){
+      dayPicker=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <label class="lbl" style="margin:0">Times per week</label>
+        <input type="number" min="1" max="7" value="${r.timesPerWeek||3}" oninput="ptSetTpw(${pi},${idx},this.value)" class="inp" style="width:70px;padding:6px 10px;font-size:13px"/>
+      </div>`;
+    }
+    return `<div class="card-inner2">
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" value="${(r.text||'').replace(/"/g,'&quot;')}" oninput="phaseTacticRows[${pi}][${idx}].text=this.value" placeholder="Action..." class="inp" style="padding:8px 10px;font-size:13px"/>
+        <select onchange="ptSetFreq(${pi},${idx},this.value)" class="inp" style="width:140px;padding:8px 10px;font-size:13px">
+          <option value="daily"${freq==='daily'?' selected':''}>Daily</option>
+          <option value="weekdays"${freq==='weekdays'?' selected':''}>Weekdays (M–F)</option>
+          <option value="xperweek"${freq==='xperweek'?' selected':''}>X times/week</option>
+          <option value="weekly"${freq==='weekly'?' selected':''}>Weekly</option>
+          <option value="onetime"${freq==='onetime'?' selected':''}>One-time</option>
+          <option value="custom"${freq==='custom'?' selected':''}>Custom days</option>
+        </select>
+        <button onclick="removePhaseTactic(${pi},'${r.id}')" class="btn-icon" style="color:var(--accent-d);border-color:var(--accent-soft);flex-shrink:0"><span class="icon" style="font-size:14px">remove</span></button>
+      </div>
+      ${dayPicker}
+    </div>`;
+  }).join('');
+}
+function ptSetFreq(pi,idx,val){
+  phaseTacticRows[pi][idx].freq=val;
+  if(val==='weekdays') phaseTacticRows[pi][idx].days=[0,1,2,3,4];
+  else if(val==='xperweek') { phaseTacticRows[pi][idx].days=[]; if(!phaseTacticRows[pi][idx].timesPerWeek) phaseTacticRows[pi][idx].timesPerWeek=3; }
+  else if(val!=='custom') phaseTacticRows[pi][idx].days=[];
+  renderPhaseTactics(pi);
+}
+function ptSetTpw(pi,idx,n){ phaseTacticRows[pi][idx].timesPerWeek=n; renderPhaseTactics(pi); }
+function ptToggleDay(pi,idx,dayIdx){
+  const days=phaseTacticRows[pi][idx].days||[]; const i=days.indexOf(dayIdx);
+  if(i>=0)days.splice(i,1); else days.push(dayIdx);
+  days.sort((a,b)=>a-b); phaseTacticRows[pi][idx].days=days; renderPhaseTactics(pi);
+}
+function _resetSprintSheet(){phaseTacticRows=[[],[],[]];[0,1,2].forEach(i=>renderPhaseTactics(i));}
+function _loadSprintSheetFields(sp,goalId){
+  document.getElementById('nss-id').value=sp?sp.id:'';
+  document.getElementById('nss-name').value=sp?sp.name:'';
+  document.getElementById('nss-outcome').value=sp?(sp.outcome||''):'';
+  const sel=document.getElementById('nss-goal');
+  sel.innerHTML=DB.goals.filter(g=>g.status==='active').map(g=>`<option value="${g.id}">${g.title}</option>`).join('');
+  if(goalId) sel.value=goalId; else if(sp) sel.value=sp.goalId;
+  document.getElementById('nss-start').value=sp?(sp.startDate||''):'';
+  document.getElementById('nss-end').value=sp?(sp.endDate||''):'';
+  [0,1,2].forEach(i=>{
+    const ph=sp?.phases?.[i];
+    document.getElementById(`nss-p${i+1}-name`).value=ph?.name||['Foundation','Build','Peak'][i];
+    document.getElementById(`nss-p${i+1}-desc`).value=ph?.desc||'';
+    phaseTacticRows[i]=(ph?.tactics||[]).map(t=>({...t}));
+    renderPhaseTactics(i);
+  });
+}
+function openNewSprintSheet(goalId){
+  if(!DB.goals.length){alert('Add a goal first.');openNewGoalSheet();return;}
+  document.getElementById('nss-sheet-title').textContent='New focus cycle';
+  document.getElementById('nss-save-btn').textContent='Start this cycle';
+  _resetSprintSheet(); _loadSprintSheetFields(null,goalId);
+  openSheet('sheet-new-sprint');
+}
+function openEditSprintSheet(sprintId){
+  const sp=DB.sprints.find(s=>s.id===sprintId); if(!sp) return;
+  document.getElementById('nss-sheet-title').textContent='Edit focus cycle';
+  document.getElementById('nss-save-btn').textContent='Save changes';
+  _loadSprintSheetFields(sp,null);
+  openSheet('sheet-new-sprint');
+}
+function saveSprint(){
+  const id=document.getElementById('nss-id').value;
+  const name=document.getElementById('nss-name').value.trim();
+  if(!name){alert('Please enter a cycle name');return;}
+  const goalId=document.getElementById('nss-goal').value;
+  if(!goalId){alert('Please select a goal');return;}
+  const phases=[0,1,2].map(i=>({
+    name:document.getElementById(`nss-p${i+1}-name`).value.trim()||['Foundation','Build','Peak'][i],
+    desc:document.getElementById(`nss-p${i+1}-desc`).value.trim(),
+    tactics:phaseTacticRows[i].filter(r=>r.text.trim()),
+  }));
+  const data={goalId,name,outcome:document.getElementById('nss-outcome').value.trim(),startDate:document.getElementById('nss-start').value,endDate:document.getElementById('nss-end').value,phases};
+  if(id){Object.assign(DB.sprints.find(s=>s.id===id),data);}
+  else{DB.sprints.push({id:uid(),weekChecks:{},reflections:{},...data});}
+  saveDB(DB); closeSheet('sheet-new-sprint');
+  if(currentView==='today') renderToday();
+  if(currentView==='cycles') renderCycles();
+  if(currentView==='goal-detail') renderGoalDetail(detailGoalId);
+}
+
+// ─────────────────────────────────────────
+//  REFLECTION
+// ─────────────────────────────────────────
+function openReflection(sprintId,week,sprintName){
+  const sp=DB.sprints.find(s=>s.id===sprintId); const ref=(sp?.reflections||{})[week]||{};
+  document.getElementById('ref-sprint-id').value=sprintId;
+  document.getElementById('ref-week').value=week;
+  document.getElementById('ref-week-num').textContent=week;
+  document.getElementById('ref-sprint-name').textContent=sprintName;
+  document.getElementById('ref-well').value=ref.well||'';
+  document.getElementById('ref-obstacles').value=ref.obstacles||'';
+  document.getElementById('ref-adjust').value=ref.adjust||'';
+  document.getElementById('ref-next').value=ref.next||'';
+  openSheet('sheet-reflection');
+}
+function saveReflection(){
+  const spId=document.getElementById('ref-sprint-id').value; const week=parseInt(document.getElementById('ref-week').value);
+  const sp=DB.sprints.find(s=>s.id===spId); if(!sp) return;
+  if(!sp.reflections) sp.reflections={};
+  sp.reflections[week]={well:document.getElementById('ref-well').value.trim(),obstacles:document.getElementById('ref-obstacles').value.trim(),adjust:document.getElementById('ref-adjust').value.trim(),next:document.getElementById('ref-next').value.trim(),savedAt:new Date().toISOString()};
+  saveDB(DB); closeSheet('sheet-reflection');
+  if(currentView==='today') renderToday(); if(currentView==='retros') renderRetros();
+}
+
+// ─────────────────────────────────────────
+//  DELETE
+// ─────────────────────────────────────────
+function confirmDelete(type,id){
+  let title,body;
+  if(type==='goal'){
+    const goal=getGoal(id); const sc=DB.sprints.filter(s=>s.goalId===id).length;
+    const wc=DB.sprints.filter(s=>s.goalId===id).reduce((a,s)=>a+Object.keys(s.weekChecks||{}).length,0);
+    title=`Delete "${goal?goal.title:'this goal'}"?`;
+    body=sc>0?`This will permanently remove the goal, ${sc} focus cycle${sc!==1?'s':''}, and ${wc} week${wc!==1?'s':''} of check-in data.`:'This will permanently remove the goal.';
+  } else {
+    const sp=DB.sprints.find(s=>s.id===id); const wc=Object.keys(sp?.weekChecks||{}).length;
+    title=`Delete "${sp?sp.name:'this cycle'}"?`;
+    body=wc>0?`This will permanently remove this cycle and ${wc} week${wc!==1?'s':''} of check-in data.`:'This will permanently remove this cycle.';
+  }
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-body').textContent=body+' This cannot be undone.';
+  document.getElementById('confirm-yes').onclick=()=>{
+    if(type==='goal'){DB.sprints=DB.sprints.filter(s=>s.goalId!==id);DB.goals=DB.goals.filter(g=>g.id!==id);}
+    else{DB.sprints=DB.sprints.filter(s=>s.id!==id);}
+    saveDB(DB); closeSheet('sheet-confirm');
+    if(currentView==='today') renderToday();
+    if(currentView==='goals') renderGoals();
+    if(currentView==='cycles') renderCycles();
+    if(currentView==='goal-detail') renderGoalDetail(detailGoalId);
+  };
+  openSheet('sheet-confirm');
+}
+
+// SHEET helpers
+function openSheet(id){document.getElementById(id).classList.remove('hidden');}
+function closeSheet(id){document.getElementById(id).classList.add('hidden');}
+function closeBdrop(e,id){if(e.target===e.currentTarget) closeSheet(id);}
+
+// ─────────────────────────────────────────
+//  ROADMAP
+// ─────────────────────────────────────────
+function renderRoadmap() {
+  const el = document.getElementById('roadmap-body');
+  if (!DB.goals.length) {
+    el.innerHTML = `<div class="empty"><h3>No goals yet.</h3><p>Add goals and cycles to see your roadmap.</p>
+      <button class="btn btn-accent" onclick="openNewGoalSheet()"><span class="icon" style="font-size:17px">add</span>Add a goal</button></div>`;
+    return;
+  }
+  const allDates = DB.sprints.flatMap(s => [s.startDate, s.endDate]).filter(Boolean).map(d => new Date(d+'T12:00'));
+  const today = new Date(); today.setHours(12,0,0,0);
+  const minDate = allDates.length ? new Date(Math.min(...allDates, today)) : today;
+  const maxDate = allDates.length ? new Date(Math.max(...allDates, today)) : today;
+  minDate.setDate(minDate.getDate() - 30); maxDate.setDate(maxDate.getDate() + 30);
+  const totalMs = maxDate - minDate;
+  function pctOf(dateStr){ const d = new Date(dateStr+'T12:00'); return Math.min(Math.max(((d - minDate) / totalMs) * 100, 0), 100); }
+  const months = [];
+  const cur = new Date(minDate); cur.setDate(1);
+  while (cur <= maxDate) { months.push({label:cur.toLocaleDateString('en-US',{month:'short'}),pct:((cur-minDate)/totalMs)*100}); cur.setMonth(cur.getMonth()+1); }
+  const todayPct = pctOf(today.toISOString().split('T')[0]);
+  const AREA_COLORS = { health:'var(--health)', career:'var(--career)', family:'var(--family)', personal:'var(--personal)', default:'var(--ink)' };
+
+  let html = `<div class="card" style="overflow-x:auto;padding:24px">
+    <div style="min-width:680px">
+      <div style="display:grid;grid-template-columns:200px 1fr;gap:0;margin-bottom:8px">
+        <div></div>
+        <div style="position:relative;height:24px">
+          ${months.map(m=>`<span style="position:absolute;left:${m.pct.toFixed(1)}%;transform:translateX(-50%);font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3)">${m.label}</span>`).join('')}
+        </div>
+      </div>`;
+
+  DB.goals.filter(g => g.status !== 'completed').forEach(g => {
+    const area = getArea(g.areaId);
+    const sprints = DB.sprints.filter(s => s.goalId === g.id && s.startDate && s.endDate);
+    const color = AREA_COLORS[g.areaId] || AREA_COLORS.default;
+    const sprintBars = sprints.map(sp => {
+      const left = pctOf(sp.startDate); const right = pctOf(sp.endDate);
+      const width = Math.max(right - left, 1);
+      const isAct = isSprintActive(sp); const opacity = isAct ? 1 : 0.4;
+      return `<div class="rm-bar" style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%;background:${color};opacity:${opacity}" title="${sp.name}">${sp.name}</div>`;
+    }).join('');
+    html += `<div style="display:grid;grid-template-columns:200px 1fr;gap:0;border-top:1px solid var(--rule)">
+      <div style="padding:18px 24px 18px 0">
+        <div class="serif" style="font-size:18px;letter-spacing:-0.015em;line-height:1.15">${g.title}</div>
+        <div class="lbl" style="margin-top:4px;font-size:9px">${area?area.short:''}</div>
+      </div>
+      <div style="position:relative;min-height:60px;padding:8px 0">
+        <div class="rm-today" style="left:${todayPct.toFixed(1)}%"></div>
+        ${sprintBars || `<span class="subtle" style="position:absolute;top:50%;transform:translateY(-50%);font-style:italic">no cycles yet</span>`}
+      </div>
+    </div>`;
+  });
+  html += `</div></div>`;
+  el.innerHTML = html;
+}
+
+// ─────────────────────────────────────────
+//  VISION BOARD
+// ─────────────────────────────────────────
+const VB_AREAS = [
+  { id:'health',   label:'Health & Fitness',     barClass:'health'   },
+  { id:'career',   label:'Career & Business',    barClass:'career'   },
+  { id:'family',   label:'Family',               barClass:'family'   },
+  { id:'personal', label:'Personal Development', barClass:'personal' },
+];
+function loadVBImages(){ return JSON.parse(localStorage.getItem('gs2_vb') || '[]'); }
+function saveVBImages(arr){
+  try { localStorage.setItem('gs2_vb', JSON.stringify(arr)); }
+  catch(e){ alert('Could not save: storage is full.'); throw e; }
+}
+let _vbView = 'areas';
+function setVBView(v){ _vbView = v; renderVisionBoard(); }
+
+function renderVisionBoard() {
+  const el = document.getElementById('visions-body');
+  const images = loadVBImages();
+  const totalGoals = DB.goals.filter(g=>g.status==='active').length;
+  const totalImgs = images.length;
+
+  let html = `<div class="vision-hero">
+    <div>
+      <div class="eyebrow">Volume One — Living manifest</div>
+      <h1 style="margin-top:18px"><em>Visions.</em></h1>
+      <p class="lead">A visual blueprint for the life you're building, one image and intention at a time.</p>
+    </div>
+    <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:14px">
+      <div class="meta"><strong>${totalGoals}</strong> active goals · <strong>${totalImgs}</strong> images</div>
+      <div class="view-tabs">
+        <button class="view-tab ${_vbView==='areas'?'active':''}" onclick="setVBView('areas')">By area</button>
+        <button class="view-tab ${_vbView==='collage'?'active':''}" onclick="setVBView('collage')">Collage</button>
+      </div>
+    </div>
+  </div>`;
+
+  if (_vbView === 'collage') html += renderVBCollage(images);
+  else                       html += renderVBAreas(images);
+  el.innerHTML = html;
+}
+
+function renderVBCollage(images) {
+  if (!images.length) {
+    return `<div class="photo-empty" onclick="openAddImageSheet('')" style="margin:48px 0">
+      <div class="serif" style="font-size:32px;letter-spacing:-0.02em;margin-bottom:8px">No photos yet.</div>
+      <div class="subtle">Add images to your life areas to see them collected here.</div>
+    </div>`;
+  }
+  const shuffled = [...images].sort(() => Math.random() - 0.5);
+  const photoItems = shuffled.map(img => {
+    const area = VB_AREAS.find(a=>a.id===img.area);
+    return `<div class="photo" onclick="openLightbox('${img.id}')">
+      <img src="${img.src}" alt="${img.caption||''}" loading="lazy"/>
+      ${img.caption ? `<div class="cap">${img.caption}</div>` : ''}
+    </div>`;
+  }).join('');
+  return `<div style="margin-top:24px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2 class="section">${images.length} image${images.length!==1?'s':''}</h2>
+        <p class="subtle">All your vision photos across every life area</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="openMeditation()"><span class="icon" style="font-size:14px">self_improvement</span>Meditate</button>
+        <button class="btn btn-accent btn-sm" onclick="openAddImageSheet('')"><span class="icon" style="font-size:14px">add</span>Add photo</button>
+      </div>
+    </div>
+    <div class="photo-masonry">${photoItems}</div>
+  </div>`;
+}
+
+function renderVBAreas(images) {
+  return VB_AREAS.map((area, i) => {
+    const visionText = DB.visions[area.id] || '';
+    const areaGoals = DB.goals.filter(g => g.areaId === area.id && g.status === 'active');
+    const imgs = images.filter(img => img.area === area.id);
+    const galleryHtml = imgs.length === 0
+      ? `<div class="photo-empty" onclick="openAddImageSheet('${area.id}')">
+          <div class="serif" style="font-size:24px;font-style:italic;margin-bottom:6px">No images yet.</div>
+          <div class="subtle">Click to add one.</div></div>`
+      : `<div class="photo-masonry ${imgs.length===1?'cols-1':imgs.length===2?'cols-2':''}">
+          ${imgs.map(img => `<div class="photo" onclick="openLightbox('${img.id}')">
+            <img src="${img.src}" alt="${img.caption||''}" loading="lazy"/>
+            ${img.caption?`<div class="cap">${img.caption}</div>`:''}
+          </div>`).join('')}
+          <div class="photo-add" onclick="openAddImageSheet('${area.id}')">+ Add photo</div>
+        </div>`;
+    return `<section class="vision-section">
+      <div class="vision-area-head">
+        <div class="label-col">
+          <div class="area ${area.barClass}" style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px">N°&nbsp;${String(i+1).padStart(2,'0')} · ${area.label}</div>
+          <h2 class="${area.barClass}">${area.label.split(' &')[0].split(' ')[0]}<br/><em>${area.label.split(' ').slice(-1)[0]}.</em></h2>
+        </div>
+        <div>
+          ${visionText
+            ? `<p class="vision-statement">${visionText}</p>`
+            : `<p class="vision-statement empty" onclick="openVisionSheet('${area.id}')">Write your ${area.label} vision — what does your ideal future look like here? <span style="color:var(--accent);font-weight:600">Add it →</span></p>`
+          }
+          <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="openVisionSheet('${area.id}')"><span class="icon" style="font-size:14px">edit_note</span>${visionText ? 'Edit' : 'Write'}</button>
+            <button class="btn btn-ghost btn-sm" onclick="openAddImageSheet('${area.id}')"><span class="icon" style="font-size:14px">add</span>Add photo</button>
+          </div>
+          ${areaGoals.length ? `<div class="vision-goals">
+            ${areaGoals.map(g => {
+              const activeSp = DB.sprints.find(s => s.goalId === g.id && isSprintActive(s));
+              return `<div class="vision-goal-chip" onclick="nav('goal-detail','${g.id}')">${g.title}${activeSp?`<span class="wk">Wk ${sprintCurrentWeek(activeSp)}/12</span>`:''}</div>`;
+            }).join('')}
+          </div>` : ''}
+        </div>
+      </div>
+      ${galleryHtml}
+    </section>`;
+  }).join('');
+}
+
+let _vbPreviewData = null;
+function openAddImageSheet(areaId) {
+  _vbPreviewData = null;
+  document.getElementById('vb-caption').value = '';
+  document.getElementById('vb-file-input').value = '';
+  document.getElementById('vb-preview').style.display = 'none';
+  document.getElementById('vb-upload-label').style.display = 'flex';
+  if (areaId) document.getElementById('vb-area').value = areaId;
+  openSheet('sheet-add-image');
+}
+function previewVBImage(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0]; const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 800; const scale = img.width > MAX ? MAX / img.width : 1;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      _vbPreviewData = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById('vb-preview-img').src = _vbPreviewData;
+      document.getElementById('vb-preview').style.display = 'block';
+      document.getElementById('vb-upload-label').style.display = 'none';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function clearVBPreview() {
+  _vbPreviewData = null;
+  document.getElementById('vb-preview').style.display = 'none';
+  document.getElementById('vb-upload-label').style.display = 'flex';
+  document.getElementById('vb-file-input').value = '';
+}
+function saveVBImage() {
+  if (!_vbPreviewData) { alert('Please select an image first.'); return; }
+  try {
+    const images = loadVBImages();
+    images.push({id:uid(),area:document.getElementById('vb-area').value,caption:document.getElementById('vb-caption').value.trim(),src:_vbPreviewData,addedAt:Date.now()});
+    saveVBImages(images);
+    _vbPreviewData = null;
+    closeSheet('sheet-add-image');
+    renderVisionBoard();
+  } catch(e){}
+}
+function openLightbox(imgId) {
+  const images = loadVBImages(); const img = images.find(x=>x.id===imgId); if(!img) return;
+  document.getElementById('lb-img').src = img.src;
+  document.getElementById('lb-caption').textContent = img.caption || '';
+  document.getElementById('lb-delete').onclick = () => {
+    saveVBImages(loadVBImages().filter(x=>x.id!==imgId));
+    closeSheet('sheet-lightbox'); renderVisionBoard();
+  };
+  openSheet('sheet-lightbox');
+}
+
+// ─────────────────────────────────────────
+//  MEDITATION
+// ─────────────────────────────────────────
+let _meditIdleTimer = null;
+function openMeditation() {
+  const images = loadVBImages();
+  if (!images.length) { alert('Add some photos to your vision board first.'); return; }
+  const shuffled = [...images].sort(() => Math.random() - 0.5);
+  const mosaic = document.getElementById('medit-mosaic'); const n = shuffled.length;
+  let cols, rows;
+  if      (n <= 2)  { cols = n;  rows = 1; }
+  else if (n <= 4)  { cols = 2;  rows = 2; }
+  else if (n <= 6)  { cols = 3;  rows = 2; }
+  else if (n <= 9)  { cols = 3;  rows = 3; }
+  else if (n <= 12) { cols = 4;  rows = 3; }
+  else if (n <= 16) { cols = 4;  rows = 4; }
+  else              { cols = 5;  rows = Math.ceil(n / 5); }
+  mosaic.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  mosaic.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+  mosaic.style.height = '100%';
+  const totalCells = cols * rows; mosaic.innerHTML = '';
+  for (let i = 0; i < totalCells; i++) {
+    const img = shuffled[i % shuffled.length]; const tile = document.createElement('div');
+    tile.className = 'medit-tile';
+    const delay = (i * 0.9).toFixed(1);
+    tile.innerHTML = `<img src="${img.src}" alt="" style="animation-delay:-${delay}s" loading="lazy"/>`;
+    mosaic.appendChild(tile);
+  }
+  const overlay = document.getElementById('meditation-overlay'); overlay.classList.add('open');
+  if (overlay.requestFullscreen) overlay.requestFullscreen().catch(()=>{});
+  _startMeditIdle();
+  overlay.addEventListener('mousemove', _onMeditActivity);
+  overlay.addEventListener('touchstart', _onMeditActivity);
+  document.addEventListener('keydown', _onMeditKey);
+}
+function closeMeditation() {
+  const overlay = document.getElementById('meditation-overlay'); overlay.classList.remove('open');
+  if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+  clearTimeout(_meditIdleTimer);
+  overlay.removeEventListener('mousemove', _onMeditActivity);
+  overlay.removeEventListener('touchstart', _onMeditActivity);
+  document.removeEventListener('keydown', _onMeditKey);
+  document.getElementById('medit-bar').classList.remove('hidden-ui');
+}
+function _onMeditKey(e){ if(e.key==='Escape') closeMeditation(); }
+function _startMeditIdle(){ clearTimeout(_meditIdleTimer); _meditIdleTimer=setTimeout(()=>{document.getElementById('medit-bar').classList.add('hidden-ui');},3000); }
+function _onMeditActivity(){ document.getElementById('medit-bar').classList.remove('hidden-ui'); _startMeditIdle(); }
+
+// ─────────────────────────────────────────
+//  RETROSPECTIVES
+// ─────────────────────────────────────────
+function selectRetroOpt(field, val, btn) {
+  const containerId = field === 'outcome' ? 'retro-outcome-opts' : 'retro-rating-opts';
+  document.querySelectorAll(`#${containerId} .retro-opt-btn`).forEach(b => {
+    b.style.background = 'transparent'; b.style.borderColor = 'var(--rule-2)'; b.style.color = 'var(--ink)';
+  });
+  btn.style.background = field === 'outcome' ? 'var(--ink)' : 'var(--accent-soft)';
+  btn.style.borderColor = field === 'outcome' ? 'var(--ink)' : 'var(--accent)';
+  btn.style.color = field === 'outcome' ? 'var(--canvas)' : 'var(--accent-d)';
+  document.getElementById(field === 'outcome' ? 'retro-outcome' : 'retro-rating').value = val;
+}
+function openRetro(sprintId) {
+  const sp = DB.sprints.find(s=>s.id===sprintId); if(!sp) return;
+  const retro = sp.retro || {};
+  document.getElementById('retro-sprint-id').value = sprintId;
+  document.getElementById('retro-sprint-name').textContent = sp.name;
+  document.getElementById('retro-win').value = retro.win || '';
+  document.getElementById('retro-lesson').value = retro.lesson || '';
+  document.getElementById('retro-carry').value = retro.carry || '';
+  document.getElementById('retro-outcome').value = retro.outcome || '';
+  document.getElementById('retro-rating').value = retro.rating || '';
+  document.querySelectorAll('#retro-outcome-opts .retro-opt-btn, #retro-rating-opts .retro-opt-btn').forEach(b => {
+    b.style.background='transparent'; b.style.borderColor='var(--rule-2)'; b.style.color='var(--ink)';
+  });
+  if (retro.outcome) { const btn=document.querySelector(`#retro-outcome-opts [data-val="${retro.outcome}"]`); if(btn){btn.style.background='var(--ink)';btn.style.borderColor='var(--ink)';btn.style.color='var(--canvas)';} }
+  if (retro.rating)  { const btn=document.querySelector(`#retro-rating-opts [data-val="${retro.rating}"]`); if(btn){btn.style.background='var(--accent-soft)';btn.style.borderColor='var(--accent)';btn.style.color='var(--accent-d)';} }
+  openSheet('sheet-retro');
+}
+function saveRetro() {
+  const spId = document.getElementById('retro-sprint-id').value;
+  const sp = DB.sprints.find(s=>s.id===spId); if(!sp) return;
+  sp.retro = {outcome:document.getElementById('retro-outcome').value,win:document.getElementById('retro-win').value.trim(),lesson:document.getElementById('retro-lesson').value.trim(),carry:document.getElementById('retro-carry').value.trim(),rating:document.getElementById('retro-rating').value,savedAt:new Date().toISOString()};
+  saveDB(DB); closeSheet('sheet-retro');
+  if (currentView === 'retros') renderRetros();
+  if (currentView === 'cycles') renderCycles();
+}
+function renderRetros() {
+  const el = document.getElementById('retros-list');
+  const completed = DB.sprints.filter(s => !isSprintActive(s) && !isSprintUpcoming(s) && s.startDate);
+  if (!completed.length) {
+    el.innerHTML = `<div class="empty"><h3>No completed cycles yet.</h3><p>Retrospectives appear here once a 12-week cycle finishes. Keep going.</p></div>`;
+    return;
+  }
+  const outcomeLabels = { yes:'Yes, fully', mostly:'Mostly', partial:'Partially', no:'Not really' };
+  const ratingEmojis = ['😞','😐','🙂','💪','🔥'];
+  el.innerHTML = completed.map(sp => {
+    const goal = getGoal(sp.goalId); const area = goal ? getArea(goal.areaId) : null;
+    const avg = avgExecScore(sp); const retro = sp.retro;
+    const hasRetro = retro && (retro.win || retro.lesson || retro.outcome);
+    const reflCount = Object.keys(sp.reflections || {}).length;
+    return `<div class="retro-card">
+      <div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-start">
+        <div style="flex:1;min-width:240px">
+          <div class="cycle-meta" style="margin-bottom:10px">
+            ${area?`<span class="area ${area.barClass}">${area.short}</span><span class="sep">·</span>`:''}
+            ${avg!==null?`<span>${avg}% avg</span><span class="sep">·</span>`:''}
+            ${hasRetro&&retro.rating?`<span>${ratingEmojis[parseInt(retro.rating)-1]} Rated ${retro.rating}/5</span>`:'<span>No rating</span>'}
+          </div>
+          <h3 class="serif" style="font-size:28px;letter-spacing:-0.02em">${sp.name}</h3>
+          ${goal?`<p class="subtle" style="margin-top:4px">↳ ${goal.title}</p>`:''}
+          <p class="subtle" style="margin-top:6px">${fmtDate(sp.startDate)} – ${fmtDate(sp.endDate)} · ${reflCount} reflection${reflCount!==1?'s':''}</p>
+        </div>
+        <button class="btn ${hasRetro?'btn-ghost':'btn-accent'} btn-sm" onclick="openRetro('${sp.id}')">
+          <span class="icon" style="font-size:14px">${hasRetro?'edit':'auto_awesome'}</span>${hasRetro?'Edit retro':'Write retro'}
+        </button>
+      </div>
+      ${hasRetro?`<div class="retro-grid">
+        ${retro.outcome?`<div class="retro-pull"><div class="l">Outcome</div><div class="v">${outcomeLabels[retro.outcome]||retro.outcome}</div></div>`:''}
+        ${retro.win?`<div class="retro-pull"><div class="l">Biggest win</div><div class="v">${retro.win}</div></div>`:''}
+        ${retro.lesson?`<div class="retro-pull"><div class="l">Key lesson</div><div class="v">${retro.lesson}</div></div>`:''}
+        ${retro.carry?`<div class="retro-pull"><div class="l">Carry forward</div><div class="v">${retro.carry}</div></div>`:''}
+      </div>`:`<div style="margin-top:14px;padding:14px 16px;border-radius:12px;background:var(--accent-soft);font-size:13px;color:var(--accent-d);font-weight:500">Take 5 minutes to close this chapter intentionally.</div>`}
+    </div>`;
+  }).join('');
+}
+function checkPendingRetros(){ /* no-op nudge in this redesign */ }
+
+// ─────────────────────────────────────────
+//  METRIC LOG
+// ─────────────────────────────────────────
+function openMetricLog(goalId, metricId, metricName) {
+  const g = getGoal(goalId); if (!g) return;
+  document.getElementById('mlog-goal-id').value = goalId;
+  document.getElementById('mlog-metric-id').value = metricId;
+  document.getElementById('mlog-metric-name').textContent = metricName;
+  document.getElementById('mlog-value').value = '';
+  document.getElementById('mlog-note').value = '';
+  document.getElementById('mlog-date').value = new Date().toISOString().split('T')[0];
+  const logs = (g.metricLogs || {})[metricId] || [];
+  const histEl = document.getElementById('mlog-history');
+  if (logs.length) {
+    histEl.innerHTML = `<div class="lbl">History</div>` +
+      [...logs].reverse().slice(0,8).map(entry => `
+        <div class="mlog-row">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="serif" style="font-size:20px;font-style:italic;color:var(--good)">${entry.value}</span>
+            <span class="subtle">${fmtDate(entry.date)}</span>
+          </div>
+          ${entry.note?`<span class="subtle" style="font-style:italic;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${entry.note}</span>`:''}
+        </div>`).join('');
+  } else { histEl.innerHTML = ''; }
+  openSheet('sheet-metric-log');
+}
+function saveMetricLog() {
+  const goalId = document.getElementById('mlog-goal-id').value;
+  const metricId = document.getElementById('mlog-metric-id').value;
+  const value = parseFloat(document.getElementById('mlog-value').value);
+  if (isNaN(value)) { alert('Enter a value.'); return; }
+  const g = getGoal(goalId); if (!g) return;
+  if (!g.metricLogs) g.metricLogs = {};
+  if (!g.metricLogs[metricId]) g.metricLogs[metricId] = [];
+  g.metricLogs[metricId].push({value,date:document.getElementById('mlog-date').value,note:document.getElementById('mlog-note').value.trim(),savedAt:new Date().toISOString()});
+  g.metricLogs[metricId].sort((a,b)=>a.date.localeCompare(b.date));
+  saveDB(DB); closeSheet('sheet-metric-log');
+  if (currentView==='goal-detail') renderGoalDetail(detailGoalId);
+}
+
+// ─────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('menu').classList.contains('open')) toggleMenu();
+});
+nav('today');
+</script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="goals-tweaks.jsx"></script>
+</body>
+</html>

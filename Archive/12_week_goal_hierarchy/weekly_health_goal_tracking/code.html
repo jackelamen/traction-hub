@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Weekly Execution - SereneLife</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-dim": "#41593f",
+                    "on-secondary-fixed-variant": "#645a4d",
+                    "tertiary-fixed-dim": "#eed9c6",
+                    "surface-tint": "#4d654a",
+                    "on-surface": "#2f342e",
+                    "on-surface-variant": "#5c605a",
+                    "tertiary": "#6c5c4d",
+                    "primary-container": "#ceeac7",
+                    "secondary": "#685d50",
+                    "on-primary-fixed": "#2e452c",
+                    "tertiary-container": "#fde7d3",
+                    "tertiary-fixed": "#fde7d3",
+                    "surface-container-low": "#f3f4ee",
+                    "surface-container-high": "#e7e9e2",
+                    "on-tertiary-container": "#635445",
+                    "primary-fixed-dim": "#c0dcba",
+                    "on-primary-container": "#40583d",
+                    "secondary-dim": "#5c5145",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-bright": "#fafaf5",
+                    "surface-container-highest": "#e0e4dc",
+                    "error": "#a73b21",
+                    "tertiary-dim": "#5f5142",
+                    "secondary-fixed-dim": "#e1d2c2",
+                    "outline": "#787c75",
+                    "on-tertiary": "#fff7f3",
+                    "background": "#fafaf5",
+                    "primary": "#4d654a",
+                    "inverse-primary": "#e2ffdb",
+                    "on-secondary-container": "#5a5043",
+                    "on-background": "#2f342e",
+                    "on-tertiary-fixed": "#504234",
+                    "secondary-fixed": "#efe0cf",
+                    "on-error-container": "#6e1400",
+                    "inverse-on-surface": "#9c9d99",
+                    "on-primary": "#eaffe3",
+                    "on-secondary-fixed": "#473e32",
+                    "error-container": "#fd795a",
+                    "surface-dim": "#d8dbd3",
+                    "on-secondary": "#fff8f2",
+                    "primary-fixed": "#ceeac7",
+                    "on-primary-fixed-variant": "#496246",
+                    "outline-variant": "#afb3ac",
+                    "surface": "#fafaf5",
+                    "inverse-surface": "#0d0f0c",
+                    "on-tertiary-fixed-variant": "#6d5e4f",
+                    "error-dim": "#791903",
+                    "secondary-container": "#efe0cf",
+                    "surface-variant": "#e0e4dc",
+                    "on-error": "#fff7f6",
+                    "surface-container": "#edefe8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {},
+            "fontFamily": {
+                    "headline": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "body": [
+                            "Be Vietnam Pro"
+                    ],
+                    "label": [
+                            "Be Vietnam Pro"
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background-color: theme('colors.surface');
+            color: theme('colors.on-surface');
+        }
+        h1, h2, h3, h4, h5, h6, .headline {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex antialiased">
+<!-- SideNavBar (Hidden on Mobile) -->
+<!-- TopNavBar (Visible on Mobile) -->
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full pb-24 px-6 md:px-12 lg:px-24 max-w-7xl mx-auto pt-16">
+<!-- Header Section -->
+<header class="mb-16 md:mb-24 mt-8 md:mt-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
+<div class="max-w-2xl">
+<p class="text-on-surface-variant font-medium tracking-wide uppercase text-sm mb-3 font-body">This Week's Canvas</p>
+<h1 class="text-4xl md:text-5xl lg:text-6xl font-headline font-extrabold text-on-surface tracking-tight mb-6 leading-tight">
+                    Health Execution
+                </h1>
+<p class="text-lg text-on-surface-variant font-body max-w-xl">
+                    Focus on lead indicators for cardiovascular health. Small, intentional actions build the foundation for long-term vitality.
+                </p>
+</div>
+<!-- Wellness Score Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-[0_12px_40px_rgba(47,52,46,0.06)] min-w-[240px] flex-shrink-0 border border-outline-variant/15">
+<div class="flex justify-between items-center mb-4">
+<span class="text-sm font-medium text-on-surface-variant">Wellness Score</span>
+<span class="material-symbols-outlined text-primary" data-icon="vital_signs">vital_signs</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline font-bold text-on-surface">85</span>
+<span class="text-sm text-on-surface-variant">/ 100</span>
+</div>
+<div class="mt-4 h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full" style="width: 85%;"></div>
+</div>
+<p class="text-xs text-on-surface-variant mt-3 text-right">Feeling grounded</p>
+</div>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-24">
+<!-- Lead Indicators Checklist -->
+<section>
+<div class="flex items-center gap-4 mb-8">
+<h2 class="text-2xl font-headline font-semibold text-on-surface tracking-tight">Lead Indicators</h2>
+<div class="h-px flex-1 bg-gradient-to-r from-outline-variant/20 to-transparent"></div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-8 relative overflow-hidden group">
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary-container/30 rounded-full blur-2xl group-hover:bg-primary-container/50 transition-all duration-700"></div>
+<h3 class="font-headline font-semibold text-lg mb-6 text-on-surface flex items-center justify-between">
+                Daily Habits
+                <span class="text-sm font-normal text-on-surface-variant">Consistency is key</span>
+</h3>
+<div class="space-y-4 font-body">
+<label class="flex items-start gap-4 cursor-pointer group/item bg-surface-container-lowest p-4 rounded-lg shadow-sm border border-outline-variant/10 hover:border-primary/30 transition-colors">
+<div class="relative flex items-center justify-center w-6 h-6 mt-0.5">
+<input checked="" class="peer appearance-none w-6 h-6 border-2 border-outline-variant/30 rounded-sm checked:bg-primary checked:border-primary transition-colors cursor-pointer bg-surface-container-lowest" type="checkbox"/>
+<span class="material-symbols-outlined text-on-primary absolute pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity text-sm" data-icon="check">check</span>
+</div>
+<span class="text-on-surface font-medium peer-checked:text-on-surface-variant peer-checked:line-through transition-all duration-300">30 Min Brisk Walk</span>
+</label>
+<label class="flex items-start gap-4 cursor-pointer group/item bg-surface-container-lowest p-4 rounded-lg shadow-sm border border-outline-variant/10 hover:border-primary/30 transition-colors">
+<div class="relative flex items-center justify-center w-6 h-6 mt-0.5">
+<input class="peer appearance-none w-6 h-6 border-2 border-outline-variant/30 rounded-sm checked:bg-primary checked:border-primary transition-colors cursor-pointer bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 focus:ring-offset-0 outline-none" type="checkbox"/>
+<span class="material-symbols-outlined text-on-primary absolute pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity text-sm" data-icon="check">check</span>
+</div>
+<span class="text-on-surface font-medium peer-checked:text-on-surface-variant peer-checked:line-through transition-all duration-300">Morning Yoga</span>
+</label>
+<label class="flex items-start gap-4 cursor-pointer group/item bg-surface-container-lowest p-4 rounded-lg shadow-sm border border-outline-variant/10 hover:border-primary/30 transition-colors">
+<div class="relative flex items-center justify-center w-6 h-6 mt-0.5">
+<input class="peer appearance-none w-6 h-6 border-2 border-outline-variant/30 rounded-sm checked:bg-primary checked:border-primary transition-colors cursor-pointer bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 focus:ring-offset-0 outline-none" type="checkbox"/>
+<span class="material-symbols-outlined text-on-primary absolute pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity text-sm" data-icon="check">check</span>
+</div>
+<span class="text-on-surface font-medium peer-checked:text-on-surface-variant peer-checked:line-through transition-all duration-300">Healthy Meal Prep</span>
+</label>
+<label class="flex items-start gap-4 cursor-pointer group/item bg-surface-container-lowest p-4 rounded-lg shadow-sm border border-outline-variant/10 hover:border-primary/30 transition-colors">
+<div class="relative flex items-center justify-center w-6 h-6 mt-0.5">
+<input class="peer appearance-none w-6 h-6 border-2 border-outline-variant/30 rounded-sm checked:bg-primary checked:border-primary transition-colors cursor-pointer bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 focus:ring-offset-0 outline-none" type="checkbox"/>
+<span class="material-symbols-outlined text-on-primary absolute pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity text-sm" data-icon="check">check</span>
+</div>
+<span class="text-on-surface font-medium peer-checked:text-on-surface-variant peer-checked:line-through transition-all duration-300">Hydration (2L)</span>
+</label>
+</div>
+</div>
+</section>
+<!-- Goal Progress Area -->
+<section>
+<div class="flex items-center gap-4 mb-8">
+<h2 class="text-2xl font-headline font-semibold text-on-surface tracking-tight">Goal Progress</h2>
+<div class="h-px flex-1 bg-gradient-to-r from-outline-variant/20 to-transparent"></div>
+</div>
+<div class="space-y-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 shadow-sm">
+<div class="flex justify-between items-center mb-2">
+<label class="font-headline font-semibold text-on-surface">Weekly Cardio Minutes</label>
+<span class="text-primary font-medium">120 mins</span>
+</div>
+<p class="text-sm text-on-surface-variant mb-4">Target: 150 mins this week</p>
+<input class="w-full h-2 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary" max="100" min="0" type="range" value="80"/>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 shadow-sm">
+<div class="flex justify-between items-center mb-2">
+<label class="font-headline font-semibold text-on-surface">Resting Heart Rate</label>
+<span class="text-primary font-medium">70 bpm</span>
+</div>
+<p class="text-sm text-on-surface-variant mb-4">Target: 68 bpm avg</p>
+<input class="w-full h-2 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary" max="100" min="0" type="range" value="60"/>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/15 shadow-sm">
+<div class="flex justify-between items-center mb-2">
+<label class="font-headline font-semibold text-on-surface">Active Days</label>
+<span class="text-primary font-medium">4 Days</span>
+</div>
+<p class="text-sm text-on-surface-variant mb-4">Target: 5 active days</p>
+<input class="w-full h-2 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary" max="100" min="0" type="range" value="80"/>
+</div>
+</div>
+</section>
+</div>
+<!-- Weekly Reflection Form -->
+<section class="bg-surface-container-lowest rounded-[2rem] p-8 md:p-12 shadow-[0_12px_40px_rgba(47,52,46,0.06)] relative overflow-hidden border border-outline-variant/15">
+<!-- Decorative gradient background -->
+<div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-surface-container-lowest opacity-50 pointer-events-none"></div>
+<div class="relative z-10 flex flex-col md:flex-row gap-12 items-start">
+<div class="md:w-1/3">
+<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container mb-6">
+<span class="material-symbols-outlined icon-fill" data-icon="psychiatry">psychiatry</span>
+</div>
+<h3 class="text-2xl font-headline font-bold text-on-surface mb-4 tracking-tight">Weekly Reflection</h3>
+<p class="text-on-surface-variant font-body">Take a deep breath and listen to your body. Observe your patterns without judgment. How did you balance exertion and physical recovery this week?</p>
+</div>
+<div class="md:w-2/3 w-full space-y-6">
+<div>
+<label class="block text-sm font-medium text-on-surface-variant mb-2">What went well?</label>
+<textarea class="w-full bg-surface-container-high text-on-surface placeholder-on-surface-variant/50 rounded-xl px-4 py-3 border border-transparent focus:border-primary/20 focus:bg-surface-container-highest focus:ring-0 outline-none transition-all font-body resize-none" placeholder="Celebrate the small wins..." rows="3"></textarea>
+</div>
+<div>
+<label class="block text-sm font-medium text-on-surface-variant mb-2">Obstacles encountered</label>
+<textarea class="w-full bg-surface-container-high text-on-surface placeholder-on-surface-variant/50 rounded-xl px-4 py-3 border border-transparent focus:border-primary/20 focus:bg-surface-container-highest focus:ring-0 outline-none transition-all font-body resize-none" placeholder="What got in the way?" rows="3"></textarea>
+</div>
+<div>
+<label class="block text-sm font-medium text-on-surface-variant mb-2">Adjust Intention for Next Week</label>
+<input class="w-full bg-surface-container-high text-on-surface placeholder-on-surface-variant/50 rounded-xl px-4 py-3 border border-transparent focus:border-primary/20 focus:bg-surface-container-highest focus:ring-0 outline-none transition-all font-body" placeholder="e.g., Prioritize rest over completion..." type="text"/>
+</div>
+<div class="flex justify-end pt-4">
+<button class="bg-secondary-container text-on-secondary-container px-6 py-3 rounded-full font-medium font-body hover:bg-secondary-fixed-dim transition-colors flex items-center gap-2">
+                    Save Reflection
+                    <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body></html>

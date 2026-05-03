@@ -1,0 +1,641 @@
+{
+  "visions": [
+    {
+      "area": "health",
+      "content": "I want to be the strongest, fastest, most physically Dad my son could ever want."
+    },
+    {
+      "area": "family",
+      "content": "I want my family to regularly travel the world and see places and people the would normally only see on TV."
+    },
+    {
+      "area": "work",
+      "content": "I want to be so financially successful that it would show my family that the time, effort, and money they put into supporting me was not in vain."
+    }
+  ],
+  "goals": [
+    {
+      "local_id": "mo375j9atnh9",
+      "title": "Improve my strength & cardiovascular health",
+      "area": "health",
+      "why": "If my son ever wants to do sports, I don't want to be the old Dad who couldn't run with him or play with him like he wants.",
+      "status": "active"
+    },
+    {
+      "local_id": "mo6t939hu1n6",
+      "title": "I will take my family on a vacation this year.",
+      "area": "family",
+      "why": "I believe a lot of inspiration comes from seeing new things.  I want that for my family.",
+      "status": "paused"
+    },
+    {
+      "local_id": "mocfgbl45xj0",
+      "title": "I will fix my anterior pelvic tilt and walk with good posture.",
+      "area": "health",
+      "why": "When I look at myself in the mirror, I see my belly and my butt poking out... I'm not pleased with that.  Yes, a lot of that is fat.  I'm working on that too.  but, I noticed, when I forcefully correct my posture by squeezing my abs and my butt... I look much better.  I don't want to have Auntie booty anymore!",
+      "status": "active"
+    },
+    {
+      "local_id": "mocim2hmxtip",
+      "title": "I will create a habit of keeping my room clean and organized",
+      "area": "personal",
+      "why": "In Zen Buddhism, they say the state of your room is a reflection of the state of your mind.  If that is the case... my mind is an absolute mess!  I need to fix that.",
+      "status": "active"
+    }
+  ],
+  "metrics": [
+    {
+      "local_id": "mo36v20ew0jd",
+      "goal_local_id": "mo375j9atnh9",
+      "name": "100m Sprint",
+      "type": "Duration",
+      "target": "15 Sec.",
+      "sort_order": 0
+    },
+    {
+      "local_id": "mo6r74xf4oa0",
+      "goal_local_id": "mo375j9atnh9",
+      "name": "Strict Form Pullups",
+      "type": "Number",
+      "target": "12 reps",
+      "sort_order": 1
+    },
+    {
+      "local_id": "mo6r7koftq1v",
+      "goal_local_id": "mo375j9atnh9",
+      "name": "Strict Form Pushups",
+      "type": "Number",
+      "target": "50 reps",
+      "sort_order": 2
+    },
+    {
+      "local_id": "mo6t89wk7f3l",
+      "goal_local_id": "mo6t939hu1n6",
+      "name": "Da Nang Travel Money",
+      "type": "Currency",
+      "target": "3,000,000 KRW",
+      "sort_order": 0
+    },
+    {
+      "local_id": "mocff7cuqg8y",
+      "goal_local_id": "mocfgbl45xj0",
+      "name": "Posture Correction",
+      "type": "Percentage",
+      "target": "100%",
+      "sort_order": 0
+    },
+    {
+      "local_id": "mocimd5rbsyn",
+      "goal_local_id": "mocim2hmxtip",
+      "name": "Maintain an orderly room",
+      "type": "Frequency",
+      "target": "Weekly",
+      "sort_order": 0
+    }
+  ],
+  "logs": [
+    {
+      "metric_local_id": "mo6r7koftq1v",
+      "goal_local_id": "mo375j9atnh9",
+      "log_date": "2026-04-26",
+      "value": 30.0,
+      "note": "I tested this just before bed.  Not sure if that effected my results."
+    },
+    {
+      "metric_local_id": "mo6r74xf4oa0",
+      "goal_local_id": "mo375j9atnh9",
+      "log_date": "2026-04-27",
+      "value": 5.0,
+      "note": "I didn't sleep well yesterday.  I believe I could have done more."
+    }
+  ],
+  "sprints": [
+    {
+      "local_id": "mo37gaa0x8e2",
+      "goal_local_id": "mo375j9atnh9",
+      "name": "Q2 The Baseline",
+      "outcome": "Hit 85% Execution Each Week",
+      "start_date": "2026-04-20",
+      "end_date": "2026-07-12",
+      "week_checks": {
+        "1": {
+          "mo5x6gfweovh": true,
+          "mo5sxprd6lai": true,
+          "mo5syf5g5gdt": true,
+          "mo5sxprd6lai_2": true,
+          "mo5sxprd6lai_3": true,
+          "mo5sxprd6lai_4": true,
+          "mo5syf5g5gdt_4": true,
+          "mo5syf5g5gdt_2": true,
+          "mo5syf5g5gdt_1": true,
+          "mo5syf5g5gdt_0": true,
+          "mo5yelwmacuj_4": true,
+          "mo5yelwmacuj_2": true,
+          "mo5yelwmacuj_0": true,
+          "mo5yizpcxvjy_4": true,
+          "mo5yizpcxvjy_2": true,
+          "mo5yizpcxvjy_0": true,
+          "mo5zzhls7b8c_4": true
+        },
+        "2": {
+          "mo5syf5g5gdt_0": false,
+          "mo5yelwmacuj_0": true,
+          "mo5yizpcxvjy_0": true,
+          "mo5sxprd6lai_2": false,
+          "mo5syf5g5gdt_1": false,
+          "mo5yelwmacuj_2": false,
+          "mo5yizpcxvjy_2": false,
+          "mo5syf5g5gdt_2": false,
+          "mo5sxprd6lai_3": false,
+          "mo5sxprd6lai_4": false,
+          "mo5zzhls7b8c_4": false,
+          "mo5syf5g5gdt_3": false,
+          "mo5syf5g5gdt_4": false,
+          "mo5yelwmacuj_4": false,
+          "mo5yizpcxvjy_4": false,
+          "mo5x6gfweovh": false
+        }
+      },
+      "reflections": {
+        "1": {
+          "well": "I completed all of my walking tasks this commitments.  I'm very proud of myself.  Now, I've started other fitness based commitments for my cardio in Week 2",
+          "obstacles": "Occasionally, I wasn't always in a place where walking was easy during workdays, but I managed.",
+          "next": "Let's complete everything 100%"
+        }
+      }
+    },
+    {
+      "local_id": "mocg3ngfrxlw",
+      "goal_local_id": "mocfgbl45xj0",
+      "name": "Q2 Posture Fix",
+      "outcome": "I will have reversed my anterior pelvic tilt and walk with an upright posture.",
+      "start_date": "2026-04-27",
+      "end_date": "2026-07-19",
+      "week_checks": {},
+      "reflections": {}
+    },
+    {
+      "local_id": "mocitwnb8f4u",
+      "goal_local_id": "mocim2hmxtip",
+      "name": "Q2 Clean Slate Habit",
+      "outcome": "By week 12, I will have created a habit of keeping my room clean and organized.",
+      "start_date": "2026-04-26",
+      "end_date": "2026-07-18",
+      "week_checks": {
+        "1": {
+          "mocintghcbvc": true,
+          "mocirvxc9ne3": true
+        }
+      },
+      "reflections": {}
+    }
+  ],
+  "phases": [
+    {
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 0,
+      "name": "Foundation",
+      "description": "Creating the habit of moving"
+    },
+    {
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 1,
+      "name": "Build",
+      "description": "Ramping up my cardio"
+    },
+    {
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 2,
+      "name": "Peak",
+      "description": "Bring it on home!"
+    },
+    {
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 0,
+      "name": "Foundation",
+      "description": "Focus: Mobilizing the front, waking up the back.\\nWalking Cue: During your walks, focus on \"tucking your tail\" slightly and engaging your core as if someone were about to poke your stomach."
+    },
+    {
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 1,
+      "name": "Build",
+      "description": "Focus: Increasing resistance and core control.\\nWalking Cue: Walk at a slightly faster pace. Focus on \"driving\" from your glutes rather than pulling with your hip flexors."
+    },
+    {
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 2,
+      "name": "Integration",
+      "description": "Focus: Making neutral posture your \"new normal.\"\\nWalking Cue: Practice \"Active Glute Engagement.\" On every stride, feel the glute of the trailing leg push you forward."
+    },
+    {
+      "sprint_local_id": "mocitwnb8f4u",
+      "phase_index": 0,
+      "name": "Foundation",
+      "description": "Maintain a 100% \"Ready State\" bedroom for 12 consecutive weeks."
+    },
+    {
+      "sprint_local_id": "mocitwnb8f4u",
+      "phase_index": 1,
+      "name": "Build the Habit",
+      "description": "Maintain a 100% \"Ready State\" bedroom for 12 consecutive weeks (continued)."
+    },
+    {
+      "sprint_local_id": "mocitwnb8f4u",
+      "phase_index": 2,
+      "name": "Peak",
+      "description": "Maintain a 100% \"Ready State\" bedroom for 12 consecutive weeks (continued)."
+    }
+  ],
+  "tactics": [
+    {
+      "local_id": "mo5sxprd6lai",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 0,
+      "text": "Complete at least 3 morning walks per week",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 0
+    },
+    {
+      "local_id": "mo5syf5g5gdt",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 0,
+      "text": "10,000 Steps per workday",
+      "freq": "weekdays",
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "times_per_week": null,
+      "sort_order": 1
+    },
+    {
+      "local_id": "mo5x6gfweovh",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 0,
+      "text": "60,000 Steps per week",
+      "freq": "weekly",
+      "days": [],
+      "times_per_week": null,
+      "sort_order": 2
+    },
+    {
+      "local_id": "mo5yelwmacuj",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 0,
+      "text": "100 pushups per workout day",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 3
+    },
+    {
+      "local_id": "mo5yizpcxvjy",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 0,
+      "text": "30 pull ups per workout day",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 4
+    },
+    {
+      "local_id": "mo5zzhls7b8c",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 0,
+      "text": "20 second power walks x 4 on morning walk days",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 5
+    },
+    {
+      "local_id": "mo5sywv3m9oe",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 1,
+      "text": "Complete at least 3 morning walks per week",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 0
+    },
+    {
+      "local_id": "mo5x709v5438",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 1,
+      "text": "60,000 Steps per week",
+      "freq": "weekly",
+      "days": [],
+      "times_per_week": null,
+      "sort_order": 1
+    },
+    {
+      "local_id": "mo5x709v90r4",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 1,
+      "text": "10,000 Steps per workday",
+      "freq": "weekdays",
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "times_per_week": null,
+      "sort_order": 2
+    },
+    {
+      "local_id": "mo5zw2mkyyvl",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 1,
+      "text": "125 pushups per workout day (5x25)",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 3
+    },
+    {
+      "local_id": "mo5zx7nfx4gx",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 1,
+      "text": "40 pull ups on workout days (5 x 8)",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 4
+    },
+    {
+      "local_id": "mo5zyd1nfm2j",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 1,
+      "text": "20 second runs (60%) 90 second breaks (x 3) on morning walk days",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 5
+    },
+    {
+      "local_id": "mo601upo4yl4",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 2,
+      "text": "Complete at least 3 morning walks per week",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 0
+    },
+    {
+      "local_id": "mo6022ax5mnt",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 2,
+      "text": "60,000 Steps per week",
+      "freq": "weekly",
+      "days": [],
+      "times_per_week": null,
+      "sort_order": 1
+    },
+    {
+      "local_id": "mo602659govp",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 2,
+      "text": "10,000 Steps per workday",
+      "freq": "weekdays",
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "times_per_week": null,
+      "sort_order": 2
+    },
+    {
+      "local_id": "mo6029cfxcu1",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 2,
+      "text": "150 pushups per workout day (5x30)",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 3
+    },
+    {
+      "local_id": "mo60bsbknx1w",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 2,
+      "text": "50 pull ups on workout days (10 x 5)",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 4
+    },
+    {
+      "local_id": "mo60ceznyies",
+      "sprint_local_id": "mo37gaa0x8e2",
+      "phase_index": 2,
+      "text": "20 second runs all out 90 second breaks (x 3) on morning walk days",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 5
+    },
+    {
+      "local_id": "mocg0l7pjtml",
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 0,
+      "text": "Daily Desk Habit: Set a timer for every 60 minutes. Stand up and perform a 30-second standing hip flexor stretch",
+      "freq": "weekdays",
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "times_per_week": null,
+      "sort_order": 0
+    },
+    {
+      "local_id": "mocg278skxoj",
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 0,
+      "text": "Cat-Cow (10 reps): Focus specifically on the \"tucking\" motion of the tailbone.",
+      "freq": "daily",
+      "days": [],
+      "times_per_week": null,
+      "sort_order": 1
+    },
+    {
+      "local_id": "mocg2nt2hgmm",
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 0,
+      "text": "Deadbugs (3 sets of 10): Focus on keeping your lower back pressed flat against the floor.",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 2
+    },
+    {
+      "local_id": "mocg36t0dskk",
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 0,
+      "text": "Glute Bridges (3 sets of 15): Squeeze your glutes hard at the top without arching your back.",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 3
+    },
+    {
+      "local_id": "mocg44qv3fiz",
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 1,
+      "text": "Daily Desk Habit: Introduce \"Glute Squeezes\" while sitting. Every hour, squeeze your glutes for 10 seconds to combat \"gluteal amnesia.\"",
+      "freq": "weekdays",
+      "days": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "times_per_week": null,
+      "sort_order": 0
+    },
+    {
+      "local_id": "mocg4hy1lgep",
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 1,
+      "text": "Planks (3 sets, max hold): Maintain a \"Posterior Pelvic Tilt\" (hollow body) throughout the hold. Do not let your back sag.",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 1
+    },
+    {
+      "local_id": "mocg5c3qx66n",
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 1,
+      "text": "Bulgarian Split Squats: Excellent for stretching the hip flexor of the back leg while strengthening the front leg.",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 2
+    },
+    {
+      "local_id": "mocg5ovv8w49",
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 1,
+      "text": "Bird-Dogs (3 sets of 12): Focus on stability. Do not let your hips rotate or your back arch as your limbs extend.",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 3
+    },
+    {
+      "local_id": "mocg8ogluwow",
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 2,
+      "text": "Romanian Deadlifts: Focus on the \"hinge\" and the stretch in the hamstrings, which are often lengthened and weak in APT.",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 0
+    },
+    {
+      "local_id": "mocg9881oipx",
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 2,
+      "text": "Weighted Glute Bridges or Hip Thrusts: Increase the load to solidify glute strength.",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 1
+    },
+    {
+      "local_id": "mocg9yzs7cn1",
+      "sprint_local_id": "mocg3ngfrxlw",
+      "phase_index": 2,
+      "text": "Pallof Press: A \"standing core\" exercise that teaches you to resist rotation and maintain a neutral spine.",
+      "freq": "xperweek",
+      "days": [],
+      "times_per_week": 3,
+      "sort_order": 2
+    },
+    {
+      "local_id": "mocintghcbvc",
+      "sprint_local_id": "mocitwnb8f4u",
+      "phase_index": 0,
+      "text": "Spend time on Saturday/Sunday doing the \"Big Clean\" to get to your baseline.",
+      "freq": "onetime",
+      "days": [],
+      "times_per_week": null,
+      "sort_order": 0
+    },
+    {
+      "local_id": "mocio5kpgrsz",
+      "sprint_local_id": "mocitwnb8f4u",
+      "phase_index": 0,
+      "text": "Before getting into bed, spend 5 minutes putting away clothes and clearing surfaces.",
+      "freq": "daily",
+      "days": [],
+      "times_per_week": null,
+      "sort_order": 1
+    },
+    {
+      "local_id": "mocirvxc9ne3",
+      "sprint_local_id": "mocitwnb8f4u",
+      "phase_index": 0,
+      "text": " Spend 15 minutes every Sunday resetting any clutter that crept in during the week.",
+      "freq": "weekly",
+      "days": [],
+      "times_per_week": null,
+      "sort_order": 2
+    },
+    {
+      "local_id": "mociqm5xnkgc",
+      "sprint_local_id": "mocitwnb8f4u",
+      "phase_index": 1,
+      "text": "Before getting into bed, spend 5 minutes putting away clothes and clearing surfaces.",
+      "freq": "daily",
+      "days": [],
+      "times_per_week": null,
+      "sort_order": 0
+    },
+    {
+      "local_id": "mocir8sbgnvp",
+      "sprint_local_id": "mocitwnb8f4u",
+      "phase_index": 1,
+      "text": " Spend 15 minutes every Sunday resetting any clutter that crept in during the week.",
+      "freq": "weekly",
+      "days": [],
+      "times_per_week": null,
+      "sort_order": 1
+    },
+    {
+      "local_id": "mocir4g7tuua",
+      "sprint_local_id": "mocitwnb8f4u",
+      "phase_index": 2,
+      "text": "Before getting into bed, spend 5 minutes putting away clothes and clearing surfaces.",
+      "freq": "daily",
+      "days": [],
+      "times_per_week": null,
+      "sort_order": 0
+    },
+    {
+      "local_id": "mocirj7xb531",
+      "sprint_local_id": "mocitwnb8f4u",
+      "phase_index": 2,
+      "text": " Spend 15 minutes every Sunday resetting any clutter that crept in during the week.",
+      "freq": "weekly",
+      "days": [],
+      "times_per_week": null,
+      "sort_order": 1
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "edgex-migration",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Migration scripts for The EDGEx — Goals data from localStorage to Supabase",
+  "scripts": {
+    "migrate": "node edge_goals_migrate.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0"
+  }
+}
