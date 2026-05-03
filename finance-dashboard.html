@@ -1232,11 +1232,41 @@ function checkFinanceSession() {
   return (Date.now() - parseInt(ts)) < FINANCE_SESSION_MAX;
 }
 
-// Auth gate — redirect before any rendering
-(function authGate() {
-  const session = getSession();
-  if (!session) { window.location.href = 'login.html'; return; }
-  if (!checkFinanceSession()) { window.location.href = 'finance-login.html'; return; }
+async function refreshSessionIfNeeded() {
+  const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+  if (!s.access_token) return null;
+  const now = Math.floor(Date.now() / 1000);
+  const expiresAt = s.expires_at || 0;
+  if (expiresAt > now + 300) return s;
+  if (!s.refresh_token) return expiresAt > now ? s : null;
+  try {
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: s.refresh_token })
+    });
+    if (!res.ok) return expiresAt > now ? s : null;
+    const data = await res.json();
+    if (!data.access_token) return expiresAt > now ? s : null;
+    const next = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || s.refresh_token,
+      expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+      user: data.user || s.user
+    };
+    localStorage.setItem('sb_session', JSON.stringify(next));
+    return next;
+  } catch(e) {
+    return expiresAt > now ? s : null;
+  }
+}
+
+// Auth gate — redirect before any data loading
+const authReady = (async function authGate() {
+  const session = await refreshSessionIfNeeded();
+  if (!session) { window.location.href = 'login.html'; return null; }
+  if (!checkFinanceSession()) { window.location.href = 'finance-login.html'; return null; }
+  return session;
 })();
 
 function getAuthHeaders() {
@@ -1249,8 +1279,6 @@ function getAuthHeaders() {
     'Prefer': 'resolution=merge-duplicates',
   };
 }
-
-const SB_HEADERS = getAuthHeaders();
 
 function getSbUserId() {
   const session = getSession();
@@ -1567,7 +1595,7 @@ async function migrateLocalToSupabase() {
   try {
     const res = await fetch(`${SB_URL}/rest/v1/finance_transactions`, {
       method: 'POST',
-      headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      headers: { ...getAuthHeaders(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify(rows),
     });
     if (res.ok) {
@@ -1613,6 +1641,8 @@ function switchSection(name, btn) {
 // INIT
 // ════════════════════════════════════════════════════════════════════
 window.onload = async () => {
+  const session = await authReady;
+  if (!session) return;
   await loadData();
   await migrateLocalToSupabase();
   pushLocalPlanningToSupabase();
