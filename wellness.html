@@ -551,6 +551,14 @@ async function syncFromSupabase() {
     });
   } catch(e) { console.warn('[Wellness] sync failed', e); }
 }
+const _sbPullThrottled = (() => {
+  let busy = false;
+  return () => {
+    if (busy) return Promise.resolve();
+    busy = true;
+    return syncFromSupabase().finally(() => { busy = false; });
+  };
+})();
 async function doLogout() {
   try {
     const s = JSON.parse(_lsGet('sb_session') || '{}');
@@ -561,8 +569,8 @@ async function doLogout() {
   window.location.href = 'login.html';
 }
 function _startPeriodicSync() {
-  setInterval(pushAllToSupabase, 60000);
-  setInterval(async () => { await syncFromSupabase(); db = loadData(); writeSummary(); renderToday(); }, 30000);
+  setInterval(_sbPushThrottled, 60000);
+  setInterval(async () => { await _sbPullThrottled(); db = loadData(); writeSummary(); renderToday(); }, 30000);
 }
 
 const RESET_TOOLS = [

@@ -10127,6 +10127,14 @@ async function pullAndRefresh() {
   renderCarryoverBanner();
   renderWeeklyIntentionHero();
 }
+const _sbPullThrottled = (() => {
+  let busy = false;
+  return () => {
+    if (busy) return Promise.resolve();
+    busy = true;
+    return pullAndRefresh().finally(() => { busy = false; });
+  };
+})();
 
 // ═══════════════════════════════════════════════════════════════
 // GOAL STACK
@@ -10823,9 +10831,9 @@ syncFromSupabase().finally(() => {
   bootApp();
   _sbBootComplete = true; // now allow writes to trigger uploads
   // Push local state to cloud every 60s (safety net)
-  setInterval(pushAllToSupabase, 60000);
+  setInterval(_sbPushThrottled, 60000);
   // Pull fresh data from cloud every 30s (cross-device sync)
-  setInterval(pullAndRefresh, 30000);
+  setInterval(_sbPullThrottled, 30000);
 });
 </script>
 </body>

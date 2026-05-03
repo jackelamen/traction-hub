@@ -680,6 +680,14 @@ async function syncFromSupabase() {
     });
   } catch(e) { console.warn('[Health] sync failed', e); }
 }
+const _sbPullThrottled = (() => {
+  let busy = false;
+  return () => {
+    if (busy) return Promise.resolve();
+    busy = true;
+    return syncFromSupabase().finally(() => { busy = false; });
+  };
+})();
 async function doLogout() {
   try {
     const s = JSON.parse(_lsGet('sb_session') || '{}');
@@ -691,8 +699,8 @@ async function doLogout() {
 }
 // Periodic safety net
 function _startPeriodicSync() {
-  setInterval(pushAllToSupabase, 60000);
-  setInterval(async () => { await syncFromSupabase(); db = loadData(); renderAll(); }, 30000);
+  setInterval(_sbPushThrottled, 60000);
+  setInterval(async () => { await _sbPullThrottled(); db = loadData(); renderAll(); }, 30000);
 }
 function getDailySignals() {
   try { return JSON.parse(localStorage.getItem(DAILY_SIGNALS_KEY) || '{}'); }
