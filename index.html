@@ -614,6 +614,45 @@ async function doLogout() {
 }
 
 const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.3
+const EDGEX_KV_USER_ID = 'jack_traction_hub_v1';
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchTractionValue(key) {
+  try {
+    const url = `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(EDGEX_KV_USER_ID)}&key=eq.${encodeURIComponent(key)}&select=value,updated_at&limit=1`;
+    const res = await fetchWithTimeout(url, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
+    });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    if (!rows.length) return null;
+    const value = rows[0].value;
+    localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    return value;
+  } catch(e) {
+    return null;
+  }
+}
+
+async function readSummary(key) {
+  const cloudValue = await fetchTractionValue(key);
+  if (cloudValue && typeof cloudValue === 'object') return cloudValue;
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : null;
+  } catch(e) {
+    return null;
+  }
+}
 
 // Animate rings on load
 function animateRing(selector, pct, delay = 300) {
@@ -632,15 +671,12 @@ animateRing('.work-ring', 100, 400);
 // Goals ring: pull from Supabase if available, else use demo 25%
 (async () => {
   let pct = 25, done = 6, total = 24;
-  try {
-    const stored = localStorage.getItem('edgex_goals_summary');
-    if (stored) {
-      const d = JSON.parse(stored);
-      done  = d.done  ?? done;
-      total = d.total ?? total;
-      pct   = total > 0 ? Math.round((done / total) * 100) : 0;
-    }
-  } catch(e) {}
+  const d = await readSummary('edgex_goals_summary');
+  if (d) {
+    done  = d.done  ?? done;
+    total = d.total ?? total;
+    pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+  }
 
   document.getElementById('goals-pct').textContent  = pct + '%';
   document.getElementById('goals-meta').textContent = done + '/' + total + ' done';
@@ -669,32 +705,26 @@ animateRing('.work-ring', 100, 400);
 })();
 
 // Health ring: read today's routine completions from edgex_health_summary
-(function() {
-  try {
-    const stored = localStorage.getItem('edgex_health_summary');
-    if (!stored) { animateRing('.health-ring', 0, 1000); return; }
-    const data = JSON.parse(stored);
-    const completed = data.checked ?? 0;
-    const total = data.total ?? 4;
-    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-    document.getElementById('health-pct').textContent = pct + '%';
-    document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
-    animateRing('.health-ring', pct, 1000);
-  } catch(e) { animateRing('.health-ring', 0, 1000); }
+(async function() {
+  const data = await readSummary('edgex_health_summary');
+  if (!data) { animateRing('.health-ring', 0, 1000); return; }
+  const completed = data.checked ?? 0;
+  const total = data.total ?? 4;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  document.getElementById('health-pct').textContent = pct + '%';
+  document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
+  animateRing('.health-ring', pct, 1000);
 })();
 
 // Wellness ring: read clarity score from edgex_wellness_summary
-(function() {
-  try {
-    const stored = localStorage.getItem('edgex_wellness_summary');
-    if (!stored) { animateRing('.wellness-ring', 0, 1200); return; }
-    const data = JSON.parse(stored);
-    const score = data.score ?? null;
-    if (score == null) { animateRing('.wellness-ring', 0, 1200); return; }
-    document.getElementById('wellness-pct').textContent = score;
-    document.getElementById('wellness-meta').textContent = 'clarity';
-    animateRing('.wellness-ring', score, 1200);
-  } catch(e) { animateRing('.wellness-ring', 0, 1200); }
+(async function() {
+  const data = await readSummary('edgex_wellness_summary');
+  if (!data) { animateRing('.wellness-ring', 0, 1200); return; }
+  const score = data.score ?? null;
+  if (score == null) { animateRing('.wellness-ring', 0, 1200); return; }
+  document.getElementById('wellness-pct').textContent = score;
+  document.getElementById('wellness-meta').textContent = 'clarity';
+  animateRing('.wellness-ring', score, 1200);
 })();
 </script>
 </body>
