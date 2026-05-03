@@ -2606,6 +2606,14 @@ async function sbGet(table, params = '') {
   return res.json();
 }
 
+function withTimeout(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 async function sbUpsert(table, body, onConflict) {
   const conflictParam = onConflict ? `?on_conflict=${encodeURIComponent(onConflict)}` : '';
   const url = `${SB_URL}/rest/v1/${table}${conflictParam}`;
@@ -3208,6 +3216,13 @@ function renderToday() {
     heroEl.innerHTML=''; statsEl.innerHTML=''; cyclesEl.innerHTML='';
     if (toggleEl) toggleEl.style.display='none';
     if (actionListEl) actionListEl.style.display='none';
+    empty.innerHTML = `
+      <div class="empty-icon"><span class="icon">rocket_launch</span></div>
+      <h3>Nothing in motion yet</h3>
+      <p>Start a 12-week Focus Cycle and your daily actions will show up here.</p>
+      <button class="btn btn-primary" onclick="openNewSprintSheet()">
+        <span class="icon" style="font-size:17px">add</span>Start a Cycle
+      </button>`;
     empty.style.display='block'; return;
   }
   empty.style.display='none';
@@ -5469,7 +5484,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     <h3>Loading your data…</h3>`;
 
   try {
-    DB = await loadDB();
+    DB = await withTimeout(loadDB(), 8000, 'Goals data load');
   } catch(e) {
     console.error('Failed to load from Supabase, falling back to localStorage:', e);
     DB = JSON.parse(localStorage.getItem('gs2_db') || 'null') || { visions:{}, goals:[], sprints:[] };
