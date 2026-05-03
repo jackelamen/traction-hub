@@ -3327,6 +3327,37 @@ const TIMER_KEY    = '30day-timer-v1';
 const SB_URL    = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 
+// ── Auth gate ────────────────────────────────────────────────────
+(async function checkAuth() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (!s.access_token) { window.location.href = 'login.html'; return; }
+    const now = Math.floor(Date.now() / 1000);
+    const expiresAt = s.expires_at || 0;
+    if (expiresAt > now + 300) return;
+    if (s.refresh_token) {
+      const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: s.refresh_token })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.access_token) {
+          localStorage.setItem('sb_session', JSON.stringify({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token || s.refresh_token,
+            expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+            user: data.user || s.user
+          }));
+          return;
+        }
+      }
+    }
+    if (expiresAt > 0 && expiresAt <= now) window.location.href = 'login.html';
+  } catch(e) { window.location.href = 'login.html'; }
+})();
+
 async function doLogout() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
@@ -3336,6 +3367,7 @@ async function doLogout() {
     });
   } catch(e) {}
   localStorage.removeItem('sb_session');
+  localStorage.removeItem('finance_session_ts');
   window.location.href = 'login.html';
 }
 
@@ -3372,6 +3404,16 @@ function _touchLsTimestamp(key) {
   _lsSet(LS_TIMESTAMPS_KEY, JSON.stringify(ts));
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Push ALL current localStorage keys to Supabase in one batch
 async function pushAllToSupabase() {
   const rows = [];
@@ -3384,7 +3426,7 @@ async function pushAllToSupabase() {
   }
   if (!rows.length) return;
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
+    const res = await fetchWithTimeout(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
       method: 'POST',
       headers: {
         'apikey': SB_ANON,
@@ -3423,7 +3465,7 @@ localStorage.setItem = function(key, value) {
 // On page load: pull all data from Supabase into localStorage, then boot the app
 async function syncFromSupabase() {
   try {
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=neq.${encodeURIComponent(OLD_DAILY_SIGNALS_KEY)}&select=key,value,updated_at`,
       { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' } }
     );

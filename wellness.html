@@ -456,12 +456,33 @@ const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const SB_USER_ID = 'jack_traction_hub_v1';
 
 // ── Auth gate ────────────────────────────────────────────────────
-(function checkAuth() {
+(async function checkAuth() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
-    if (!s.access_token || s.expires_at <= Math.floor(Date.now() / 1000)) {
-      window.location.href = 'login.html';
+    if (!s.access_token) { window.location.href = 'login.html'; return; }
+    const now = Math.floor(Date.now() / 1000);
+    const expiresAt = s.expires_at || 0;
+    if (expiresAt > now + 300) return;
+    if (s.refresh_token) {
+      const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: s.refresh_token })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.access_token) {
+          localStorage.setItem('sb_session', JSON.stringify({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token || s.refresh_token,
+            expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+            user: data.user || s.user
+          }));
+          return;
+        }
+      }
     }
+    if (expiresAt > 0 && expiresAt <= now) window.location.href = 'login.html';
   } catch(e) { window.location.href = 'login.html'; }
 })();
 
@@ -477,6 +498,15 @@ function _touchLsTimestamp(key) {
   const ts = _getLsTimestamps(); ts[key] = Date.now();
   _lsSet(LS_TIMESTAMPS_KEY, JSON.stringify(ts));
 }
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 async function pushAllToSupabase() {
   const rows = [];
   for (let i = 0; i < localStorage.length; i++) {
@@ -487,7 +517,7 @@ async function pushAllToSupabase() {
   }
   if (!rows.length) return;
   try {
-    await fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
+    await fetchWithTimeout(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
       method: 'POST',
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows })
@@ -506,7 +536,7 @@ localStorage.setItem = function(key, value) {
 async function syncFromSupabase() {
   try {
     const keyFilter = [STORAGE_KEY, SUMMARY_KEY].join(',');
-    const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
+    const res = await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return;
@@ -527,6 +557,7 @@ async function doLogout() {
     if (s.access_token) await fetch(`${SB_URL}/auth/v1/logout`, { method: 'POST', headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${s.access_token}` } });
   } catch(e) {}
   localStorage.removeItem('sb_session');
+  localStorage.removeItem('finance_session_ts');
   window.location.href = 'login.html';
 }
 function _startPeriodicSync() {
