@@ -2549,6 +2549,7 @@ const AREAS = [
 // ─────────────────────────────────────────
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
+const GOALS_KV_USER_ID = 'jack_traction_hub_v1';
 
 // ── Auth gate ────────────────────────────────────────────────────
 const authReady = (async function checkAuth() {
@@ -4724,11 +4725,13 @@ const VB_AREAS = [
 ];
 
 function loadVBImages() {
-  return JSON.parse(localStorage.getItem('gs2_vb') || '[]');
+  try { return JSON.parse(localStorage.getItem('gs2_vb') || '[]'); }
+  catch(e) { return []; }
 }
 function saveVBImages(arr) {
   try {
     localStorage.setItem('gs2_vb', JSON.stringify(arr));
+    syncGoalExtraToSupabase('gs2_vb', arr);
   } catch(e) {
     alert('Could not save: storage is full. Try removing some existing images first.');
     throw e;
@@ -4751,7 +4754,65 @@ function saveVisionMeta(areaId, field, value) {
   const meta = getVisionMeta(areaId);
   meta[field] = value || '';
   meta.updatedAt = new Date().toISOString();
-  localStorage.setItem(visionMetaKey(areaId), JSON.stringify(meta));
+  const key = visionMetaKey(areaId);
+  localStorage.setItem(key, JSON.stringify(meta));
+  syncGoalExtraToSupabase(key, meta);
+}
+
+function hasObjectData(value) {
+  return value && typeof value === 'object' && Object.values(value).some(v => String(v || '').trim());
+}
+
+function setGoalExtraLocal(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+async function syncGoalExtraToSupabase(key, value) {
+  try {
+    await fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
+      method: 'POST',
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rows: [{ user_id: GOALS_KV_USER_ID, key, value, updated_at: new Date().toISOString() }]
+      })
+    });
+  } catch(e) { console.warn('Goals extra sync failed:', e); }
+}
+
+async function syncGoalExtrasFromSupabase() {
+  const keys = ['gs2_vb', ...AREAS.map(a => visionMetaKey(a.id))];
+  try {
+    const keyFilter = keys.join(',');
+    const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(GOALS_KV_USER_ID)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
+    });
+    if (!res.ok) return;
+    const rows = await res.json();
+    const cloud = Object.fromEntries(rows.map(r => [r.key, r.value]));
+
+    const localImages = loadVBImages();
+    const cloudImages = Array.isArray(cloud.gs2_vb) ? cloud.gs2_vb : [];
+    const imageMap = new Map();
+    [...cloudImages, ...localImages].forEach(img => { if (img?.id) imageMap.set(img.id, img); });
+    const mergedImages = [...imageMap.values()].sort((a,b) => (a.addedAt || 0) - (b.addedAt || 0));
+    if (mergedImages.length) {
+      setGoalExtraLocal('gs2_vb', mergedImages);
+      if (mergedImages.length !== cloudImages.length) syncGoalExtraToSupabase('gs2_vb', mergedImages);
+    }
+
+    AREAS.forEach(area => {
+      const key = visionMetaKey(area.id);
+      const localMeta = getVisionMeta(area.id);
+      const cloudMeta = cloud[key] && typeof cloud[key] === 'object' ? cloud[key] : {};
+      const localTime = localMeta.updatedAt ? new Date(localMeta.updatedAt).getTime() : 0;
+      const cloudTime = cloudMeta.updatedAt ? new Date(cloudMeta.updatedAt).getTime() : 0;
+      if (hasObjectData(cloudMeta) && cloudTime >= localTime) {
+        setGoalExtraLocal(key, cloudMeta);
+      } else if (hasObjectData(localMeta)) {
+        syncGoalExtraToSupabase(key, localMeta);
+      }
+    });
+  } catch(e) { console.warn('Goals extra load failed:', e); }
 }
 
 function firstOpenActionForSprint(sp) {
@@ -5528,6 +5589,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       DB = cloudDB;
     }
+    await withTimeout(syncGoalExtrasFromSupabase(), 8000, 'Goals extras load');
   } catch(e) {
     console.error('Failed to load from Supabase, falling back to localStorage:', e);
     DB = loadLocalDB();
