@@ -2555,6 +2555,8 @@ const VB_IMAGES_KEY = 'gs2_vb';
 const VB_IMAGES_UPDATED_KEY = 'gs2_vb_updated_at';
 const GOAL_EXEMPT_UPDATED_KEY = 'goal-exempt-days-updated-at-v1';
 const GOALS_TODAY_NOTE_PREFIX = 'edgex_goals_today_note_';
+const DELETED_GOALS_KEY = 'goals_deleted_goal_ids_v1';
+const DELETED_SPRINTS_KEY = 'goals_deleted_sprint_ids_v1';
 
 // ── Auth gate ────────────────────────────────────────────────────
 const authReady = (async function checkAuth() {
@@ -2639,6 +2641,21 @@ async function sbPatch(table, match, body) {
   if (!res.ok) throw new Error(`SB PATCH ${table}: ${res.status} ${await res.text()}`);
 }
 
+function deletedIdSet(key) {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(key) || '[]'));
+  } catch(e) {
+    return new Set();
+  }
+}
+
+function rememberDeletedId(key, id) {
+  if (!id) return;
+  const ids = deletedIdSet(key);
+  ids.add(id);
+  try { localStorage.setItem(key, JSON.stringify([...ids])); } catch(e) {}
+}
+
 // ─────────────────────────────────────────
 //  LOAD FROM SUPABASE → in-memory DB
 // ─────────────────────────────────────────
@@ -2654,6 +2671,14 @@ async function loadDB() {
     sbGet('sprint_phases', '?select=id,sprint_id,phase_index,name,description&order=phase_index.asc'),
     sbGet('sprint_tactics','?select=id,local_id,sprint_id,phase_id,text,freq,days,times_per_week,sort_order&order=sort_order.asc'),
   ]);
+  const deletedGoals = deletedIdSet(DELETED_GOALS_KEY);
+  const deletedSprints = deletedIdSet(DELETED_SPRINTS_KEY);
+  const activeGoalRows = goalRows.filter(g => !deletedGoals.has(g.id) && !deletedGoals.has(g.local_id));
+  const activeSprintRows = sprintRows.filter(s => (
+    !deletedSprints.has(s.id) &&
+    !deletedSprints.has(s.local_id) &&
+    !deletedGoals.has(s.goal_id)
+  ));
 
   // Maps for joining
   const goalByUuid    = {};  // uuid → goal object (in DB format)
@@ -2668,7 +2693,7 @@ async function loadDB() {
   if (visions.work !== undefined && visions.career === undefined) visions.career = visions.work;
 
   // ── Goals ────────────────────────────────
-  const goals = goalRows.map(g => {
+  const goals = activeGoalRows.map(g => {
     // UI uses areaId; DB uses area. Map 'work' → 'career' for existing UI.
     const areaId = g.area === 'work' ? 'career' : g.area;
     const obj = {
@@ -2704,7 +2729,7 @@ async function loadDB() {
   }
 
   // ── Sprints ──────────────────────────────
-  const sprints = sprintRows.map(s => {
+  const sprints = activeSprintRows.map(s => {
     const goalObj = goalByUuid[s.goal_id];
     const obj = {
       id: s.local_id || s.id,
@@ -4582,11 +4607,23 @@ function confirmDelete(type,id){
   document.getElementById('confirm-yes').onclick=()=>{
     if(type==='goal'){
       const g=DB.goals.find(x=>x.id===id);
+      if(g){
+        rememberDeletedId(DELETED_GOALS_KEY, g.id);
+        rememberDeletedId(DELETED_GOALS_KEY, g._uuid);
+        DB.sprints.filter(s=>s.goalId===id).forEach(s=>{
+          rememberDeletedId(DELETED_SPRINTS_KEY, s.id);
+          rememberDeletedId(DELETED_SPRINTS_KEY, s._uuid);
+        });
+      }
       DB.sprints=DB.sprints.filter(s=>s.goalId!==id);
       DB.goals=DB.goals.filter(g=>g.id!==id);
       if(g?._uuid){ fetch(`${SB_URL}/rest/v1/goals?id=eq.${g._uuid}`,{method:'DELETE',headers:sbHeaders()}); }
     } else {
       const sp=DB.sprints.find(s=>s.id===id);
+      if(sp){
+        rememberDeletedId(DELETED_SPRINTS_KEY, sp.id);
+        rememberDeletedId(DELETED_SPRINTS_KEY, sp._uuid);
+      }
       DB.sprints=DB.sprints.filter(s=>s.id!==id);
       if(sp?._uuid){ fetch(`${SB_URL}/rest/v1/sprints?id=eq.${sp._uuid}`,{method:'DELETE',headers:sbHeaders()}); }
     }
