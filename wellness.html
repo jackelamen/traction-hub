@@ -66,6 +66,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter','Manrope',system
 .tab.active{background:var(--accent-light);color:var(--accent-dark)}
 .field{display:flex;flex-direction:column;gap:6px}
 .field label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+.form-section{margin-top:20px}
+.form-section-label{font-size:10px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.form-section-label::after{content:'';flex:1;height:1px;background:var(--border-med)}
 input,select,textarea{font-family:inherit;font-size:14px;border:1.5px solid var(--border-med);border-radius:10px;background:#f9fafb;color:var(--text);padding:10px 12px;outline:none;width:100%}
 textarea{resize:vertical;min-height:84px}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
@@ -272,26 +275,36 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </div>
     </div>
     <div class="card card-pad">
+      <div class="form-section-label">Basics</div>
       <div class="form-grid">
         <div class="field"><label>Date</label><input id="log-date" type="date"/></div>
         <div class="field"><label>Mood</label><select id="mood"><option value="">Choose</option><option value="1">Heavy</option><option value="2">Low</option><option value="3">Neutral</option><option value="4">Good</option><option value="5">Bright</option></select></div>
         <div class="field"><label>Dominant State</label><select id="state"><option value="">Choose</option><option>Calm</option><option>Focused</option><option>Scattered</option><option>Overwhelmed</option><option>Anxious</option><option>Restless</option><option>Confident</option><option>Flat</option><option>Grateful</option></select></div>
         <div class="field"><label>Sleep Impact</label><select id="sleep-impact"><option value="">Unknown</option><option value="helped">Helped</option><option value="neutral">Neutral</option><option value="hurt">Hurt</option></select></div>
       </div>
-      <div class="grid-3" style="margin-top:16px">
+      <div class="form-section">
+      <div class="form-section-label">Scores</div>
+      <div class="grid-3">
         <div class="field"><label>Stress</label><div class="range-row"><input id="stress" type="range" min="1" max="5" value="3" oninput="syncRangeLabel('stress')"/><div class="score-pill" id="stress-label">3</div></div></div>
         <div class="field"><label>Clarity</label><div class="range-row"><input id="clarity" type="range" min="1" max="5" value="3" oninput="syncRangeLabel('clarity')"/><div class="score-pill" id="clarity-label">3</div></div></div>
         <div class="field"><label>Groundedness</label><div class="range-row"><input id="grounded" type="range" min="1" max="5" value="3" oninput="syncRangeLabel('grounded')"/><div class="score-pill" id="grounded-label">3</div></div></div>
       </div>
-      <div class="grid-2" style="margin-top:16px">
+      </div>
+      <div class="form-section">
+      <div class="form-section-label">Reflection</div>
+      <div class="grid-2">
         <div class="field"><label>What is present?</label><textarea id="present" placeholder="A plain sentence about what is true right now."></textarea></div>
         <div class="field"><label>What would make today lighter?</label><textarea id="lighter" placeholder="One adjustment, support, boundary, or reset."></textarea></div>
       </div>
-      <div class="grid-2" style="margin-top:16px">
+      </div>
+      <div class="form-section">
+      <div class="form-section-label">Loop &amp; Reframe <span style="font-size:9px;font-weight:600;color:var(--text-3);letter-spacing:0">(optional)</span></div>
+      <div class="grid-2">
         <div class="field"><label>Looping Thought</label><textarea id="loop" placeholder="Optional: the thought that keeps repeating."></textarea></div>
         <div class="field"><label>Reframe</label><textarea id="reframe" placeholder="Optional: a kinder or more useful interpretation."></textarea></div>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
         <button class="btn btn-primary" onclick="saveCheckin()"><span class="icon" style="font-size:17px">save</span>Save Check-In</button>
         <button class="btn btn-secondary" onclick="sendLoopToInbox()"><span class="icon" style="font-size:17px">move_to_inbox</span>Send Loop to Inbox</button>
         <button class="btn btn-danger" onclick="deleteCheckin()"><span class="icon" style="font-size:17px">delete</span>Delete This Date</button>
