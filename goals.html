@@ -2551,13 +2551,13 @@ const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 
 // ── Auth gate ────────────────────────────────────────────────────
-(async function checkAuth() {
+const authReady = (async function checkAuth() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
-    if (!s.access_token) { window.location.href = 'login.html'; return; }
+    if (!s.access_token) { window.location.href = 'login.html'; return null; }
     const now = Math.floor(Date.now() / 1000);
     const expiresAt = s.expires_at || 0;
-    if (expiresAt > now + 300) return;
+    if (expiresAt > now + 300) return s;
     if (s.refresh_token) {
       const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
         method: 'POST',
@@ -2567,18 +2567,20 @@ const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
       if (res.ok) {
         const data = await res.json();
         if (data.access_token) {
-          localStorage.setItem('sb_session', JSON.stringify({
+          const next = {
             access_token: data.access_token,
             refresh_token: data.refresh_token || s.refresh_token,
             expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
             user: data.user || s.user
-          }));
-          return;
+          };
+          localStorage.setItem('sb_session', JSON.stringify(next));
+          return next;
         }
       }
     }
     if (expiresAt > 0 && expiresAt <= now) window.location.href = 'login.html';
-  } catch(e) { window.location.href = 'login.html'; }
+    return expiresAt > now ? s : null;
+  } catch(e) { window.location.href = 'login.html'; return null; }
 })();
 
 function getSession() {
@@ -5511,6 +5513,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     <h3>Loading your data…</h3>`;
 
   try {
+    const session = await authReady;
+    if (!session) return;
     const cloudDB = await withTimeout(loadDB(), 8000, 'Goals data load');
     const localDB = loadLocalDB();
     if (!hasGoalsData(cloudDB) && hasGoalsData(localDB)) {
