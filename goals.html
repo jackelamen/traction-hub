@@ -2550,6 +2550,7 @@ const AREAS = [
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const GOALS_KV_USER_ID = 'jack_traction_hub_v1';
+const GOALS_SUMMARY_KEY = 'edgex_goals_summary';
 const VB_IMAGES_KEY = 'gs2_vb';
 const VB_IMAGES_UPDATED_KEY = 'gs2_vb_updated_at';
 const GOAL_EXEMPT_UPDATED_KEY = 'goal-exempt-days-updated-at-v1';
@@ -3200,12 +3201,14 @@ function goalsTodayTotals() {
 function writeGoalsSummary() {
   try {
     const { done, total } = goalsTodayTotals();
-    localStorage.setItem('edgex_goals_summary', JSON.stringify({
+    const summary = {
       done,
       total,
       activeCycles: DB.sprints.filter(s => isSprintActive(s)).length,
       updatedAt: new Date().toISOString()
-    }));
+    };
+    localStorage.setItem(GOALS_SUMMARY_KEY, JSON.stringify(summary));
+    syncGoalExtraToSupabase(GOALS_SUMMARY_KEY, summary);
   } catch(e) {}
 }
 function scoreColor(s) {
