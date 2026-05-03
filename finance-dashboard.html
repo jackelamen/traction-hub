@@ -1431,11 +1431,22 @@ function uid(prefix = 'id') {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function mergeTransactions(localRows = [], cloudRows = []) {
+function mergeLoadedTransactions(localRows = [], cloudRows = []) {
   const byId = new Map();
   localRows.forEach(tx => { if (tx?.id) byId.set(tx.id, tx); });
   cloudRows.forEach(tx => { if (tx?.id) byId.set(tx.id, tx); });
   return [...byId.values()].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+}
+
+function mergeById(localRows = [], cloudRows = []) {
+  const byId = new Map();
+  localRows.forEach(item => { if (item?.id) byId.set(item.id, item); });
+  cloudRows.forEach(item => { if (item?.id) byId.set(item.id, item); });
+  return [...byId.values()];
+}
+
+function mergeBudgets(localBudgets = {}, cloudBudgets = {}) {
+  return { ...cloudBudgets, ...localBudgets };
 }
 
 // ── Local save (always keep as fast fallback) ────────────────────
@@ -1477,17 +1488,18 @@ async function sbLoadPlanning() {
     if (budgetRes.ok) {
       const rows = await budgetRes.json();
       if (rows.length) {
-        data.budgets = {};
-        rows.forEach(r => { data.budgets[r.month_key] = rowToBudget(r); });
+        const cloudBudgets = {};
+        rows.forEach(r => { cloudBudgets[r.month_key] = rowToBudget(r); });
+        data.budgets = mergeBudgets(data.budgets || {}, cloudBudgets);
       }
     }
     if (recurringRes.ok) {
       const rows = await recurringRes.json();
-      if (rows.length) data.recurring = rows.map(rowToRecurring);
+      if (rows.length) data.recurring = mergeById(data.recurring || [], rows.map(rowToRecurring));
     }
     if (savingsRes.ok) {
       const rows = await savingsRes.json();
-      if (rows.length) data.savingsGoals = rows.map(rowToSavings);
+      if (rows.length) data.savingsGoals = mergeById(data.savingsGoals || [], rows.map(rowToSavings));
     }
     saveLocal();
     syncSavingsGoalsToGoals();
@@ -1591,7 +1603,7 @@ async function loadData() {
     if (res.ok) {
       const rows = await res.json();
       if (rows.length) {
-        data.transactions = mergeTransactions(localTransactions, rows.map(rowToTx));
+        data.transactions = mergeLoadedTransactions(localTransactions, rows.map(rowToTx));
         data.lastUpdated  = new Date().toISOString();
         saveLocal();
       }
