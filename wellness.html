@@ -489,6 +489,7 @@ const SB_USER_ID = 'jack_traction_hub_v1';
 // ── Supabase sync ────────────────────────────────────────────────
 const _lsSet = localStorage.setItem.bind(localStorage);
 const _lsGet = localStorage.getItem.bind(localStorage);
+const _lsRemove = localStorage.removeItem.bind(localStorage);
 let _sbBootComplete = false;
 const NO_SYNC_KEYS = new Set(['sb_session', '_edgex_ls_timestamps', 'morning-setup-done', 'edgex_daily_signals_v1']);
 const LS_TIMESTAMPS_KEY = '_edgex_ls_timestamps';
@@ -516,6 +517,15 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
     clearTimeout(timer);
   }
 }
+async function deleteKeyFromSupabase(key) {
+  if (NO_SYNC_KEYS.has(key)) return;
+  try {
+    await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=eq.${encodeURIComponent(key)}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
+    });
+  } catch(e) { console.warn('[Wellness] delete key failed', key, e); }
+}
 async function pushAllToSupabase() {
   const rows = [];
   for (let i = 0; i < localStorage.length; i++) {
@@ -541,6 +551,12 @@ localStorage.setItem = function(key, value) {
   _lsSet(key, value);
   if (!NO_SYNC_KEYS.has(key)) _touchLsTimestamp(key);
   if (_sbBootComplete && !NO_SYNC_KEYS.has(key)) _sbPushThrottled();
+};
+localStorage.removeItem = function(key) {
+  _lsRemove(key);
+  if (NO_SYNC_KEYS.has(key)) return;
+  _touchLsTimestamp(key);
+  if (_sbBootComplete) deleteKeyFromSupabase(key);
 };
 async function syncFromSupabase() {
   try {

@@ -3390,6 +3390,7 @@ function getSbUserId() { return SB_USER_ID; }
 // Keep a direct reference to the original localStorage.setItem (used during boot hydration)
 const _lsSet = localStorage.setItem.bind(localStorage);
 const _lsGet = localStorage.getItem.bind(localStorage);
+const _lsRemove = localStorage.removeItem.bind(localStorage);
 let _sbBootComplete = false; // don't push during initial hydration
 
 // Track when each key was last written locally (epoch ms), so pull never clobbers newer local data
@@ -3433,6 +3434,22 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
     return await fetch(url, { ...options, signal: controller.signal });
   } finally {
     clearTimeout(timer);
+  }
+}
+
+async function deleteKeyFromSupabase(key) {
+  if (NO_SYNC_KEYS.has(key)) return;
+  try {
+    const res = await fetchWithTimeout(
+      `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=eq.${encodeURIComponent(key)}`,
+      {
+        method: 'DELETE',
+        headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
+      }
+    );
+    if (!res.ok) console.warn('[Supabase] delete key failed:', key, res.status, await res.text());
+  } catch(e) {
+    console.warn('[Supabase] delete key error:', key, e);
   }
 }
 
@@ -3482,6 +3499,13 @@ localStorage.setItem = function(key, value) {
   _lsSet(key, value);
   if (!NO_SYNC_KEYS.has(key)) _touchLsTimestamp(key);
   if (_sbBootComplete && !NO_SYNC_KEYS.has(key)) _sbPushThrottled();
+};
+
+localStorage.removeItem = function(key) {
+  _lsRemove(key);
+  if (NO_SYNC_KEYS.has(key)) return;
+  _touchLsTimestamp(key);
+  if (_sbBootComplete) deleteKeyFromSupabase(key);
 };
 
 // On page load: pull all data from Supabase into localStorage, then boot the app
