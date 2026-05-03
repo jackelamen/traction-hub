@@ -2875,6 +2875,33 @@ function saveDB(d) {
   try { localStorage.setItem('gs2_db', JSON.stringify(d)); } catch(_) {}
 }
 
+function loadLocalDB() {
+  try {
+    return JSON.parse(localStorage.getItem('gs2_db') || 'null') || { visions:{}, goals:[], sprints:[] };
+  } catch(e) {
+    return { visions:{}, goals:[], sprints:[] };
+  }
+}
+
+function hasGoalsData(d) {
+  if (!d) return false;
+  const hasVision = Object.values(d.visions || {}).some(v => String(v || '').trim());
+  return hasVision || (d.goals || []).length > 0 || (d.sprints || []).length > 0;
+}
+
+async function migrateLocalGoalsToSupabase(localDB) {
+  DB = localDB;
+  for (const [areaId, content] of Object.entries(DB.visions || {})) {
+    if (String(content || '').trim()) await syncVision(areaId);
+  }
+  for (const g of DB.goals || []) await syncGoal(g.id);
+  for (const g of DB.goals || []) {
+    for (const m of g.metrics || []) await syncMetricLog(g.id, m.id);
+  }
+  for (const sp of DB.sprints || []) await syncSprintFull(sp.id);
+  saveDB(DB);
+}
+
 let DB = { visions: {}, goals: [], sprints: [] };
 
 // ─────────────────────────────────────────
@@ -5484,10 +5511,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     <h3>Loading your data…</h3>`;
 
   try {
-    DB = await withTimeout(loadDB(), 8000, 'Goals data load');
+    const cloudDB = await withTimeout(loadDB(), 8000, 'Goals data load');
+    const localDB = loadLocalDB();
+    if (!hasGoalsData(cloudDB) && hasGoalsData(localDB)) {
+      document.getElementById('today-empty').innerHTML = `
+        <div class="empty-icon"><span class="icon">sync</span></div>
+        <h3>Restoring your local Goals data…</h3>`;
+      DB = localDB;
+      await withTimeout(migrateLocalGoalsToSupabase(localDB), 15000, 'Goals local restore');
+    } else {
+      DB = cloudDB;
+    }
   } catch(e) {
     console.error('Failed to load from Supabase, falling back to localStorage:', e);
-    DB = JSON.parse(localStorage.getItem('gs2_db') || 'null') || { visions:{}, goals:[], sprints:[] };
+    DB = loadLocalDB();
   }
 
   const first = DB.sprints.find(s => isSprintActive(s));
