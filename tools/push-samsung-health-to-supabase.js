@@ -4,10 +4,12 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const IMPORT_FILE = path.join(ROOT, 'samsung-health-last-6-months.import.json');
-const DAILY_SIGNALS_KEY = 'edgex_daily_signals_v1';
-const SB_URL = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
+const IMPORT_FILE = process.env.SAMSUNG_HEALTH_IMPORT_FILE
+  ? path.resolve(process.env.SAMSUNG_HEALTH_IMPORT_FILE)
+  : path.join(ROOT, 'samsung-health-last-30-days.import.json');
+const DAILY_SIGNALS_KEY = 'edgex_daily_signals_v2';
+const SB_URL = 'https://mdkyijbgvxedelcqcouu.supabase.co';
+const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const SB_USER_ID = 'jack_traction_hub_v1';
 
 async function fetchExistingSignals() {

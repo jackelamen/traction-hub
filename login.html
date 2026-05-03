@@ -211,8 +211,10 @@ body::after {
 <div class="footer-note">theedgex.com &nbsp;·&nbsp; personal operating system</div>
 
 <script>
-const SB_URL  = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
+const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
+const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
+const AUTH_TIMEOUT_MS = 15000;
+const SB_PROJECT_HOST = new URL(SB_URL).host;
 
 // ── Intercept recovery tokens before anything else ───────────────
 (function interceptRecovery() {
@@ -230,6 +232,11 @@ async function checkExistingSession() {
   if (!stored) return;
   try {
     const session = JSON.parse(stored);
+    if (!sessionMatchesProject(session)) {
+      localStorage.removeItem('sb_session');
+      localStorage.removeItem('finance_session_ts');
+      return;
+    }
     if (session.access_token && session.expires_at > Math.floor(Date.now() / 1000)) {
       window.location.href = 'index.html';
     }
@@ -248,27 +255,33 @@ async function doLogin() {
   const errEl    = document.getElementById('errorMsg');
 
   errEl.style.display = 'none';
+  document.getElementById('successMsg').style.display = 'none';
   if (!email || !password) { showError('Please enter your email and password.'); return; }
+  if (btn.disabled) return;
 
   btn.disabled = true;
   btn.textContent = 'Signing in...';
 
   try {
-    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
+    const { res, data } = await fetchAuthJson(`${SB_URL}/auth/v1/token?grant_type=password`, {
       method: 'POST',
       headers: {
         'apikey': SB_ANON,
+        'Authorization': `Bearer ${SB_ANON}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
-      showError(data.error_description || data.msg || 'Invalid email or password.');
-      btn.disabled = false;
-      btn.textContent = 'Sign In';
+      showError(authErrorMessage(data));
+      resetLoginButton();
+      return;
+    }
+
+    if (!data.access_token || !data.refresh_token) {
+      showError('Sign in did not return a valid session. Please try again.');
+      resetLoginButton();
       return;
     }
 
@@ -283,9 +296,52 @@ async function doLogin() {
     window.location.href = 'index.html';
 
   } catch(e) {
-    showError('Network error. Please try again.');
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
+    showError(e.name === 'AbortError'
+      ? 'Sign in timed out. Please check your connection and try again.'
+      : 'Network error. Please try again.');
+    resetLoginButton();
+  }
+}
+
+async function fetchAuthJson(url, options) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AUTH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    const text = await res.text();
+    let data = {};
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch(e) {
+        data = { msg: text };
+      }
+    }
+    return { res, data };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function authErrorMessage(data) {
+  return data?.error_description || data?.msg || data?.message || data?.error || 'Invalid email or password.';
+}
+
+function resetLoginButton() {
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = false;
+  btn.textContent = 'Sign In';
+}
+
+function sessionMatchesProject(session) {
+  const token = session?.access_token;
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (!payload.iss) return true;
+    return new URL(payload.iss).host === SB_PROJECT_HOST;
+  } catch(e) {
+    return false;
   }
 }
 
@@ -308,9 +364,9 @@ async function doForgotPassword() {
   if (!email) { showError('Enter your email address above first.'); return; }
 
   try {
-    const res = await fetch(`${SB_URL}/auth/v1/recover`, {
+    await fetchAuthJson(`${SB_URL}/auth/v1/recover`, {
       method: 'POST',
-      headers: { 'apikey': SB_ANON, 'Content-Type': 'application/json' },
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email,
         gotrue_meta_security: {},

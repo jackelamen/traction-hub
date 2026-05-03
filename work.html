@@ -3324,8 +3324,8 @@ const BREATH_KEY   = '30day-breath-v1';
 const TIMER_KEY    = '30day-timer-v1';
 
 // ── Supabase Sync ────────────────────────────────────────────────
-const SB_URL    = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
-const SB_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
+const SB_URL    = 'https://mdkyijbgvxedelcqcouu.supabase.co';
+const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 
 async function doLogout() {
   try {
@@ -3345,6 +3345,7 @@ const NO_SYNC_KEYS = new Set([
   'traction-device-id',      // old device ID, no longer used
   'morning-setup-done',      // sessionStorage flag, not relevant cross-device
   '_edgex_ls_timestamps',    // local write-time metadata — never push to cloud
+  'edgex_daily_signals_v1',  // oversized legacy Samsung Health import
 ]);
 
 // Everything else gets synced — no allowlist needed
@@ -3423,7 +3424,7 @@ localStorage.setItem = function(key, value) {
 async function syncFromSupabase() {
   try {
     const res = await fetch(
-      `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&select=key,value,updated_at`,
+      `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=neq.${encodeURIComponent(OLD_DAILY_SIGNALS_KEY)}&select=key,value,updated_at`,
       { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' } }
     );
     if (!res.ok) {
@@ -3631,7 +3632,8 @@ let currentSteps      = 0;   // latest cumulative step count from device
 const STEP_GOAL_KEY   = '30day-step-goal-v1';
 let STEP_GOAL         = parseInt(localStorage.getItem(STEP_GOAL_KEY) || '10000');
 const STEPS_KEY       = '30day-steps-v1';
-const DAILY_SIGNALS_KEY = 'edgex_daily_signals_v1';
+const DAILY_SIGNALS_KEY = 'edgex_daily_signals_v2';
+const OLD_DAILY_SIGNALS_KEY = 'edgex_daily_signals_v1';
 function getDailySignals() {
   try { return JSON.parse(localStorage.getItem(DAILY_SIGNALS_KEY) || '{}'); }
   catch(e) { return {}; }
@@ -7862,7 +7864,7 @@ function buildNotionProps(dateStr) {
   return props;
 }
 
-const NOTION_PROXY_URL = 'https://kthpsnaxkzmxjgbmychn.supabase.co/functions/v1/notion-sync';
+const NOTION_PROXY_URL = 'https://mdkyijbgvxedelcqcouu.supabase.co/functions/v1/notion-sync';
 
 // Clear a stale Notion page ID for a date (e.g. after manually deleting the page).
 // Next sync will create a fresh page instead of trying to update the deleted one.

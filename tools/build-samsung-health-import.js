@@ -6,10 +6,15 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const EXPORT_ROOT = path.join(ROOT, 'Samsung Health jsons', 'jsons');
 const CSV_ROOT = path.join(ROOT, 'Samsung Health jsons', 'csvs');
-const OUT_FILE = path.join(ROOT, 'samsung-health-last-6-months.import.json');
+const OUT_FILE = process.env.SAMSUNG_HEALTH_IMPORT_OUT
+  ? path.resolve(process.env.SAMSUNG_HEALTH_IMPORT_OUT)
+  : path.join(ROOT, 'samsung-health-last-30-days.import.json');
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
-const WINDOW_START = '2025-11-02';
-const WINDOW_END = '2026-05-02';
+const DAYS_TO_KEEP = Number(process.env.SAMSUNG_HEALTH_DAYS || 30);
+const WINDOW_END = process.env.SAMSUNG_HEALTH_WINDOW_END || dateKey(Date.now());
+const WINDOW_START = process.env.SAMSUNG_HEALTH_WINDOW_START || dateKey(
+  new Date(`${WINDOW_END}T00:00:00+09:00`).getTime() - (DAYS_TO_KEEP - 1) * 24 * 60 * 60 * 1000
+);
 
 function dateKey(ms) {
   return new Date(ms + KST_OFFSET_MS).toISOString().slice(0, 10);
@@ -119,10 +124,6 @@ function csvDate(value) {
   return null;
 }
 
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
 function importTimedArrays(days, summary, dirName, mapper) {
   const dir = path.join(EXPORT_ROOT, dirName);
   const files = walkJsonFiles(dir);
@@ -152,7 +153,6 @@ function importTimedArrays(days, summary, dirName, mapper) {
     const day = ensureDay(days, date);
     for (const [key, stat] of Object.entries(metrics)) {
       day[key] = rounded(stat.sum / stat.count, key.includes('Spo2') ? 0 : 1);
-      day[`${key}Samples`] = stat.count;
       if (key === 'spo2') day.spo2Min = rounded(stat.min, 0);
     }
   }
@@ -195,7 +195,6 @@ function importExercise(days, summary) {
 
     const day = ensureDay(days, date);
     day.exerciseMins = (Number(day.exerciseMins) || 0) + minutes;
-    day.exerciseSessions = (Number(day.exerciseSessions) || 0) + 1;
     usedFiles += 1;
   }
 
@@ -213,12 +212,6 @@ function importDailyStepsCsv(days, summary) {
     if (!Number.isFinite(steps)) continue;
     const day = ensureDay(days, date);
     day.steps = Math.round(steps);
-    day.stepGoal = Number(row.recommendation) || day.stepGoal;
-    day.distanceM = rounded(Number(row.distance), 1);
-    day.walkStepCount = Math.round(Number(row.walk_step_count) || 0);
-    day.runStepCount = Math.round(Number(row.run_step_count) || 0);
-    day.activeTimeMins = Math.round((Number(row.active_time) || 0) / 60000);
-    day.stepCalories = rounded(Number(row.calorie), 1);
     used += 1;
   }
   summary[name] = { file: file ? path.basename(file) : null, rows: rows.length, usedRows: used };
@@ -235,13 +228,6 @@ function importActivityDaySummaryCsv(days, summary) {
     if (!Number.isFinite(steps)) continue;
     const day = ensureDay(days, date);
     day.steps = Math.round(steps);
-    day.distanceM = rounded(Number(row.distance), 1);
-    day.activeTimeMins = Math.round((Number(row.active_time) || 0) / 60000);
-    day.walkTimeMins = Math.round((Number(row.walk_time) || 0) / 60000);
-    day.runTimeMins = Math.round((Number(row.run_time) || 0) / 60000);
-    day.floorCount = Number(row.floor_count) || null;
-    day.activityCalories = rounded(Number(row.calorie), 1);
-    day.moveHourlyCount = Number(row.move_hourly_count) || null;
     used += 1;
   }
   summary[name] = { file: file ? path.basename(file) : null, rows: rows.length, usedRows: used };
@@ -258,15 +244,6 @@ function importSleepCsv(days, summary) {
     if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) continue;
     const day = ensureDay(days, date);
     day.sleepHours = rounded(durationMinutes / 60, 2);
-    day.sleepScore = Number(row.sleep_score) || null;
-    day.sleepEfficiency = Number(row.efficiency) || null;
-    day.sleepType = row.sleep_type !== '' ? Number(row.sleep_type) : null;
-    const scoreForQuality = Number(row.sleep_score);
-    if (Number.isFinite(scoreForQuality) && scoreForQuality > 0) {
-      day.sleepQuality = clamp(Math.round(scoreForQuality / 20), 1, 5);
-    } else if (row.quality !== '') {
-      day.sleepQuality = clamp(Math.round(Number(row.quality) / 20), 1, 5);
-    }
     used += 1;
   }
   summary[name] = { file: file ? path.basename(file) : null, rows: rows.length, usedRows: used };
@@ -283,19 +260,13 @@ function importExerciseCsv(days, summary) {
     const durationMs = Number(row['com.samsung.health.exercise.duration']);
     const minutes = Math.round(durationMs / 60000);
     if (!Number.isFinite(minutes) || minutes < 1 || minutes > 8 * 60) continue;
-    if (!totals[date]) totals[date] = { mins: 0, sessions: 0, calories: 0, distance: 0 };
+    if (!totals[date]) totals[date] = { mins: 0 };
     totals[date].mins += minutes;
-    totals[date].sessions += 1;
-    totals[date].calories += Number(row['com.samsung.health.exercise.calorie']) || 0;
-    totals[date].distance += Number(row['com.samsung.health.exercise.distance']) || 0;
     used += 1;
   }
   for (const [date, total] of Object.entries(totals)) {
     const day = ensureDay(days, date);
     day.exerciseMins = total.mins;
-    day.exerciseSessions = total.sessions;
-    day.exerciseCalories = rounded(total.calories, 1);
-    day.exerciseDistanceM = rounded(total.distance, 1);
   }
   summary[name] = { file: file ? path.basename(file) : null, rows: rows.length, usedRows: used, days: Object.keys(totals).length };
 }
@@ -342,8 +313,7 @@ const dailySignals = {};
 const summary = {};
 
 importTimedArrays(dailySignals, summary, 'com.samsung.health.hrv', record => ({
-  hrvRmssd: Number(record.rmssd),
-  hrvSdnn: Number(record.sdnn)
+  hrvRmssd: Number(record.rmssd)
 }));
 
 importTimedArrays(dailySignals, summary, 'com.samsung.health.respiratory_rate', record => {

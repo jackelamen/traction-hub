@@ -451,8 +451,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 <script>
 const STORAGE_KEY = 'edgex_wellness_v1';
 const SUMMARY_KEY = 'edgex_wellness_summary';
-const SB_URL  = 'https://kthpsnaxkzmxjgbmychn.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0aHBzbmF4a3pteGpnYm15Y2huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTQ2MDMsImV4cCI6MjA4NzY5MDYwM30.Gz0bppkjT3GXgSVRGhXRtkUPXRiQ-U2skWcN2aTEyRI';
+const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
+const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const SB_USER_ID = 'jack_traction_hub_v1';
 
 // ── Auth gate ────────────────────────────────────────────────────
@@ -469,7 +469,7 @@ const SB_USER_ID = 'jack_traction_hub_v1';
 const _lsSet = localStorage.setItem.bind(localStorage);
 const _lsGet = localStorage.getItem.bind(localStorage);
 let _sbBootComplete = false;
-const NO_SYNC_KEYS = new Set(['sb_session', '_edgex_ls_timestamps', 'morning-setup-done']);
+const NO_SYNC_KEYS = new Set(['sb_session', '_edgex_ls_timestamps', 'morning-setup-done', 'edgex_daily_signals_v1']);
 const LS_TIMESTAMPS_KEY = '_edgex_ls_timestamps';
 function _getLsTimestamps() { try { return JSON.parse(_lsGet(LS_TIMESTAMPS_KEY) || '{}'); } catch(e) { return {}; } }
 function _touchLsTimestamp(key) {
@@ -505,7 +505,8 @@ localStorage.setItem = function(key, value) {
 };
 async function syncFromSupabase() {
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&select=key,value,updated_at`, {
+    const keys = [STORAGE_KEY, SUMMARY_KEY].join(',');
+    const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=in.(${encodeURIComponent(keys)})&select=key,value,updated_at`, {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return;
