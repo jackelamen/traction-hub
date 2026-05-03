@@ -18,10 +18,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 28px 20px 32px;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Radial glows */
@@ -49,67 +50,110 @@ body::after {
   z-index: 0;
 }
 
-/* ── Hero text ── */
-.hero {
-  text-align: center;
-  margin-bottom: 32px;
+.app-shell {
+  width: min(1280px, 100%);
   position: relative;
   z-index: 1;
 }
 
-.hero-title {
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.brand-block {
+  min-width: 0;
+}
+
+.brand-title {
   font-family: 'Inter', sans-serif;
   font-weight: 900;
-  font-size: clamp(52px, 9vw, 88px);
-  letter-spacing: -2px;
+  font-size: clamp(36px, 6vw, 62px);
+  letter-spacing: 0;
   line-height: 1;
   color: #fff;
   text-transform: uppercase;
 }
 
-.hero-title .edge { color: #fff; }
-.hero-title .bold { font-weight: 900; }
-.hero-title .x-letter {
+.brand-title .bold { font-weight: 900; }
+.brand-title .x-letter {
   color: #7c6ff7;
   font-style: italic;
 }
 
-.hero-sub {
+.brand-sub {
   font-family: 'Inter', sans-serif;
   font-weight: 600;
   font-size: clamp(10px, 1.4vw, 13px);
   letter-spacing: 0.26em;
   color: rgba(255,255,255,0.38);
   text-transform: uppercase;
-  margin-top: 16px;
+  margin-top: 12px;
+}
+
+.dashboard-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.66);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #34d399;
+  box-shadow: 0 0 12px rgba(52,211,153,0.7);
 }
 
 /* ── Module cards ── */
 .modules {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
   width: 100%;
-  max-width: 1280px;
-  position: relative;
-  z-index: 1;
 }
 
 @media (max-width: 1100px) {
-  .modules { grid-template-columns: repeat(3, 1fr); max-width: 900px; }
+  .modules { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 720px) {
-  .modules { grid-template-columns: 1fr 1fr; max-width: 600px; }
+  .topbar { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .dashboard-status { justify-content: flex-start; }
+  .modules { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 480px) {
-  .modules { grid-template-columns: 1fr; max-width: 340px; gap: 14px; }
-  .hero-title { font-size: 44px; }
+  body { padding: 20px 14px 28px; }
+  .modules { grid-template-columns: 1fr; gap: 14px; }
+  .brand-title { font-size: 42px; }
+  .brand-sub { letter-spacing: 0.18em; }
+  .footer { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .btn-logout { width: 100%; min-height: 38px; }
 }
 
 .module-card {
-  border-radius: 20px;
+  border-radius: 12px;
   padding: 22px 18px 20px;
   cursor: pointer;
   text-decoration: none;
@@ -121,9 +165,15 @@ body::after {
   position: relative;
   overflow: hidden;
   border: 1px solid;
+  min-height: 318px;
+  outline: none;
 }
 
 .module-card:hover { transform: translateY(-4px); }
+.module-card:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.12), 0 12px 48px rgba(0,0,0,0.25);
+}
 
 /* Work card — orange/amber */
 .module-card.work {
@@ -280,10 +330,9 @@ body::after {
 .card-corner-icons {
   position: absolute;
   top: 18px;
-  left: 0; right: 0;
+  right: 18px;
   display: flex;
-  justify-content: space-between;
-  padding: 0 20px;
+  justify-content: flex-end;
 }
 
 .corner-icon {
@@ -299,7 +348,7 @@ body::after {
 .card-title {
   font-family: 'Inter', sans-serif;
   font-weight: 800;
-  font-size: 17px;
+  font-size: 16px;
   letter-spacing: -0.3px;
   text-align: center;
   margin-bottom: 8px;
@@ -316,8 +365,38 @@ body::after {
   text-align: center;
   line-height: 1.55;
   font-weight: 400;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   flex: 1;
+}
+
+.card-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 30px;
+  margin-bottom: 14px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.62);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.card-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.9;
 }
 
 /* ── CTA Button ── */
@@ -327,8 +406,9 @@ body::after {
   justify-content: center;
   gap: 8px;
   width: 100%;
+  min-height: 40px;
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid;
   font-size: 13px;
   font-weight: 600;
@@ -348,12 +428,24 @@ body::after {
   color: #34d399;
 }
 .module-card:hover .card-btn { transform: none; }
-.work  .module-card:hover .card-btn { background: rgba(251,146,60,0.18); }
-.goals .module-card:hover .card-btn { background: rgba(52,211,153,0.18); }
+.module-card.work:hover .card-btn { background: rgba(251,146,60,0.18); }
+.module-card.goals:hover .card-btn { background: rgba(52,211,153,0.18); }
+
+@media (prefers-reduced-motion: reduce) {
+  .module-card,
+  .card-btn,
+  .ring-fill {
+    transition: none;
+  }
+  .module-card:hover,
+  .module-card:focus-visible {
+    transform: none;
+  }
+}
 
 /* ── Footer ── */
 .footer {
-  margin-top: 52px;
+  margin-top: 22px;
   font-size: 11px;
   color: rgba(255,255,255,0.18);
   letter-spacing: 0.08em;
@@ -363,7 +455,8 @@ body::after {
   display: flex;
   align-items: center;
   gap: 16px;
-  justify-content: center;
+  justify-content: space-between;
+  width: 100%;
 }
 .footer strong { color: rgba(255,255,255,0.32); font-weight: 600; }
 
@@ -384,21 +477,26 @@ body::after {
 </head>
 <body>
 
-  <!-- Hero -->
-  <div class="hero">
-    <div class="hero-title">
-      THE <span class="bold">EDG</span><span class="bold">E</span><span class="x-letter">x</span>
+  <main class="app-shell">
+  <header class="topbar">
+    <div class="brand-block">
+      <div class="brand-title">
+        THE <span class="bold">EDG</span><span class="bold">E</span><span class="x-letter">x</span>
+      </div>
+      <div class="brand-sub">Every Day Growth Experience</div>
     </div>
-    <div class="hero-sub">Every Day Growth Experience</div>
-  </div>
+    <div class="dashboard-status" aria-label="Dashboard status">
+      <div class="status-pill"><span class="status-dot"></span><span id="today-label">Today</span></div>
+      <div class="status-pill">Signed in</div>
+    </div>
+  </header>
 
   <!-- Module cards -->
   <div class="modules">
 
     <!-- Work -->
-    <a class="module-card work" href="work.html">
+    <a class="module-card work" href="work.html" aria-label="Open Work Room">
       <div class="card-corner-icons">
-        <div class="corner-icon">⚡</div>
         <div class="corner-icon">⚡</div>
       </div>
 
@@ -415,16 +513,16 @@ body::after {
       </div>
 
       <div class="card-title">
-        <span class="the-edge">THE EDGE</span><span class="x">x</span> <span class="module-word">Work</span>
+        <span class="module-word">Work Room</span>
       </div>
       <div class="card-desc">Deep work, daily traction, and your 30-day map.</div>
-      <div class="card-btn">Enter Module →</div>
+      <div class="card-status" id="work-status">Focus timer ready</div>
+      <div class="card-btn">Open Work →</div>
     </a>
 
     <!-- Goals -->
-    <a class="module-card goals" href="goals.html">
+    <a class="module-card goals" href="goals.html" aria-label="Open Goals Room">
       <div class="card-corner-icons">
-        <div class="corner-icon">🚩</div>
         <div class="corner-icon">🚩</div>
       </div>
 
@@ -441,16 +539,16 @@ body::after {
       </div>
 
       <div class="card-title">
-        <span class="the-edge">THE EDGE</span><span class="x">x</span> <span class="module-word">Goals</span>
+        <span class="module-word">Goals Room</span>
       </div>
       <div class="card-desc">12-week cycles, goal tracking, and progress metrics.</div>
-      <div class="card-btn">Enter Module →</div>
+      <div class="card-status" id="goals-status">Loading goal progress</div>
+      <div class="card-btn">Open Goals →</div>
     </a>
 
     <!-- Finance -->
-    <a class="module-card finance" href="finance-login.html">
+    <a class="module-card finance" href="finance-login.html" aria-label="Open Finance Room">
       <div class="card-corner-icons">
-        <div class="corner-icon">💸</div>
         <div class="corner-icon">💸</div>
       </div>
 
@@ -467,16 +565,16 @@ body::after {
       </div>
 
       <div class="card-title">
-        <span class="the-edge">THE EDGE</span><span class="x">x</span> <span class="module-word">Finance</span>
+        <span class="module-word">Finance Room</span>
       </div>
       <div class="card-desc">Spending, income, and trends across categories.</div>
-      <div class="card-btn">Enter Module →</div>
+      <div class="card-status" id="finance-status">Locked money layer</div>
+      <div class="card-btn">Open Finance →</div>
     </a>
 
     <!-- Health -->
-    <a class="module-card health" href="health.html">
+    <a class="module-card health" href="health.html" aria-label="Open Health Room">
       <div class="card-corner-icons">
-        <div class="corner-icon">🫀</div>
         <div class="corner-icon">🫀</div>
       </div>
 
@@ -493,16 +591,16 @@ body::after {
       </div>
 
       <div class="card-title">
-        <span class="the-edge">THE EDGE</span><span class="x">x</span> <span class="module-word">Health</span>
+        <span class="module-word">Health Room</span>
       </div>
       <div class="card-desc">Routines, sleep, steps, and 30-day body trends.</div>
-      <div class="card-btn">Enter Module →</div>
+      <div class="card-status" id="health-status">Loading today</div>
+      <div class="card-btn">Open Health →</div>
     </a>
 
     <!-- Wellness -->
-    <a class="module-card wellness" href="wellness.html">
+    <a class="module-card wellness" href="wellness.html" aria-label="Open Wellness Room">
       <div class="card-corner-icons">
-        <div class="corner-icon">🧘</div>
         <div class="corner-icon">🧘</div>
       </div>
 
@@ -519,10 +617,11 @@ body::after {
       </div>
 
       <div class="card-title">
-        <span class="the-edge">THE EDGE</span><span class="x">x</span> <span class="module-word">Wellness</span>
+        <span class="module-word">Wellness Room</span>
       </div>
       <div class="card-desc">Check-ins, meditation, and clarity trends.</div>
-      <div class="card-btn">Enter Module →</div>
+      <div class="card-status" id="wellness-status">Loading clarity</div>
+      <div class="card-btn">Open Wellness →</div>
     </a>
 
   </div>
@@ -531,6 +630,7 @@ body::after {
     <span><strong>theedgex.com</strong> &nbsp;·&nbsp; personal operating system</span>
     <button class="btn-logout" onclick="doLogout()">Sign Out</button>
   </div>
+  </main>
 
 <script>
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
@@ -620,6 +720,20 @@ async function doLogout() {
 
 const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.3
 const EDGEX_KV_USER_ID = 'jack_traction_hub_v1';
+
+const todayLabel = document.getElementById('today-label');
+if (todayLabel) {
+  todayLabel.textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
   const controller = new AbortController();
@@ -715,6 +829,7 @@ function animateRing(selector, pct, delay = 300) {
 
 // Work ring: show 100% (full timer, hasn't started)
 animateRing('.work-ring', 100, 400);
+setText('work-status', 'Ready for a 50 minute focus block');
 
 // Goals ring: pull from Supabase if available, else use demo 25%
 (async () => {
@@ -729,6 +844,7 @@ animateRing('.work-ring', 100, 400);
 
   document.getElementById('goals-pct').textContent  = pct + '%';
   document.getElementById('goals-meta').textContent = done + '/' + total + ' done';
+  setText('goals-status', total > 0 ? done + ' of ' + total + ' goals complete' : 'No goals tracked yet');
   animateRing('.goals-ring', pct, 600);
 })();
 
@@ -739,7 +855,11 @@ animateRing('.work-ring', 100, 400);
     let summary = await fetchFinanceMonthSummary();
     if (!summary) {
       const stored = localStorage.getItem('finance_tracker_data_v1');
-      if (!stored) { animateRing('.finance-ring', 0, 800); return; }
+      if (!stored) {
+        setText('finance-status', 'No month data yet');
+        animateRing('.finance-ring', 0, 800);
+        return;
+      }
       summary = financeSummaryFromTransactions(JSON.parse(stored).transactions || []);
     }
     const { expense, income } = summary;
@@ -747,20 +867,29 @@ animateRing('.work-ring', 100, 400);
     const fmt = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? Math.round(n/1000)+'K' : String(Math.round(n));
     document.getElementById('finance-pct').textContent = income > 0 ? pct + '%' : '₩' + fmt(expense);
     document.getElementById('finance-meta').textContent = income > 0 ? 'of income' : 'this month';
+    setText('finance-status', income > 0 ? '₩' + fmt(expense) + ' spent this month' : '₩' + fmt(expense) + ' tracked this month');
     animateRing('.finance-ring', pct || (expense > 0 ? 60 : 0), 800);
-  } catch(e) { animateRing('.finance-ring', 0, 800); }
+  } catch(e) {
+    setText('finance-status', 'Finance summary unavailable');
+    animateRing('.finance-ring', 0, 800);
+  }
 })();
 
 // Health ring: read today's routine completions from edgex_health_summary
 (async function() {
   await authReady;
   const data = await readSummary('edgex_health_summary');
-  if (!data) { animateRing('.health-ring', 0, 1000); return; }
+  if (!data) {
+    setText('health-status', 'No health check-in yet');
+    animateRing('.health-ring', 0, 1000);
+    return;
+  }
   const completed = data.checked ?? 0;
   const total = data.total ?? 4;
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   document.getElementById('health-pct').textContent = pct + '%';
   document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
+  setText('health-status', completed + ' of ' + total + ' routines complete');
   animateRing('.health-ring', pct, 1000);
 })();
 
@@ -768,11 +897,20 @@ animateRing('.work-ring', 100, 400);
 (async function() {
   await authReady;
   const data = await readSummary('edgex_wellness_summary');
-  if (!data) { animateRing('.wellness-ring', 0, 1200); return; }
+  if (!data) {
+    setText('wellness-status', 'No wellness check-in yet');
+    animateRing('.wellness-ring', 0, 1200);
+    return;
+  }
   const score = data.score ?? null;
-  if (score == null) { animateRing('.wellness-ring', 0, 1200); return; }
+  if (score == null) {
+    setText('wellness-status', 'Clarity not logged yet');
+    animateRing('.wellness-ring', 0, 1200);
+    return;
+  }
   document.getElementById('wellness-pct').textContent = score;
   document.getElementById('wellness-meta').textContent = 'clarity';
+  setText('wellness-status', 'Clarity score is ' + score + ' today');
   animateRing('.wellness-ring', score, 1200);
 })();
 </script>
