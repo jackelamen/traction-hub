@@ -547,14 +547,14 @@ const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 })();
 
 // ── Auth check (with token refresh) ─────────────────────────────
-(async function checkAuth() {
+const authReady = (async function checkAuth() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
-    if (!s.access_token) { window.location.href = 'login.html'; return; }
+    if (!s.access_token) { window.location.href = 'login.html'; return null; }
     const now = Math.floor(Date.now() / 1000);
     const expiresAt = s.expires_at || 0;
     // If token is still good for more than 5 minutes, allow through
-    if (expiresAt > now + 300) return;
+    if (expiresAt > now + 300) return s;
     // Token expired or expiring soon — try to refresh if we have a refresh token
     if (s.refresh_token) {
       try {
@@ -566,35 +566,40 @@ const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
         if (res.ok) {
           const data = await res.json();
           if (data.access_token) {
-            localStorage.setItem('sb_session', JSON.stringify({
+            const next = {
               access_token:  data.access_token,
               refresh_token: data.refresh_token || s.refresh_token,
               expires_at:    Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
               user:          data.user || s.user
-            }));
-            return; // refreshed successfully — allow through
+            };
+            localStorage.setItem('sb_session', JSON.stringify(next));
+            return next; // refreshed successfully — allow through
           }
         }
         // Refresh request failed — only redirect if token is actually expired
         if (expiresAt > 0 && expiresAt <= now) {
           window.location.href = 'login.html';
+          return null;
         }
         // If token not yet expired (or no expires_at), allow through
-        return;
+        return expiresAt > now ? s : null;
       } catch(e) {
         // Network error during refresh — allow through if token not clearly expired
         if (expiresAt > 0 && expiresAt <= now) {
           window.location.href = 'login.html';
+          return null;
         }
-        return;
+        return expiresAt > now ? s : null;
       }
     }
     // No refresh token — only redirect if token is confirmed expired
     if (expiresAt > 0 && expiresAt <= now) {
       window.location.href = 'login.html';
+      return null;
     }
     // If no expires_at at all but we have an access_token, give benefit of the doubt
-  } catch(e) { window.location.href = 'login.html'; }
+    return s;
+  } catch(e) { window.location.href = 'login.html'; return null; }
 })();
 
 // ── Logout ───────────────────────────────────────────────────────
@@ -654,6 +659,49 @@ async function readSummary(key) {
   }
 }
 
+function getSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (s.access_token && s.expires_at > Math.floor(Date.now() / 1000)) return s;
+  } catch(e) {}
+  return null;
+}
+
+function getSbUserId() {
+  const session = getSession();
+  return session?.user?.id || 'fa3f910d-64f8-43cf-94c1-61d645ed9414';
+}
+
+function financeSummaryFromTransactions(transactions) {
+  const now = new Date();
+  const monthTx = (transactions || []).filter(t => {
+    const td = new Date(t.date);
+    return td.getFullYear() === now.getFullYear() && td.getMonth() === now.getMonth();
+  });
+  const expense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amountKRW ?? t.amount_krw ?? 0), 0);
+  const income  = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + (t.amountKRW ?? t.amount_krw ?? 0), 0);
+  return { expense, income };
+}
+
+async function fetchFinanceMonthSummary() {
+  const session = getSession();
+  if (!session) return null;
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+  try {
+    const url = `${SB_URL}/rest/v1/finance_transactions?user_id=eq.${encodeURIComponent(getSbUserId())}&date=gte.${from}&date=lte.${to}&select=type,amount_krw,date`;
+    const res = await fetchWithTimeout(url, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${session.access_token}`, 'Accept': 'application/json' }
+    });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return financeSummaryFromTransactions(rows);
+  } catch(e) {
+    return null;
+  }
+}
+
 // Animate rings on load
 function animateRing(selector, pct, delay = 300) {
   setTimeout(() => {
@@ -670,6 +718,7 @@ animateRing('.work-ring', 100, 400);
 
 // Goals ring: pull from Supabase if available, else use demo 25%
 (async () => {
+  await authReady;
   let pct = 25, done = 6, total = 24;
   const d = await readSummary('edgex_goals_summary');
   if (d) {
@@ -683,19 +732,17 @@ animateRing('.work-ring', 100, 400);
   animateRing('.goals-ring', pct, 600);
 })();
 
-// Finance ring: read this month's spend from localStorage
+// Finance ring: read this month's spend from Supabase, then localStorage
 (async () => {
   try {
-    const stored = localStorage.getItem('finance_tracker_data_v1');
-    if (!stored) { animateRing('.finance-ring', 0, 800); return; }
-    const d = JSON.parse(stored);
-    const now = new Date();
-    const monthTx = (d.transactions || []).filter(t => {
-      const td = new Date(t.date);
-      return td.getFullYear() === now.getFullYear() && td.getMonth() === now.getMonth();
-    });
-    const expense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amountKRW || 0), 0);
-    const income  = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + (t.amountKRW || 0), 0);
+    await authReady;
+    let summary = await fetchFinanceMonthSummary();
+    if (!summary) {
+      const stored = localStorage.getItem('finance_tracker_data_v1');
+      if (!stored) { animateRing('.finance-ring', 0, 800); return; }
+      summary = financeSummaryFromTransactions(JSON.parse(stored).transactions || []);
+    }
+    const { expense, income } = summary;
     const pct = income > 0 ? Math.min(100, Math.round(expense / income * 100)) : 0;
     const fmt = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? Math.round(n/1000)+'K' : String(Math.round(n));
     document.getElementById('finance-pct').textContent = income > 0 ? pct + '%' : '₩' + fmt(expense);
@@ -706,6 +753,7 @@ animateRing('.work-ring', 100, 400);
 
 // Health ring: read today's routine completions from edgex_health_summary
 (async function() {
+  await authReady;
   const data = await readSummary('edgex_health_summary');
   if (!data) { animateRing('.health-ring', 0, 1000); return; }
   const completed = data.checked ?? 0;
@@ -718,6 +766,7 @@ animateRing('.work-ring', 100, 400);
 
 // Wellness ring: read clarity score from edgex_wellness_summary
 (async function() {
+  await authReady;
   const data = await readSummary('edgex_wellness_summary');
   if (!data) { animateRing('.wellness-ring', 0, 1200); return; }
   const score = data.score ?? null;
