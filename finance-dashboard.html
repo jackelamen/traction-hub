@@ -318,14 +318,20 @@
   .schange.neutral { color: var(--muted); }
 
   /* Monthly total bar chart */
-  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 200px; padding-top: 10px; }
+  .bar-chart-wrap { position: relative; display: flex; gap: 0; }
+  .bar-chart-yaxis { display: flex; flex-direction: column; justify-content: space-between; width: 44px; padding-bottom: 20px; flex-shrink: 0; }
+  .bar-chart-ytick { font-size: 9.5px; font-weight: 700; color: var(--muted); text-align: right; line-height: 1; }
+  .bar-chart-grid { position: absolute; left: 44px; right: 0; top: 0; bottom: 20px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
+  .bar-chart-gridline { width: 100%; height: 1px; background: rgba(255,255,255,0.05); }
+  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 200px; padding-top: 10px; flex: 1; }
   .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 6px; height: 100%; justify-content: flex-end; }
   .bar-col .bwrap { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; flex: 1; }
-  .bar-col .bitem { width: 100%; border-radius: 5px 5px 0 0; min-height: 3px; transition: height 0.4s; cursor: pointer; }
-  .bar-col .bitem:hover { opacity: 0.85; }
+  .bar-col .bitem { width: 100%; border-radius: 5px 5px 0 0; min-height: 3px; transition: height 0.4s, opacity 0.15s; cursor: pointer; }
+  .bar-col .bitem:hover { opacity: 0.82; }
   .bar-col .blbl { font-size: 10px; color: var(--muted); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
   .bar-col .bval { font-size: 9px; color: var(--muted); text-align: center; margin-bottom: 3px; }
   .bar-col.bactive .blbl { color: var(--text); font-weight: 600; }
+  .bar-col.bactive .bval { color: var(--accent); font-weight: 700; }
 
   /* Grouped bar chart */
   .grouped-bar-wrap { overflow-x: auto; }
@@ -1030,7 +1036,11 @@
     <div class="grid-2">
       <div class="tcard">
         <div class="tcard-title">Monthly Total Spending</div>
-        <div class="bar-chart" id="tMonthlyBarChart"></div>
+        <div class="bar-chart-wrap">
+          <div class="bar-chart-yaxis" id="tMonthlyYAxis"></div>
+          <div class="bar-chart-grid" id="tMonthlyGrid"></div>
+          <div class="bar-chart" id="tMonthlyBarChart"></div>
+        </div>
       </div>
       <div class="tcard">
         <div class="tcard-title">Category Breakdown — Latest Month</div>
@@ -2648,13 +2658,28 @@ function renderTrendsOverview() {
   // Monthly total bars
   const monthlyTotals = months.map(m => ({ m, total: txForMonth(m).reduce((s,t)=>s+t.amountKRW,0) }));
   const maxM = Math.max(...monthlyTotals.map(x=>x.total), 1);
+
+  // Y-axis ticks (4 steps)
+  const yTickCount = 4;
+  const yAxisEl = document.getElementById('tMonthlyYAxis');
+  const yGridEl = document.getElementById('tMonthlyGrid');
+  if (yAxisEl) {
+    yAxisEl.innerHTML = Array.from({length: yTickCount + 1}, (_, i) => {
+      const v = Math.round(maxM * (yTickCount - i) / yTickCount);
+      return `<div class="bar-chart-ytick">₩${fmtShort(v)}</div>`;
+    }).join('');
+  }
+  if (yGridEl) {
+    yGridEl.innerHTML = Array.from({length: yTickCount + 1}, () => '<div class="bar-chart-gridline"></div>').join('');
+  }
+
   document.getElementById('tMonthlyBarChart').innerHTML = monthlyTotals.map(({ m, total }) => {
     const h = Math.round(total / maxM * 100);
     const isLast = m === curM;
     return `<div class="bar-col ${isLast ? 'bactive' : ''}">
-      <div class="bval">₩${fmtShort(total)}</div>
+      <div class="bval">${isLast ? '₩'+fmtShort(total) : ''}</div>
       <div class="bwrap">
-        <div class="bitem" style="height:${h}%;background:${isLast?'var(--accent)':'var(--surface2)'};border:1px solid ${isLast?'var(--accent)':'var(--border)'}"
+        <div class="bitem" style="height:${h}%;background:${isLast?'var(--accent)':'rgba(255,255,255,0.08)'};border:1px solid ${isLast?'var(--accent)':'var(--border)'}"
           data-tip="${monthLabel(m)}: ₩${fmt(total)}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>
       </div>
       <div class="blbl">${monthLabel(m)}</div>
@@ -2677,19 +2702,26 @@ function renderTrendsOverview() {
   });
   const gMax = Math.max(...months.flatMap(m => expCats.map(c => mct[m]?.[c] || 0)), 1);
 
-  document.getElementById('tCatLegend').innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:10px">` +
-    expCats.map(cat => `<div style="display:flex;align-items:center;gap:5px;font-size:12px">
-      <div style="width:10px;height:10px;border-radius:3px;background:${CAT_COLORS[cat]||'#64748b'}"></div>
-      ${CAT_ICONS[cat]||''} ${cat}</div>`).join('') + `</div>`;
+  document.getElementById('tCatLegend').innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center">` +
+    expCats.map(cat => {
+      const total = months.reduce((s,m) => s + (mct[m]?.[cat]||0), 0);
+      return `<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500">
+        <div style="width:10px;height:10px;border-radius:3px;flex-shrink:0;background:${CAT_COLORS[cat]||'#64748b'}"></div>
+        <span>${cat}</span>
+        <span style="color:var(--muted);font-size:11px">₩${fmtShort(total)}</span>
+      </div>`;
+    }).join('') + `</div>`;
 
   document.getElementById('tGroupedBars').innerHTML = months.map(m => {
+    const monthTotal = expCats.reduce((s,c) => s + (mct[m]?.[c]||0), 0);
     const bars = expCats.map(cat => {
       const val = mct[m]?.[cat] || 0;
       const h = Math.round(val / gMax * 100);
       return `<div class="gbar" style="height:${h}%;background:${CAT_COLORS[cat]||'#64748b'}"
-        data-tip="${monthLabel(m)} ${cat}: ₩${fmt(val)}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>`;
+        data-tip="${cat}: ₩${fmt(val)}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>`;
     }).join('');
     return `<div class="gcol">
+      <div style="font-size:9px;color:var(--muted);margin-bottom:2px;text-align:center">₩${fmtShort(monthTotal)}</div>
       <div class="gbars">${bars}</div>
       <div class="glbl">${monthLabel(m)}</div>
     </div>`;

@@ -130,10 +130,15 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .trend-chart{min-height:230px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,#f8fafc,#fff);padding:14px;display:flex;flex-direction:column;gap:12px}
 .trend-plot{position:relative;height:160px}
 .trend-plot svg{position:absolute;inset:0;width:100%;height:160px;overflow:visible}
-.trend-chart .axis{stroke:#dbe3ef;stroke-width:1}
+.trend-chart .axis{stroke:#e5e7eb;stroke-width:1}
+.trend-chart .grid{stroke:#f0f1f5;stroke-width:1}
 .trend-chart .target{stroke:#f97316;stroke-width:1.5;stroke-dasharray:5 5}
-.trend-chart .line{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.trend-chart .avg-line{stroke:rgba(14,165,233,0.4);stroke-width:1.5;stroke-dasharray:4 4}
+.trend-chart .line{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.trend-chart .area{fill:url(#areaGrad);opacity:0.12}
 .trend-chart .dot{fill:#fff;stroke:var(--accent);stroke-width:2}
+.trend-chart .y-label{font-size:9px;font-weight:700;fill:#9ca3af;font-family:'Inter',sans-serif}
+.trend-chart .target-label{font-size:9px;font-weight:700;fill:#f97316;font-family:'Inter',sans-serif}
 .trend-hover-point{position:absolute;width:28px;height:28px;transform:translate(-50%,-50%);border-radius:99px;cursor:default;z-index:2}
 .trend-hover-point::after{content:'';position:absolute;left:50%;top:50%;width:9px;height:9px;transform:translate(-50%,-50%);border-radius:99px;background:#fff;border:2px solid var(--accent);box-shadow:0 1px 4px rgba(14,165,233,.28)}
 .trend-hover-point:focus{outline:none}
@@ -1418,27 +1423,71 @@ function renderTrendDetail(vals, meta, max){
   return `<div class="trend-chart">${chart}</div><div class="trend-table">${rows}</div>`;
 }
 function renderTrendLine(vals, meta, max){
-  const w = 520, h = 160, pad = 18;
-  const scaleX = i => vals.length === 1 ? w / 2 : pad + (i * ((w - pad * 2) / (vals.length - 1)));
-  const scaleY = v => pad + ((max - v) / max) * (h - pad * 2);
-  const points = vals.map((x,i) => `${scaleX(i).toFixed(1)},${scaleY(x.val).toFixed(1)}`).join(' ');
-  const targetY = Math.max(pad, Math.min(h - pad, scaleY(meta.target)));
-  const circles = vals.map((x,i) => `<circle class="dot" cx="${scaleX(i).toFixed(1)}" cy="${scaleY(x.val).toFixed(1)}" r="4"></circle>`).join('');
-  const hoverPoints = vals.map((x,i) => {
-    const left = (scaleX(i) / w) * 100;
-    const top = (scaleY(x.val) / h) * 100;
+  const w = 520, h = 160, padL = 38, padR = 12, padT = 12, padB = 18;
+  const innerW = w - padL - padR;
+  const innerH = h - padT - padB;
+  const scaleX = i => vals.length === 1 ? padL + innerW / 2 : padL + (i * innerW / (vals.length - 1));
+  const scaleY = v => padT + ((max - v) / max) * innerH;
+
+  // Y-axis ticks (4 evenly spaced)
+  const tickCount = 4;
+  let gridLines = '', yLabels = '';
+  for (let t = 0; t <= tickCount; t++) {
+    const v = Math.round(max * (tickCount - t) / tickCount);
+    const y = scaleY(v);
+    gridLines += `<line class="grid" x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}"/>`;
+    yLabels  += `<text class="y-label" x="${padL - 5}" y="${(y + 3).toFixed(1)}" text-anchor="end">${v}</text>`;
+  }
+
+  // Area fill path
+  const pts = vals.map((x, i) => [scaleX(i), scaleY(x.val)]);
+  const linePts = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  const areaPath = `M${pts[0][0].toFixed(1)},${(h - padB).toFixed(1)} ` +
+    pts.map(p => `L${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ') +
+    ` L${pts[pts.length-1][0].toFixed(1)},${(h - padB).toFixed(1)} Z`;
+
+  const avgVal = vals.reduce((s, x) => s + x.val, 0) / vals.length;
+  const avgY = scaleY(avgVal);
+  const targetY = Math.max(padT, Math.min(h - padB, scaleY(meta.target)));
+
+  const circles = vals.map((x, i) =>
+    `<circle class="dot" cx="${scaleX(i).toFixed(1)}" cy="${scaleY(x.val).toFixed(1)}" r="4.5"/>`
+  ).join('');
+
+  const hoverPoints = vals.map((x, i) => {
+    const left  = (scaleX(i) / w) * 100;
+    const top   = (scaleY(x.val) / h) * 100;
     const status = getTrendStatus(x.val, meta);
     return `<div class="trend-hover-point" tabindex="0" style="left:${left.toFixed(2)}%;top:${top.toFixed(2)}%" aria-label="${fmtDate(x.date)} ${formatTrend(x.val, trendMetric)} ${status.label}">
       <div class="trend-tooltip">${formatTrend(x.val, trendMetric)}<small>${fmtDate(x.date)} · ${status.label}</small></div>
     </div>`;
   }).join('');
+
   return `<div class="trend-plot"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="${meta.label} trend">
-      <line class="axis" x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}"></line>
-      <line class="target" x1="${pad}" y1="${targetY.toFixed(1)}" x2="${w-pad}" y2="${targetY.toFixed(1)}"></line>
-      <polyline class="line" points="${points}"></polyline>
+      <defs>
+        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.22"/>
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${gridLines}
+      <line class="axis" x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}"/>
+      <line class="avg-line" x1="${padL}" y1="${avgY.toFixed(1)}" x2="${w - padR}" y2="${avgY.toFixed(1)}"/>
+      <line class="target" x1="${padL}" y1="${targetY.toFixed(1)}" x2="${w - padR}" y2="${targetY.toFixed(1)}"/>
+      <text class="target-label" x="${w - padR + 3}" y="${(targetY + 3).toFixed(1)}">T</text>
+      <path class="area" d="${areaPath}"/>
+      <polyline class="line" points="${linePts}"/>
       ${circles}
+      ${yLabels}
     </svg>${hoverPoints}</div>
-    <div class="trend-chart-footer"><span>${fmtDate(vals[0].date)}</span><span>Target ${formatTrend(meta.target, trendMetric)}</span><span>${fmtDate(vals[vals.length - 1].date)}</span></div>`;
+    <div class="trend-chart-footer">
+      <span>${fmtDate(vals[0].date)}</span>
+      <span style="display:flex;align-items:center;gap:12px">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:rgba(14,165,233,0.5);border-radius:1px;display:inline-block"></span>Avg ${formatTrend(avgVal, trendMetric)}</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:2px;background:#f97316;opacity:0.6;border-radius:1px;display:inline-block;border-top:2px dashed #f97316"></span>Target ${formatTrend(meta.target, trendMetric)}</span>
+      </span>
+      <span>${fmtDate(vals[vals.length - 1].date)}</span>
+    </div>`;
 }
 function getTrendStatus(value, meta){
   if (!Number.isFinite(value)) return { label:'No data', tone:'low' };
