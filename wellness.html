@@ -505,8 +505,8 @@ localStorage.setItem = function(key, value) {
 };
 async function syncFromSupabase() {
   try {
-    const keys = [STORAGE_KEY, SUMMARY_KEY].join(',');
-    const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=in.(${encodeURIComponent(keys)})&select=key,value,updated_at`, {
+    const keyFilter = [STORAGE_KEY, SUMMARY_KEY].join(',');
+    const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return;
