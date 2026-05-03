@@ -1431,6 +1431,13 @@ function uid(prefix = 'id') {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function mergeTransactions(localRows = [], cloudRows = []) {
+  const byId = new Map();
+  localRows.forEach(tx => { if (tx?.id) byId.set(tx.id, tx); });
+  cloudRows.forEach(tx => { if (tx?.id) byId.set(tx.id, tx); });
+  return [...byId.values()].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+}
+
 // ── Local save (always keep as fast fallback) ────────────────────
 function saveLocal() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -1562,6 +1569,7 @@ function saveData(changedTx = null, deletedId = null) {
 
 // ── Load: pull from Supabase, fall back to localStorage ─────────
 async function loadData() {
+  let localTransactions = [];
   // Always load local first so UI is instant
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -1572,6 +1580,7 @@ async function loadData() {
   data.recurring = data.recurring || [];
   data.savingsGoals = data.savingsGoals || [];
   data.version = data.version || '1.1';
+  localTransactions = [...data.transactions];
 
   // Then fetch from Supabase using auth token (source of truth)
   try {
@@ -1582,7 +1591,7 @@ async function loadData() {
     if (res.ok) {
       const rows = await res.json();
       if (rows.length) {
-        data.transactions = rows.map(rowToTx);
+        data.transactions = mergeTransactions(localTransactions, rows.map(rowToTx));
         data.lastUpdated  = new Date().toISOString();
         saveLocal();
       }
