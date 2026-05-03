@@ -5,8 +5,10 @@
 -- ============================================================
 
 do $$ begin
-  create type tactic_freq as enum ('daily', 'weekly', 'custom', 'onetime');
+  create type tactic_freq as enum ('daily', 'weekly', 'custom', 'xperweek', 'onetime');
 exception when duplicate_object then null; end $$;
+
+alter type tactic_freq add value if not exists 'xperweek';
 
 create table if not exists sprints (
   id uuid primary key default gen_random_uuid(),

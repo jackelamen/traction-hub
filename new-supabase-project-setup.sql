@@ -491,8 +491,9 @@ do $$ begin
   create type metric_type as enum ('Number', 'Percentage', 'Duration', 'Frequency', 'Currency');
 exception when duplicate_object then null; end $$;
 do $$ begin
-  create type tactic_freq as enum ('daily', 'weekly', 'custom', 'onetime');
+  create type tactic_freq as enum ('daily', 'weekly', 'custom', 'xperweek', 'onetime');
 exception when duplicate_object then null; end $$;
+alter type tactic_freq add value if not exists 'xperweek';
 
 create table if not exists visions (
   id uuid primary key default gen_random_uuid(),
@@ -591,5 +592,36 @@ drop trigger if exists sprints_updated_at on sprints;
 create trigger sprints_updated_at before update on sprints for each row execute function set_updated_at();
 drop trigger if exists visions_updated_at on visions;
 create trigger visions_updated_at before update on visions for each row execute function set_updated_at();
+
+grant select, insert, update, delete on visions to authenticated;
+grant select, insert, update, delete on goals to authenticated;
+grant select, insert, update, delete on goal_metrics to authenticated;
+grant select, insert, update, delete on metric_logs to authenticated;
+grant select, insert, update, delete on sprints to authenticated;
+grant select, insert, update, delete on sprint_phases to authenticated;
+grant select, insert, update, delete on sprint_tactics to authenticated;
+
+alter table visions enable row level security;
+alter table goals enable row level security;
+alter table goal_metrics enable row level security;
+alter table metric_logs enable row level security;
+alter table sprints enable row level security;
+alter table sprint_phases enable row level security;
+alter table sprint_tactics enable row level security;
+
+drop policy if exists visions_authenticated_access on visions;
+create policy visions_authenticated_access on visions for all to authenticated using (true) with check (true);
+drop policy if exists goals_authenticated_access on goals;
+create policy goals_authenticated_access on goals for all to authenticated using (true) with check (true);
+drop policy if exists goal_metrics_authenticated_access on goal_metrics;
+create policy goal_metrics_authenticated_access on goal_metrics for all to authenticated using (true) with check (true);
+drop policy if exists metric_logs_authenticated_access on metric_logs;
+create policy metric_logs_authenticated_access on metric_logs for all to authenticated using (true) with check (true);
+drop policy if exists sprints_authenticated_access on sprints;
+create policy sprints_authenticated_access on sprints for all to authenticated using (true) with check (true);
+drop policy if exists sprint_phases_authenticated_access on sprint_phases;
+create policy sprint_phases_authenticated_access on sprint_phases for all to authenticated using (true) with check (true);
+drop policy if exists sprint_tactics_authenticated_access on sprint_tactics;
+create policy sprint_tactics_authenticated_access on sprint_tactics for all to authenticated using (true) with check (true);
 
 select 'setup complete' as status;
