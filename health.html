@@ -619,6 +619,15 @@ function _touchLsTimestamp(key) {
   const ts = _getLsTimestamps(); ts[key] = Date.now();
   _lsSet(LS_TIMESTAMPS_KEY, JSON.stringify(ts));
 }
+function _setSyncedLsValue(key, value, updatedAtMs) {
+  const str = typeof value === 'string' ? value : JSON.stringify(value);
+  _lsSet(key, str);
+  if (Number.isFinite(updatedAtMs)) {
+    const ts = _getLsTimestamps();
+    ts[key] = updatedAtMs;
+    _lsSet(LS_TIMESTAMPS_KEY, JSON.stringify(ts));
+  }
+}
 async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -676,7 +685,7 @@ async function syncFromSupabase() {
       if (!keys.has(key)) return;
       const remoteTs = new Date(updated_at).getTime();
       const localTs  = timestamps[key] || 0;
-      if (remoteTs > localTs) _lsSet(key, JSON.stringify(value));
+      if (remoteTs > localTs) _setSyncedLsValue(key, value, remoteTs);
     });
   } catch(e) { console.warn('[Health] sync failed', e); }
 }

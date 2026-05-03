@@ -3404,6 +3404,23 @@ function _touchLsTimestamp(key) {
   _lsSet(LS_TIMESTAMPS_KEY, JSON.stringify(ts));
 }
 
+function _setSyncedLsValue(key, value, updatedAtMs) {
+  let str;
+  if (value === null || value === undefined) {
+    str = 'null';
+  } else if (typeof value === 'string') {
+    str = value;
+  } else {
+    str = JSON.stringify(value);
+  }
+  _lsSet(key, str);
+  if (Number.isFinite(updatedAtMs)) {
+    const ts = _getLsTimestamps();
+    ts[key] = updatedAtMs;
+    _lsSet(LS_TIMESTAMPS_KEY, JSON.stringify(ts));
+  }
+}
+
 function uid(prefix) {
   if (globalThis.crypto?.randomUUID) return `${prefix}-${globalThis.crypto.randomUUID()}`;
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
@@ -3490,17 +3507,9 @@ async function syncFromSupabase() {
         console.log(`[Supabase] keeping local ${key} (local ${localMs} > cloud ${cloudMs})`);
         return;
       }
-      let str;
-      if (value === null || value === undefined) {
-        str = 'null';
-      } else if (typeof value === 'string') {
-        str = value;
-      } else {
-        str = JSON.stringify(value);
-      }
-      _lsSet(key, str); // bypass patched setItem to avoid re-uploading
+      _setSyncedLsValue(key, value, cloudMs); // bypass patched setItem to avoid re-uploading
       if (key === 'morning-setup-v1') {
-        console.log('[Supabase] morning-setup-v1 from cloud:', str);
+        console.log('[Supabase] morning-setup-v1 from cloud:', _lsGet(key));
       }
     });
     if (!rows.some(r => r.key === 'morning-setup-v1')) {
