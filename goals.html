@@ -2790,6 +2790,16 @@ async function syncGoal(goalId) {
         if (!m._uuid && mrows?.[0]?.id) m._uuid = mrows[0].id;
       }
     }
+
+    try {
+      const existingRows = await sbGet('goal_metrics', `?goal_id=eq.${g._uuid}&select=id`);
+      const keptUuids = new Set((g.metrics || []).filter(m => m._uuid).map(m => m._uuid));
+      for (const row of existingRows) {
+        if (!keptUuids.has(row.id)) {
+          await fetch(`${SB_URL}/rest/v1/goal_metrics?id=eq.${row.id}`, { method: 'DELETE', headers: sbHeaders() });
+        }
+      }
+    } catch(e) { console.warn('metric cleanup failed:', e); }
   } catch(e) { console.error('syncGoal failed:', e); }
 }
 
