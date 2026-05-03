@@ -3404,6 +3404,11 @@ function _touchLsTimestamp(key) {
   _lsSet(LS_TIMESTAMPS_KEY, JSON.stringify(ts));
 }
 
+function uid(prefix) {
+  if (globalThis.crypto?.randomUUID) return `${prefix}-${globalThis.crypto.randomUUID()}`;
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -8313,7 +8318,7 @@ function tbTodayBlocks() {
 }
 
 function tbMakeId() {
-  return 'tb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  return uid('tb');
 }
 
 // ── Section toggle ────────────────────────────────────────────
@@ -10468,7 +10473,7 @@ function saveGoal() {
     }
   } else {
     goals.push({
-      id: 'goal_' + Date.now(),
+      id: uid('goal'),
       tier: _goalModalTier,
       title, why, due,
       area: _goalModalArea,
@@ -10662,7 +10667,7 @@ function saveWin() {
   if (!title) { showToast('Please describe the win.'); return; }
   const wins = getWins();
   wins.unshift({
-    id:       Date.now(),
+    id:       uid('win'),
     title,
     note:     document.getElementById('win-note-input').value.trim(),
     category: _winCategory,
@@ -10676,7 +10681,7 @@ function saveWin() {
 }
 
 function deleteWin(id) {
-  const wins = getWins().filter(w => w.id !== id);
+  const wins = getWins().filter(w => String(w.id) !== String(id));
   localStorage.setItem(WIN_KEY, JSON.stringify(wins));
   pushAllToSupabase();
   renderWeeklyPage();
@@ -10743,7 +10748,7 @@ function renderWeeklyPage() {
     const dateLabel = new Date(w.date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     return `
     <div class="rounded-2xl p-4 relative group" style="background:${c.bg};border:1.5px solid ${c.border}">
-      <button onclick="deleteWin(${w.id})" class="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full bg-white/80 flex items-center justify-center transition-opacity shadow-sm">
+      <button onclick='deleteWin(${JSON.stringify(String(w.id))})' class="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full bg-white/80 flex items-center justify-center transition-opacity shadow-sm">
         <span class="material-symbols-outlined text-sm text-gray-400">close</span>
       </button>
       <div class="flex items-start gap-2 mb-2">
