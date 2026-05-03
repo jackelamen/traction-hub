@@ -2552,6 +2552,8 @@ const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const GOALS_KV_USER_ID = 'jack_traction_hub_v1';
 const VB_IMAGES_KEY = 'gs2_vb';
 const VB_IMAGES_UPDATED_KEY = 'gs2_vb_updated_at';
+const GOAL_EXEMPT_UPDATED_KEY = 'goal-exempt-days-updated-at-v1';
+const GOALS_TODAY_NOTE_PREFIX = 'edgex_goals_today_note_';
 
 // ── Auth gate ────────────────────────────────────────────────────
 const authReady = (async function checkAuth() {
@@ -2951,6 +2953,8 @@ function setGoalExemptToday(type) {
     manual[today] = type;
   }
   localStorage.setItem(GOAL_EXEMPT_KEY, JSON.stringify(manual));
+  localStorage.setItem(GOAL_EXEMPT_UPDATED_KEY, new Date().toISOString());
+  syncGoalExtraToSupabase(GOAL_EXEMPT_KEY, manual);
   renderToday();
   renderTodayEnhancements();
 }
@@ -3186,13 +3190,26 @@ function progressMood(pct, done, total) {
   return 'Behind pace';
 }
 
+function todayNoteKey() {
+  return GOALS_TODAY_NOTE_PREFIX + localDateKey();
+}
+
+function todayNoteUpdatedKey() {
+  return todayNoteKey() + '_updated_at';
+}
+
 function todayNoteValue() {
-  try { return localStorage.getItem('edgex_goals_today_note_' + localDateKey()) || ''; }
+  try { return localStorage.getItem(todayNoteKey()) || ''; }
   catch(e) { return ''; }
 }
 
 function saveTodayNote(value) {
-  try { localStorage.setItem('edgex_goals_today_note_' + localDateKey(), value || ''); }
+  try {
+    const key = todayNoteKey();
+    localStorage.setItem(key, value || '');
+    localStorage.setItem(todayNoteUpdatedKey(), new Date().toISOString());
+    syncGoalExtraToSupabase(key, value || '');
+  }
   catch(e) {}
 }
 
@@ -4788,7 +4805,8 @@ async function syncGoalExtraToSupabase(key, value) {
 }
 
 async function syncGoalExtrasFromSupabase() {
-  const keys = [VB_IMAGES_KEY, ...AREAS.map(a => visionMetaKey(a.id))];
+  const noteKey = todayNoteKey();
+  const keys = [VB_IMAGES_KEY, GOAL_EXEMPT_KEY, noteKey, ...AREAS.map(a => visionMetaKey(a.id))];
   try {
     const keyFilter = keys.join(',');
     const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(GOALS_KV_USER_ID)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
@@ -4809,6 +4827,33 @@ async function syncGoalExtrasFromSupabase() {
       setVBImagesLocal(cloudImages, cloudImageRow.updated_at);
     } else if (localImages.length || localImageTime > cloudImageTime) {
       syncGoalExtraToSupabase(VB_IMAGES_KEY, localImages);
+    }
+
+    const cloudExemptRow = rowByKey[GOAL_EXEMPT_KEY];
+    const cloudExempt = cloud[GOAL_EXEMPT_KEY] && typeof cloud[GOAL_EXEMPT_KEY] === 'object' ? cloud[GOAL_EXEMPT_KEY] : {};
+    let localExempt = {};
+    try { localExempt = JSON.parse(localStorage.getItem(GOAL_EXEMPT_KEY) || '{}'); } catch(e) {}
+    const localExemptUpdated = localStorage.getItem(GOAL_EXEMPT_UPDATED_KEY) || '';
+    const localExemptTime = localExemptUpdated ? new Date(localExemptUpdated).getTime() : 0;
+    const cloudExemptTime = cloudExemptRow?.updated_at ? new Date(cloudExemptRow.updated_at).getTime() : 0;
+    if (cloudExemptRow && cloudExemptTime >= localExemptTime) {
+      localStorage.setItem(GOAL_EXEMPT_KEY, JSON.stringify(cloudExempt));
+      localStorage.setItem(GOAL_EXEMPT_UPDATED_KEY, cloudExemptRow.updated_at);
+    } else if (Object.keys(localExempt).length || localExemptTime > cloudExemptTime) {
+      syncGoalExtraToSupabase(GOAL_EXEMPT_KEY, localExempt);
+    }
+
+    const cloudNoteRow = rowByKey[noteKey];
+    const cloudNote = typeof cloud[noteKey] === 'string' ? cloud[noteKey] : '';
+    const localNote = localStorage.getItem(noteKey) || '';
+    const localNoteUpdated = localStorage.getItem(todayNoteUpdatedKey()) || '';
+    const localNoteTime = localNoteUpdated ? new Date(localNoteUpdated).getTime() : 0;
+    const cloudNoteTime = cloudNoteRow?.updated_at ? new Date(cloudNoteRow.updated_at).getTime() : 0;
+    if (cloudNoteRow && cloudNoteTime >= localNoteTime) {
+      localStorage.setItem(noteKey, cloudNote);
+      localStorage.setItem(todayNoteUpdatedKey(), cloudNoteRow.updated_at);
+    } else if (localNote || localNoteTime > cloudNoteTime) {
+      syncGoalExtraToSupabase(noteKey, localNote);
     }
 
     AREAS.forEach(area => {
