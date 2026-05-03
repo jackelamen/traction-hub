@@ -1209,6 +1209,8 @@ const STORAGE_KEY = 'finance_tracker_data_v1';
 const MIGRATE_KEY = 'finance_sb_migrated_v1';
 const FINANCE_GOALS_SYNC_KEY = 'edgex_finance_savings_goals';
 const TREND_HIDDEN_CATS_KEY = 'finance_trend_hidden_categories_v1';
+const DELETED_RECURRING_KEY = 'finance_deleted_recurring_v1';
+const DELETED_SAVINGS_KEY = 'finance_deleted_savings_v1';
 
 // ════════════════════════════════════════════════════════════════════
 // SUPABASE CONFIG & AUTH
@@ -1449,6 +1451,17 @@ function mergeBudgets(localBudgets = {}, cloudBudgets = {}) {
   return { ...cloudBudgets, ...localBudgets };
 }
 
+function deletedIdSet(key) {
+  try { return new Set(JSON.parse(localStorage.getItem(key) || '[]')); }
+  catch(e) { return new Set(); }
+}
+
+function rememberDeletedId(key, id) {
+  const ids = deletedIdSet(key);
+  ids.add(id);
+  try { localStorage.setItem(key, JSON.stringify([...ids])); } catch(e) {}
+}
+
 // ── Local save (always keep as fast fallback) ────────────────────
 function saveLocal() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -1495,11 +1508,17 @@ async function sbLoadPlanning() {
     }
     if (recurringRes.ok) {
       const rows = await recurringRes.json();
-      if (rows.length) data.recurring = mergeById(data.recurring || [], rows.map(rowToRecurring));
+      if (rows.length) {
+        const deletedRecurring = deletedIdSet(DELETED_RECURRING_KEY);
+        data.recurring = mergeById(data.recurring || [], rows.map(rowToRecurring).filter(r => !deletedRecurring.has(r.id)));
+      }
     }
     if (savingsRes.ok) {
       const rows = await savingsRes.json();
-      if (rows.length) data.savingsGoals = mergeById(data.savingsGoals || [], rows.map(rowToSavings));
+      if (rows.length) {
+        const deletedSavings = deletedIdSet(DELETED_SAVINGS_KEY);
+        data.savingsGoals = mergeById(data.savingsGoals || [], rows.map(rowToSavings).filter(g => !deletedSavings.has(g.id)));
+      }
     }
     saveLocal();
     syncSavingsGoalsToGoals();
@@ -2052,6 +2071,7 @@ function addRecurring() {
 }
 
 function deleteRecurring(id) {
+  rememberDeletedId(DELETED_RECURRING_KEY, id);
   data.recurring = (data.recurring || []).filter(r => r.id !== id);
   saveBudgetData();
   sbDeleteRecurring(id);
@@ -2093,6 +2113,7 @@ function updateSavingsGoal(id, field, value) {
 }
 
 function deleteSavingsGoal(id) {
+  rememberDeletedId(DELETED_SAVINGS_KEY, id);
   data.savingsGoals = (data.savingsGoals || []).filter(g => g.id !== id);
   saveBudgetData();
   sbDeleteSavingsGoal(id);
