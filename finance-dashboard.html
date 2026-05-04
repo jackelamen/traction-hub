@@ -3184,6 +3184,26 @@ function renderTrendsHeatmap() {
       </div>`;
     }).join('') + `</div>`;
 }
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────
+// N → jump to the merchant input to start a new transaction
+//     (only when not already typing somewhere)
+document.addEventListener('keydown', e => {
+  const tag = (document.activeElement?.tagName || '').toLowerCase();
+  const isTyping = tag === 'input' || tag === 'textarea' || tag === 'select'
+    || document.activeElement?.isContentEditable;
+  if (isTyping) return;
+
+  if (e.key === 'n' || e.key === 'N') {
+    e.preventDefault();
+    // Switch to Transactions section if not already there
+    if (activeSection !== 'tracker') {
+      switchSection('tracker', document.querySelectorAll('.module-nav-item')[0]);
+    }
+    const el = document.getElementById('fMerchant');
+    if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  }
+});
 </script>
 </body>
 </html>

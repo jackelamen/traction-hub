@@ -10874,6 +10874,20 @@ syncFromSupabase().finally(() => {
   // Pull fresh data from cloud every 30s (cross-device sync)
   setInterval(_sbPullThrottled, 30000);
 });
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────
+// Space  → toggle the deep work timer (unless focus is in an input/textarea)
+document.addEventListener('keydown', e => {
+  const tag = (document.activeElement?.tagName || '').toLowerCase();
+  const isTyping = tag === 'input' || tag === 'textarea' || tag === 'select'
+    || document.activeElement?.isContentEditable;
+  if (isTyping) return;
+
+  if (e.code === 'Space') {
+    e.preventDefault();
+    toggleTimer();
+  }
+});
 </script>
 </body>
 </html>
