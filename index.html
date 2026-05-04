@@ -6,6 +6,7 @@
 <title>The EDGEx</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='10' fill='%231a1a2e'/><text x='16' y='23' font-size='20' text-anchor='middle' font-family='sans-serif' font-weight='bold' fill='white'>E</text></svg>"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-font-smoothing: antialiased; height: 100%; }
@@ -89,10 +90,47 @@ body::after {
   font-family: 'Inter', sans-serif;
   font-weight: 600;
   font-size: clamp(10px, 1.4vw, 13px);
-  letter-spacing: 0.26em;
+  letter-spacing: 0.16em;
   color: rgba(255,255,255,0.38);
   text-transform: uppercase;
   margin-top: 12px;
+}
+
+.brand-context {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: clamp(11px, 1.5vw, 13px);
+  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.55);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-context .ctx-date {
+  color: rgba(255,255,255,0.65);
+  font-weight: 600;
+}
+
+.brand-context .ctx-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(251,146,60,0.12);
+  border: 1px solid rgba(251,146,60,0.25);
+  color: #fb923c;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.brand-context .ctx-streak .material-symbols-rounded {
+  font-size: 13px;
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20;
+  line-height: 1;
 }
 
 .dashboard-status {
@@ -350,6 +388,11 @@ body::after {
   display: flex; align-items: center; justify-content: center;
   font-size: 14px;
 }
+.corner-icon .material-symbols-rounded {
+  font-size: 18px;
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  line-height: 1;
+}
 .work  .corner-icon { background: rgba(251,146,60,0.18); color: #fb923c; }
 .goals .corner-icon { background: rgba(52,211,153,0.18); color: #34d399; }
 
@@ -493,6 +536,13 @@ body::after {
         THE <span class="bold">EDG</span><span class="bold">E</span><span class="x-letter">x</span>
       </div>
       <div class="brand-sub">Every Day Growth Experience</div>
+      <div class="brand-context">
+        <span class="ctx-date" id="ctx-date"></span>
+        <span class="ctx-streak" id="ctx-streak" style="display:none">
+          <span class="material-symbols-rounded">local_fire_department</span>
+          <span id="ctx-streak-count"></span>
+        </span>
+      </div>
     </div>
     <div class="dashboard-status" aria-label="Dashboard status">
       <div class="status-pill"><span class="status-dot" id="sys-dot"></span><span id="today-label">Today</span></div>
@@ -506,7 +556,7 @@ body::after {
     <!-- Work -->
     <a class="module-card work" href="work.html" aria-label="Open Work Room">
       <div class="card-corner-icons">
-        <div class="corner-icon">⚡</div>
+        <div class="corner-icon"><span class="material-symbols-rounded">bolt</span></div>
       </div>
 
       <div class="ring-wrap">
@@ -532,7 +582,7 @@ body::after {
     <!-- Goals -->
     <a class="module-card goals" href="goals.html" aria-label="Open Goals Room">
       <div class="card-corner-icons">
-        <div class="corner-icon">🚩</div>
+        <div class="corner-icon"><span class="material-symbols-rounded">flag</span></div>
       </div>
 
       <div class="ring-wrap">
@@ -558,7 +608,7 @@ body::after {
     <!-- Finance -->
     <a class="module-card finance" href="finance-login.html" aria-label="Open Finance Room">
       <div class="card-corner-icons">
-        <div class="corner-icon">💸</div>
+        <div class="corner-icon"><span class="material-symbols-rounded">payments</span></div>
       </div>
 
       <div class="ring-wrap">
@@ -584,7 +634,7 @@ body::after {
     <!-- Health -->
     <a class="module-card health" href="health.html" aria-label="Open Health Room">
       <div class="card-corner-icons">
-        <div class="corner-icon">🫀</div>
+        <div class="corner-icon"><span class="material-symbols-rounded">monitor_heart</span></div>
       </div>
 
       <div class="ring-wrap">
@@ -610,7 +660,7 @@ body::after {
     <!-- Wellness -->
     <a class="module-card wellness" href="wellness.html" aria-label="Open Wellness Room">
       <div class="card-corner-icons">
-        <div class="corner-icon">🧘</div>
+        <div class="corner-icon"><span class="material-symbols-rounded">self_improvement</span></div>
       </div>
 
       <div class="ring-wrap">
@@ -773,6 +823,53 @@ if (todayLabel) {
     day: 'numeric'
   });
 }
+
+// ── Brand context line: date + streak ────────────────────────────
+(function initBrandContext() {
+  const now = new Date();
+  const ctxDate = document.getElementById('ctx-date');
+  if (ctxDate) {
+    ctxDate.textContent = now.toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+  }
+
+  // Compute streak: count consecutive days (ending today) on which the
+  // user opened the hub. We track this by writing today's date on load
+  // into a small streak object stored in localStorage.
+  try {
+    const STREAK_KEY = 'edgex_hub_streak_v1';
+    const todayStr = now.toISOString().slice(0, 10);
+    let streak = JSON.parse(localStorage.getItem(STREAK_KEY) || '{"count":0,"last":""}');
+
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yStr = yesterday.toISOString().slice(0, 10);
+
+    if (streak.last === todayStr) {
+      // already counted today — count stays the same
+    } else if (streak.last === yStr) {
+      // consecutive day — increment
+      streak.count = (streak.count || 0) + 1;
+      streak.last = todayStr;
+      localStorage.setItem(STREAK_KEY, JSON.stringify(streak));
+    } else {
+      // gap or first visit — reset to 1
+      streak.count = 1;
+      streak.last = todayStr;
+      localStorage.setItem(STREAK_KEY, JSON.stringify(streak));
+    }
+
+    if (streak.count >= 2) {
+      const el = document.getElementById('ctx-streak');
+      const countEl = document.getElementById('ctx-streak-count');
+      if (el && countEl) {
+        countEl.textContent = streak.count + '-day streak';
+        el.style.display = 'inline-flex';
+      }
+    }
+  } catch(e) { /* non-critical */ }
+})();
 
 function setText(id, value) {
   const el = document.getElementById(id);
