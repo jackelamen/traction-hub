@@ -3268,11 +3268,12 @@ function cmdRender() {
   const list = document.getElementById('cmd-list');
   if (!cmdFiltered.length) { list.innerHTML = '<div style="padding:20px;text-align:center;color:rgba(255,255,255,0.28);font-size:13px">No modules match</div>'; return; }
   list.innerHTML = cmdFiltered.map((m, i) => `
-    <a class="cmd-item${i === cmdSelected ? ' selected' : ''}" href="${m.href}"
-       onmouseenter="cmdSelected=${i};cmdRender()" onclick="cmdCloseForce()">
+    <div class="cmd-item${i === cmdSelected ? ' selected' : ''}"
+       onmouseenter="cmdSelected=${i};cmdRender()"
+       onclick="cmdCloseForce();window.location.href='${m.href}'">
       <div class="cmd-item-icon" style="background:${m.color}">${m.icon}</div>
       <div><div class="cmd-item-label">${m.label}</div><div class="cmd-item-sub">${m.sub}</div></div>
-    </a>`).join('');
+    </div>`).join('');
 }
 function cmdKey(e) {
   if (e.key === 'Escape') { cmdCloseForce(); return; }
