@@ -4699,18 +4699,19 @@ function streakChartHTML(sp) {
     const x = startX + i * (barW + gap);
     const isCur = (i + 1) === cw;
     const weekLabel = `Week ${i + 1}`;
+    const esc = str => str.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
     if (s === null) {
-      const tipContent = `${weekLabel}<small>Not started yet</small>`;
-      return `<rect x="${x}" y="${H - padB - 6}" width="${barW}" height="6" rx="3" fill="#EEF2F7" data-streak-tip="${tipContent.replace(/"/g,'&quot;')}"/>
+      const tip = esc(weekLabel + '<small>Not started yet</small>');
+      return `<rect x="${x}" y="${H - padB - 6}" width="${barW}" height="6" rx="3" fill="#EEF2F7" data-streak-tip="${tip}"/>
               <text x="${x + barW/2}" y="${H - 1}" text-anchor="middle" font-size="9" font-weight="700" fill="#C8D0DC" font-family="Inter,sans-serif">${i+1}</text>`;
     }
     const barH = Math.max(6, Math.round(s / 100 * (H - padB - 6)));
     const y = H - padB - barH;
     const color = s >= 85 ? '#10b981' : s >= 65 ? '#f97316' : '#ef4444';
-    const glow = isCur ? `filter="url(#glow-${sp.id})"` : '';
+    const glow = isCur ? 'filter="url(#glow-' + sp.id + ')"' : '';
     const quality = s >= 85 ? 'Excellent' : s >= 65 ? 'Solid' : 'Needs push';
-    const tipContent = `${weekLabel}: ${s}%<small>${quality}${isCur ? ' · Current' : ''}</small>`;
-    return `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="${color}" ${glow} opacity="${isCur?1:0.72}" data-streak-tip="${tipContent.replace(/"/g,'&quot;')}"/>
+    const tip = esc(weekLabel + ': ' + s + '%<small>' + quality + (isCur ? ' · Current' : '') + '</small>');
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="${color}" ${glow} opacity="${isCur?1:0.72}" data-streak-tip="${tip}"/>
             <text x="${x + barW/2}" y="${H - 1}" text-anchor="middle" font-size="9" font-weight="${isCur?'800':'700'}" fill="${isCur?color:'#9BA3B2'}" font-family="Inter,sans-serif">${i+1}</text>`;
   }).join('');
 
@@ -4742,6 +4743,7 @@ function streakChartHTML(sp) {
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--text-3)"><span style="width:8px;height:8px;border-radius:2px;background:#ef4444;display:inline-block"></span>&lt;65% Push</span>
     </div>
   </div>`;
+}
 
 // ─────────────────────────────────────────
 //  AREA BALANCE DONUT (SVG)
