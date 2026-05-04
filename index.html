@@ -827,7 +827,7 @@ function getSession() {
 
 function getSbUserId() {
   const session = getSession();
-  return session?.user?.id || 'fa3f910d-64f8-43cf-94c1-61d645ed9414';
+  return session?.user?.id || null;
 }
 
 function financeSummaryFromTransactions(transactions) {
@@ -844,11 +844,13 @@ function financeSummaryFromTransactions(transactions) {
 async function fetchFinanceMonthSummary() {
   const session = getSession();
   if (!session) return null;
+  const userId = getSbUserId();
+  if (!userId) return null;
   const now = new Date();
   const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
   const to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
   try {
-    const url = `${SB_URL}/rest/v1/finance_transactions?user_id=eq.${encodeURIComponent(getSbUserId())}&date=gte.${from}&date=lte.${to}&select=type,amount_krw,date`;
+    const url = `${SB_URL}/rest/v1/finance_transactions?user_id=eq.${encodeURIComponent(userId)}&date=gte.${from}&date=lte.${to}&select=type,amount_krw,date`;
     const res = await fetchWithTimeout(url, {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${session.access_token}`, 'Accept': 'application/json' }
     });
@@ -984,6 +986,132 @@ setText('work-status', 'Ready for a 50 minute focus block');
   const isTodayW  = data.updatedAt && data.updatedAt.slice(0, 10) === todayStrW;
   reportModuleStatus('wellness', isTodayW ? 'fresh' : 'stale');
 })();
+
+// ── Re-fetch all ring data when tab becomes visible again ─────────────────
+// This ensures rings update after you interact with a module in another tab
+// without needing a full page reload.
+async function refreshAllRings() {
+  // Reset system status state so it re-aggregates cleanly
+  moduleStatus.goals    = null;
+  moduleStatus.finance  = null;
+  moduleStatus.health   = null;
+  moduleStatus.wellness = null;
+
+  // Goals
+  (async () => {
+    const d = await readSummary('edgex_goals_summary');
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const isToday = d?.updatedAt && d.updatedAt.slice(0, 10) === todayStr;
+    if (d && isToday && d.total > 0) {
+      const done = d.done ?? 0; const total = d.total;
+      const pct = Math.round((done / total) * 100);
+      document.getElementById('goals-pct').textContent  = pct + '%';
+      document.getElementById('goals-meta').textContent = done + '/' + total + ' done';
+      setText('goals-status', done + ' of ' + total + ' tactics done today');
+      animateRing('.goals-ring', pct, 0);
+      reportModuleStatus('goals', 'fresh');
+    } else if (d && d.activeCycles > 0) {
+      document.getElementById('goals-pct').textContent  = d.activeCycles;
+      document.getElementById('goals-meta').textContent = 'active cycles';
+      setText('goals-status', d.activeCycles + ' active sprint' + (d.activeCycles === 1 ? '' : 's') + ' running');
+      animateRing('.goals-ring', 60, 0);
+      reportModuleStatus('goals', 'stale');
+    } else {
+      document.getElementById('goals-pct').textContent  = '—';
+      document.getElementById('goals-meta').textContent = 'no data';
+      setText('goals-status', 'Open Goals to sync');
+      animateRing('.goals-ring', 0, 0);
+      reportModuleStatus('goals', 'empty');
+    }
+  })();
+
+  // Finance
+  (async () => {
+    try {
+      let summary = await fetchFinanceMonthSummary();
+      if (!summary) {
+        const stored = localStorage.getItem('finance_tracker_data_v1');
+        if (!stored) { animateRing('.finance-ring', 0, 0); reportModuleStatus('finance', 'empty'); return; }
+        summary = financeSummaryFromTransactions(JSON.parse(stored).transactions || []);
+      }
+      const { expense, income } = summary;
+      const pct = income > 0 ? Math.min(100, Math.round(expense / income * 100)) : 0;
+      const fmt = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? Math.round(n/1000)+'K' : String(Math.round(n));
+      document.getElementById('finance-pct').textContent = income > 0 ? pct + '%' : '₩' + fmt(expense);
+      document.getElementById('finance-meta').textContent = income > 0 ? 'of income' : 'this month';
+      setText('finance-status', income > 0 ? '₩' + fmt(expense) + ' spent this month' : '₩' + fmt(expense) + ' tracked this month');
+      animateRing('.finance-ring', pct || (expense > 0 ? 60 : 0), 0);
+      reportModuleStatus('finance', expense > 0 || income > 0 ? 'fresh' : 'empty');
+    } catch(e) {
+      animateRing('.finance-ring', 0, 0);
+      reportModuleStatus('finance', 'empty');
+    }
+  })();
+
+  // Health
+  (async () => {
+    const data = await readSummary('edgex_health_summary');
+    if (!data) { animateRing('.health-ring', 0, 0); reportModuleStatus('health', 'empty'); return; }
+    const completed = data.checked ?? 0; const total = data.total ?? 4;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    document.getElementById('health-pct').textContent  = pct + '%';
+    document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
+    setText('health-status', completed + ' of ' + total + ' routines complete');
+    animateRing('.health-ring', pct, 0);
+    const todayStrH = new Date().toISOString().slice(0, 10);
+    reportModuleStatus('health', data.updatedAt && data.updatedAt.slice(0, 10) === todayStrH ? 'fresh' : 'stale');
+  })();
+
+  // Wellness
+  (async () => {
+    const data = await readSummary('edgex_wellness_summary');
+    if (!data) { animateRing('.wellness-ring', 0, 0); reportModuleStatus('wellness', 'empty'); return; }
+    const score = data.score ?? null;
+    if (score == null) { animateRing('.wellness-ring', 0, 0); reportModuleStatus('wellness', 'stale'); return; }
+    document.getElementById('wellness-pct').textContent  = score;
+    document.getElementById('wellness-meta').textContent = 'clarity';
+    setText('wellness-status', 'Clarity score is ' + score + ' today');
+    animateRing('.wellness-ring', score, 0);
+    const todayStrW = new Date().toISOString().slice(0, 10);
+    reportModuleStatus('wellness', data.updatedAt && data.updatedAt.slice(0, 10) === todayStrW ? 'fresh' : 'stale');
+  })();
+}
+
+let _lastVisible = Date.now();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  // Only re-fetch if the tab was hidden for more than 30 seconds
+  if (Date.now() - _lastVisible > 30000) {
+    authReady.then(s => { if (s) refreshAllRings(); });
+  }
+  _lastVisible = Date.now();
+});
+
+// ── Periodic token refresh (every 15 minutes, only when visible) ──────────
+setInterval(async () => {
+  if (document.visibilityState !== 'visible') return;
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (!s.refresh_token) return;
+    const now = Math.floor(Date.now() / 1000);
+    // Only refresh if token will expire within the next 20 minutes
+    if ((s.expires_at || 0) > now + 1200) return;
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'apikey': SB_ANON, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: s.refresh_token })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.access_token) return;
+    localStorage.setItem('sb_session', JSON.stringify({
+      access_token:  data.access_token,
+      refresh_token: data.refresh_token || s.refresh_token,
+      expires_at:    Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+      user:          data.user || s.user
+    }));
+  } catch(e) { /* silent — network issues shouldn't disrupt the hub */ }
+}, 15 * 60 * 1000);
 </script>
 </body>
 </html>
