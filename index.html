@@ -482,66 +482,6 @@ body::after {
   transition: all 0.15s;
 }
 .btn-logout:hover { border-color: rgba(239,68,68,0.4); color: #f87171; }
-
-/* ── Cmd+K Module Switcher ── */
-#cmd-backdrop {
-  position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
-  display: none; align-items: flex-start; justify-content: center;
-  padding-top: 18vh;
-}
-#cmd-backdrop.open { display: flex; }
-#cmd-modal {
-  width: min(480px, 90vw);
-  background: #13142a;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 16px;
-  box-shadow: 0 32px 64px rgba(0,0,0,0.5);
-  overflow: hidden;
-}
-#cmd-input-wrap {
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 18px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-#cmd-input-wrap .cmd-icon {
-  font-size: 18px; color: rgba(255,255,255,0.35); flex-shrink: 0;
-}
-#cmd-input {
-  flex: 1; background: none; border: none; outline: none;
-  font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500;
-  color: #fff; caret-color: #7c6ff7;
-}
-#cmd-input::placeholder { color: rgba(255,255,255,0.28); }
-#cmd-list { padding: 8px; }
-.cmd-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 12px; border-radius: 10px;
-  cursor: pointer; text-decoration: none;
-  transition: background 0.12s;
-}
-.cmd-item:hover, .cmd-item.selected {
-  background: rgba(255,255,255,0.07);
-}
-.cmd-item-icon {
-  width: 32px; height: 32px; border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 15px; flex-shrink: 0;
-}
-.cmd-item-label { font-size: 14px; font-weight: 600; color: #fff; }
-.cmd-item-sub   { font-size: 11px; color: rgba(255,255,255,0.38); margin-top: 1px; }
-#cmd-hint {
-  padding: 8px 18px 10px;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  font-size: 11px; color: rgba(255,255,255,0.22);
-  display: flex; gap: 14px;
-}
-#cmd-hint kbd {
-  display: inline-flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 5px; padding: 1px 6px; font-size: 10px; font-family: inherit;
-  color: rgba(255,255,255,0.45);
-}
 </style>
 </head>
 <body>
@@ -696,27 +636,10 @@ body::after {
   </div>
 
   <div class="footer">
-    <span><strong>theedgex.com</strong> &nbsp;·&nbsp; personal operating system &nbsp;·&nbsp; <kbd style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:1px 5px;font-size:10px;color:rgba(255,255,255,0.3);font-family:inherit">⌘K</kbd> to switch</span>
+    <span><strong>theedgex.com</strong> &nbsp;·&nbsp; personal operating system</span>
     <button class="btn-logout" onclick="doLogout()">Sign Out</button>
   </div>
   </main>
-
-<!-- ── Cmd+K Module Switcher Modal ── -->
-<div id="cmd-backdrop" onclick="cmdClose(event)">
-  <div id="cmd-modal" role="dialog" aria-label="Module switcher">
-    <div id="cmd-input-wrap">
-      <span class="cmd-icon">⌘</span>
-      <input id="cmd-input" placeholder="Jump to module…" autocomplete="off"
-        oninput="cmdFilter()" onkeydown="cmdKey(event)"/>
-    </div>
-    <div id="cmd-list"></div>
-    <div id="cmd-hint">
-      <span><kbd>↑↓</kbd> navigate</span>
-      <span><kbd>↵</kbd> open</span>
-      <span><kbd>Esc</kbd> close</span>
-    </div>
-  </div>
-</div>
 
 <script>
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
@@ -1279,89 +1202,6 @@ setInterval(async () => {
   } catch(e) {}
 })();
 
-// ── Cmd+K Module Switcher ─────────────────────────────────────────────────
-const CMD_MODULES = [
-  { label: 'Work',    sub: 'Deep work, timer, daily traction',       href: 'work.html',          icon: '⚡', color: 'rgba(251,146,60,0.18)'  },
-  { label: 'Goals',   sub: '12-week cycles, goal tracking',           href: 'goals.html',         icon: '🚩', color: 'rgba(52,211,153,0.18)'  },
-  { label: 'Finance', sub: 'Spending, income, budget',                href: 'finance-login.html', icon: '💸', color: 'rgba(108,138,255,0.18)' },
-  { label: 'Health',  sub: 'Routines, sleep, steps',                  href: 'health.html',        icon: '🫀', color: 'rgba(14,165,233,0.18)'  },
-  { label: 'Wellness',sub: 'Check-ins, meditation, clarity',          href: 'wellness.html',      icon: '🧘', color: 'rgba(124,58,237,0.18)'  },
-];
-
-let cmdSelected = 0;
-let cmdFiltered = [...CMD_MODULES];
-
-function cmdOpen() {
-  document.getElementById('cmd-backdrop').classList.add('open');
-  const inp = document.getElementById('cmd-input');
-  inp.value = '';
-  cmdFiltered = [...CMD_MODULES];
-  cmdSelected = 0;
-  cmdRender();
-  setTimeout(() => inp.focus(), 30);
-}
-
-function cmdClose(e) {
-  if (e && e.target !== document.getElementById('cmd-backdrop')) return;
-  document.getElementById('cmd-backdrop').classList.remove('open');
-}
-
-function cmdCloseForce() {
-  document.getElementById('cmd-backdrop').classList.remove('open');
-}
-
-function cmdFilter() {
-  const q = document.getElementById('cmd-input').value.toLowerCase().trim();
-  cmdFiltered = q ? CMD_MODULES.filter(m =>
-    m.label.toLowerCase().includes(q) || m.sub.toLowerCase().includes(q)
-  ) : [...CMD_MODULES];
-  cmdSelected = 0;
-  cmdRender();
-}
-
-function cmdRender() {
-  const list = document.getElementById('cmd-list');
-  if (!cmdFiltered.length) {
-    list.innerHTML = '<div style="padding:20px;text-align:center;color:rgba(255,255,255,0.28);font-size:13px">No modules match</div>';
-    return;
-  }
-  list.innerHTML = cmdFiltered.map((m, i) => `
-    <a class="cmd-item${i === cmdSelected ? ' selected' : ''}" href="${m.href}"
-       onmouseenter="cmdSelected=${i};cmdRender()"
-       onclick="cmdCloseForce()">
-      <div class="cmd-item-icon" style="background:${m.color}">${m.icon}</div>
-      <div>
-        <div class="cmd-item-label">${m.label}</div>
-        <div class="cmd-item-sub">${m.sub}</div>
-      </div>
-    </a>`).join('');
-}
-
-function cmdKey(e) {
-  if (e.key === 'Escape') { cmdCloseForce(); return; }
-  if (e.key === 'ArrowDown') { e.preventDefault(); cmdSelected = Math.min(cmdSelected + 1, cmdFiltered.length - 1); cmdRender(); }
-  if (e.key === 'ArrowUp')   { e.preventDefault(); cmdSelected = Math.max(cmdSelected - 1, 0); cmdRender(); }
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    if (cmdFiltered[cmdSelected]) { cmdCloseForce(); window.location.href = cmdFiltered[cmdSelected].href; }
-  }
-}
-
-// Global keyboard listeners for the hub
-document.addEventListener('keydown', e => {
-  // Cmd+K or Ctrl+K → open switcher
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-    e.preventDefault();
-    const backdrop = document.getElementById('cmd-backdrop');
-    if (backdrop.classList.contains('open')) cmdCloseForce();
-    else cmdOpen();
-    return;
-  }
-  // Escape → close switcher if open
-  if (e.key === 'Escape') {
-    cmdCloseForce();
-  }
-});
 </script>
 </body>
 </html>

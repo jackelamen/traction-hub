@@ -164,6 +164,23 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .hidden-file{display:none}
 @media(max-width:900px){#sidebar{position:static;width:100%;height:auto}#app{display:block}#main{margin-left:0}.view{padding:22px 18px 70px}.grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.reset-grid,.score-grid{grid-template-columns:1fr}.well-ring{margin:0 auto}}
 @media(max-width:600px){.tabs{width:100%}.tab{flex:1}.timer-time{font-size:38px}.breath-visual{width:178px;height:178px}.breath-orb{width:136px;height:136px}.breath-presets{grid-template-columns:1fr}.meditation-fullscreen .breath-visual{width:280px;height:280px}.meditation-fullscreen .breath-orb{width:214px;height:214px}.meditation-fullscreen .timer-time{font-size:54px}}
+
+/* ── Cmd+K Module Switcher ── */
+#cmd-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding-top:14vh;opacity:0;pointer-events:none;transition:opacity .15s}
+#cmd-backdrop.open{opacity:1;pointer-events:all}
+#cmd-modal{width:100%;max-width:520px;background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.6)}
+#cmd-input-wrap{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.07)}
+#cmd-input-wrap svg{flex-shrink:0;opacity:.45}
+#cmd-input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;font-family:'Inter',sans-serif;font-weight:500}
+#cmd-input::placeholder{color:rgba(255,255,255,0.28)}
+#cmd-list{max-height:320px;overflow-y:auto;padding:8px}
+.cmd-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;text-decoration:none;color:rgba(255,255,255,0.82);transition:background .12s;cursor:pointer}
+.cmd-item.selected,.cmd-item:hover{background:rgba(255,255,255,0.08)}
+.cmd-item-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.cmd-item-label{font-size:13.5px;font-weight:600;font-family:'Inter',sans-serif}
+.cmd-item-sub{font-size:11.5px;color:rgba(255,255,255,0.38);margin-top:1px;font-family:'Inter',sans-serif}
+#cmd-hint{padding:10px 18px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:16px;font-size:11px;color:rgba(255,255,255,0.28);font-family:'Inter',sans-serif}
+#cmd-hint kbd{background:rgba(255,255,255,0.08);border-radius:4px;padding:1px 5px;font-family:inherit}
 </style>
 </head>
 <body>
@@ -190,7 +207,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
   </div>
   <div class="sidebar-footer">
     <button onclick="nav('checkin')" class="btn btn-primary" style="width:100%"><span class="icon" style="font-size:17px">add</span>Check In</button>
-    <a href="index.html" class="nav-item" style="justify-content:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);font-size:11.5px"><span class="icon" style="font-size:14px">apps</span>Switch module</a>
+    <button onclick="cmdOpen()" class="nav-item" style="justify-content:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);font-size:11.5px;cursor:pointer"><span class="icon" style="font-size:14px">apps</span>Switch module<kbd style="background:rgba(255,255,255,0.1);border-radius:4px;padding:1px 5px;font-size:10px;font-family:'Inter',sans-serif;margin-left:auto">⌘K</kbd></button>
     <button onclick="doLogout()" class="nav-item" style="justify-content:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);font-size:11.5px;color:#f87171"><span class="icon" style="font-size:14px;color:#f87171">logout</span>Sign out</button>
   </div>
 </nav>
@@ -1220,6 +1237,82 @@ async function bootWellness() {
   _startPeriodicSync();
 }
 bootWellness();
+
+// ── Cmd+K Module Switcher ─────────────────────────────────────────────────
+const CMD_MODULES = [
+  { label: 'Home',    sub: 'Hub — all modules overview',               href: 'index.html',         icon: '🏠', color: 'rgba(255,255,255,0.12)'  },
+  { label: 'Work',    sub: 'Deep work, timer, daily traction',         href: 'work.html',          icon: '⚡', color: 'rgba(251,146,60,0.18)'  },
+  { label: 'Goals',   sub: '12-week cycles, goal tracking',            href: 'goals.html',         icon: '🚩', color: 'rgba(52,211,153,0.18)'  },
+  { label: 'Finance', sub: 'Spending, income, budget',                 href: 'finance-login.html', icon: '💸', color: 'rgba(108,138,255,0.18)' },
+  { label: 'Health',  sub: 'Routines, sleep, steps',                   href: 'health.html',        icon: '🫀', color: 'rgba(14,165,233,0.18)'  },
+  { label: 'Wellness',sub: 'Check-ins, meditation, clarity',           href: 'wellness.html',      icon: '🧘', color: 'rgba(124,58,237,0.18)'  },
+];
+let cmdSelected = 0;
+let cmdFiltered = [...CMD_MODULES];
+function cmdOpen() {
+  document.getElementById('cmd-backdrop').classList.add('open');
+  const inp = document.getElementById('cmd-input');
+  inp.value = '';
+  cmdFiltered = [...CMD_MODULES];
+  cmdSelected = 0;
+  cmdRender();
+  setTimeout(() => inp.focus(), 30);
+}
+function cmdClose(e) {
+  if (e && e.target !== document.getElementById('cmd-backdrop')) return;
+  document.getElementById('cmd-backdrop').classList.remove('open');
+}
+function cmdCloseForce() {
+  document.getElementById('cmd-backdrop').classList.remove('open');
+}
+function cmdFilter() {
+  const q = document.getElementById('cmd-input').value.toLowerCase().trim();
+  cmdFiltered = q ? CMD_MODULES.filter(m => m.label.toLowerCase().includes(q) || m.sub.toLowerCase().includes(q)) : [...CMD_MODULES];
+  cmdSelected = 0;
+  cmdRender();
+}
+function cmdRender() {
+  const list = document.getElementById('cmd-list');
+  if (!cmdFiltered.length) { list.innerHTML = '<div style="padding:20px;text-align:center;color:rgba(255,255,255,0.28);font-size:13px">No modules match</div>'; return; }
+  list.innerHTML = cmdFiltered.map((m, i) => `
+    <a class="cmd-item${i === cmdSelected ? ' selected' : ''}" href="${m.href}"
+       onmouseenter="cmdSelected=${i};cmdRender()" onclick="cmdCloseForce()">
+      <div class="cmd-item-icon" style="background:${m.color}">${m.icon}</div>
+      <div><div class="cmd-item-label">${m.label}</div><div class="cmd-item-sub">${m.sub}</div></div>
+    </a>`).join('');
+}
+function cmdKey(e) {
+  if (e.key === 'Escape') { cmdCloseForce(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); cmdSelected = Math.min(cmdSelected + 1, cmdFiltered.length - 1); cmdRender(); }
+  if (e.key === 'ArrowUp')   { e.preventDefault(); cmdSelected = Math.max(cmdSelected - 1, 0); cmdRender(); }
+  if (e.key === 'Enter') { e.preventDefault(); if (cmdFiltered[cmdSelected]) { cmdCloseForce(); window.location.href = cmdFiltered[cmdSelected].href; } }
+}
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    const backdrop = document.getElementById('cmd-backdrop');
+    if (backdrop.classList.contains('open')) cmdCloseForce();
+    else cmdOpen();
+    return;
+  }
+  if (e.key === 'Escape') { cmdCloseForce(); }
+});
 </script>
+
+<!-- Cmd+K Module Switcher Modal -->
+<div id="cmd-backdrop" onclick="cmdClose(event)">
+  <div id="cmd-modal">
+    <div id="cmd-input-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="cmd-input" placeholder="Jump to module…" oninput="cmdFilter()" onkeydown="cmdKey(event)" autocomplete="off" spellcheck="false"/>
+    </div>
+    <div id="cmd-list"></div>
+    <div id="cmd-hint">
+      <span><kbd>↑↓</kbd> navigate</span>
+      <span><kbd>↵</kbd> open</span>
+      <span><kbd>Esc</kbd> close</span>
+    </div>
+  </div>
+</div>
 </body>
 </html>
