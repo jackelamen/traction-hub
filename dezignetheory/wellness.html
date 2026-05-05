@@ -492,7 +492,14 @@ const STORAGE_KEY = 'edgex_wellness_v1';
 const SUMMARY_KEY = 'edgex_wellness_summary';
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
-const SB_USER_ID = 'dezignetheory_traction_hub_v1';
+// User ID derived from authenticated Supabase session
+function getSbUserId() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s?.user?.id || null;
+  } catch(e) { return null; }
+}
+const SB_USER_ID = getSbUserId();
 
 // ── Auth gate ────────────────────────────────────────────────────
 (async function checkAuth() {

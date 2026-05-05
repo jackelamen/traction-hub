@@ -842,7 +842,13 @@ async function doLogout() {
 }
 
 const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.3
-const EDGEX_KV_USER_ID = 'dezignetheory_traction_hub_v1';
+// User ID derived from authenticated Supabase session
+const EDGEX_KV_USER_ID = (() => {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s?.user?.id || null;
+  } catch(e) { return null; }
+})();
 
 // ── System status tracker ─────────────────────────────────────────
 // Each module reports: 'fresh' (data exists for today), 'stale' (data but old), or 'empty' (no data)

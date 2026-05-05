@@ -2587,7 +2587,12 @@ const AREAS = [
 // ─────────────────────────────────────────
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
-const GOALS_KV_USER_ID = 'dezignetheory_traction_hub_v1';
+const GOALS_KV_USER_ID = (() => {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s?.user?.id || null;
+  } catch(e) { return null; }
+})();
 const GOALS_SUMMARY_KEY = 'edgex_goals_summary';
 const VB_IMAGES_KEY = 'gs2_vb';
 const VB_IMAGES_UPDATED_KEY = 'gs2_vb_updated_at';

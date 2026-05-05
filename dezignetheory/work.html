@@ -3406,9 +3406,13 @@ const NO_SYNC_KEYS = new Set([
 
 // Everything else gets synced — no allowlist needed
 
-// Fixed user ID — single user app, same ID on every device
-const SB_USER_ID = 'dezignetheory_traction_hub_v1';
-function getSbUserId() { return SB_USER_ID; }
+// User ID derived from authenticated Supabase session
+function getSbUserId() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s?.user?.id || null;
+  } catch(e) { return null; }
+}
 
 
 // Keep a direct reference to the original localStorage.setItem (used during boot hydration)
