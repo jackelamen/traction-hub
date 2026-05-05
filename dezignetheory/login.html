@@ -285,7 +285,13 @@ async function doLogin() {
       return;
     }
 
-    localStorage.removeItem('finance_session_ts');
+    // Clear all cached data so we start fresh from Supabase for this user
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k !== 'sb_session') keysToRemove.push(k);
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
 
     // Store session
     localStorage.setItem('sb_session', JSON.stringify({
