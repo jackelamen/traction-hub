@@ -3458,6 +3458,7 @@ const NO_SYNC_KEYS = new Set([
   'morning-setup-done',      // sessionStorage flag, not relevant cross-device
   '_edgex_ls_timestamps',    // local write-time metadata — never push to cloud
   'edgex_daily_signals_v1',  // oversized legacy Samsung Health import
+  '30day-sprint-start-v1',   // sprint start date — account-local, never cross-sync
 ]);
 
 // Everything else gets synced — no allowlist needed
