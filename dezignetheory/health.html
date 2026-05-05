@@ -418,11 +418,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       <div class="grid-3">
         <div class="field">
           <label>Energy</label>
-          <div class="range-row"><input id="energy" type="range" min="1" max="5" value="3" oninput="syncRangeLabel('energy')"/><div class="score-pill" id="energy-label">3</div></div>
+          <div class="range-row"><input id="energy" type="range" min="1" max="5" value="0" oninput="syncRangeLabel('energy')"/><div class="score-pill" id="energy-label">0</div></div>
         </div>
         <div class="field">
           <label>Sleep Quality</label>
-          <div class="range-row"><input id="sleep-quality" type="range" min="1" max="5" value="3" oninput="syncRangeLabel('sleep-quality')"/><div class="score-pill" id="sleep-quality-label">3</div></div>
+          <div class="range-row"><input id="sleep-quality" type="range" min="1" max="5" value="0" oninput="syncRangeLabel('sleep-quality')"/><div class="score-pill" id="sleep-quality-label">0</div></div>
         </div>
         <div class="field">
           <label>Pain / Strain</label>
@@ -920,15 +920,15 @@ function readinessDetails(log){
   const sleep = Math.min(100, ((parseFloat(log.sleepHours) || 0) / s.sleepTarget) * 100);
   const steps = Math.min(100, ((parseInt(log.steps) || 0) / s.stepTarget) * 100);
   const water = Math.min(100, ((parseFloat(log.water) || 0) / s.waterTarget) * 100);
-  const energy = ((parseInt(log.energy) || 3) / 5) * 100;
-  const quality = ((parseInt(log.sleepQuality) || 3) / 5) * 100;
+  const energy = ((parseInt(log.energy) || 0) / 5) * 100;
+  const quality = ((parseInt(log.sleepQuality) || 0) / 5) * 100;
   const pain = parseInt(log.pain) || 0;
   const painScore = Math.max(0, 100 - pain * 20);
   const components = [
     { key:'sleepHours', label:'Sleep', value:sleep, weight:.28, detail:(parseFloat(log.sleepHours)||0) + 'h / ' + s.sleepTarget + 'h', advice:'Add an earlier shutdown cue or protect tomorrow morning from late-night drift.' },
     { key:'steps', label:'Steps', value:steps, weight:.18, detail:Number(log.steps || 0).toLocaleString() + ' / ' + Number(s.stepTarget).toLocaleString(), advice:'Add a 10-minute walk to a transition you already have.' },
     { key:'water', label:'Water', value:water, weight:.14, detail:(parseFloat(log.water)||0).toFixed(1) + 'L / ' + s.waterTarget + 'L', advice:'Put water in reach and pair the next glass with food or a work start.' },
-    { key:'energy', label:'Energy', value:energy, weight:.22, detail:(parseInt(log.energy)||3) + ' / 5', advice:'Reduce friction: food, daylight, a short walk, or a lower-demand plan.' },
+    { key:'energy', label:'Energy', value:energy, weight:.22, detail:(parseInt(log.energy)||0) + ' / 5', advice:'Reduce friction: food, daylight, a short walk, or a lower-demand plan.' },
     { key:'sleepQuality', label:'Sleep quality', value:quality, weight:.18, detail:(parseInt(log.sleepQuality)||3) + ' / 5', advice:'Improve the pre-sleep environment before adding more effort tomorrow.' },
     { key:'pain', label:'Low pain', value:painScore, weight:.14, detail:pain + ' / 5 strain', advice:'De-load today: mobility, easy walking, or rest instead of forcing intensity.' }
   ];
@@ -1071,7 +1071,7 @@ function getHealthCoach(log, score){
     { key:'steps', gap:(parseInt(log.steps)||0) < s.stepTarget * .55, action:{icon:'directions_walk', title:'Add easy movement', body:'A 10-minute walk counts. Keep it embarrassingly doable.'} },
     { key:'water', gap:(parseFloat(log.water)||0) < s.waterTarget * .6, action:{icon:'water_drop', title:'Hydrate before optimizing', body:'Drink one glass now and pair the next with a meal or break.'} },
     { key:'pain', gap:(parseInt(log.pain)||0) >= 3, action:{icon:'healing', title:'De-load the plan', body:'Choose mobility, gentle walking, or rest over proving anything.'} },
-    { key:'energy', gap:(parseInt(log.energy)||3) <= 2, action:{icon:'battery_low', title:'Run the low-energy version', body:'Reduce intensity and keep only the health minimums.'} }
+    { key:'energy', gap:(parseInt(log.energy)||0) <= 2, action:{icon:'battery_low', title:'Run the low-energy version', body:'Reduce intensity and keep only the health minimums.'} }
   ].filter(x => x.gap).map(x => x.action);
   const actions = gaps.length ? gaps.slice(0,3) : [
     {icon:'fitness_center', title:'Use the good window', body:'Train or do a challenging walk while the signal is strong.'},
@@ -1191,8 +1191,8 @@ function loadTodayIntoForm(){
   setExerciseTypes(log.exerciseTypes || log.exerciseType || []);
   setVal('water', log.water || '');
   setVal('nutrition', log.nutrition || '');
-  setVal('energy', log.energy || 3);
-  setVal('sleep-quality', log.sleepQuality || 3);
+  setVal('energy', log.energy || 0);
+  setVal('sleep-quality', log.sleepQuality || 0);
   setVal('pain', log.pain || 0);
   setVal('notes', log.notes || '');
   ['energy','sleep-quality','pain'].forEach(syncRangeLabel);
