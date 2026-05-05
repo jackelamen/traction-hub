@@ -287,6 +287,13 @@ async function doLogin() {
 
     localStorage.removeItem('finance_session_ts');
 
+    // Only Jack's account is allowed at the root hub
+    if (data.user?.email !== 'jackelamen@gmail.com') {
+      showError('This hub is private. Please use your personal EDGEx link.');
+      resetLoginButton();
+      return;
+    }
+
     // Store session
     localStorage.setItem('sb_session', JSON.stringify({
       access_token:  data.access_token,
