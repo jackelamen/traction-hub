@@ -3528,7 +3528,7 @@ async function deleteKeyFromSupabase(key) {
       `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=eq.${encodeURIComponent(key)}`,
       {
         method: 'DELETE',
-        headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
+        headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}` }
       }
     );
     if (!res.ok) console.warn('[Supabase] delete key failed:', key, res.status, await res.text());
@@ -3553,7 +3553,7 @@ async function pushAllToSupabase() {
       method: 'POST',
       headers: {
         'apikey': SB_ANON,
-        'Authorization': `Bearer ${SB_ANON}`,
+        'Authorization': `Bearer ${getSbToken()}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ rows: rows })
@@ -3597,7 +3597,7 @@ async function syncFromSupabase() {
   try {
     const res = await fetchWithTimeout(
       `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=neq.${encodeURIComponent(OLD_DAILY_SIGNALS_KEY)}&select=key,value,updated_at`,
-      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' } }
+      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' } }
     );
     if (!res.ok) {
       console.warn('[Supabase] syncFromSupabase failed:', res.status, await res.text());
@@ -7231,7 +7231,7 @@ async function syncToHealthLog(dateStr, patch) {
     // Fetch current edgex_health_v1 value from Supabase
     const res = await fetch(
       `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=eq.${HEALTH_KEY}&select=value`,
-      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' } }
+      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' } }
     );
     if (!res.ok) { console.warn('[syncToHealthLog] fetch failed:', res.status); return; }
     const rows = await res.json();
@@ -7247,7 +7247,7 @@ async function syncToHealthLog(dateStr, patch) {
       method: 'POST',
       headers: {
         'apikey': SB_ANON,
-        'Authorization': `Bearer ${SB_ANON}`,
+        'Authorization': `Bearer ${getSbToken()}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ rows: [{ user_id: getSbUserId(), key: HEALTH_KEY, value: health, updated_at: new Date().toISOString() }] })
@@ -9818,7 +9818,7 @@ function saveMorningSetup(data) {
   const row = { user_id: getSbUserId(), key: MS_KEY, value: data, updated_at: new Date().toISOString() };
   fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
     method: 'POST',
-    headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+    headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ rows: [row] })
   }).then(r => {
     if (r.ok) console.log('[Supabase] morning-setup-v1 saved to cloud ✓', data);
