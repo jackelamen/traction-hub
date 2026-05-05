@@ -750,7 +750,7 @@ body::after {
   </div>
 
   <div class="footer">
-    <span><strong>theedgex.com</strong> &nbsp;·&nbsp; personal operating system</span>
+    <span><strong>theedgex.com</strong> &nbsp;·&nbsp; personal operating system &nbsp;·&nbsp; <span id="logged-in-email" style="color:rgba(255,255,255,0.32);"></span></span>
     <button class="btn-logout" onclick="doLogout()">Sign Out</button>
   </div>
   </main>
@@ -774,6 +774,7 @@ const authReady = (async function checkAuth() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
     if (!s.access_token) { window.location.href = 'login.html'; return null; }
+    if (s.user?.email !== 'jackelamen@gmail.com') { localStorage.removeItem('sb_session'); window.location.href = 'login.html'; return null; }
     const now = Math.floor(Date.now() / 1000);
     const expiresAt = s.expires_at || 0;
     // If token is still good for more than 5 minutes, allow through
@@ -990,6 +991,14 @@ function getSbUserId() {
   const session = getSession();
   return session?.user?.id || null;
 }
+
+// Show logged-in email in footer
+document.addEventListener('DOMContentLoaded', function() {
+  const session = getSession();
+  const email = session?.user?.email;
+  const el = document.getElementById('logged-in-email');
+  if (el && email) el.textContent = email;
+});
 
 function financeSummaryFromTransactions(transactions) {
   const now = new Date();

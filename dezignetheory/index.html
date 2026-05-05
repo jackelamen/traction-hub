@@ -1005,12 +1005,12 @@ function getSbUserId() {
 }
 
 // Show logged-in email in footer
-(function showLoggedInEmail() {
+document.addEventListener('DOMContentLoaded', function() {
   const session = getSession();
   const email = session?.user?.email;
   const el = document.getElementById('logged-in-email');
   if (el && email) el.textContent = email;
-})();
+});
 
 function financeSummaryFromTransactions(transactions) {
   const now = new Date();

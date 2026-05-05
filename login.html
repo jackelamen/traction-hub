@@ -238,6 +238,10 @@ async function checkExistingSession() {
       return;
     }
     if (session.access_token && session.expires_at > Math.floor(Date.now() / 1000)) {
+      if (session.user?.email !== 'jackelamen@gmail.com') {
+        localStorage.removeItem('sb_session');
+        return;
+      }
       window.location.href = 'index.html';
     }
   } catch(e) {}
