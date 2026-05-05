@@ -2587,12 +2587,12 @@ const AREAS = [
 // ─────────────────────────────────────────
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
-const GOALS_KV_USER_ID = (() => {
+function getGoalsUserId() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
     return s?.user?.id || null;
   } catch(e) { return null; }
-})();
+}
 const GOALS_SUMMARY_KEY = 'edgex_goals_summary';
 const VB_IMAGES_KEY = 'gs2_vb';
 const VB_IMAGES_UPDATED_KEY = 'gs2_vb_updated_at';
@@ -4951,7 +4951,7 @@ async function syncGoalExtraToSupabase(key, value) {
       method: 'POST',
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        rows: [{ user_id: GOALS_KV_USER_ID, key, value, updated_at: new Date().toISOString() }]
+        rows: [{ user_id: getGoalsUserId(), key, value, updated_at: new Date().toISOString() }]
       })
     });
   } catch(e) { console.warn('Goals extra sync failed:', e); }
@@ -4962,7 +4962,7 @@ async function syncGoalExtrasFromSupabase() {
   const keys = [VB_IMAGES_KEY, GOAL_EXEMPT_KEY, noteKey, ...AREAS.map(a => visionMetaKey(a.id))];
   try {
     const keyFilter = keys.join(',');
-    const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(GOALS_KV_USER_ID)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
+    const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getGoalsUserId())}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return;

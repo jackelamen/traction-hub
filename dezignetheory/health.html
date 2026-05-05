@@ -597,7 +597,6 @@ function getSbUserId() {
     return s?.user?.id || null;
   } catch(e) { return null; }
 }
-const SB_USER_ID = getSbUserId();
 
 // ── Auth gate ────────────────────────────────────────────────────
 (async function checkAuth() {
@@ -687,7 +686,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
 async function deleteKeyFromSupabase(key) {
   if (NO_SYNC_KEYS.has(key)) return;
   try {
-    await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=eq.${encodeURIComponent(key)}`, {
+    await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=eq.${encodeURIComponent(key)}`, {
       method: 'DELETE',
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
     });
@@ -699,7 +698,7 @@ async function pushAllToSupabase() {
     const key = localStorage.key(i);
     if (NO_SYNC_KEYS.has(key)) continue;
     let parsed; try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
-    rows.push({ user_id: SB_USER_ID, key, value: parsed, updated_at: new Date().toISOString() });
+    rows.push({ user_id: getSbUserId(), key, value: parsed, updated_at: new Date().toISOString() });
   }
   if (!rows.length) return;
   try {
@@ -737,7 +736,7 @@ async function syncFromSupabase() {
       WORK_WATER_KEY
     ]);
     const keyFilter = [...keys].join(',');
-    const res = await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
+    const res = await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return;

@@ -842,13 +842,13 @@ async function doLogout() {
 }
 
 const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.3
-// User ID derived from authenticated Supabase session
-const EDGEX_KV_USER_ID = (() => {
+// User ID derived from authenticated Supabase session (resolved lazily at each call)
+function getEdgexUserId() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
     return s?.user?.id || null;
   } catch(e) { return null; }
-})();
+}
 
 // ── System status tracker ─────────────────────────────────────────
 // Each module reports: 'fresh' (data exists for today), 'stale' (data but old), or 'empty' (no data)
@@ -958,7 +958,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
 
 async function fetchTractionValue(key) {
   try {
-    const url = `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(EDGEX_KV_USER_ID)}&key=eq.${encodeURIComponent(key)}&select=value,updated_at&limit=1`;
+    const url = `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getEdgexUserId())}&key=eq.${encodeURIComponent(key)}&select=value,updated_at&limit=1`;
     const res = await fetchWithTimeout(url, {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
     });
