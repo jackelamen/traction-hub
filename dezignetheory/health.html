@@ -588,6 +588,13 @@ const WORK_TRACTION_KEY = '30day-traction-v2';
 const WORK_STEPS_KEY = '30day-steps-v1';
 const WORK_STEPS_ONLY_KEY = '30day-steps-only-v1';
 const WORK_WATER_KEY = '30day-water-v1';
+// ── Clear stale cache (multi-user safe) ─────────────────────────
+(function clearStaleCache() {
+  const session = localStorage.getItem('sb_session');
+  localStorage.clear();
+  if (session) localStorage.setItem('sb_session', session);
+})();
+
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 // User ID derived from authenticated Supabase session

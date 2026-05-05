@@ -3347,6 +3347,13 @@ const SESSION_KEY  = '30day-sessions-v1';
 const BREATH_KEY   = '30day-breath-v1';
 const TIMER_KEY    = '30day-timer-v1';
 
+// ── Clear stale cache (multi-user safe) ─────────────────────────
+(function clearStaleCache() {
+  const session = localStorage.getItem('sb_session');
+  localStorage.clear();
+  if (session) localStorage.setItem('sb_session', session);
+})();
+
 // ── Supabase Sync ────────────────────────────────────────────────
 const SB_URL    = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';

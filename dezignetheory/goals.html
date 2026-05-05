@@ -2583,6 +2583,15 @@ const AREAS = [
 ];
 
 // ─────────────────────────────────────────
+//  CLEAR STALE CACHE (multi-user safe)
+// ─────────────────────────────────────────
+(function clearStaleCache() {
+  const session = localStorage.getItem('sb_session');
+  localStorage.clear();
+  if (session) localStorage.setItem('sb_session', session);
+})();
+
+// ─────────────────────────────────────────
 //  SUPABASE CONFIG
 // ─────────────────────────────────────────
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
@@ -5787,20 +5796,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const session = await authReady;
     if (!session) return;
-    const cloudDB = await withTimeout(loadDB(), 8000, 'Goals data load');
-    const localDB = loadLocalDB();
-    if (!hasGoalsData(cloudDB) && hasGoalsData(localDB)) {
-      document.getElementById('today-empty').innerHTML = `
-        <div class="empty-icon"><span class="icon">sync</span></div>
-        <h3>Restoring your local Goals data…</h3>`;
-      DB = localDB;
-      await withTimeout(migrateLocalGoalsToSupabase(localDB), 15000, 'Goals local restore');
-    } else {
-      DB = cloudDB;
-    }
+    // Always load fresh from Supabase — never fall back to localStorage cache
+    DB = await withTimeout(loadDB(), 8000, 'Goals data load');
   } catch(e) {
-    console.error('Failed to load from Supabase, falling back to localStorage:', e);
-    DB = loadLocalDB();
+    console.error('Failed to load from Supabase:', e);
+    DB = { visions: {}, goals: [], sprints: [] };
   }
 
   try {

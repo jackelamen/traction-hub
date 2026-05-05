@@ -756,6 +756,13 @@ body::after {
   </main>
 
 <script>
+// ── Clear stale cache (multi-user safe) ─────────────────────────
+(function clearStaleCache() {
+  const session = localStorage.getItem('sb_session');
+  localStorage.clear();
+  if (session) localStorage.setItem('sb_session', session);
+})();
+
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 
