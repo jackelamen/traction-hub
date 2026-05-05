@@ -3465,7 +3465,6 @@ const NO_SYNC_KEYS = new Set([
   'morning-setup-done',      // sessionStorage flag, not relevant cross-device
   '_edgex_ls_timestamps',    // local write-time metadata — never push to cloud
   'edgex_daily_signals_v1',  // oversized legacy Samsung Health import
-  '30day-sprint-start-v1',   // sprint start date — account-local, never cross-sync
 ]);
 
 // Everything else gets synced — no allowlist needed
@@ -10253,6 +10252,9 @@ function bootApp() {
   tbBlocks      = JSON.parse(localStorage.getItem(TB_KEY)        || '{}');
   try { dayTypes = JSON.parse(localStorage.getItem(DAY_TYPES_KEY) || '{}'); } catch(e) { dayTypes = {}; }
   STEP_GOAL     = parseInt(localStorage.getItem(STEP_GOAL_KEY)   || '10000');
+  // Re-read sprint start now that Supabase has synced — rebuilds WEEKDAY_DATES with the correct date
+  START_DATE    = getSprintStartDate();
+  WEEKDAY_DATES = buildWeekdayDates(START_DATE);
 
   if (!timerRestore()) updateTimerUI();
   loadStepState();
@@ -10287,6 +10289,9 @@ async function pullAndRefresh() {
   ledgerEntries = JSON.parse(localStorage.getItem(LEDGER_KEY)    || '{}');
   tbBlocks      = JSON.parse(localStorage.getItem(TB_KEY)        || '{}');
   try { dayTypes = JSON.parse(localStorage.getItem(DAY_TYPES_KEY) || '{}'); } catch(e) { dayTypes = {}; }
+  // Re-read sprint start in case it changed on another device
+  START_DATE    = getSprintStartDate();
+  WEEKDAY_DATES = buildWeekdayDates(START_DATE);
   // Re-render all panels
   renderAll();
   renderSidebarTB();
