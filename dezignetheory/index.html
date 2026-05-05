@@ -750,7 +750,7 @@ body::after {
   </div>
 
   <div class="footer">
-    <span><strong>theedgex.com</strong> &nbsp;·&nbsp; personal operating system</span>
+    <span><strong>theedgex.com</strong> &nbsp;·&nbsp; personal operating system &nbsp;·&nbsp; <span id="logged-in-email" style="color:rgba(255,255,255,0.32);"></span></span>
     <button class="btn-logout" onclick="doLogout()">Sign Out</button>
   </div>
   </main>
@@ -1003,6 +1003,14 @@ function getSbUserId() {
   const session = getSession();
   return session?.user?.id || null;
 }
+
+// Show logged-in email in footer
+(function showLoggedInEmail() {
+  const session = getSession();
+  const email = session?.user?.email;
+  const el = document.getElementById('logged-in-email');
+  if (el && email) el.textContent = email;
+})();
 
 function financeSummaryFromTransactions(transactions) {
   const now = new Date();
