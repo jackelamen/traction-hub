@@ -3384,7 +3384,7 @@
 <!-- ═══════════════════════ SCRIPT ═══════════════════════ -->
 <script>
 // ── Config ──────────────────────────────────────────────────────
-const SPRINT_START_KEY = '30day-sprint-start-v1'; // localStorage key for user-chosen sprint start
+const SPRINT_START_KEY = 'dt_30day-sprint-start-v1'; // localStorage key for user-chosen sprint start
 const TOTAL_DAYS  = 30;
 
 function getSprintStartDate() {
@@ -3396,19 +3396,12 @@ function getSprintStartDate() {
   return new Date(2026, 3, 7); // Default: April 7 2026
 }
 let START_DATE = getSprintStartDate();
-const STORAGE_KEY = '30day-traction-v2';
+const STORAGE_KEY = 'dt_30day-traction-v2';
 const NOTION_URL  = 'https://www.notion.so/27f990778487423a94395d4167e276e0';
 
-const SESSION_KEY  = '30day-sessions-v1';
-const BREATH_KEY   = '30day-breath-v1';
-const TIMER_KEY    = '30day-timer-v1';
-
-// ── Clear stale cache (multi-user safe) ─────────────────────────
-(function clearStaleCache() {
-  const session = localStorage.getItem('sb_session');
-  localStorage.clear();
-  if (session) localStorage.setItem('sb_session', session);
-})();
+const SESSION_KEY  = 'dt_30day-sessions-v1';
+const BREATH_KEY   = 'dt_30day-breath-v1';
+const TIMER_KEY    = 'dt_30day-timer-v1';
 
 // ── Supabase Sync ────────────────────────────────────────────────
 const SB_URL    = 'https://mdkyijbgvxedelcqcouu.supabase.co';
@@ -3460,11 +3453,11 @@ async function doLogout() {
 
 // Keys that are purely ephemeral and should NOT be synced
 const NO_SYNC_KEYS = new Set([
-  'sb_session',              // auth token — never sync, would overwrite current login session
-  'traction-device-id',      // old device ID, no longer used
-  'morning-setup-done',      // sessionStorage flag, not relevant cross-device
-  '_edgex_ls_timestamps',    // local write-time metadata — never push to cloud
-  'edgex_daily_signals_v1',  // oversized legacy Samsung Health import
+  'sb_session',                  // auth token — never sync, would overwrite current login session
+  'traction-device-id',          // old device ID, no longer used
+  'morning-setup-done',          // sessionStorage flag, not relevant cross-device
+  'dt__edgex_ls_timestamps',     // local write-time metadata — never push to cloud
+  'dt_edgex_daily_signals_v1',   // oversized legacy Samsung Health import
 ]);
 
 // Everything else gets synced — no allowlist needed
@@ -3485,7 +3478,7 @@ const _lsRemove = localStorage.removeItem.bind(localStorage);
 let _sbBootComplete = false; // don't push during initial hydration
 
 // Track when each key was last written locally (epoch ms), so pull never clobbers newer local data
-const LS_TIMESTAMPS_KEY = '_edgex_ls_timestamps';
+const LS_TIMESTAMPS_KEY = 'dt__edgex_ls_timestamps';
 function _getLsTimestamps() {
   try { return JSON.parse(_lsGet(LS_TIMESTAMPS_KEY) || '{}'); } catch(e) { return {}; }
 }
@@ -3623,12 +3616,12 @@ async function syncFromSupabase() {
         return;
       }
       _setSyncedLsValue(key, value, cloudMs); // bypass patched setItem to avoid re-uploading
-      if (key === 'morning-setup-v1') {
-        console.log('[Supabase] morning-setup-v1 from cloud:', _lsGet(key));
+      if (key === MS_KEY) {
+        console.log('[Supabase] morning-setup from cloud:', _lsGet(key));
       }
     });
-    if (!rows.some(r => r.key === 'morning-setup-v1')) {
-      console.warn('[Supabase] morning-setup-v1 NOT found in cloud — may not have been saved yet');
+    if (!rows.some(r => r.key === MS_KEY)) {
+      console.warn('[Supabase] morning-setup NOT found in cloud — may not have been saved yet');
     }
   } catch(e) {
     console.warn('[Supabase] syncFromSupabase error:', e);
@@ -3639,7 +3632,7 @@ async function syncFromSupabase() {
 const ASANA_TASKS = [];
 
 // ── Asana Live Refresh ───────────────────────────────────────────
-const ASANA_PAT_KEY = '30day-asana-pat-v1';
+const ASANA_PAT_KEY = 'dt_30day-asana-pat-v1';
 
 function getAsanaPAT() {
   return localStorage.getItem(ASANA_PAT_KEY) || '';
@@ -3783,11 +3776,11 @@ let horizonCount      = 0;   // horizon looks logged today (persisted in step st
 let selectedEnergy    = 0;
 let baseSteps         = 0;   // step count at the START of today (set manually)
 let currentSteps      = 0;   // latest cumulative step count from device
-const STEP_GOAL_KEY   = '30day-step-goal-v1';
+const STEP_GOAL_KEY   = 'dt_30day-step-goal-v1';
 let STEP_GOAL         = parseInt(localStorage.getItem(STEP_GOAL_KEY) || '10000');
-const STEPS_KEY       = '30day-steps-v1';
-const DAILY_SIGNALS_KEY = 'edgex_daily_signals_v2';
-const OLD_DAILY_SIGNALS_KEY = 'edgex_daily_signals_v1';
+const STEPS_KEY       = 'dt_30day-steps-v1';
+const DAILY_SIGNALS_KEY = 'dt_edgex_daily_signals_v2';
+const OLD_DAILY_SIGNALS_KEY = 'dt_edgex_daily_signals_v1';
 function getDailySignals() {
   try { return JSON.parse(localStorage.getItem(DAILY_SIGNALS_KEY) || '{}'); }
   catch(e) { return {}; }
@@ -3882,7 +3875,7 @@ function isChallengeDayStr(dateStr) {
 }
 
 // ── Day Type (holiday / sick / travel) ─────────────────────────
-const DAY_TYPES_KEY = '30day-day-types-v1';
+const DAY_TYPES_KEY = 'dt_30day-day-types-v1';
 let dayTypes = {}; // { 'YYYY-MM-DD': 'holiday' | 'sick' | 'travel' | 'ooo' | null }
 (function loadDayTypes() {
   try { dayTypes = JSON.parse(localStorage.getItem(DAY_TYPES_KEY) || '{}'); } catch(e) { dayTypes = {}; }
@@ -4045,7 +4038,7 @@ function setDuration(mins) {
 }
 
 // ── Chime preference helpers ───────────────────────────────────────
-const CHIME_PREFS_KEY = 'timer-chime-prefs-v1';
+const CHIME_PREFS_KEY = 'dt_timer-chime-prefs-v1';
 
 function getChimePrefs() {
   try {
@@ -4894,16 +4887,16 @@ function saveSession() {
 // on the next session, and we also attempt a direct call if ASANA_PAT is set.
 function markAsanaTaskComplete(gid, name) {
   // Store as pending so the assistant can action it
-  const pending = JSON.parse(localStorage.getItem('30day-asana-pending-v1') || '[]');
+  const pending = JSON.parse(localStorage.getItem('dt_30day-asana-pending-v1') || '[]');
   pending.push({ gid, name, ts: Date.now() });
-  localStorage.setItem('30day-asana-pending-v1', JSON.stringify(pending));
+  localStorage.setItem('dt_30day-asana-pending-v1', JSON.stringify(pending));
   // Remove completed task from the baked-in list (cosmetic update)
   const idx = ASANA_TASKS.findIndex(t => t.gid === gid);
   if (idx !== -1) ASANA_TASKS.splice(idx, 1);
 }
 
 // ── Storage keys ─────────────────────────────────────────────────
-const DISTRACT_KEY = '30day-distract-v1';
+const DISTRACT_KEY = 'dt_30day-distract-v1';
 let distractLog    = JSON.parse(localStorage.getItem(DISTRACT_KEY) || '{}'); // keyed by date
 let selectedDistractType = '';
 let selectedDistractDur  = null; // null = not selected
@@ -5033,7 +5026,7 @@ function renderIntentionBanner() {
 
   let hasIntention = false;
   try {
-    const raw = localStorage.getItem('30day-tomorrow-v1');
+    const raw = localStorage.getItem('dt_30day-tomorrow-v1');
     if (raw) {
       const t = JSON.parse(raw);
       const yesterday = WEEKDAY_DATES[WEEKDAY_DATES.indexOf(todayStr()) - 1];
@@ -5076,7 +5069,7 @@ function saveEditIntention() {
   if (!val) { cancelEditIntention(); return; }
   // Save back to the same key so it persists for today
   const today = todayStr();
-  localStorage.setItem('30day-tomorrow-v1', JSON.stringify({ date: WEEKDAY_DATES[WEEKDAY_DATES.indexOf(today) - 1] || today, text: val }));
+  localStorage.setItem('dt_30day-tomorrow-v1', JSON.stringify({ date: WEEKDAY_DATES[WEEKDAY_DATES.indexOf(today) - 1] || today, text: val }));
   document.getElementById('intention-text').textContent = val;
   document.getElementById('intention-edit').classList.add('hidden');
   document.getElementById('intention-display').classList.remove('hidden');
@@ -5891,13 +5884,13 @@ function saveEntry() {
   // over a 0-value from the EOD form, then clear the steps-only store for today.
   let finalSteps = steps;
   try {
-    const stepsOnly = JSON.parse(localStorage.getItem('30day-steps-only-v1') || '{}');
+    const stepsOnly = JSON.parse(localStorage.getItem('dt_30day-steps-only-v1') || '{}');
     if (stepsOnly[today] && (!steps || steps === 0)) {
       finalSteps = stepsOnly[today].steps;
     }
     if (stepsOnly[today]) {
       delete stepsOnly[today];
-      localStorage.setItem('30day-steps-only-v1', JSON.stringify(stepsOnly));
+      localStorage.setItem('dt_30day-steps-only-v1', JSON.stringify(stepsOnly));
     }
   } catch {}
 
@@ -5928,7 +5921,7 @@ function saveEntry() {
   document.getElementById('inp-notes').value        = notes;
 
   // Save tomorrow's intention so it can be shown next morning (only for today's entry)
-  if (tomorrow && !_eodEditDate) localStorage.setItem('30day-tomorrow-v1', JSON.stringify({ date: today, text: tomorrow }));
+  if (tomorrow && !_eodEditDate) localStorage.setItem('dt_30day-tomorrow-v1', JSON.stringify({ date: today, text: tomorrow }));
 
   closeEodModal();
   renderAll();
@@ -6183,8 +6176,8 @@ function closeMobileMore() {
 // ── Settings modal ────────────────────────────────────────────────
 function openSettings() {
   // Populate token status hints
-  const hasNotion = !!localStorage.getItem('notion-token-v1');
-  const hasAsana  = !!localStorage.getItem('30day-asana-pat-v1');
+  const hasNotion = !!localStorage.getItem(NOTION_TOKEN_KEY);
+  const hasAsana  = !!localStorage.getItem(ASANA_PAT_KEY);
   const nStatus   = document.getElementById('notion-token-status');
   const aStatus   = document.getElementById('asana-pat-status');
   if (nStatus) nStatus.textContent = hasNotion ? '✓ Token saved' : 'No token saved — paste yours above';
@@ -6207,7 +6200,7 @@ function closeSettings() {
 function saveAsanaPAT() {
   const v = (document.getElementById('settings-asana-pat-input').value || '').trim();
   if (!v) { showToast('Please paste your Asana Personal Access Token.'); return; }
-  localStorage.setItem('30day-asana-pat-v1', v);
+  localStorage.setItem(ASANA_PAT_KEY, v);
   document.getElementById('settings-asana-pat-input').value = '';
   document.getElementById('asana-pat-status').textContent = '✓ Token saved';
   showToast('Asana token saved ✓');
@@ -6242,7 +6235,7 @@ document.addEventListener('click', function(e) {
 // ═══════════════════════════════════════════════════════════════
 // LEDGER OF INTENT
 // ═══════════════════════════════════════════════════════════════
-const LEDGER_KEY   = '30day-ledger-v1';
+const LEDGER_KEY   = 'dt_30day-ledger-v1';
 let ledgerEntries  = JSON.parse(localStorage.getItem(LEDGER_KEY) || '{}'); // keyed by date
 let selectedCategory = '';
 let pendingTabUrl  = null;
@@ -7045,7 +7038,7 @@ function openStepsUpdateModal(preselectedDate) {
 
   // Build date options: all days that have a full EOD log OR a steps-only entry,
   // plus today always. Falls back to last 7 days if today isn't in WEEKDAY_DATES.
-  const stepsOnly = (() => { try { return JSON.parse(localStorage.getItem('30day-steps-only-v1') || '{}'); } catch { return {}; } })();
+  const stepsOnly = (() => { try { return JSON.parse(localStorage.getItem('dt_30day-steps-only-v1') || '{}'); } catch { return {}; } })();
   const pool = todayIdx >= 0 ? WEEKDAY_DATES.slice(0, todayIdx + 1) : WEEKDAY_DATES;
   const eligibleDates = pool.filter(d => d === today || !!logs[d] || !!stepsOnly[d]);
   // Also include the 7 most recent calendar days in case today is a weekend/outside pool
@@ -7136,9 +7129,9 @@ function saveFinalSteps() {
     });
   } else {
     // No EOD log yet — store steps separately so streak / heatmap aren't affected
-    const stepsOnly = JSON.parse(localStorage.getItem('30day-steps-only-v1') || '{}');
+    const stepsOnly = JSON.parse(localStorage.getItem('dt_30day-steps-only-v1') || '{}');
     stepsOnly[targetDate] = { steps, netSteps: steps };
-    localStorage.setItem('30day-steps-only-v1', JSON.stringify(stepsOnly));
+    localStorage.setItem('dt_30day-steps-only-v1', JSON.stringify(stepsOnly));
     updateDailySignal(targetDate, { steps, netSteps: steps });
   }
   syncToHealthLog(targetDate, { steps: String(steps) });
@@ -7164,7 +7157,7 @@ function saveFinalSteps() {
 function getStepsForDate(dateStr) {
   if (logs[dateStr]?.steps) return logs[dateStr].steps;
   try {
-    const stepsOnly = JSON.parse(localStorage.getItem('30day-steps-only-v1') || '{}');
+    const stepsOnly = JSON.parse(localStorage.getItem('dt_30day-steps-only-v1') || '{}');
     if (stepsOnly[dateStr]?.steps) return stepsOnly[dateStr].steps;
   } catch {}
   // Fall back to shared daily signals (written by health.html)
@@ -7178,12 +7171,12 @@ function getStepsForDate(dateStr) {
 // When EOD is saved, merge any steps-only entry into the full log so it's consolidated.
 function mergeStepsOnlyIntoLog(dateStr) {
   try {
-    const stepsOnly = JSON.parse(localStorage.getItem('30day-steps-only-v1') || '{}');
+    const stepsOnly = JSON.parse(localStorage.getItem('dt_30day-steps-only-v1') || '{}');
     if (stepsOnly[dateStr] && logs[dateStr] && !logs[dateStr].steps) {
       logs[dateStr].steps    = stepsOnly[dateStr].steps;
       logs[dateStr].netSteps = stepsOnly[dateStr].netSteps;
       delete stepsOnly[dateStr];
-      localStorage.setItem('30day-steps-only-v1', JSON.stringify(stepsOnly));
+      localStorage.setItem('dt_30day-steps-only-v1', JSON.stringify(stepsOnly));
     }
   } catch {}
 }
@@ -7193,7 +7186,7 @@ document.getElementById('steps-update-backdrop').addEventListener('click', funct
 });
 
 // ── Water Intake ────────────────────────────────────────────────
-const WATER_KEY  = '30day-water-v1';
+const WATER_KEY  = 'dt_30day-water-v1';
 const WATER_GOAL_OZ = 67.6; // 2 litres in oz
 
 function toOz(amount, unit) {
@@ -7361,8 +7354,8 @@ document.getElementById('water-backdrop').addEventListener('click', function(e) 
 
 // ── Focus Music ───────────────────────────────────────────────────
 // Tracks open in YouTube (file:// blocks embeds). Tag + filter system.
-const MUSIC_TRACKS_KEY  = '30day-tracks-v1';
-const MUSIC_TAGS_KEY    = '30day-tags-v1';
+const MUSIC_TRACKS_KEY  = 'dt_30day-tracks-v1';
+const MUSIC_TAGS_KEY    = 'dt_30day-tags-v1';
 const DEFAULT_TAGS      = ['Ambient','Jazz','Lo-Fi','Classical','Focus','Chill','Upbeat','Nature'];
 
 let musicPlayerVisible  = true;
@@ -7949,8 +7942,8 @@ function showToast(msg) {
 // NOTION SYNC
 // ═══════════════════════════════════════════════════════════════
 const NOTION_DB_ID     = '27f990778487423a94395d4167e276e0';
-const NOTION_TOKEN_KEY = 'notion-token-v1';
-const NOTION_PAGE_MAP_KEY = 'notion-page-map-v1';
+const NOTION_TOKEN_KEY = 'dt_notion-token-v1';
+const NOTION_PAGE_MAP_KEY = 'dt_notion-page-map-v1';
 const NOTION_DEFAULT_TOKEN = ''; // Set your Notion token via the Settings panel
 
 function getNotionToken() {
@@ -8440,7 +8433,7 @@ function showPage(page) {
 // ═══════════════════════════════════════════════════════════════
 // TIME BLOCKING FULL PAGE
 // ═══════════════════════════════════════════════════════════════
-const TB_KEY = '30day-blocks-v1';
+const TB_KEY = 'dt_30day-blocks-v1';
 let tbBlocks = [];      // [{ id, name, color, start, dur, tasks:[], collapsed }]
 let tbSectionOpen = true;
 let tbAsanaPaletteOpen = true;
@@ -9800,7 +9793,7 @@ document.getElementById('tb-create-start').addEventListener('input', () => {
 // ═══════════════════════════════════════════════════════════════
 // MORNING SETUP
 // ═══════════════════════════════════════════════════════════════
-const MS_KEY = 'morning-setup-v1'; // { date, gratitude, energy, priorities:[str,str,str] }
+const MS_KEY = 'dt_morning-setup-v1'; // { date, gratitude, energy, priorities:[str,str,str] }
 
 let _msStep       = 1;
 let _msTotalSteps = 4;
@@ -10042,7 +10035,7 @@ function renderMorningSummaryBanner() {
   // Priorities column — checkable items, state stored per-date in localStorage
   if (prioEl) {
     const priorities = data.priorities || [];
-    const checkedKey = 'edgex-priority-checks-' + todayStr();
+    const checkedKey = 'dt_edgex-priority-checks-' + todayStr();
     const checked = JSON.parse(localStorage.getItem(checkedKey) || '[]');
     prioEl.innerHTML = priorities.length
       ? priorities.map((p, i) => {
@@ -10061,7 +10054,7 @@ function renderMorningSummaryBanner() {
 }
 
 function togglePriorityCheck(idx) {
-  const checkedKey = 'edgex-priority-checks-' + todayStr();
+  const checkedKey = 'dt_edgex-priority-checks-' + todayStr();
   const checked = JSON.parse(localStorage.getItem(checkedKey) || '[]');
   const pos = checked.indexOf(idx);
   if (pos === -1) checked.push(idx); else checked.splice(pos, 1);
@@ -10172,12 +10165,12 @@ function renderAll() {
 
 // ── Data Import / Export ─────────────────────────────────────────
 const DATA_KEYS = [
-  '30day-traction-v2', '30day-ledger-v1', '30day-sessions-v1',
-  '30day-breath-v1', '30day-distract-v1', '30day-blocks-v1',
-  '30day-steps-v1', 'morning-setup-v1', '30day-tomorrow-v1',
-  '30day-tracks-v1', '30day-tags-v1', '30day-playlists-v1',
-  '30day-music-v1', '30day-water-v1', '30day-asana-pending-v1',
-  'notion-page-map-v1', 'notion-token-v1'
+  'dt_30day-traction-v2', 'dt_30day-ledger-v1', 'dt_30day-sessions-v1',
+  'dt_30day-breath-v1', 'dt_30day-distract-v1', 'dt_30day-blocks-v1',
+  'dt_30day-steps-v1', 'dt_morning-setup-v1', 'dt_30day-tomorrow-v1',
+  'dt_30day-tracks-v1', 'dt_30day-tags-v1', 'dt_30day-playlists-v1',
+  'dt_30day-music-v1', 'dt_30day-water-v1', 'dt_30day-asana-pending-v1',
+  'dt_notion-page-map-v1', 'dt_notion-token-v1'
 ];
 
 function exportAllData() {
@@ -10305,7 +10298,7 @@ const _sbPullThrottled = (() => {
 // ═══════════════════════════════════════════════════════════════
 // GOAL STACK
 // ═══════════════════════════════════════════════════════════════
-const GOALS_KEY = 'edgex-goals-v1'; // [ { id, tier, title, why, due, area, status, createdAt } ]
+const GOALS_KEY = 'dt_edgex-goals-v1'; // [ { id, tier, title, why, due, area, status, createdAt } ]
 
 function getGoals() {
   try { return JSON.parse(localStorage.getItem(GOALS_KEY) || '[]'); } catch(e) { return []; }
@@ -10318,7 +10311,7 @@ function saveGoals(arr) {
 // ── Goal Exempt Days ─────────────────────────────────────────
 // goal-exempt-days-v1: { 'YYYY-MM-DD': 'holiday' | 'rest' | 'travel' | ... }
 // Sick days are automatically pulled from the work module's dayTypes.
-const GOAL_EXEMPT_KEY = 'goal-exempt-days-v1';
+const GOAL_EXEMPT_KEY = 'dt_goal-exempt-days-v1';
 
 function getGoalExemptDays() {
   let manual = {};
@@ -10679,9 +10672,9 @@ function deleteGoal(id) {
 // ═══════════════════════════════════════════════════════════════
 // WEEKLY HUB — Intention, Review, Win Wall
 // ═══════════════════════════════════════════════════════════════
-const WI_KEY      = 'edgex-weekly-intentions-v1';  // { 'YYYY-Www': { week, intention, setAt } }
-const WR_KEY      = 'edgex-weekly-reviews-v1';     // { 'YYYY-Www': { week, worked, didnt, commit, rating, savedAt } }
-const WIN_KEY     = 'edgex-win-wall-v1';            // [ { id, title, note, category, date } ]
+const WI_KEY      = 'dt_edgex-weekly-intentions-v1';  // { 'YYYY-Www': { week, intention, setAt } }
+const WR_KEY      = 'dt_edgex-weekly-reviews-v1';     // { 'YYYY-Www': { week, worked, didnt, commit, rating, savedAt } }
+const WIN_KEY     = 'dt_edgex-win-wall-v1';            // [ { id, title, note, category, date } ]
 
 // ── Week helpers ─────────────────────────────────────────────────
 function getISOWeekKey(date) {
