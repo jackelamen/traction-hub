@@ -3635,25 +3635,8 @@ async function syncFromSupabase() {
   }
 }
 
-// ── Asana Tasks (baked in at generation time) ───────────────────
-const ASANA_TASKS = [
-  { gid:'1213644788594032', name:'Finalize S7 Corporate Deck', project:'S7 Internal Tasks', due:'Mar 31' },
-  { gid:'1209525971104918', name:'Make plan with Jeongwoo', project:'S7 Internal Tasks', due:'Apr 8' },
-  { gid:'1213964036749555', name:'Schedule 3 LinkedIn Posts', project:'S7 Internal Tasks', due:'Apr 8' },
-  { gid:'1213957240084416', name:'Find Beauty Brands that would be interested in OEM or Made in SEA in Indonesia', project:'Magpie', due:'Apr 10' },
-  { gid:'1213998137748614', name:'Comment on LinkedIn Daily for 15 minutes', project:'S7 Internal Tasks', due:'Apr 13' },
-  { gid:'1213957907668793', name:'Order S7 Business Cards', project:'S7 Internal Tasks', due:'Apr 13' },
-  { gid:'1213975267729088', name:'KTO Project Meeting / CrowdCom,S7, FAME', project:'S7 Internal Tasks', due:'Apr 15' },
-  { gid:'1214075670889490', name:'Answer Michael about my monthly fee for Innsbruck', project:'Innsbruck/Brand EE', due:'Apr 16' },
-  { gid:'1214063569524143', name:'Go through LinkedIn Jobs to see who\'s hiring for E-commerce positions in KR', project:'Innsbruck/Brand EE', due:'Apr 16' },
-  { gid:'1213414521833909', name:'Brainstorm an S7 Service around iKala', project:'iKala', due:'Apr 24' },
-  { gid:'1213414521833911', name:'Research overseas Sales Agencies for use of iKala', project:'iKala', due:'Apr 24' },
-  { gid:'1213414521833845', name:'Find reliable MY partner', project:'S7 Internal Tasks', due:'' },
-  { gid:'1213414521833847', name:'Find reliable SG partner', project:'S7 Internal Tasks', due:'' },
-  { gid:'1213414521833851', name:'Find reliable TH partner', project:'S7 Internal Tasks', due:'' },
-  { gid:'1213414521833849', name:'Find reliable VN partner', project:'S7 Internal Tasks', due:'' },
-  { gid:'1213414521833919', name:'Get JGL to do a trial of ELink Pro', project:'Inspien', due:'' },
-];
+// ── Asana Tasks — starts empty, populated via Live Refresh ───────
+const ASANA_TASKS = [];
 
 // ── Asana Live Refresh ───────────────────────────────────────────
 const ASANA_PAT_KEY = '30day-asana-pat-v1';
