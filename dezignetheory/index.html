@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The EDGEx</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='10' fill='%231a1a2e'/><text x='16' y='23' font-size='20' text-anchor='middle' font-family='sans-serif' font-weight='bold' fill='white'>E</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; height: 100%; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #0b0c1e;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 20px 32px;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Radial glows */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 18% 18%, rgba(79,70,229,0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 82% 80%, rgba(5,150,105,0.14) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Grid lines */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app-shell {
+  width: min(1280px, 100%);
+  position: relative;
+  z-index: 1;
+  transform: translateY(-3vh);
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.brand-block {
+  min-width: 0;
+}
+
+.brand-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  font-size: clamp(36px, 6vw, 62px);
+  letter-spacing: 0;
+  line-height: 1;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.brand-title .bold { font-weight: 900; }
+.brand-title .x-letter {
+  color: #7c6ff7;
+  font-style: italic;
+}
+
+.brand-sub {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: clamp(10px, 1.4vw, 13px);
+  letter-spacing: 0.16em;
+  color: rgba(255,255,255,0.38);
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+
+.brand-context {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: clamp(11px, 1.5vw, 13px);
+  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.55);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-context .ctx-date {
+  color: rgba(255,255,255,0.65);
+  font-weight: 600;
+}
+
+.brand-context .ctx-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(251,146,60,0.12);
+  border: 1px solid rgba(251,146,60,0.25);
+  color: #fb923c;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.brand-context .ctx-streak .material-symbols-rounded {
+  font-size: 13px;
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20;
+  line-height: 1;
+}
+
+.dashboard-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.66);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #6b7280;
+  box-shadow: none;
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+
+/* ── Module cards ── */
+.modules {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .modules { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  body { justify-content: flex-start; }
+  .app-shell { transform: none; }
+  .topbar { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .dashboard-status { justify-content: flex-start; }
+  .modules { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 480px) {
+  body { padding: 20px 14px 28px; }
+  .modules { grid-template-columns: 1fr; gap: 14px; }
+  .brand-title { font-size: 42px; }
+  .brand-sub { letter-spacing: 0.18em; }
+  .footer { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .btn-logout { width: 100%; min-height: 38px; }
+}
+
+@media (max-height: 820px) {
+  body { justify-content: flex-start; }
+  .app-shell { transform: none; }
+}
+
+.module-card {
+  border-radius: 12px;
+  padding: 22px 18px 20px;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid;
+  min-height: 318px;
+  outline: none;
+}
+
+.module-card:hover { transform: translateY(-4px); }
+.module-card:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.12), 0 12px 48px rgba(0,0,0,0.25);
+}
+
+/* Work card — orange/amber */
+.module-card.work {
+  background: linear-gradient(160deg, rgba(30,22,50,0.95) 0%, rgba(20,15,40,0.95) 100%);
+  border-color: rgba(251,146,60,0.2);
+  box-shadow: 0 0 40px rgba(251,146,60,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.module-card.work:hover {
+  box-shadow: 0 8px 48px rgba(251,146,60,0.14), inset 0 1px 0 rgba(255,255,255,0.08);
+  border-color: rgba(251,146,60,0.35);
+}
+
+/* Goals card — emerald */
+.module-card.goals {
+  background: linear-gradient(160deg, rgba(15,30,28,0.95) 0%, rgba(10,22,20,0.95) 100%);
+  border-color: rgba(52,211,153,0.2);
+  box-shadow: 0 0 40px rgba(52,211,153,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.module-card.goals:hover {
+  box-shadow: 0 8px 48px rgba(52,211,153,0.14), inset 0 1px 0 rgba(255,255,255,0.08);
+  border-color: rgba(52,211,153,0.35);
+}
+
+/* Health card — sky blue */
+.module-card.health {
+  background: linear-gradient(160deg, rgba(10,25,40,0.95) 0%, rgba(8,18,32,0.95) 100%);
+  border-color: rgba(14,165,233,0.2);
+  box-shadow: 0 0 40px rgba(14,165,233,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.module-card.health:hover {
+  box-shadow: 0 8px 48px rgba(14,165,233,0.14), inset 0 1px 0 rgba(255,255,255,0.08);
+  border-color: rgba(14,165,233,0.35);
+}
+.health .ring-track { stroke: rgba(14,165,233,0.15); }
+.health .ring-fill  { stroke: #38bdf8; filter: drop-shadow(0 0 6px rgba(14,165,233,0.7)); }
+.health .ring-value { color: #38bdf8; }
+.health .corner-icon { background: rgba(14,165,233,0.18); color: #38bdf8; }
+.health .card-title .x { color: #38bdf8; }
+.health .card-btn {
+  background: rgba(14,165,233,0.10);
+  border-color: rgba(14,165,233,0.35);
+  color: #38bdf8;
+}
+.module-card.health:hover .card-btn { background: rgba(14,165,233,0.18); }
+
+/* Wellness card — violet */
+.module-card.wellness {
+  background: linear-gradient(160deg, rgba(22,14,42,0.95) 0%, rgba(16,10,32,0.95) 100%);
+  border-color: rgba(124,58,237,0.2);
+  box-shadow: 0 0 40px rgba(124,58,237,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.module-card.wellness:hover {
+  box-shadow: 0 8px 48px rgba(124,58,237,0.14), inset 0 1px 0 rgba(255,255,255,0.08);
+  border-color: rgba(124,58,237,0.35);
+}
+.wellness .ring-track { stroke: rgba(124,58,237,0.15); }
+.wellness .ring-fill  { stroke: #a78bfa; filter: drop-shadow(0 0 6px rgba(124,58,237,0.7)); }
+.wellness .ring-value { color: #a78bfa; }
+.wellness .corner-icon { background: rgba(124,58,237,0.18); color: #a78bfa; }
+.wellness .card-title .x { color: #a78bfa; }
+.wellness .card-btn {
+  background: rgba(124,58,237,0.10);
+  border-color: rgba(124,58,237,0.35);
+  color: #a78bfa;
+}
+.module-card.wellness:hover .card-btn { background: rgba(124,58,237,0.18); }
+
+/* Finance card — indigo/blue */
+.module-card.finance {
+  background: linear-gradient(160deg, rgba(15,18,40,0.95) 0%, rgba(10,12,30,0.95) 100%);
+  border-color: rgba(108,138,255,0.2);
+  box-shadow: 0 0 40px rgba(108,138,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.module-card.finance:hover {
+  box-shadow: 0 8px 48px rgba(108,138,255,0.14), inset 0 1px 0 rgba(255,255,255,0.08);
+  border-color: rgba(108,138,255,0.35);
+}
+.finance .ring-track { stroke: rgba(108,138,255,0.15); }
+.finance .ring-fill  { stroke: #6c8aff; filter: drop-shadow(0 0 6px rgba(108,138,255,0.7)); }
+.finance .ring-value { color: #6c8aff; }
+.finance .corner-icon { background: rgba(108,138,255,0.18); color: #6c8aff; }
+.finance .card-title .x { color: #6c8aff; }
+.finance .card-btn {
+  background: rgba(108,138,255,0.10);
+  border-color: rgba(108,138,255,0.35);
+  color: #6c8aff;
+}
+.module-card.finance:hover .card-btn { background: rgba(108,138,255,0.18); }
+
+/* ── Ring widget ── */
+.ring-wrap {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  margin-bottom: 18px;
+  flex-shrink: 0;
+}
+
+.ring-wrap svg {
+  width: 100px;
+  height: 100px;
+  transform: rotate(-90deg);
+}
+
+.ring-track {
+  fill: none;
+  stroke-width: 7;
+}
+.work  .ring-track { stroke: rgba(251,146,60,0.15); }
+.goals .ring-track { stroke: rgba(52,211,153,0.15); }
+
+.ring-fill {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1);
+}
+.work  .ring-fill { stroke: #fb923c; filter: drop-shadow(0 0 6px rgba(251,146,60,0.7)); }
+.goals .ring-fill { stroke: #34d399; filter: drop-shadow(0 0 6px rgba(52,211,153,0.7)); }
+
+.ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.ring-value {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.work  .ring-value { color: #fb923c; }
+.goals .ring-value { color: #34d399; }
+
+.ring-meta {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.02em;
+  max-width: 70px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* corner icons */
+.card-corner-icons {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.corner-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.corner-icon .material-symbols-rounded {
+  font-size: 18px;
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  line-height: 1;
+}
+.work  .corner-icon { background: rgba(251,146,60,0.18); color: #fb923c; }
+.goals .corner-icon { background: rgba(52,211,153,0.18); color: #34d399; }
+
+/* ── Card title ── */
+.card-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.3px;
+  text-align: center;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+.card-title .the-edge { color: #fff; }
+.work  .card-title .x { color: #fb923c; }
+.goals .card-title .x { color: #34d399; }
+.card-title .module-word { color: #fff; }
+
+.card-desc {
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.42);
+  text-align: center;
+  line-height: 1.55;
+  font-weight: 400;
+  margin-bottom: 14px;
+  flex: 1;
+}
+
+.card-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 30px;
+  margin-bottom: 14px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.62);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.card-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+/* ── CTA Button ── */
+.card-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.15s;
+  text-decoration: none;
+}
+.work  .card-btn {
+  background: rgba(251,146,60,0.10);
+  border-color: rgba(251,146,60,0.35);
+  color: #fb923c;
+}
+.goals .card-btn {
+  background: rgba(52,211,153,0.10);
+  border-color: rgba(52,211,153,0.35);
+  color: #34d399;
+}
+.module-card:hover .card-btn { transform: none; }
+.module-card.work:hover .card-btn { background: rgba(251,146,60,0.18); }
+.module-card.goals:hover .card-btn { background: rgba(52,211,153,0.18); }
+
+@media (prefers-reduced-motion: reduce) {
+  .module-card,
+  .card-btn,
+  .ring-fill {
+    transition: none;
+  }
+  .module-card:hover,
+  .module-card:focus-visible {
+    transform: none;
+  }
+}
+
+/* ── Tools strip ── */
+.tools-strip {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.tool-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.62);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+  letter-spacing: 0.01em;
+}
+
+.tool-link:hover {
+  background: rgba(20,184,166,0.10);
+  border-color: rgba(20,184,166,0.35);
+  color: #2dd4bf;
+}
+.tool-link.rose:hover {
+  background: rgba(225,29,72,0.10);
+  border-color: rgba(225,29,72,0.35);
+  color: #fb7185;
+}
+.tool-link.amber:hover {
+  background: rgba(217,119,6,0.10);
+  border-color: rgba(217,119,6,0.35);
+  color: #fbbf24;
+}
+
+.tool-link .material-symbols-rounded {
+  font-size: 16px;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  color: #5eead4;
+}
+
+/* ── Footer ── */
+.footer {
+  margin-top: 22px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.18);
+  letter-spacing: 0.08em;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+  width: 100%;
+}
+.footer strong { color: rgba(255,255,255,0.32); font-weight: 600; }
+
+.btn-logout {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.3);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: all 0.15s;
+}
+.btn-logout:hover { border-color: rgba(239,68,68,0.4); color: #f87171; }
+</style>
+</head>
+<body>
+
+  <main class="app-shell">
+  <header class="topbar">
+    <div class="brand-block">
+      <div class="brand-title">
+        THE <span class="bold">EDG</span><span class="bold">E</span><span class="x-letter">x</span>
+      </div>
+      <div class="brand-sub">Every Day Growth Experience</div>
+      <div class="brand-context">
+        <span class="ctx-date" id="ctx-date"></span>
+        <span class="ctx-streak" id="ctx-streak" style="display:none">
+          <span class="material-symbols-rounded">local_fire_department</span>
+          <span id="ctx-streak-count"></span>
+        </span>
+      </div>
+    </div>
+    <div class="dashboard-status" aria-label="Dashboard status">
+      <div class="status-pill"><span class="status-dot" id="sys-dot"></span><span id="today-label">Today</span></div>
+      <div class="status-pill" id="sys-state-pill">Loading...</div>
+    </div>
+  </header>
+
+  <!-- Module cards -->
+  <div class="modules">
+
+    <!-- Work -->
+    <a class="module-card work" href="work.html" aria-label="Open Work Room">
+      <div class="card-corner-icons">
+        <div class="corner-icon"><span class="material-symbols-rounded">bolt</span></div>
+      </div>
+
+      <div class="ring-wrap">
+        <svg viewBox="0 0 130 130">
+          <circle class="ring-track" cx="65" cy="65" r="54"/>
+          <circle class="ring-fill work-ring" cx="65" cy="65" r="54"
+            stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-value" id="work-timer">50:00</div>
+          <div class="ring-meta">50 MIN</div>
+        </div>
+      </div>
+
+      <div class="card-title">
+        <span class="module-word">Work</span>
+      </div>
+      <div class="card-desc">Deep work, daily traction, and your 30-day map.</div>
+      <div class="card-status" id="work-status">Focus timer ready</div>
+      <div class="card-btn">Open Work →</div>
+    </a>
+
+    <!-- Goals -->
+    <a class="module-card goals" href="goals.html" aria-label="Open Goals Room">
+      <div class="card-corner-icons">
+        <div class="corner-icon"><span class="material-symbols-rounded">flag</span></div>
+      </div>
+
+      <div class="ring-wrap">
+        <svg viewBox="0 0 130 130">
+          <circle class="ring-track" cx="65" cy="65" r="54"/>
+          <circle class="ring-fill goals-ring" cx="65" cy="65" r="54"
+            stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-value" id="goals-pct">25%</div>
+          <div class="ring-meta" id="goals-meta">6/24 done</div>
+        </div>
+      </div>
+
+      <div class="card-title">
+        <span class="module-word">Goals</span>
+      </div>
+      <div class="card-desc">12-week cycles, goal tracking, and progress metrics.</div>
+      <div class="card-status" id="goals-status">Loading goal progress</div>
+      <div class="card-btn">Open Goals →</div>
+    </a>
+
+    <!-- Finance -->
+    <a class="module-card finance" href="finance-login.html" aria-label="Open Finance Room">
+      <div class="card-corner-icons">
+        <div class="corner-icon"><span class="material-symbols-rounded">payments</span></div>
+      </div>
+
+      <div class="ring-wrap">
+        <svg viewBox="0 0 130 130">
+          <circle class="ring-track" cx="65" cy="65" r="54"/>
+          <circle class="ring-fill finance-ring" cx="65" cy="65" r="54"
+            stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-value" id="finance-pct">—</div>
+          <div class="ring-meta" id="finance-meta">this month</div>
+        </div>
+      </div>
+
+      <div class="card-title">
+        <span class="module-word">Finance</span>
+      </div>
+      <div class="card-desc">Spending, income, and trends across categories.</div>
+      <div class="card-status" id="finance-status">Locked money layer</div>
+      <div class="card-btn">Open Finance →</div>
+    </a>
+
+    <!-- Health -->
+    <a class="module-card health" href="health.html" aria-label="Open Health Room">
+      <div class="card-corner-icons">
+        <div class="corner-icon"><span class="material-symbols-rounded">monitor_heart</span></div>
+      </div>
+
+      <div class="ring-wrap">
+        <svg viewBox="0 0 130 130">
+          <circle class="ring-track" cx="65" cy="65" r="54"/>
+          <circle class="ring-fill health-ring" cx="65" cy="65" r="54"
+            stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-value" id="health-pct">—</div>
+          <div class="ring-meta" id="health-meta">today</div>
+        </div>
+      </div>
+
+      <div class="card-title">
+        <span class="module-word">Health</span>
+      </div>
+      <div class="card-desc">Routines, sleep, steps, and 30-day body trends.</div>
+      <div class="card-status" id="health-status">Loading today</div>
+      <div class="card-btn">Open Health →</div>
+    </a>
+
+    <!-- Wellness -->
+    <a class="module-card wellness" href="wellness.html" aria-label="Open Wellness Room">
+      <div class="card-corner-icons">
+        <div class="corner-icon"><span class="material-symbols-rounded">self_improvement</span></div>
+      </div>
+
+      <div class="ring-wrap">
+        <svg viewBox="0 0 130 130">
+          <circle class="ring-track" cx="65" cy="65" r="54"/>
+          <circle class="ring-fill wellness-ring" cx="65" cy="65" r="54"
+            stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-value" id="wellness-pct">—</div>
+          <div class="ring-meta" id="wellness-meta">clarity</div>
+        </div>
+      </div>
+
+      <div class="card-title">
+        <span class="module-word">Wellness</span>
+      </div>
+      <div class="card-desc">Check-ins, meditation, and clarity trends.</div>
+      <div class="card-status" id="wellness-status">Loading clarity</div>
+      <div class="card-btn">Open Wellness →</div>
+    </a>
+
+  </div>
+
+  <!-- Tools strip -->
+  <div class="tools-strip">
+    <a class="tool-link" href="weekly-review.html" aria-label="Open Weekly Review">
+      <span class="material-symbols-rounded">calendar_view_week</span>Weekly Review
+    </a>
+    <a class="tool-link rose" href="relationships.html" aria-label="Open Relationships">
+      <span class="material-symbols-rounded" style="color:#fda4af">people</span>Relationships
+    </a>
+    <a class="tool-link amber" href="learning.html" aria-label="Open Learning">
+      <span class="material-symbols-rounded" style="color:#fcd34d">school</span>Learning
+    </a>
+  </div>
+
+  <div class="footer">
+    <span><strong>theedgex.com</strong> &nbsp;·&nbsp; personal operating system</span>
+    <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+  </div>
+  </main>
+
+<script>
+const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
+const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
+
+// ── Intercept recovery tokens (Supabase may redirect here) ──────
+(function interceptRecovery() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return;
+  const params = new URLSearchParams(hash);
+  if (params.get('type') === 'recovery' && params.get('access_token')) {
+    window.location.href = 'reset-password.html' + window.location.hash;
+  }
+})();
+
+// ── Auth check (with token refresh) ─────────────────────────────
+const authReady = (async function checkAuth() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (!s.access_token) { window.location.href = 'login.html'; return null; }
+    const now = Math.floor(Date.now() / 1000);
+    const expiresAt = s.expires_at || 0;
+    // If token is still good for more than 5 minutes, allow through
+    if (expiresAt > now + 300) return s;
+    // Token expired or expiring soon — try to refresh if we have a refresh token
+    if (s.refresh_token) {
+      try {
+        const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST',
+          headers: { 'apikey': SB_ANON, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: s.refresh_token })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.access_token) {
+            const next = {
+              access_token:  data.access_token,
+              refresh_token: data.refresh_token || s.refresh_token,
+              expires_at:    Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+              user:          data.user || s.user
+            };
+            localStorage.setItem('sb_session', JSON.stringify(next));
+            return next; // refreshed successfully — allow through
+          }
+        }
+        // Refresh request failed — only redirect if token is actually expired
+        if (expiresAt > 0 && expiresAt <= now) {
+          window.location.href = 'login.html';
+          return null;
+        }
+        // If token not yet expired (or no expires_at), allow through
+        return expiresAt > now ? s : null;
+      } catch(e) {
+        // Network error during refresh — allow through if token not clearly expired
+        if (expiresAt > 0 && expiresAt <= now) {
+          window.location.href = 'login.html';
+          return null;
+        }
+        return expiresAt > now ? s : null;
+      }
+    }
+    // No refresh token — only redirect if token is confirmed expired
+    if (expiresAt > 0 && expiresAt <= now) {
+      window.location.href = 'login.html';
+      return null;
+    }
+    // If no expires_at at all but we have an access_token, give benefit of the doubt
+    return s;
+  } catch(e) { window.location.href = 'login.html'; return null; }
+})();
+
+// ── Logout ───────────────────────────────────────────────────────
+async function doLogout() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (s.access_token) {
+      await fetch(`${SB_URL}/auth/v1/logout`, {
+        method: 'POST',
+        headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${s.access_token}` },
+      });
+    }
+  } catch(e) {}
+  localStorage.removeItem('sb_session');
+  localStorage.removeItem('finance_session_ts');
+  window.location.href = 'login.html';
+}
+
+const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.3
+const EDGEX_KV_USER_ID = 'dezignetheory_traction_hub_v1';
+
+// ── System status tracker ─────────────────────────────────────────
+// Each module reports: 'fresh' (data exists for today), 'stale' (data but old), or 'empty' (no data)
+const moduleStatus = { work: 'ready', goals: null, finance: null, health: null, wellness: null };
+
+function reportModuleStatus(module, state) {
+  moduleStatus[module] = state; // 'fresh' | 'stale' | 'empty'
+  updateSystemStatus();
+}
+
+function updateSystemStatus() {
+  const states = Object.values(moduleStatus).filter(v => v !== null && v !== 'ready');
+  const total = 4; // goals, finance, health, wellness (work is always 'ready')
+  if (states.length < total) return; // not all modules reported yet
+
+  const fresh  = states.filter(s => s === 'fresh').length;
+  const stale  = states.filter(s => s === 'stale').length;
+  const dot    = document.getElementById('sys-dot');
+  const pill   = document.getElementById('sys-state-pill');
+  if (!dot || !pill) return;
+
+  if (fresh >= 3) {
+    dot.style.background  = '#34d399';
+    dot.style.boxShadow   = '0 0 12px rgba(52,211,153,0.7)';
+    pill.textContent       = 'All synced';
+  } else if (fresh >= 1 || stale >= 1) {
+    dot.style.background  = '#fbbf24';
+    dot.style.boxShadow   = '0 0 10px rgba(251,191,36,0.6)';
+    pill.textContent       = fresh + ' of 4 synced today';
+  } else {
+    dot.style.background  = '#6b7280';
+    dot.style.boxShadow   = 'none';
+    pill.textContent       = 'Open modules to sync';
+  }
+}
+
+const todayLabel = document.getElementById('today-label');
+if (todayLabel) {
+  todayLabel.textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+// ── Brand context line: date + streak ────────────────────────────
+(function initBrandContext() {
+  const now = new Date();
+  const ctxDate = document.getElementById('ctx-date');
+  if (ctxDate) {
+    ctxDate.textContent = now.toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+  }
+
+  // Compute streak: count consecutive days (ending today) on which the
+  // user opened the hub. We track this by writing today's date on load
+  // into a small streak object stored in localStorage.
+  try {
+    const STREAK_KEY = 'edgex_hub_streak_v1';
+    const todayStr = now.toISOString().slice(0, 10);
+    let streak = JSON.parse(localStorage.getItem(STREAK_KEY) || '{"count":0,"last":""}');
+
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yStr = yesterday.toISOString().slice(0, 10);
+
+    if (streak.last === todayStr) {
+      // already counted today — count stays the same
+    } else if (streak.last === yStr) {
+      // consecutive day — increment
+      streak.count = (streak.count || 0) + 1;
+      streak.last = todayStr;
+      localStorage.setItem(STREAK_KEY, JSON.stringify(streak));
+    } else {
+      // gap or first visit — reset to 1
+      streak.count = 1;
+      streak.last = todayStr;
+      localStorage.setItem(STREAK_KEY, JSON.stringify(streak));
+    }
+
+    if (streak.count >= 2) {
+      const el = document.getElementById('ctx-streak');
+      const countEl = document.getElementById('ctx-streak-count');
+      if (el && countEl) {
+        countEl.textContent = streak.count + '-day streak';
+        el.style.display = 'inline-flex';
+      }
+    }
+  } catch(e) { /* non-critical */ }
+})();
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchTractionValue(key) {
+  try {
+    const url = `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(EDGEX_KV_USER_ID)}&key=eq.${encodeURIComponent(key)}&select=value,updated_at&limit=1`;
+    const res = await fetchWithTimeout(url, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
+    });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    if (!rows.length) return null;
+    const value = rows[0].value;
+    localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    return value;
+  } catch(e) {
+    return null;
+  }
+}
+
+async function readSummary(key) {
+  const cloudValue = await fetchTractionValue(key);
+  if (cloudValue && typeof cloudValue === 'object') return cloudValue;
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : null;
+  } catch(e) {
+    return null;
+  }
+}
+
+function getSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (s.access_token && s.expires_at > Math.floor(Date.now() / 1000)) return s;
+  } catch(e) {}
+  return null;
+}
+
+function getSbUserId() {
+  const session = getSession();
+  return session?.user?.id || null;
+}
+
+function financeSummaryFromTransactions(transactions) {
+  const now = new Date();
+  const monthTx = (transactions || []).filter(t => {
+    const td = new Date(t.date);
+    return td.getFullYear() === now.getFullYear() && td.getMonth() === now.getMonth();
+  });
+  const expense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amountKRW ?? t.amount_krw ?? 0), 0);
+  const income  = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + (t.amountKRW ?? t.amount_krw ?? 0), 0);
+  return { expense, income };
+}
+
+async function fetchFinanceMonthSummary() {
+  const session = getSession();
+  if (!session) return null;
+  const userId = getSbUserId();
+  if (!userId) return null;
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+  try {
+    const url = `${SB_URL}/rest/v1/finance_transactions?user_id=eq.${encodeURIComponent(userId)}&date=gte.${from}&date=lte.${to}&select=type,amount_krw,date`;
+    const res = await fetchWithTimeout(url, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${session.access_token}`, 'Accept': 'application/json' }
+    });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return financeSummaryFromTransactions(rows);
+  } catch(e) {
+    return null;
+  }
+}
+
+// Animate rings on load
+function animateRing(selector, pct, delay = 300) {
+  setTimeout(() => {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    const offset = CIRCUMFERENCE * (1 - pct / 100);
+    el.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)';
+    el.style.strokeDashoffset = offset;
+  }, delay);
+}
+
+// Work ring: show 100% (full timer, hasn't started)
+animateRing('.work-ring', 100, 400);
+setText('work-status', 'Ready for a 50 minute focus block');
+
+// Goals ring: pull from Supabase if available, else use demo 25%
+(async () => {
+  await authReady;
+  const d = await readSummary('edgex_goals_summary');
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isToday = d?.updatedAt && d.updatedAt.slice(0, 10) === todayStr;
+
+  if (d && isToday && d.total > 0) {
+    const done  = d.done  ?? 0;
+    const total = d.total;
+    const pct   = Math.round((done / total) * 100);
+    document.getElementById('goals-pct').textContent  = pct + '%';
+    document.getElementById('goals-meta').textContent = done + '/' + total + ' done';
+    setText('goals-status', done + ' of ' + total + ' tactics done today');
+    animateRing('.goals-ring', pct, 600);
+    reportModuleStatus('goals', 'fresh');
+  } else if (d && d.activeCycles > 0) {
+    // Summary exists but is stale or today has no tactics — show active cycles
+    document.getElementById('goals-pct').textContent  = d.activeCycles;
+    document.getElementById('goals-meta').textContent = 'active cycles';
+    setText('goals-status', d.activeCycles + ' active sprint' + (d.activeCycles === 1 ? '' : 's') + ' running');
+    animateRing('.goals-ring', 60, 600);
+    reportModuleStatus('goals', 'stale');
+  } else {
+    document.getElementById('goals-pct').textContent  = '—';
+    document.getElementById('goals-meta').textContent = 'no data';
+    setText('goals-status', 'Open Goals to sync');
+    animateRing('.goals-ring', 0, 600);
+    reportModuleStatus('goals', 'empty');
+  }
+})();
+
+// Finance ring: read this month's spend from Supabase, then localStorage
+(async () => {
+  try {
+    await authReady;
+    let summary = await fetchFinanceMonthSummary();
+    if (!summary) {
+      const stored = localStorage.getItem('finance_tracker_data_v1');
+      if (!stored) {
+        setText('finance-status', 'No month data yet');
+        animateRing('.finance-ring', 0, 800);
+        reportModuleStatus('finance', 'empty');
+        return;
+      }
+      summary = financeSummaryFromTransactions(JSON.parse(stored).transactions || []);
+    }
+    const { expense, income } = summary;
+    const pct = income > 0 ? Math.min(100, Math.round(expense / income * 100)) : 0;
+    const fmt = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? Math.round(n/1000)+'K' : String(Math.round(n));
+    document.getElementById('finance-pct').textContent = income > 0 ? pct + '%' : '₩' + fmt(expense);
+    document.getElementById('finance-meta').textContent = income > 0 ? 'of income' : 'this month';
+    setText('finance-status', income > 0 ? '₩' + fmt(expense) + ' spent this month' : '₩' + fmt(expense) + ' tracked this month');
+    animateRing('.finance-ring', pct || (expense > 0 ? 60 : 0), 800);
+    reportModuleStatus('finance', expense > 0 || income > 0 ? 'fresh' : 'empty');
+  } catch(e) {
+    setText('finance-status', 'Finance summary unavailable');
+    animateRing('.finance-ring', 0, 800);
+    reportModuleStatus('finance', 'empty');
+  }
+})();
+
+// Health ring: read today's routine completions from edgex_health_summary
+(async function() {
+  await authReady;
+  const data = await readSummary('edgex_health_summary');
+  if (!data) {
+    setText('health-status', 'No health check-in yet');
+    animateRing('.health-ring', 0, 1000);
+    reportModuleStatus('health', 'empty');
+    return;
+  }
+  const completed = data.checked ?? 0;
+  const total = data.total ?? 4;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  document.getElementById('health-pct').textContent = pct + '%';
+  document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
+  setText('health-status', completed + ' of ' + total + ' routines complete');
+  animateRing('.health-ring', pct, 1000);
+  const todayStrH = new Date().toISOString().slice(0, 10);
+  const isTodayH  = data.updatedAt && data.updatedAt.slice(0, 10) === todayStrH;
+  reportModuleStatus('health', isTodayH ? 'fresh' : 'stale');
+})();
+
+// Wellness ring: read clarity score from edgex_wellness_summary
+(async function() {
+  await authReady;
+  const data = await readSummary('edgex_wellness_summary');
+  if (!data) {
+    setText('wellness-status', 'No wellness check-in yet');
+    animateRing('.wellness-ring', 0, 1200);
+    reportModuleStatus('wellness', 'empty');
+    return;
+  }
+  const score = data.score ?? null;
+  if (score == null) {
+    setText('wellness-status', 'Clarity not logged yet');
+    animateRing('.wellness-ring', 0, 1200);
+    reportModuleStatus('wellness', 'stale');
+    return;
+  }
+  document.getElementById('wellness-pct').textContent = score;
+  document.getElementById('wellness-meta').textContent = 'clarity';
+  setText('wellness-status', 'Clarity score is ' + score + ' today');
+  animateRing('.wellness-ring', score, 1200);
+  const todayStrW = new Date().toISOString().slice(0, 10);
+  const isTodayW  = data.updatedAt && data.updatedAt.slice(0, 10) === todayStrW;
+  reportModuleStatus('wellness', isTodayW ? 'fresh' : 'stale');
+})();
+
+// ── Re-fetch all ring data when tab becomes visible again ─────────────────
+// This ensures rings update after you interact with a module in another tab
+// without needing a full page reload.
+async function refreshAllRings() {
+  // Reset system status state so it re-aggregates cleanly
+  moduleStatus.goals    = null;
+  moduleStatus.finance  = null;
+  moduleStatus.health   = null;
+  moduleStatus.wellness = null;
+
+  // Goals
+  (async () => {
+    const d = await readSummary('edgex_goals_summary');
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const isToday = d?.updatedAt && d.updatedAt.slice(0, 10) === todayStr;
+    if (d && isToday && d.total > 0) {
+      const done = d.done ?? 0; const total = d.total;
+      const pct = Math.round((done / total) * 100);
+      document.getElementById('goals-pct').textContent  = pct + '%';
+      document.getElementById('goals-meta').textContent = done + '/' + total + ' done';
+      setText('goals-status', done + ' of ' + total + ' tactics done today');
+      animateRing('.goals-ring', pct, 0);
+      reportModuleStatus('goals', 'fresh');
+    } else if (d && d.activeCycles > 0) {
+      document.getElementById('goals-pct').textContent  = d.activeCycles;
+      document.getElementById('goals-meta').textContent = 'active cycles';
+      setText('goals-status', d.activeCycles + ' active sprint' + (d.activeCycles === 1 ? '' : 's') + ' running');
+      animateRing('.goals-ring', 60, 0);
+      reportModuleStatus('goals', 'stale');
+    } else {
+      document.getElementById('goals-pct').textContent  = '—';
+      document.getElementById('goals-meta').textContent = 'no data';
+      setText('goals-status', 'Open Goals to sync');
+      animateRing('.goals-ring', 0, 0);
+      reportModuleStatus('goals', 'empty');
+    }
+  })();
+
+  // Finance
+  (async () => {
+    try {
+      let summary = await fetchFinanceMonthSummary();
+      if (!summary) {
+        const stored = localStorage.getItem('finance_tracker_data_v1');
+        if (!stored) { animateRing('.finance-ring', 0, 0); reportModuleStatus('finance', 'empty'); return; }
+        summary = financeSummaryFromTransactions(JSON.parse(stored).transactions || []);
+      }
+      const { expense, income } = summary;
+      const pct = income > 0 ? Math.min(100, Math.round(expense / income * 100)) : 0;
+      const fmt = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? Math.round(n/1000)+'K' : String(Math.round(n));
+      document.getElementById('finance-pct').textContent = income > 0 ? pct + '%' : '₩' + fmt(expense);
+      document.getElementById('finance-meta').textContent = income > 0 ? 'of income' : 'this month';
+      setText('finance-status', income > 0 ? '₩' + fmt(expense) + ' spent this month' : '₩' + fmt(expense) + ' tracked this month');
+      animateRing('.finance-ring', pct || (expense > 0 ? 60 : 0), 0);
+      reportModuleStatus('finance', expense > 0 || income > 0 ? 'fresh' : 'empty');
+    } catch(e) {
+      animateRing('.finance-ring', 0, 0);
+      reportModuleStatus('finance', 'empty');
+    }
+  })();
+
+  // Health
+  (async () => {
+    const data = await readSummary('edgex_health_summary');
+    if (!data) { animateRing('.health-ring', 0, 0); reportModuleStatus('health', 'empty'); return; }
+    const completed = data.checked ?? 0; const total = data.total ?? 4;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    document.getElementById('health-pct').textContent  = pct + '%';
+    document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
+    setText('health-status', completed + ' of ' + total + ' routines complete');
+    animateRing('.health-ring', pct, 0);
+    const todayStrH = new Date().toISOString().slice(0, 10);
+    reportModuleStatus('health', data.updatedAt && data.updatedAt.slice(0, 10) === todayStrH ? 'fresh' : 'stale');
+  })();
+
+  // Wellness
+  (async () => {
+    const data = await readSummary('edgex_wellness_summary');
+    if (!data) { animateRing('.wellness-ring', 0, 0); reportModuleStatus('wellness', 'empty'); return; }
+    const score = data.score ?? null;
+    if (score == null) { animateRing('.wellness-ring', 0, 0); reportModuleStatus('wellness', 'stale'); return; }
+    document.getElementById('wellness-pct').textContent  = score;
+    document.getElementById('wellness-meta').textContent = 'clarity';
+    setText('wellness-status', 'Clarity score is ' + score + ' today');
+    animateRing('.wellness-ring', score, 0);
+    const todayStrW = new Date().toISOString().slice(0, 10);
+    reportModuleStatus('wellness', data.updatedAt && data.updatedAt.slice(0, 10) === todayStrW ? 'fresh' : 'stale');
+  })();
+}
+
+let _lastVisible = Date.now();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  // Only re-fetch if the tab was hidden for more than 30 seconds
+  if (Date.now() - _lastVisible > 30000) {
+    authReady.then(s => { if (s) refreshAllRings(); });
+  }
+  _lastVisible = Date.now();
+});
+
+// ── Periodic token refresh (every 15 minutes, only when visible) ──────────
+setInterval(async () => {
+  if (document.visibilityState !== 'visible') return;
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (!s.refresh_token) return;
+    const now = Math.floor(Date.now() / 1000);
+    // Only refresh if token will expire within the next 20 minutes
+    if ((s.expires_at || 0) > now + 1200) return;
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'apikey': SB_ANON, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: s.refresh_token })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.access_token) return;
+    localStorage.setItem('sb_session', JSON.stringify({
+      access_token:  data.access_token,
+      refresh_token: data.refresh_token || s.refresh_token,
+      expires_at:    Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+      user:          data.user || s.user
+    }));
+  } catch(e) { /* silent — network issues shouldn't disrupt the hub */ }
+}, 15 * 60 * 1000);
+
+// ── Instant hub badges from localStorage (before async calls return) ──────
+// Read each module's last-used summary from localStorage immediately on load
+// so the rings and status lines aren't blank while Supabase fetches.
+(function instantBadges() {
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  // Work: show active day type from 30day-day-types-v1
+  try {
+    const dayTypes = JSON.parse(localStorage.getItem('30day-day-types-v1') || '{}');
+    const todayType = dayTypes[todayStr];
+    const labels = { holiday: '🏖 Holiday', sick: '🤒 Sick Day', travel: '✈ Travel Day', ooo: '🏢 Out of Office' };
+    if (todayType && labels[todayType]) {
+      setText('work-status', labels[todayType] + ' — timer paused');
+    } else {
+      // Show timer state if saved
+      try {
+        const t = JSON.parse(localStorage.getItem('30day-timer-v1') || '{}');
+        if (t.running) {
+          const remaining = Math.max(0, Math.ceil((t.deadlineAt - Date.now()) / 1000));
+          const m = Math.floor(remaining / 60); const s = remaining % 60;
+          setText('work-status', 'Timer running — ' + m + ':' + String(s).padStart(2,'0') + ' left');
+          document.getElementById('work-timer').textContent = m + ':' + String(s).padStart(2,'0');
+        }
+      } catch(e) {}
+    }
+  } catch(e) {}
+
+  // Goals: show from cached summary
+  try {
+    const d = JSON.parse(localStorage.getItem('edgex_goals_summary') || 'null');
+    if (d && d.total > 0) {
+      const isToday = d.updatedAt && d.updatedAt.slice(0,10) === todayStr;
+      if (isToday) {
+        const pct = Math.round((d.done / d.total) * 100);
+        document.getElementById('goals-pct').textContent  = pct + '%';
+        document.getElementById('goals-meta').textContent = d.done + '/' + d.total + ' done';
+        setText('goals-status', d.done + ' of ' + d.total + ' tactics done today');
+        animateRing('.goals-ring', pct, 200);
+      } else if (d.activeCycles > 0) {
+        document.getElementById('goals-pct').textContent  = d.activeCycles;
+        document.getElementById('goals-meta').textContent = 'active cycles';
+        setText('goals-status', d.activeCycles + ' sprint' + (d.activeCycles === 1 ? '' : 's') + ' running');
+        animateRing('.goals-ring', 60, 200);
+      }
+    }
+  } catch(e) {}
+
+  // Health: show from cached summary
+  try {
+    const d = JSON.parse(localStorage.getItem('edgex_health_summary') || 'null');
+    if (d) {
+      const completed = d.checked ?? 0; const total = d.total ?? 4;
+      const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+      document.getElementById('health-pct').textContent  = pct + '%';
+      document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
+      setText('health-status', completed + ' of ' + total + ' routines complete');
+      animateRing('.health-ring', pct, 400);
+    }
+  } catch(e) {}
+
+  // Wellness: show from cached summary
+  try {
+    const d = JSON.parse(localStorage.getItem('edgex_wellness_summary') || 'null');
+    if (d && d.score != null) {
+      document.getElementById('wellness-pct').textContent  = d.score;
+      document.getElementById('wellness-meta').textContent = 'clarity';
+      setText('wellness-status', 'Clarity score is ' + d.score + ' today');
+      animateRing('.wellness-ring', d.score, 600);
+    }
+  } catch(e) {}
+
+  // Finance: show from cached localStorage data
+  try {
+    const stored = localStorage.getItem('finance_tracker_data_v1');
+    if (stored) {
+      const summary = financeSummaryFromTransactions(JSON.parse(stored).transactions || []);
+      const { expense, income } = summary;
+      if (expense > 0 || income > 0) {
+        const pct = income > 0 ? Math.min(100, Math.round(expense / income * 100)) : 0;
+        const fmt = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? Math.round(n/1000)+'K' : String(Math.round(n));
+        document.getElementById('finance-pct').textContent  = income > 0 ? pct + '%' : '₩' + fmt(expense);
+        document.getElementById('finance-meta').textContent = income > 0 ? 'of income' : 'this month';
+        setText('finance-status', income > 0 ? '₩' + fmt(expense) + ' spent this month' : '₩' + fmt(expense) + ' tracked this month');
+        animateRing('.finance-ring', pct || (expense > 0 ? 60 : 0), 500);
+      }
+    }
+  } catch(e) {}
+})();
+
+</script>
+</body>
+</html>

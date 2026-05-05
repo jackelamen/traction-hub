@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The EDGEx — Finance Access</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='10' fill='%236c8aff'/><text x='16' y='23' font-size='16' text-anchor='middle' font-family='sans-serif' font-weight='bold' fill='white'>₩</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; height: 100%; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #0b0c1e;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 20%, rgba(108,138,255,0.15) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(167,139,250,0.12) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(108,138,255,0.2);
+  border-radius: 24px;
+  padding: 44px 40px;
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 0 60px rgba(108,138,255,0.08);
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.logo-title {
+  font-weight: 900;
+  font-size: 28px;
+  letter-spacing: -1px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.logo-title .x-letter { color: #6c8aff; font-style: italic; }
+
+.logo-sub {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+.step { display: none; }
+.step.active { display: block; }
+
+.step-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.4);
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: 0.04em;
+}
+
+.step-label span {
+  color: #6c8aff;
+}
+
+.info-text {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.info-text strong { color: rgba(255,255,255,0.8); }
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: #6c8aff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* PIN input */
+.pin-wrap {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.pin-wrap input {
+  width: 52px;
+  height: 60px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(108,138,255,0.3);
+  border-radius: 10px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  caret-color: #6c8aff;
+}
+
+.pin-wrap input:focus {
+  border-color: #6c8aff;
+  background: rgba(108,138,255,0.1);
+}
+
+.timer {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 16px;
+}
+
+.timer.urgent { color: #f87171; }
+
+.resend-link {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  color: #6c8aff;
+  cursor: pointer;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  text-decoration: underline;
+}
+
+.resend-link:disabled { color: rgba(255,255,255,0.3); cursor: not-allowed; text-decoration: none; }
+
+.error-msg {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #f87171;
+  margin-top: 14px;
+  display: none;
+  text-align: center;
+}
+
+.success-msg {
+  background: rgba(52,211,153,0.12);
+  border: 1px solid rgba(52,211,153,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #34d399;
+  margin-top: 14px;
+  display: none;
+  text-align: center;
+}
+
+.back-link {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
+  text-decoration: none;
+  margin-top: 20px;
+}
+
+.back-link:hover { color: rgba(255,255,255,0.6); }
+
+.shield-icon {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-title">THE EDGE<span class="x-letter">x</span> Finance</div>
+    <div class="logo-sub">Secure Access</div>
+  </div>
+
+  <!-- Step 1: Send PIN -->
+  <div class="step active" id="step1">
+    <div class="shield-icon">🔐</div>
+    <div class="step-label">Step <span>1 of 2</span> — Verify Identity</div>
+    <p class="info-text">
+      Finance data is protected by two-factor authentication.<br>
+      We'll send a <strong>6-digit PIN</strong> to <strong id="userEmail">your email</strong>.
+    </p>
+    <button class="btn-primary" id="sendBtn" onclick="sendPin()">Send PIN to Email</button>
+    <div class="error-msg" id="sendError"></div>
+    <a href="index.html" class="back-link">← Back to Home</a>
+  </div>
+
+  <!-- Step 2: Enter PIN -->
+  <div class="step" id="step2">
+    <div class="shield-icon">📧</div>
+    <div class="step-label">Step <span>2 of 2</span> — Enter PIN</div>
+    <p class="info-text">
+      Check your email and enter the 6-digit PIN below.<br>
+      It expires in <strong>5 minutes</strong>.
+    </p>
+
+    <div class="pin-wrap">
+      <input type="text" inputmode="numeric" maxlength="1" class="pin-digit" id="p0"/>
+      <input type="text" inputmode="numeric" maxlength="1" class="pin-digit" id="p1"/>
+      <input type="text" inputmode="numeric" maxlength="1" class="pin-digit" id="p2"/>
+      <input type="text" inputmode="numeric" maxlength="1" class="pin-digit" id="p3"/>
+      <input type="text" inputmode="numeric" maxlength="1" class="pin-digit" id="p4"/>
+      <input type="text" inputmode="numeric" maxlength="1" class="pin-digit" id="p5"/>
+    </div>
+
+    <div class="timer" id="timer">Expires in 5:00</div>
+
+    <button class="btn-primary" id="verifyBtn" onclick="verifyPin()">Verify PIN</button>
+    <button class="resend-link" id="resendBtn" onclick="resendPin()" disabled>Resend PIN</button>
+    <div class="error-msg" id="verifyError"></div>
+    <div class="success-msg" id="verifySuccess"></div>
+  </div>
+</div>
+
+<script>
+const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
+const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
+const FINANCE_SESSION_KEY = 'finance_session_ts';
+const FINANCE_SESSION_MAX = 60 * 60 * 1000; // 1 hour in ms
+
+let userEmail = '';
+let timerInterval = null;
+let pinExpiresAt = null;
+
+// ── Step 0: Check sessions ───────────────────────────────────────
+function getSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (s.access_token && s.expires_at > Math.floor(Date.now() / 1000)) return s;
+  } catch(e) {}
+  return null;
+}
+
+function checkFinanceSession() {
+  const ts = localStorage.getItem(FINANCE_SESSION_KEY);
+  if (!ts) return false;
+  return (Date.now() - parseInt(ts)) < FINANCE_SESSION_MAX;
+}
+
+async function refreshSessionIfNeeded() {
+  const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+  if (!s.access_token) return null;
+  const now = Math.floor(Date.now() / 1000);
+  const expiresAt = s.expires_at || 0;
+  if (expiresAt > now + 300) return s;
+  if (!s.refresh_token) return expiresAt > now ? s : null;
+  try {
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: s.refresh_token })
+    });
+    if (!res.ok) return expiresAt > now ? s : null;
+    const data = await res.json();
+    if (!data.access_token) return expiresAt > now ? s : null;
+    const next = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || s.refresh_token,
+      expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+      user: data.user || s.user
+    };
+    localStorage.setItem('sb_session', JSON.stringify(next));
+    return next;
+  } catch(e) {
+    return expiresAt > now ? s : null;
+  }
+}
+
+(async function init() {
+  // Must have Layer 1 session
+  const session = await refreshSessionIfNeeded();
+  if (!session) { window.location.href = 'login.html'; return; }
+
+  // If finance session still valid, skip straight in
+  if (checkFinanceSession()) { window.location.href = 'finance-dashboard.html'; return; }
+
+  userEmail = session.user?.email || '';
+  document.getElementById('userEmail').textContent = userEmail;
+})();
+
+// ── Step 1: Send PIN ─────────────────────────────────────────────
+async function sendPin() {
+  const btn    = document.getElementById('sendBtn');
+  const errEl  = document.getElementById('sendError');
+  const session = getSession();
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  try {
+    const res = await fetch(`${SB_URL}/functions/v1/finance-pin`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'send' }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      showSendError(data.error || 'Could not send PIN. Try again.');
+      btn.disabled = false;
+      btn.textContent = 'Send PIN to Email';
+      return;
+    }
+
+    // Move to step 2
+    document.getElementById('step1').classList.remove('active');
+    document.getElementById('step2').classList.add('active');
+    pinExpiresAt = Date.now() + 5 * 60 * 1000;
+    startTimer();
+    setupPinInputs();
+    document.getElementById('p0').focus();
+
+  } catch(e) {
+    showSendError('Network error. Please try again.');
+    btn.disabled = false;
+    btn.textContent = 'Send PIN to Email';
+  }
+}
+
+// ── Timer ────────────────────────────────────────────────────────
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const remaining = Math.max(0, pinExpiresAt - Date.now());
+    const m = Math.floor(remaining / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    const el = document.getElementById('timer');
+    el.textContent = `Expires in ${m}:${String(s).padStart(2,'0')}`;
+    el.className = 'timer' + (remaining < 60000 ? ' urgent' : '');
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      el.textContent = 'PIN expired — please resend.';
+      document.getElementById('resendBtn').disabled = false;
+    }
+  }, 1000);
+  // Enable resend after 30s
+  setTimeout(() => {
+    document.getElementById('resendBtn').disabled = false;
+  }, 30000);
+}
+
+// ── PIN input UX ─────────────────────────────────────────────────
+function setupPinInputs() {
+  const inputs = document.querySelectorAll('.pin-digit');
+  inputs.forEach((inp, i) => {
+    inp.value = '';
+    inp.addEventListener('input', e => {
+      const val = e.target.value.replace(/\D/g, '');
+      inp.value = val.slice(-1);
+      if (val && i < 5) inputs[i+1].focus();
+      if (getPin().length === 6) verifyPin();
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i-1].focus();
+    });
+    inp.addEventListener('paste', e => {
+      e.preventDefault();
+      const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0,6);
+      pasted.split('').forEach((ch, idx) => { if (inputs[idx]) inputs[idx].value = ch; });
+      if (pasted.length === 6) verifyPin();
+    });
+  });
+}
+
+function getPin() {
+  return [...document.querySelectorAll('.pin-digit')].map(i => i.value).join('');
+}
+
+// ── Step 2: Verify PIN ───────────────────────────────────────────
+async function verifyPin() {
+  const pin     = getPin();
+  const btn     = document.getElementById('verifyBtn');
+  const errEl   = document.getElementById('verifyError');
+  const sucEl   = document.getElementById('verifySuccess');
+  const session = getSession();
+  errEl.style.display = 'none';
+  sucEl.style.display = 'none';
+
+  if (pin.length < 6) { showVerifyError('Please enter all 6 digits.'); return; }
+  if (Date.now() > pinExpiresAt) { showVerifyError('PIN has expired. Please resend.'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+
+  try {
+    const res = await fetch(`${SB_URL}/functions/v1/finance-pin`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'verify', pin }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data.verified) {
+      showVerifyError(data.error || 'Incorrect PIN. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Verify PIN';
+      document.querySelectorAll('.pin-digit').forEach(i => i.value = '');
+      document.getElementById('p0').focus();
+      return;
+    }
+
+    // Set finance session timestamp (Layer 1 session unchanged)
+    localStorage.setItem(FINANCE_SESSION_KEY, String(Date.now()));
+
+    clearInterval(timerInterval);
+    sucEl.textContent = 'Verified! Entering Finance...';
+    sucEl.style.display = 'block';
+    setTimeout(() => { window.location.href = 'finance-dashboard.html'; }, 800);
+
+  } catch(e) {
+    showVerifyError('Network error. Please try again.');
+    btn.disabled = false;
+    btn.textContent = 'Verify PIN';
+  }
+}
+
+async function resendPin() {
+  document.getElementById('resendBtn').disabled = true;
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('step1').classList.add('active');
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('sendBtn').textContent = 'Send PIN to Email';
+  clearInterval(timerInterval);
+}
+
+function showSendError(msg) {
+  const el = document.getElementById('sendError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function showVerifyError(msg) {
+  const el = document.getElementById('verifyError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+</script>
+</body>
+</html>

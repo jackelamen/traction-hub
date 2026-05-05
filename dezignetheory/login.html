@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The EDGEx — Login</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='10' fill='%231a1a2e'/><text x='16' y='23' font-size='20' text-anchor='middle' font-family='sans-serif' font-weight='bold' fill='white'>E</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; height: 100%; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #0b0c1e;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 18% 18%, rgba(79,70,229,0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 82% 80%, rgba(5,150,105,0.14) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 24px;
+  padding: 44px 40px;
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 0 60px rgba(79,70,229,0.08);
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.logo-title {
+  font-weight: 900;
+  font-size: 36px;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.logo-title .x-letter { color: #7c6ff7; font-style: italic; }
+
+.logo-sub {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.form-group input {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-size: 15px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus {
+  border-color: rgba(124,111,247,0.6);
+  background: rgba(255,255,255,0.08);
+}
+
+.form-group input::placeholder { color: rgba(255,255,255,0.25); }
+
+.btn-login {
+  width: 100%;
+  padding: 14px;
+  background: #7c6ff7;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity 0.15s, transform 0.15s;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.btn-login:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.error-msg {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #f87171;
+  margin-top: 14px;
+  display: none;
+}
+
+.footer-note {
+  text-align: center;
+  margin-top: 28px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.18);
+  letter-spacing: 0.06em;
+}
+
+.forgot-link {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  margin-top: 14px;
+  text-align: center;
+  text-decoration: underline;
+  padding: 0;
+}
+.forgot-link:hover { color: rgba(255,255,255,0.6); }
+
+.success-msg {
+  background: rgba(52,211,153,0.12);
+  border: 1px solid rgba(52,211,153,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #34d399;
+  margin-top: 14px;
+  display: none;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-title">THE EDGE<span class="x-letter">x</span></div>
+    <div class="logo-sub">Sign in to continue</div>
+  </div>
+
+  <div class="form-group">
+    <label>Email</label>
+    <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+  </div>
+
+  <div class="form-group">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+  </div>
+
+  <button class="btn-login" id="loginBtn" onclick="doLogin()">Sign In</button>
+  <div class="error-msg" id="errorMsg"></div>
+  <div class="success-msg" id="successMsg"></div>
+  <button class="forgot-link" onclick="doForgotPassword()">Forgot password?</button>
+</div>
+
+<div class="footer-note">theedgex.com &nbsp;·&nbsp; personal operating system</div>
+
+<script>
+const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
+const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
+const AUTH_TIMEOUT_MS = 15000;
+const SB_PROJECT_HOST = new URL(SB_URL).host;
+
+// ── Intercept recovery tokens before anything else ───────────────
+(function interceptRecovery() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return;
+  const params = new URLSearchParams(hash);
+  if (params.get('type') === 'recovery' && params.get('access_token')) {
+    window.location.href = 'reset-password.html' + window.location.hash;
+  }
+})();
+
+// If already logged in, skip to index
+async function checkExistingSession() {
+  const stored = localStorage.getItem('sb_session');
+  if (!stored) return;
+  try {
+    const session = JSON.parse(stored);
+    if (!sessionMatchesProject(session)) {
+      localStorage.removeItem('sb_session');
+      localStorage.removeItem('finance_session_ts');
+      return;
+    }
+    if (session.access_token && session.expires_at > Math.floor(Date.now() / 1000)) {
+      window.location.href = 'index.html';
+    }
+  } catch(e) {}
+}
+checkExistingSession();
+
+document.getElementById('password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+async function doLogin() {
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn      = document.getElementById('loginBtn');
+  const errEl    = document.getElementById('errorMsg');
+
+  errEl.style.display = 'none';
+  document.getElementById('successMsg').style.display = 'none';
+  if (!email || !password) { showError('Please enter your email and password.'); return; }
+  if (btn.disabled) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+
+  try {
+    const { res, data } = await fetchAuthJson(`${SB_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': `Bearer ${SB_ANON}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!res.ok) {
+      showError(authErrorMessage(data));
+      resetLoginButton();
+      return;
+    }
+
+    if (!data.access_token || !data.refresh_token) {
+      showError('Sign in did not return a valid session. Please try again.');
+      resetLoginButton();
+      return;
+    }
+
+    localStorage.removeItem('finance_session_ts');
+
+    // Store session
+    localStorage.setItem('sb_session', JSON.stringify({
+      access_token:  data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at:    Math.floor(Date.now() / 1000) + data.expires_in,
+      user:          data.user,
+    }));
+
+    window.location.href = 'index.html';
+
+  } catch(e) {
+    showError(e.name === 'AbortError'
+      ? 'Sign in timed out. Please check your connection and try again.'
+      : 'Network error. Please try again.');
+    resetLoginButton();
+  }
+}
+
+async function fetchAuthJson(url, options) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AUTH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    const text = await res.text();
+    let data = {};
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch(e) {
+        data = { msg: text };
+      }
+    }
+    return { res, data };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function authErrorMessage(data) {
+  return data?.error_description || data?.msg || data?.message || data?.error || 'Invalid email or password.';
+}
+
+function resetLoginButton() {
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = false;
+  btn.textContent = 'Sign In';
+}
+
+function sessionMatchesProject(session) {
+  const token = session?.access_token;
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (!payload.iss) return true;
+    return new URL(payload.iss).host === SB_PROJECT_HOST;
+  } catch(e) {
+    return false;
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('successMsg').style.display = 'none';
+}
+
+function showSuccess(msg) {
+  const el = document.getElementById('successMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('errorMsg').style.display = 'none';
+}
+
+async function doForgotPassword() {
+  const email = document.getElementById('email').value.trim();
+  if (!email) { showError('Enter your email address above first.'); return; }
+
+  try {
+    await fetchAuthJson(`${SB_URL}/auth/v1/recover`, {
+      method: 'POST',
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        gotrue_meta_security: {},
+        redirect_to: 'https://theedgex.com/reset-password.html',
+      }),
+    });
+
+    // Supabase returns 200 even if email not found (security)
+    showSuccess('Password reset email sent. Check your inbox.');
+  } catch(e) {
+    showError('Network error. Please try again.');
+  }
+}
+</script>
+</body>
+</html>
