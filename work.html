@@ -3491,6 +3491,12 @@ function _touchLsTimestamp(key) {
   ts[key] = Date.now();
   _lsSet(LS_TIMESTAMPS_KEY, JSON.stringify(ts));
 }
+function _setLsTimestamp(key, updatedAtMs) {
+  if (key === LS_TIMESTAMPS_KEY || !Number.isFinite(updatedAtMs)) return;
+  const ts = _getLsTimestamps();
+  ts[key] = updatedAtMs;
+  _lsSet(LS_TIMESTAMPS_KEY, JSON.stringify(ts));
+}
 
 function _setSyncedLsValue(key, value, updatedAtMs) {
   let str;
@@ -9846,10 +9852,13 @@ function getMorningSetup() {
   catch { return null; }
 }
 function saveMorningSetup(data) {
+  const updatedAt = new Date().toISOString();
+  const updatedAtMs = new Date(updatedAt).getTime();
   const str = JSON.stringify(data);
   _lsSet(MS_KEY, str); // write directly to avoid triggering throttled push first
+  _setLsTimestamp(MS_KEY, updatedAtMs); // protect the just-saved setup from an older cloud pull
   // Push just this key immediately, then do a full push as backup
-  const row = { user_id: getSbUserId(), key: MS_KEY, value: data, updated_at: new Date().toISOString() };
+  const row = { user_id: getSbUserId(), key: MS_KEY, value: data, updated_at: updatedAt };
   fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
     method: 'POST',
     headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Content-Type': 'application/json' },
