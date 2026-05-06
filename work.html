@@ -5371,12 +5371,15 @@ function renderWeeklySummary() {
     const start = (w - 1) * 5 + 1;
     const end   = w * 5;
     if (start > dn) break; // don't show future weeks
-    const days = [];
+    const days = [];        // logged days only (for stats)
+    const allDayNums = [];  // every day number in range up to today (for dot bar)
     for (let d = start; d <= Math.min(end, dn); d++) {
+      allDayNums.push(d);
       const log = logs[dateForDay(d)];
       if (log) days.push(log);
     }
-    if (days.length === 0) continue;
+    if (days.length === 0 && allDayNums.every(d => isExemptDay(dateForDay(d)))) continue;
+    if (days.length === 0 && allDayNums.length === 0) continue;
     const cleanDays   = days.filter(l => l.pillar1 && l.pillar2).length;
     const avgScore    = days.filter(l => l.focusScore != null).length > 0
       ? Math.round(days.reduce((a, l) => a + (l.focusScore || 0), 0) / days.filter(l => l.focusScore != null).length)
@@ -5387,7 +5390,7 @@ function renderWeeklySummary() {
     }, 0);
     const totalSteps  = days.reduce((a, l) => a + (l.netSteps || Math.max(0, (l.steps || 0) - (l.stepBase || 0))), 0);
     const totalDistracts = days.reduce((a, l) => a + (l.distractCount || 0), 0);
-    weeks.push({ w, start, end: Math.min(end, dn), days: days.length, cleanDays, avgScore, totalSteps, totalDistracts });
+    weeks.push({ w, start, end: Math.min(end, dn), days: days.length, allDayNums, cleanDays, avgScore, totalSteps, totalDistracts });
   }
 
   if (weeks.length === 0) {
@@ -5423,11 +5426,19 @@ function renderWeeklySummary() {
       </div>
       <!-- Mini clean-day dots -->
       <div class="flex gap-1 mt-3">
-        ${Array.from({length: w.days}, (_, i) => {
-          const log = logs[dateForDay(w.start + i)];
+        ${w.allDayNums.map(d => {
+          const ds = dateForDay(d);
+          const log = logs[ds];
+          const exempt = isExemptDay(ds);
           const full = log && log.pillar1 && log.pillar2;
           const partial = log && (log.pillar1 || log.pillar2);
-          return `<div class="flex-1 h-1.5 rounded-full ${full ? 'bg-emerald-500' : partial ? 'bg-emerald-200' : 'bg-[#EF4444]/30'}"></div>`;
+          // Red only if the day was actually logged but pillars weren't completed
+          // Exempt days and unlogged days get a neutral gray
+          const color = full ? 'bg-emerald-500'
+            : partial ? 'bg-emerald-200'
+            : (log && !exempt) ? 'bg-[#EF4444]/30'
+            : 'bg-gray-200/70';
+          return `<div class="flex-1 h-1.5 rounded-full ${color}"></div>`;
         }).join('')}
       </div>
     </div>
