@@ -2609,6 +2609,13 @@ const AREAS = [
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const GOALS_KV_USER_ID = 'jack_traction_hub_v1';
+const GOALS_OWNER_USER_ID = 'fa3f910d-64f8-43cf-94c1-61d645ed9414';
+function getSbToken() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s.access_token || SB_ANON;
+  } catch(e) { return SB_ANON; }
+}
 const GOALS_SUMMARY_KEY = 'edgex_goals_summary';
 const VB_IMAGES_KEY = 'gs2_vb';
 const VB_IMAGES_UPDATED_KEY = 'gs2_vb_updated_at';
@@ -2858,8 +2865,8 @@ async function syncGoal(goalId) {
   try {
     const rows = await sbUpsert('goals', {
       ...(g._uuid ? { id: g._uuid } : {}),
-      local_id: g.id, title: g.title, area, why: g.why || null, status: g.status
-    }, 'local_id');
+      user_id: GOALS_OWNER_USER_ID, local_id: g.id, title: g.title, area, why: g.why || null, status: g.status
+    }, 'user_id,local_id');
     // If it was a new goal, capture the returned uuid
     if (!g._uuid && rows?.[0]?.id) g._uuid = rows[0].id;
 
@@ -2869,9 +2876,9 @@ async function syncGoal(goalId) {
         const m = g.metrics[i];
         const mrows = await sbUpsert('goal_metrics', {
           ...(m._uuid ? { id: m._uuid } : {}),
-          local_id: m.id, goal_id: g._uuid,
+          user_id: GOALS_OWNER_USER_ID, local_id: m.id, goal_id: g._uuid,
           name: m.name, type: m.type, target: m.target || null, sort_order: i
-        }, 'local_id');
+        }, 'user_id,local_id');
         if (!m._uuid && mrows?.[0]?.id) m._uuid = mrows[0].id;
       }
     }
@@ -2898,11 +2905,11 @@ async function syncSprintFull(sprintId) {
   // Upsert the sprint row
   const rows = await sbUpsert('sprints', {
     ...(sp._uuid ? { id: sp._uuid } : {}),
-    local_id: sp.id, goal_id: goalObj._uuid,
+    user_id: GOALS_OWNER_USER_ID, local_id: sp.id, goal_id: goalObj._uuid,
     name: sp.name, outcome: sp.outcome || null,
     start_date: sp.startDate || null, end_date: sp.endDate || null,
     week_checks: sp.weekChecks || {}, reflections: sp.reflections || {}, retro: sp.retro || null
-  }, 'local_id');
+  }, 'user_id,local_id');
   if (!sp._uuid && rows?.[0]?.id) sp._uuid = rows[0].id;
 
   // Upsert phases + tactics
@@ -2911,9 +2918,9 @@ async function syncSprintFull(sprintId) {
     if (!ph) continue;
     const phRows = await sbUpsert('sprint_phases', {
       ...(ph._uuid ? { id: ph._uuid } : {}),
-      sprint_id: sp._uuid, phase_index: pi,
+      user_id: GOALS_OWNER_USER_ID, sprint_id: sp._uuid, phase_index: pi,
       name: ph.name, description: ph.desc || null
-    }, 'sprint_id,phase_index');
+    }, 'user_id,sprint_id,phase_index');
     // Always update _uuid from the response (covers both new and existing phases)
     if (phRows?.[0]?.id) ph._uuid = phRows[0].id;
 
@@ -2924,10 +2931,10 @@ async function syncSprintFull(sprintId) {
       const days = t.freq === 'weekdays' ? [0,1,2,3,4] : (t.days || []);
       const tRows = await sbUpsert('sprint_tactics', {
         ...(t._uuid ? { id: t._uuid } : {}),
-        local_id: t.id, sprint_id: sp._uuid, phase_id: ph._uuid,
+        user_id: GOALS_OWNER_USER_ID, local_id: t.id, sprint_id: sp._uuid, phase_id: ph._uuid,
         text: t.text, freq,
         days, times_per_week: t.timesPerWeek || null, sort_order: ti
-      }, 'local_id');
+      }, 'user_id,local_id');
       // Always update _uuid from the response
       if (tRows?.[0]?.id) t._uuid = tRows[0].id;
     }
@@ -2950,7 +2957,7 @@ async function syncVision(areaId) {
   const area = areaId === 'career' ? 'work' : areaId;
   const content = DB.visions[areaId] || '';
   try {
-    await sbUpsert('visions', { area, content }, 'area');
+    await sbUpsert('visions', { user_id: GOALS_OWNER_USER_ID, area, content }, 'user_id,area');
   } catch(e) { console.error('syncVision failed:', e); }
 }
 
@@ -2963,9 +2970,9 @@ async function syncMetricLog(goalId, metricId) {
   try {
     for (const entry of logs) {
       await sbUpsert('metric_logs', {
-        metric_id: m._uuid, goal_id: g._uuid,
+        user_id: GOALS_OWNER_USER_ID, metric_id: m._uuid, goal_id: g._uuid,
         log_date: entry.date, value: entry.value, note: entry.note || null
-      }, 'metric_id,log_date');
+      }, 'user_id,metric_id,log_date');
     }
   } catch(e) { console.error('syncMetricLog failed:', e); }
 }
@@ -5010,7 +5017,7 @@ async function syncGoalExtraToSupabase(key, value) {
   try {
     await fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
       method: 'POST',
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         rows: [{ user_id: GOALS_KV_USER_ID, key, value, updated_at: new Date().toISOString() }]
       })
@@ -5024,7 +5031,7 @@ async function syncGoalExtrasFromSupabase() {
   try {
     const keyFilter = keys.join(',');
     const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(GOALS_KV_USER_ID)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return;
     const rows = await res.json();

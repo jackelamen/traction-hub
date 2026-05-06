@@ -1043,20 +1043,20 @@
 // ════════════════════════════════════════════════════════════════════
 // SHARED CONSTANTS
 // ════════════════════════════════════════════════════════════════════
-const STORAGE_KEY = 'finance_tracker_data_v1';
-const MIGRATE_KEY = 'finance_sb_migrated_v1';
-const FINANCE_GOALS_SYNC_KEY = 'edgex_finance_savings_goals';
-const TREND_HIDDEN_CATS_KEY = 'finance_trend_hidden_categories_v1';
-const DELETED_TX_KEY = 'finance_deleted_transactions_v1';
-const DELETED_RECURRING_KEY = 'finance_deleted_recurring_v1';
-const DELETED_SAVINGS_KEY = 'finance_deleted_savings_v1';
+const STORAGE_KEY = 'dt_finance_tracker_data_v1';
+const MIGRATE_KEY = 'dt_finance_sb_migrated_v1';
+const FINANCE_GOALS_SYNC_KEY = 'dt_edgex_finance_savings_goals';
+const TREND_HIDDEN_CATS_KEY = 'dt_finance_trend_hidden_categories_v1';
+const DELETED_TX_KEY = 'dt_finance_deleted_transactions_v1';
+const DELETED_RECURRING_KEY = 'dt_finance_deleted_recurring_v1';
+const DELETED_SAVINGS_KEY = 'dt_finance_deleted_savings_v1';
 
 // ════════════════════════════════════════════════════════════════════
 // SUPABASE CONFIG & AUTH
 // ════════════════════════════════════════════════════════════════════
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
-const FINANCE_SESSION_KEY = 'finance_session_ts';
+const FINANCE_SESSION_KEY = 'dt_finance_session_ts';
 const FINANCE_SESSION_MAX = 60 * 60 * 1000; // 1 hour
 
 function getSession() {
@@ -1123,7 +1123,7 @@ function getAuthHeaders() {
 
 function getSbUserId() {
   const session = getSession();
-  return session?.user?.id || 'fa3f910d-64f8-43cf-94c1-61d645ed9414';
+  return session?.user?.id || null;
 }
 
 function lockFinance() {

@@ -449,19 +449,39 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 const SUPABASE_URL = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const TABLE = 'weekly_reviews';
+const REVIEW_LOCAL_KEY = 'dt_edgex_reviews_local';
+const REVIEW_GEMINI_KEY = 'dt_edgex_gemini_key';
+const REVIEW_RESET_DAY_KEY = 'dt_edgex_review_reset_day';
 
 /* ===================== SUPABASE HELPERS ===================== */
+function getSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (s.access_token && s.expires_at > Math.floor(Date.now() / 1000)) return s;
+  } catch(e) {}
+  return null;
+}
+
+function getSbUserId() {
+  return getSession()?.user?.id || null;
+}
+
+(function authGate() {
+  if (!getSession()) window.location.href = 'login.html';
+})();
+
 async function sbFetch(path, opts = {}) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    headers: {
-      'apikey': SUPABASE_ANON,
-      'Authorization': `Bearer ${SUPABASE_ANON}`,
-      'Content-Type': 'application/json',
-      'Prefer': opts.prefer || 'return=representation',
-      ...opts.headers
-    },
-    ...opts
-  });
+  const session = getSession();
+  if (!session) throw new Error('No Supabase session');
+  const headers = {
+    'apikey': SUPABASE_ANON,
+    'Authorization': `Bearer ${session.access_token}`,
+    'Content-Type': 'application/json',
+    'Prefer': opts.prefer || 'return=representation',
+    ...opts.headers
+  };
+  const { prefer, headers: _ignored, ...fetchOpts } = opts;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { ...fetchOpts, headers });
   if (!res.ok) {
     const err = await res.text();
     throw new Error(err);
@@ -484,8 +504,8 @@ async function checkSbConnection() {
 
 /* ===================== SETTINGS ===================== */
 function loadSettings() {
-  const key = localStorage.getItem('edgex_gemini_key') || '';
-  const day = localStorage.getItem('edgex_review_reset_day') || '1';
+  const key = localStorage.getItem(REVIEW_GEMINI_KEY) || '';
+  const day = localStorage.getItem(REVIEW_RESET_DAY_KEY) || '1';
   document.getElementById('setting-gemini-key').value = key;
   document.getElementById('setting-reset-day').value = day;
 }
@@ -493,13 +513,13 @@ function loadSettings() {
 function saveSettings() {
   const key = document.getElementById('setting-gemini-key').value.trim();
   const day = document.getElementById('setting-reset-day').value;
-  localStorage.setItem('edgex_gemini_key', key);
-  localStorage.setItem('edgex_review_reset_day', day);
+  localStorage.setItem(REVIEW_GEMINI_KEY, key);
+  localStorage.setItem(REVIEW_RESET_DAY_KEY, day);
   showToast('Settings saved');
 }
 
 function getResetDay() {
-  return parseInt(localStorage.getItem('edgex_review_reset_day') || '1');
+  return parseInt(localStorage.getItem(REVIEW_RESET_DAY_KEY) || '1');
 }
 
 /* ===================== WEEK HELPERS ===================== */
@@ -544,11 +564,11 @@ function syncScore() {
 
 /* ===================== MODULE SNAPSHOT ===================== */
 const MODULE_DEFS = [
-  { key: 'traction', label: 'Work & Traction', icon: 'bolt', color: '#f97316', bg: 'rgba(249,115,22,0.12)', ls: 'edgex_traction_summary', file: 'work.html' },
-  { key: 'goals', label: 'Goals', icon: 'flag', color: '#10b981', bg: 'rgba(16,185,129,0.12)', ls: 'edgex_goals_summary', file: 'goals.html' },
-  { key: 'finance', label: 'Finance', icon: 'payments', color: '#4f46e5', bg: 'rgba(79,70,229,0.12)', ls: 'finance_tracker_data_v1', file: 'finance-dashboard.html' },
-  { key: 'health', label: 'Health', icon: 'monitor_heart', color: '#0ea5e9', bg: 'rgba(14,165,233,0.12)', ls: 'edgex_health_summary', file: 'health.html' },
-  { key: 'wellness', label: 'Wellness', icon: 'self_improvement', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)', ls: 'edgex_wellness_summary', file: 'wellness.html' },
+  { key: 'traction', label: 'Work & Traction', icon: 'bolt', color: '#f97316', bg: 'rgba(249,115,22,0.12)', ls: 'dt_edgex_traction_summary', file: 'work.html' },
+  { key: 'goals', label: 'Goals', icon: 'flag', color: '#10b981', bg: 'rgba(16,185,129,0.12)', ls: 'dt_edgex_goals_summary', file: 'goals.html' },
+  { key: 'finance', label: 'Finance', icon: 'payments', color: '#4f46e5', bg: 'rgba(79,70,229,0.12)', ls: 'dt_finance_tracker_data_v1', file: 'finance-dashboard.html' },
+  { key: 'health', label: 'Health', icon: 'monitor_heart', color: '#0ea5e9', bg: 'rgba(14,165,233,0.12)', ls: 'dt_edgex_health_summary', file: 'health.html' },
+  { key: 'wellness', label: 'Wellness', icon: 'self_improvement', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)', ls: 'dt_edgex_wellness_summary', file: 'wellness.html' },
 ];
 
 function buildModuleCards() {
@@ -604,7 +624,7 @@ function extractSummaryText(data, key) {
   // 30-day timer
   if (key === 'traction') {
     try {
-      const timer = localStorage.getItem('30day-timer-v1');
+      const timer = localStorage.getItem('dt_30day-timer-v1');
       const timerData = timer ? JSON.parse(timer) : null;
       if (timerData && timerData.label) {
         const started = new Date(timerData.startDate);
@@ -623,7 +643,7 @@ function extractSummaryText(data, key) {
 
 /* ===================== GEMINI AI INSIGHT ===================== */
 async function generateInsight() {
-  const apiKey = localStorage.getItem('edgex_gemini_key') || '';
+  const apiKey = localStorage.getItem(REVIEW_GEMINI_KEY) || '';
   if (!apiKey) {
     showToast('Add your Gemini API key in Settings first');
     nav('settings');
@@ -698,7 +718,8 @@ function collectReview() {
     protect: document.getElementById('protect-text').value.trim(),
     let_go: document.getElementById('letgo-text').value.trim(),
     ai_insight: document.getElementById('ai-text').textContent.trim(),
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    user_id: getSbUserId()
   };
 }
 
@@ -710,7 +731,7 @@ async function saveReview() {
 
   try {
     // Upsert by week_id
-    await sbFetch(TABLE, {
+    await sbFetch(`${TABLE}?on_conflict=user_id,week_id`, {
       method: 'POST',
       prefer: 'resolution=merge-duplicates,return=representation',
       headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
@@ -721,10 +742,10 @@ async function saveReview() {
   } catch (err) {
     console.error('Save error:', err);
     // Fallback: save to localStorage
-    const stored = JSON.parse(localStorage.getItem('edgex_reviews_local') || '[]');
+    const stored = JSON.parse(localStorage.getItem(REVIEW_LOCAL_KEY) || '[]');
     const idx = stored.findIndex(r => r.week_id === review.week_id);
     if (idx >= 0) stored[idx] = review; else stored.unshift(review);
-    localStorage.setItem('edgex_reviews_local', JSON.stringify(stored));
+    localStorage.setItem(REVIEW_LOCAL_KEY, JSON.stringify(stored));
     showToast('Saved locally (Supabase unavailable)');
     loadHistory();
   }
@@ -733,10 +754,10 @@ async function saveReview() {
 async function loadCurrentReview() {
   const weekId = getWeekId(new Date());
   try {
-    const rows = await sbFetch(`${TABLE}?week_id=eq.${weekId}&select=*&limit=1`);
+    const rows = await sbFetch(`${TABLE}?user_id=eq.${encodeURIComponent(getSbUserId())}&week_id=eq.${weekId}&select=*&limit=1`);
     if (rows && rows.length) populateForm(rows[0]);
   } catch {
-    const stored = JSON.parse(localStorage.getItem('edgex_reviews_local') || '[]');
+    const stored = JSON.parse(localStorage.getItem(REVIEW_LOCAL_KEY) || '[]');
     const row = stored.find(r => r.week_id === weekId);
     if (row) populateForm(row);
   }
@@ -768,10 +789,10 @@ function populateForm(r) {
 /* ===================== HISTORY ===================== */
 async function loadHistory() {
   try {
-    const rows = await sbFetch(`${TABLE}?select=*&order=week_id.desc&limit=200`);
+    const rows = await sbFetch(`${TABLE}?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=week_id.desc&limit=200`);
     renderHistoryRows(rows || []);
   } catch {
-    const stored = JSON.parse(localStorage.getItem('edgex_reviews_local') || '[]');
+    const stored = JSON.parse(localStorage.getItem(REVIEW_LOCAL_KEY) || '[]');
     renderHistoryRows(stored);
   }
 }

@@ -789,20 +789,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 <div class="toast" id="toast"></div>
 
 <script>
-const STORAGE_KEY = 'edgex_health_v1';
-const SUMMARY_KEY = 'edgex_health_summary';
-const DAILY_SIGNALS_KEY = 'edgex_daily_signals_v2';
-const OLD_DAILY_SIGNALS_KEY = 'edgex_daily_signals_v1';
-const WORK_TRACTION_KEY = '30day-traction-v2';
-const WORK_STEPS_KEY = '30day-steps-v1';
-const WORK_STEPS_ONLY_KEY = '30day-steps-only-v1';
-const WORK_WATER_KEY = '30day-water-v1';
-// ── Clear stale cache (multi-user safe) ─────────────────────────
-(function clearStaleCache() {
-  const session = localStorage.getItem('sb_session');
-  localStorage.clear();
-  if (session) localStorage.setItem('sb_session', session);
-})();
+const STORAGE_KEY = 'dt_edgex_health_v1';
+const SUMMARY_KEY = 'dt_edgex_health_summary';
+const DAILY_SIGNALS_KEY = 'dt_edgex_daily_signals_v2';
+const OLD_DAILY_SIGNALS_KEY = 'dt_edgex_daily_signals_v1';
+const WORK_TRACTION_KEY = 'dt_30day-traction-v2';
+const WORK_STEPS_KEY = 'dt_30day-steps-v1';
+const WORK_STEPS_ONLY_KEY = 'dt_30day-steps-only-v1';
+const WORK_WATER_KEY = 'dt_30day-water-v1';
 
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
@@ -812,6 +806,12 @@ function getSbUserId() {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
     return s?.user?.id || null;
   } catch(e) { return null; }
+}
+function getSbToken() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s.access_token || SB_ANON;
+  } catch(e) { return SB_ANON; }
 }
 
 // ── Auth gate ────────────────────────────────────────────────────
@@ -873,8 +873,8 @@ const _lsSet = localStorage.setItem.bind(localStorage);
 const _lsGet = localStorage.getItem.bind(localStorage);
 const _lsRemove = localStorage.removeItem.bind(localStorage);
 let _sbBootComplete = false;
-const NO_SYNC_KEYS = new Set(['sb_session', '_edgex_ls_timestamps', 'morning-setup-done', OLD_DAILY_SIGNALS_KEY]);
-const LS_TIMESTAMPS_KEY = '_edgex_ls_timestamps';
+const NO_SYNC_KEYS = new Set(['sb_session', 'dt__edgex_ls_timestamps', 'morning-setup-done', OLD_DAILY_SIGNALS_KEY]);
+const LS_TIMESTAMPS_KEY = 'dt__edgex_ls_timestamps';
 function _getLsTimestamps() { try { return JSON.parse(_lsGet(LS_TIMESTAMPS_KEY) || '{}'); } catch(e) { return {}; } }
 function _touchLsTimestamp(key) {
   if (key === LS_TIMESTAMPS_KEY) return;
@@ -904,7 +904,7 @@ async function deleteKeyFromSupabase(key) {
   try {
     await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=eq.${encodeURIComponent(key)}`, {
       method: 'DELETE',
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}` }
     });
   } catch(e) { console.warn('[Health] delete key failed', key, e); }
 }
@@ -920,7 +920,7 @@ async function pushAllToSupabase() {
   try {
     await fetchWithTimeout(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
       method: 'POST',
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows })
     });
   } catch(e) { console.warn('[Health] push failed', e); }
@@ -950,12 +950,12 @@ async function syncFromSupabase() {
       WORK_STEPS_KEY,
       WORK_STEPS_ONLY_KEY,
       WORK_WATER_KEY,
-      'edgex_workout_v1',
-      'edgex_workout_sessions_v1'
+      'dt_edgex_workout_v1',
+      'dt_edgex_workout_sessions_v1'
     ]);
     const keyFilter = [...keys].join(',');
     const res = await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return;
     const timestamps = _getLsTimestamps();
@@ -982,7 +982,7 @@ async function doLogout() {
     if (s.access_token) await fetch(`${SB_URL}/auth/v1/logout`, { method: 'POST', headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${s.access_token}` } });
   } catch(e) {}
   localStorage.removeItem('sb_session');
-  localStorage.removeItem('finance_session_ts');
+  localStorage.removeItem('dt_finance_session_ts');
   window.location.href = 'login.html';
 }
 // Periodic safety net
@@ -1992,9 +1992,9 @@ document.addEventListener('keydown', e => {
 // ════════════════════════════════════════════════════════════════════
 // WORKOUT PLANNER
 // ════════════════════════════════════════════════════════════════════
-const WK_KEY = 'edgex_workout_v1';
-const WK_SESSIONS_KEY = 'edgex_workout_sessions_v1';
-const GOALS_KV_KEY = 'gs2_db'; // goals module localStorage key
+const WK_KEY = 'dt_edgex_workout_v1';
+const WK_SESSIONS_KEY = 'dt_edgex_workout_sessions_v1';
+const GOALS_KV_KEY = 'dt_gs2_db'; // goals module localStorage key
 const WK_TYPES = [
   { id:'Strength', label:'Strength', em:'🏋️' },{ id:'Cardio', label:'Cardio', em:'🏃' },{ id:'Mobility', label:'Mobility', em:'🧘' },
   { id:'HIIT', label:'HIIT', em:'⚡' },{ id:'Sport', label:'Sport', em:'🏅' },{ id:'Other', label:'Other', em:'💪' },
@@ -2050,7 +2050,7 @@ function wkTimerReset(){if(wkTimerRunning){clearInterval(wkTimerInterval);wkTime
 function wkUpdateTimerDisplay(){const el=document.getElementById('wk-timer-display');if(!el)return;const m=Math.floor(wkTimerSec/60),s=wkTimerSec%60;el.textContent=`${m}:${s.toString().padStart(2,'0')}`;}
 function wkFinishSession(){if(!wkActiveSession)return;if(wkTimerRunning)wkTimerToggle();wkActiveSession.durationSec=wkTimerSec;wkActiveSession.notes=document.getElementById('wk-sess-notes')?.value?.trim()||'';wkActiveSession.completedAt=new Date().toISOString();wkActiveSession.exercises=wkActiveSession.exercises.filter(e=>e.name.trim());wkSessions=wkSessions.filter(s=>s.id!==wkActiveSession.id);wkSessions.unshift(wkActiveSession);wkSave();if(wkTimerSec>0){const existingLog=db.logs[wkActiveSession.date]||{};const addedMins=Math.round(wkTimerSec/60);const currentMins=parseInt(existingLog.exerciseMins||0);db.logs[wkActiveSession.date]={...existingLog,exerciseMins:currentMins+addedMins,exerciseTypes:[...new Set([...(existingLog.exerciseTypes||[]),wkActiveSession.type])]};saveData();}document.getElementById('wk-session-modal').classList.remove('open');wkActiveSession=null;wkTimerSec=0;wkRenderActiveSession();wkRenderPlan();wkRenderWeekStats();toast('Session saved! 💪');}
 function wkRenderActiveSession(){const el=document.getElementById('wk-active-session');if(!el)return;const todaySessions=wkSessions.filter(s=>s.date===todayStr());const plan=wkDB.plan?.[todayStr()];let html='';if(plan?.type||todaySessions.length>0){html+=`<div class="session-header" style="margin-bottom:18px">`;if(plan?.type){const wt=WK_TYPES.find(w=>w.id===plan.type)||WK_TYPES[5];html+=`<div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px">Today's Plan</div><h2>${wt.em} ${plan.type}</h2>${plan.exercises?.length?`<div class="sh-meta">${plan.exercises.map(e=>e.name).join(', ')}</div>`:''}${plan.notes?`<div class="sh-meta" style="margin-top:6px;font-style:italic">"${plan.notes}"</div>`:''}`;}else{html+=`<h2>No plan set for today</h2><div class="sh-meta">Start a quick session or plan your week first.</div>`;}html+=`<button class="btn btn-primary" style="margin-top:14px" onclick="wkStartSession('${todayStr()}')"><span class="icon" style="font-size:17px">play_arrow</span>${todaySessions.length?'Log Another Session':'Start Session'}</button></div>`;}if(todaySessions.length){html+=`<h3 style="font-size:14px;font-weight:800;margin-bottom:10px;color:var(--green)">✓ ${todaySessions.length} Session${todaySessions.length>1?'s':''} Logged Today</h3>`;html+=todaySessions.map(s=>wkSessionRowHtml(s)).join('');}if(!html){html=`<div class="empty"><div class="empty-icon"><span class="icon">fitness_center</span></div><strong>No session today</strong><span>Start a session or plan your week.</span><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center"><button class="btn btn-primary btn-sm" onclick="wkStartSession(null)"><span class="icon" style="font-size:15px">play_arrow</span>Quick Session</button><button class="btn btn-secondary btn-sm" onclick="wkTab('plan')"><span class="icon" style="font-size:15px">calendar_month</span>Plan Week</button></div></div>`;}el.innerHTML=html;}
-function wkRenderHeatmap(){const el=document.getElementById('wk-heatmap');if(!el)return;const cells=[];const now=new Date();now.setHours(12,0,0,0);const todayDow=(now.getDay()+6)%7;const startDate=new Date(now);startDate.setDate(startDate.getDate()-todayDow-12*7);for(let week=0;week<13;week++){for(let day=0;day<7;day++){const d=new Date(startDate);d.setDate(d.getDate()+week*7+day);const ds=wkDateStr(d);const sCount=wkSessions.filter(s=>s.date===ds).length;const lvl=sCount===0?'':sCount===1?'w1':sCount===2?'w2':sCount===3?'w3':'w4';const label=d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+(sCount?` · ${sCount} session${sCount>1?'s':''}`,' · rest');cells.push(`<div class="hm-cell ${lvl}" title="${ds}"><div class="hm-tip">${label}</div></div>`);}}el.innerHTML=cells.join('');}
+function wkRenderHeatmap(){const el=document.getElementById('wk-heatmap');if(!el)return;const cells=[];const now=new Date();now.setHours(12,0,0,0);const todayDow=(now.getDay()+6)%7;const startDate=new Date(now);startDate.setDate(startDate.getDate()-todayDow-12*7);for(let week=0;week<13;week++){for(let day=0;day<7;day++){const d=new Date(startDate);d.setDate(d.getDate()+week*7+day);const ds=wkDateStr(d);const sCount=wkSessions.filter(s=>s.date===ds).length;const lvl=sCount===0?'':sCount===1?'w1':sCount===2?'w2':sCount===3?'w3':'w4';const label=d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+(sCount?` · ${sCount} session${sCount>1?'s':''}`:' · rest');cells.push(`<div class="hm-cell ${lvl}" title="${ds}"><div class="hm-tip">${label}</div></div>`);}}el.innerHTML=cells.join('');}
 function wkRenderHistoryStats(){const el=document.getElementById('wk-history-stats');if(!el)return;const total=wkSessions.length;const thisWeekDates=wkWeekDates(0);const thisWeek=wkSessions.filter(s=>thisWeekDates.includes(s.date)).length;const totalSec=wkSessions.reduce((a,s)=>a+(s.durationSec||0),0);const totalSets=wkSessions.reduce((a,s)=>a+(s.exercises||[]).reduce((b,e)=>b+(e.sets||[]).length,0),0);const stats=[{label:'Total Sessions',value:total,sub:'all time',color:'var(--accent)'},{label:'This Week',value:thisWeek,sub:'sessions',color:'var(--green)'},{label:'Total Time',value:totalSec>=3600?(totalSec/3600).toFixed(1)+'h':Math.round(totalSec/60)+'m',sub:'logged',color:'var(--orange)'},{label:'Total Sets',value:totalSets,sub:'all sessions',color:'var(--purple)'}];el.innerHTML=stats.map(s=>`<div class="stat-card" style="--accent:${s.color}"><div class="stat-label">${s.label}</div><div class="stat-value" style="color:${s.color};font-size:26px">${s.value}</div><div class="stat-sub">${s.sub}</div></div>`).join('');}
 function wkRenderHistory(){const el=document.getElementById('wk-history-list');if(!el)return;const filter=document.getElementById('wk-hist-filter')?.value||'all';const list=wkSessions.filter(s=>filter==='all'||s.type===filter);if(!list.length){el.innerHTML=`<div class="empty"><div class="empty-icon"><span class="icon">history</span></div><strong>No sessions yet</strong><span>Log your first session.</span></div>`;return;}el.innerHTML=list.map(s=>wkSessionRowHtml(s)).join('');}
 function wkSessionRowHtml(s){const d=new Date(s.date+'T12:00:00');const wt=WK_TYPES.find(w=>w.id===s.type)||WK_TYPES[5];const sets=(s.exercises||[]).reduce((a,e)=>a+(e.sets||[]).length,0);const donesets=(s.exercises||[]).reduce((a,e)=>a+(e.sets||[]).filter(x=>x.done).length,0);const mins=s.durationSec?Math.round(s.durationSec/60):null;const goalCount=(s.goalIds||[]).length;return`<div class="session-log-row"><div><div class="sl-date">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div><small>${d.toLocaleDateString('en-US',{weekday:'short'})}</small></div><div class="sl-chips"><span class="sl-chip">${wt.em} ${s.type}</span>${s.exercises?.length?`<span class="sl-chip"><span class="icon" style="font-size:12px">exercise</span>${s.exercises.length} exercises</span>`:''}${sets?`<span class="sl-chip">${donesets}/${sets} sets</span>`:''}${goalCount?`<span class="sl-chip" style="background:var(--green-light);color:var(--green)"><span class="icon" style="font-size:12px">flag</span>${goalCount} goal${goalCount>1?'s':''}</span>`:''}${s.notes?`<span class="sl-chip" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.notes}">💬 ${s.notes}</span>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><div class="sl-vol">${mins!==null?mins+'m':'—'}<small>${sets?sets+' sets':''}</small></div><div style="display:flex;gap:6px"><button class="btn btn-secondary btn-sm" style="padding:5px 10px;font-size:11px" onclick="wkEditSession('${s.id}')"><span class="icon" style="font-size:13px">edit</span>Edit</button><button class="btn btn-danger btn-sm" style="padding:5px 10px;font-size:11px" onclick="wkDeleteSession('${s.id}')"><span class="icon" style="font-size:13px">delete</span></button></div></div></div>`;}

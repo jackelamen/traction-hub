@@ -844,6 +844,12 @@ async function doLogout() {
 
 const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.3
 const EDGEX_KV_USER_ID = 'jack_traction_hub_v1';
+function getSbToken() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s.access_token || SB_ANON;
+  } catch(e) { return SB_ANON; }
+}
 
 // ── System status tracker ─────────────────────────────────────────
 // Each module reports: 'fresh' (data exists for today), 'stale' (data but old), or 'empty' (no data)
@@ -955,7 +961,7 @@ async function fetchTractionValue(key) {
   try {
     const url = `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(EDGEX_KV_USER_ID)}&key=eq.${encodeURIComponent(key)}&select=value,updated_at&limit=1`;
     const res = await fetchWithTimeout(url, {
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return null;
     const rows = await res.json();

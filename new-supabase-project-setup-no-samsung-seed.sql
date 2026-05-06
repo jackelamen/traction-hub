@@ -25,6 +25,24 @@ security definer
 set search_path = public
 as $$
 begin
+  if auth.uid() is null then
+    raise exception 'upsert_traction_data requires an authenticated user';
+  end if;
+
+  if exists (
+    select 1
+    from jsonb_array_elements(rows) as item
+    where not (
+      item->>'user_id' = auth.uid()::text
+      or (
+        auth.uid() = 'fa3f910d-64f8-43cf-94c1-61d645ed9414'::uuid
+        and item->>'user_id' = 'jack_traction_hub_v1'
+      )
+    )
+  ) then
+    raise exception 'upsert_traction_data user_id does not match authenticated user';
+  end if;
+
   insert into traction_data (user_id, key, value, updated_at)
   select
     item->>'user_id',
@@ -39,16 +57,28 @@ end;
 $$;
 
 grant usage on schema public to anon, authenticated;
-grant select, insert, update, delete on traction_data to anon, authenticated;
-grant execute on function upsert_traction_data(jsonb) to anon, authenticated;
+grant select, insert, update, delete on traction_data to authenticated;
+grant execute on function upsert_traction_data(jsonb) to authenticated;
 
 alter table traction_data enable row level security;
 drop policy if exists traction_data_single_user on traction_data;
 create policy traction_data_single_user on traction_data
   for all
-  to anon, authenticated
-  using (user_id = 'jack_traction_hub_v1')
-  with check (user_id = 'jack_traction_hub_v1');
+  to authenticated
+  using (
+    user_id = auth.uid()::text
+    or (
+      auth.uid() = 'fa3f910d-64f8-43cf-94c1-61d645ed9414'::uuid
+      and user_id = 'jack_traction_hub_v1'
+    )
+  )
+  with check (
+    user_id = auth.uid()::text
+    or (
+      auth.uid() = 'fa3f910d-64f8-43cf-94c1-61d645ed9414'::uuid
+      and user_id = 'jack_traction_hub_v1'
+    )
+  );
 
 -- Samsung Health seed intentionally omitted here.
 -- After setup succeeds, use tools/insert-daily-signals-v2-compact.sql or the app script to add clean v2 data.
@@ -159,49 +189,63 @@ alter type tactic_freq add value if not exists 'xperweek';
 
 create table if not exists visions (
   id uuid primary key default gen_random_uuid(),
-  area life_area not null unique,
+  user_id uuid not null default auth.uid(),
+  area life_area not null,
   content text not null default '',
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (user_id, area)
 );
 
-insert into visions (area, content) values ('health', ''), ('work', ''), ('family', ''), ('personal', '') on conflict (area) do nothing;
+insert into visions (user_id, area, content)
+values
+  ('fa3f910d-64f8-43cf-94c1-61d645ed9414'::uuid, 'health', ''),
+  ('fa3f910d-64f8-43cf-94c1-61d645ed9414'::uuid, 'work', ''),
+  ('fa3f910d-64f8-43cf-94c1-61d645ed9414'::uuid, 'family', ''),
+  ('fa3f910d-64f8-43cf-94c1-61d645ed9414'::uuid, 'personal', '')
+on conflict (user_id, area) do nothing;
 
 create table if not exists goals (
   id uuid primary key default gen_random_uuid(),
-  local_id text unique,
+  user_id uuid not null default auth.uid(),
+  local_id text,
   title text not null,
   area life_area not null,
   why text,
   status goal_status not null default 'active',
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (user_id, local_id)
 );
 
 create table if not exists goal_metrics (
   id uuid primary key default gen_random_uuid(),
-  local_id text unique,
+  user_id uuid not null default auth.uid(),
+  local_id text,
   goal_id uuid not null references goals (id) on delete cascade,
   name text not null,
   type metric_type not null default 'Number',
   target text,
   sort_order int not null default 0,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (user_id, local_id)
 );
 
 create table if not exists metric_logs (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid(),
   metric_id uuid not null references goal_metrics (id) on delete cascade,
   goal_id uuid not null references goals (id) on delete cascade,
   log_date date not null,
   value numeric not null,
   note text,
   created_at timestamptz not null default now(),
-  unique (metric_id, log_date)
+  unique (user_id, metric_id, log_date)
 );
 
 create table if not exists sprints (
   id uuid primary key default gen_random_uuid(),
-  local_id text unique,
+  user_id uuid not null default auth.uid(),
+  local_id text,
   goal_id uuid not null references goals (id) on delete cascade,
   name text not null,
   outcome text,
@@ -211,22 +255,25 @@ create table if not exists sprints (
   reflections jsonb not null default '{}',
   retro jsonb,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (user_id, local_id)
 );
 alter table sprints add column if not exists retro jsonb;
 
 create table if not exists sprint_phases (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid(),
   sprint_id uuid not null references sprints (id) on delete cascade,
   phase_index int not null check (phase_index between 0 and 2),
   name text not null,
   description text,
-  unique (sprint_id, phase_index)
+  unique (user_id, sprint_id, phase_index)
 );
 
 create table if not exists sprint_tactics (
   id uuid primary key default gen_random_uuid(),
-  local_id text unique,
+  user_id uuid not null default auth.uid(),
+  local_id text,
   phase_id uuid not null references sprint_phases (id) on delete cascade,
   sprint_id uuid not null references sprints (id) on delete cascade,
   text text not null,
@@ -234,7 +281,8 @@ create table if not exists sprint_tactics (
   days int[] default '{}',
   times_per_week int,
   sort_order int not null default 0,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (user_id, local_id)
 );
 
 create index if not exists goals_area_idx on goals (area);
@@ -274,18 +322,18 @@ alter table sprint_phases enable row level security;
 alter table sprint_tactics enable row level security;
 
 drop policy if exists visions_authenticated_access on visions;
-create policy visions_authenticated_access on visions for all to authenticated using (true) with check (true);
+create policy visions_authenticated_access on visions for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 drop policy if exists goals_authenticated_access on goals;
-create policy goals_authenticated_access on goals for all to authenticated using (true) with check (true);
+create policy goals_authenticated_access on goals for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 drop policy if exists goal_metrics_authenticated_access on goal_metrics;
-create policy goal_metrics_authenticated_access on goal_metrics for all to authenticated using (true) with check (true);
+create policy goal_metrics_authenticated_access on goal_metrics for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 drop policy if exists metric_logs_authenticated_access on metric_logs;
-create policy metric_logs_authenticated_access on metric_logs for all to authenticated using (true) with check (true);
+create policy metric_logs_authenticated_access on metric_logs for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 drop policy if exists sprints_authenticated_access on sprints;
-create policy sprints_authenticated_access on sprints for all to authenticated using (true) with check (true);
+create policy sprints_authenticated_access on sprints for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 drop policy if exists sprint_phases_authenticated_access on sprint_phases;
-create policy sprint_phases_authenticated_access on sprint_phases for all to authenticated using (true) with check (true);
+create policy sprint_phases_authenticated_access on sprint_phases for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 drop policy if exists sprint_tactics_authenticated_access on sprint_tactics;
-create policy sprint_tactics_authenticated_access on sprint_tactics for all to authenticated using (true) with check (true);
+create policy sprint_tactics_authenticated_access on sprint_tactics for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 select 'setup complete' as status;

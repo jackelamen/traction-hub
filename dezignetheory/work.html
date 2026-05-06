@@ -3447,7 +3447,7 @@ async function doLogout() {
     });
   } catch(e) {}
   localStorage.removeItem('sb_session');
-  localStorage.removeItem('finance_session_ts');
+  localStorage.removeItem('dt_finance_session_ts');
   window.location.href = 'login.html';
 }
 
@@ -3468,6 +3468,13 @@ function getSbUserId() {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
     return s?.user?.id || null;
   } catch(e) { return null; }
+}
+
+function getSbToken() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s.access_token || SB_ANON;
+  } catch(e) { return SB_ANON; }
 }
 
 
@@ -7229,17 +7236,17 @@ async function saveWaterToday(oz) {
 
 function ozToL(oz)  { return oz / 33.814; }
 
-// Patch edgex_health_v1 logs directly in Supabase so the health module
+// Patch dt_edgex_health_v1 logs directly in Supabase so the health module
 // always has the latest water/steps without requiring a manual health save.
 // Fetches the current value fresh from Supabase to avoid stale localStorage overwrites.
 async function syncToHealthLog(dateStr, patch) {
-  const HEALTH_KEY = 'edgex_health_v1';
+  const HEALTH_KEY = 'dt_edgex_health_v1';
   const clean = Object.fromEntries(
     Object.entries(patch).filter(([, v]) => v !== null && v !== undefined && v !== '')
   );
   if (!Object.keys(clean).length) return;
   try {
-    // Fetch current edgex_health_v1 value from Supabase
+    // Fetch current dt_edgex_health_v1 value from Supabase
     const res = await fetch(
       `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=eq.${HEALTH_KEY}&select=value`,
       { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' } }

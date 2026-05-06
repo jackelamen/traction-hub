@@ -555,10 +555,21 @@ let interactions = []; // [{id, person_id, date, type, initiated, notes, followu
 let intentions = [];   // [{id, person_id, how, why, week_id, done}]
 
 /* ===================== SUPABASE ===================== */
+function getSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (s.access_token && s.expires_at > Math.floor(Date.now() / 1000)) return s;
+  } catch(e) {}
+  return null;
+}
+function getSbUserId() { return getSession()?.user?.id || null; }
+(function authGate() { if (!getSession()) window.location.href = 'login.html'; })();
 async function sbFetch(path, opts = {}) {
+  const session = getSession();
+  if (!session) throw new Error('No Supabase session');
   const headers = {
     'apikey': SUPABASE_ANON,
-    'Authorization': `Bearer ${SUPABASE_ANON}`,
+    'Authorization': `Bearer ${session.access_token}`,
     'Content-Type': 'application/json',
     ...opts.headers
   };
@@ -585,8 +596,8 @@ function setSbStatus(ok) {
 async function loadAll() {
   try {
     const [p, ix] = await Promise.all([
-      sbFetch('rel_people?select=*&order=name.asc'),
-      sbFetch('rel_interactions?select=*&order=date.desc&limit=500')
+      sbFetch(`rel_people?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=name.asc`),
+      sbFetch(`rel_interactions?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=date.desc&limit=500`)
     ]);
     people = p || [];
     interactions = ix || [];
@@ -662,12 +673,13 @@ async function savePerson() {
     location: document.getElementById('pm-location').value.trim(),
     tags: document.getElementById('pm-tags').value.split(',').map(t => t.trim()).filter(Boolean),
     notes: document.getElementById('pm-notes').value.trim(),
-    last_contact_date: document.getElementById('pm-last-contact').value || null
+    last_contact_date: document.getElementById('pm-last-contact').value || null,
+    user_id: getSbUserId()
   };
 
   try {
     if (id) {
-      const updated = await sbFetch(`rel_people?id=eq.${id}`, {
+      const updated = await sbFetch(`rel_people?id=eq.${id}&user_id=eq.${encodeURIComponent(getSbUserId())}`, {
         method: 'PATCH', prefer: 'return=representation', body: JSON.stringify(obj)
       });
       const idx = people.findIndex(p => p.id === id);
@@ -695,7 +707,7 @@ async function savePerson() {
 async function deletePerson() {
   const id = document.getElementById('pm-id').value;
   if (!id || !confirm('Delete this person and all their interactions?')) return;
-  try { await sbFetch(`rel_people?id=eq.${id}`, { method: 'DELETE' }); } catch {}
+  try { await sbFetch(`rel_people?id=eq.${id}&user_id=eq.${encodeURIComponent(getSbUserId())}`, { method: 'DELETE' }); } catch {}
   people = people.filter(p => p.id !== id);
   interactions = interactions.filter(i => i.person_id !== id);
   persist();
@@ -731,7 +743,8 @@ async function saveInteraction() {
     type: document.getElementById('log-type').value,
     initiated: document.getElementById('log-initiated').value,
     notes: document.getElementById('log-notes').value.trim(),
-    followup: document.getElementById('log-followup').value.trim()
+    followup: document.getElementById('log-followup').value.trim(),
+    user_id: getSbUserId()
   };
 
   try {
@@ -741,7 +754,7 @@ async function saveInteraction() {
     if (created && created[0]) interactions.unshift(created[0]);
     else interactions.unshift({ id: crypto.randomUUID(), ...obj });
     // Update last_contact_date on person
-    await sbFetch(`rel_people?id=eq.${personId}`, {
+    await sbFetch(`rel_people?id=eq.${personId}&user_id=eq.${encodeURIComponent(getSbUserId())}`, {
       method: 'PATCH', prefer: 'return=representation',
       body: JSON.stringify({ last_contact_date: obj.date })
     });

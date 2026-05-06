@@ -756,13 +756,6 @@ body::after {
   </main>
 
 <script>
-// ── Clear stale cache (multi-user safe) ─────────────────────────
-(function clearStaleCache() {
-  const session = localStorage.getItem('sb_session');
-  localStorage.clear();
-  if (session) localStorage.setItem('sb_session', session);
-})();
-
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 
@@ -844,7 +837,7 @@ async function doLogout() {
     }
   } catch(e) {}
   localStorage.removeItem('sb_session');
-  localStorage.removeItem('finance_session_ts');
+  localStorage.removeItem('dt_finance_session_ts');
   window.location.href = 'login.html';
 }
 
@@ -855,6 +848,12 @@ function getEdgexUserId() {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
     return s?.user?.id || null;
   } catch(e) { return null; }
+}
+function getSbToken() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s.access_token || SB_ANON;
+  } catch(e) { return SB_ANON; }
 }
 
 // ── System status tracker ─────────────────────────────────────────
@@ -915,7 +914,7 @@ if (todayLabel) {
   // user opened the hub. We track this by writing today's date on load
   // into a small streak object stored in localStorage.
   try {
-    const STREAK_KEY = 'edgex_hub_streak_v1';
+    const STREAK_KEY = 'dt_edgex_hub_streak_v1';
     const todayStr = now.toISOString().slice(0, 10);
     let streak = JSON.parse(localStorage.getItem(STREAK_KEY) || '{"count":0,"last":""}');
 
@@ -967,7 +966,7 @@ async function fetchTractionValue(key) {
   try {
     const url = `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getEdgexUserId())}&key=eq.${encodeURIComponent(key)}&select=value,updated_at&limit=1`;
     const res = await fetchWithTimeout(url, {
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return null;
     const rows = await res.json();
@@ -1062,7 +1061,7 @@ setText('work-status', 'Ready for a 50 minute focus block');
 // Goals ring: pull from Supabase if available, else use demo 25%
 (async () => {
   await authReady;
-  const d = await readSummary('edgex_goals_summary');
+  const d = await readSummary('dt_edgex_goals_summary');
   const todayStr = new Date().toISOString().slice(0, 10);
   const isToday = d?.updatedAt && d.updatedAt.slice(0, 10) === todayStr;
 
@@ -1097,7 +1096,7 @@ setText('work-status', 'Ready for a 50 minute focus block');
     await authReady;
     let summary = await fetchFinanceMonthSummary();
     if (!summary) {
-      const stored = localStorage.getItem('finance_tracker_data_v1');
+      const stored = localStorage.getItem('dt_finance_tracker_data_v1');
       if (!stored) {
         setText('finance-status', 'No month data yet');
         animateRing('.finance-ring', 0, 800);
@@ -1121,10 +1120,10 @@ setText('work-status', 'Ready for a 50 minute focus block');
   }
 })();
 
-// Health ring: read today's routine completions from edgex_health_summary
+// Health ring: read today's routine completions from dt_edgex_health_summary
 (async function() {
   await authReady;
-  const data = await readSummary('edgex_health_summary');
+  const data = await readSummary('dt_edgex_health_summary');
   if (!data) {
     setText('health-status', 'No health check-in yet');
     animateRing('.health-ring', 0, 1000);
@@ -1143,10 +1142,10 @@ setText('work-status', 'Ready for a 50 minute focus block');
   reportModuleStatus('health', isTodayH ? 'fresh' : 'stale');
 })();
 
-// Wellness ring: read clarity score from edgex_wellness_summary
+// Wellness ring: read clarity score from dt_edgex_wellness_summary
 (async function() {
   await authReady;
-  const data = await readSummary('edgex_wellness_summary');
+  const data = await readSummary('dt_edgex_wellness_summary');
   if (!data) {
     setText('wellness-status', 'No wellness check-in yet');
     animateRing('.wellness-ring', 0, 1200);
@@ -1181,7 +1180,7 @@ async function refreshAllRings() {
 
   // Goals
   (async () => {
-    const d = await readSummary('edgex_goals_summary');
+    const d = await readSummary('dt_edgex_goals_summary');
     const todayStr = new Date().toISOString().slice(0, 10);
     const isToday = d?.updatedAt && d.updatedAt.slice(0, 10) === todayStr;
     if (d && isToday && d.total > 0) {
@@ -1212,7 +1211,7 @@ async function refreshAllRings() {
     try {
       let summary = await fetchFinanceMonthSummary();
       if (!summary) {
-        const stored = localStorage.getItem('finance_tracker_data_v1');
+        const stored = localStorage.getItem('dt_finance_tracker_data_v1');
         if (!stored) { animateRing('.finance-ring', 0, 0); reportModuleStatus('finance', 'empty'); return; }
         summary = financeSummaryFromTransactions(JSON.parse(stored).transactions || []);
       }
@@ -1232,7 +1231,7 @@ async function refreshAllRings() {
 
   // Health
   (async () => {
-    const data = await readSummary('edgex_health_summary');
+    const data = await readSummary('dt_edgex_health_summary');
     if (!data) { animateRing('.health-ring', 0, 0); reportModuleStatus('health', 'empty'); return; }
     const completed = data.checked ?? 0; const total = data.total ?? 4;
     const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -1246,7 +1245,7 @@ async function refreshAllRings() {
 
   // Wellness
   (async () => {
-    const data = await readSummary('edgex_wellness_summary');
+    const data = await readSummary('dt_edgex_wellness_summary');
     if (!data) { animateRing('.wellness-ring', 0, 0); reportModuleStatus('wellness', 'empty'); return; }
     const score = data.score ?? null;
     if (score == null) { animateRing('.wellness-ring', 0, 0); reportModuleStatus('wellness', 'stale'); return; }
@@ -1301,9 +1300,9 @@ setInterval(async () => {
 (function instantBadges() {
   const todayStr = new Date().toISOString().slice(0, 10);
 
-  // Work: show active day type from 30day-day-types-v1
+  // Work: show active day type from dt_30day-day-types-v1
   try {
-    const dayTypes = JSON.parse(localStorage.getItem('30day-day-types-v1') || '{}');
+    const dayTypes = JSON.parse(localStorage.getItem('dt_30day-day-types-v1') || '{}');
     const todayType = dayTypes[todayStr];
     const labels = { holiday: '🏖 Holiday', sick: '🤒 Sick Day', travel: '✈ Travel Day', ooo: '🏢 Out of Office' };
     if (todayType && labels[todayType]) {
@@ -1311,7 +1310,7 @@ setInterval(async () => {
     } else {
       // Show timer state if saved
       try {
-        const t = JSON.parse(localStorage.getItem('30day-timer-v1') || '{}');
+        const t = JSON.parse(localStorage.getItem('dt_30day-timer-v1') || '{}');
         if (t.running) {
           const remaining = Math.max(0, Math.ceil((t.deadlineAt - Date.now()) / 1000));
           const m = Math.floor(remaining / 60); const s = remaining % 60;
@@ -1324,7 +1323,7 @@ setInterval(async () => {
 
   // Goals: show from cached summary
   try {
-    const d = JSON.parse(localStorage.getItem('edgex_goals_summary') || 'null');
+    const d = JSON.parse(localStorage.getItem('dt_edgex_goals_summary') || 'null');
     if (d && d.total > 0) {
       const isToday = d.updatedAt && d.updatedAt.slice(0,10) === todayStr;
       if (isToday) {
@@ -1344,7 +1343,7 @@ setInterval(async () => {
 
   // Health: show from cached summary
   try {
-    const d = JSON.parse(localStorage.getItem('edgex_health_summary') || 'null');
+    const d = JSON.parse(localStorage.getItem('dt_edgex_health_summary') || 'null');
     if (d) {
       const completed = d.checked ?? 0; const total = d.total ?? 4;
       const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -1357,7 +1356,7 @@ setInterval(async () => {
 
   // Wellness: show from cached summary
   try {
-    const d = JSON.parse(localStorage.getItem('edgex_wellness_summary') || 'null');
+    const d = JSON.parse(localStorage.getItem('dt_edgex_wellness_summary') || 'null');
     if (d && d.score != null) {
       document.getElementById('wellness-pct').textContent  = d.score;
       document.getElementById('wellness-meta').textContent = 'clarity';
@@ -1368,7 +1367,7 @@ setInterval(async () => {
 
   // Finance: show from cached localStorage data
   try {
-    const stored = localStorage.getItem('finance_tracker_data_v1');
+    const stored = localStorage.getItem('dt_finance_tracker_data_v1');
     if (stored) {
       const summary = financeSummaryFromTransactions(JSON.parse(stored).transactions || []);
       const { expense, income } = summary;

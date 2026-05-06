@@ -2604,15 +2604,6 @@ const AREAS = [
 ];
 
 // ─────────────────────────────────────────
-//  CLEAR STALE CACHE (multi-user safe)
-// ─────────────────────────────────────────
-(function clearStaleCache() {
-  const session = localStorage.getItem('sb_session');
-  localStorage.clear();
-  if (session) localStorage.setItem('sb_session', session);
-})();
-
-// ─────────────────────────────────────────
 //  SUPABASE CONFIG
 // ─────────────────────────────────────────
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
@@ -2623,13 +2614,20 @@ function getGoalsUserId() {
     return s?.user?.id || null;
   } catch(e) { return null; }
 }
-const GOALS_SUMMARY_KEY = 'edgex_goals_summary';
-const VB_IMAGES_KEY = 'gs2_vb';
-const VB_IMAGES_UPDATED_KEY = 'gs2_vb_updated_at';
-const GOAL_EXEMPT_UPDATED_KEY = 'goal-exempt-days-updated-at-v1';
-const GOALS_TODAY_NOTE_PREFIX = 'edgex_goals_today_note_';
-const DELETED_GOALS_KEY = 'goals_deleted_goal_ids_v1';
-const DELETED_SPRINTS_KEY = 'goals_deleted_sprint_ids_v1';
+function getSbToken() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s.access_token || SB_ANON;
+  } catch(e) { return SB_ANON; }
+}
+const GOALS_SUMMARY_KEY = 'dt_edgex_goals_summary';
+const GOALS_DB_KEY = 'dt_gs2_db';
+const VB_IMAGES_KEY = 'dt_gs2_vb';
+const VB_IMAGES_UPDATED_KEY = 'dt_gs2_vb_updated_at';
+const GOAL_EXEMPT_UPDATED_KEY = 'dt_goal-exempt-days-updated-at-v1';
+const GOALS_TODAY_NOTE_PREFIX = 'dt_edgex_goals_today_note_';
+const DELETED_GOALS_KEY = 'dt_goals_deleted_goal_ids_v1';
+const DELETED_SPRINTS_KEY = 'dt_goals_deleted_sprint_ids_v1';
 
 // ── Auth gate ────────────────────────────────────────────────────
 const authReady = (async function checkAuth() {
@@ -2736,13 +2734,13 @@ function rememberDeletedId(key, id) {
 // render functions continue to work without any changes.
 async function loadDB() {
   const [visionRows, goalRows, metricRows, logRows, sprintRows, phaseRows, tacticRows] = await Promise.all([
-    sbGet('visions',       '?select=area,content'),
-    sbGet('goals',         '?select=id,local_id,title,area,why,status&order=created_at.asc'),
-    sbGet('goal_metrics',  '?select=id,local_id,goal_id,name,type,target,sort_order&order=sort_order.asc'),
-    sbGet('metric_logs',   '?select=id,metric_id,goal_id,log_date,value,note&order=log_date.asc'),
-    sbGet('sprints',       '?select=id,local_id,goal_id,name,outcome,start_date,end_date,week_checks,reflections,retro&order=created_at.asc'),
-    sbGet('sprint_phases', '?select=id,sprint_id,phase_index,name,description&order=phase_index.asc'),
-    sbGet('sprint_tactics','?select=id,local_id,sprint_id,phase_id,text,freq,days,times_per_week,sort_order&order=sort_order.asc'),
+    sbGet('visions',       `?user_id=eq.${encodeURIComponent(getGoalsUserId())}&select=area,content`),
+    sbGet('goals',         `?user_id=eq.${encodeURIComponent(getGoalsUserId())}&select=id,local_id,title,area,why,status&order=created_at.asc`),
+    sbGet('goal_metrics',  `?user_id=eq.${encodeURIComponent(getGoalsUserId())}&select=id,local_id,goal_id,name,type,target,sort_order&order=sort_order.asc`),
+    sbGet('metric_logs',   `?user_id=eq.${encodeURIComponent(getGoalsUserId())}&select=id,metric_id,goal_id,log_date,value,note&order=log_date.asc`),
+    sbGet('sprints',       `?user_id=eq.${encodeURIComponent(getGoalsUserId())}&select=id,local_id,goal_id,name,outcome,start_date,end_date,week_checks,reflections,retro&order=created_at.asc`),
+    sbGet('sprint_phases', `?user_id=eq.${encodeURIComponent(getGoalsUserId())}&select=id,sprint_id,phase_index,name,description&order=phase_index.asc`),
+    sbGet('sprint_tactics',`?user_id=eq.${encodeURIComponent(getGoalsUserId())}&select=id,local_id,sprint_id,phase_id,text,freq,days,times_per_week,sort_order&order=sort_order.asc`),
   ]);
   const deletedGoals = deletedIdSet(DELETED_GOALS_KEY);
   const deletedSprints = deletedIdSet(DELETED_SPRINTS_KEY);
@@ -2872,8 +2870,8 @@ async function syncGoal(goalId) {
   try {
     const rows = await sbUpsert('goals', {
       ...(g._uuid ? { id: g._uuid } : {}),
-      local_id: g.id, title: g.title, area, why: g.why || null, status: g.status
-    }, 'local_id');
+      user_id: getGoalsUserId(), local_id: g.id, title: g.title, area, why: g.why || null, status: g.status
+    }, 'user_id,local_id');
     // If it was a new goal, capture the returned uuid
     if (!g._uuid && rows?.[0]?.id) g._uuid = rows[0].id;
 
@@ -2883,15 +2881,15 @@ async function syncGoal(goalId) {
         const m = g.metrics[i];
         const mrows = await sbUpsert('goal_metrics', {
           ...(m._uuid ? { id: m._uuid } : {}),
-          local_id: m.id, goal_id: g._uuid,
+          user_id: getGoalsUserId(), local_id: m.id, goal_id: g._uuid,
           name: m.name, type: m.type, target: m.target || null, sort_order: i
-        }, 'local_id');
+        }, 'user_id,local_id');
         if (!m._uuid && mrows?.[0]?.id) m._uuid = mrows[0].id;
       }
     }
 
     try {
-      const existingRows = await sbGet('goal_metrics', `?goal_id=eq.${g._uuid}&select=id`);
+      const existingRows = await sbGet('goal_metrics', `?user_id=eq.${encodeURIComponent(getGoalsUserId())}&goal_id=eq.${g._uuid}&select=id`);
       const keptUuids = new Set((g.metrics || []).filter(m => m._uuid).map(m => m._uuid));
       for (const row of existingRows) {
         if (!keptUuids.has(row.id)) {
@@ -2912,11 +2910,11 @@ async function syncSprintFull(sprintId) {
   // Upsert the sprint row
   const rows = await sbUpsert('sprints', {
     ...(sp._uuid ? { id: sp._uuid } : {}),
-    local_id: sp.id, goal_id: goalObj._uuid,
+    user_id: getGoalsUserId(), local_id: sp.id, goal_id: goalObj._uuid,
     name: sp.name, outcome: sp.outcome || null,
     start_date: sp.startDate || null, end_date: sp.endDate || null,
     week_checks: sp.weekChecks || {}, reflections: sp.reflections || {}, retro: sp.retro || null
-  }, 'local_id');
+  }, 'user_id,local_id');
   if (!sp._uuid && rows?.[0]?.id) sp._uuid = rows[0].id;
 
   // Upsert phases + tactics
@@ -2925,9 +2923,9 @@ async function syncSprintFull(sprintId) {
     if (!ph) continue;
     const phRows = await sbUpsert('sprint_phases', {
       ...(ph._uuid ? { id: ph._uuid } : {}),
-      sprint_id: sp._uuid, phase_index: pi,
+      user_id: getGoalsUserId(), sprint_id: sp._uuid, phase_index: pi,
       name: ph.name, description: ph.desc || null
-    }, 'sprint_id,phase_index');
+    }, 'user_id,sprint_id,phase_index');
     // Always update _uuid from the response (covers both new and existing phases)
     if (phRows?.[0]?.id) ph._uuid = phRows[0].id;
 
@@ -2938,17 +2936,17 @@ async function syncSprintFull(sprintId) {
       const days = t.freq === 'weekdays' ? [0,1,2,3,4] : (t.days || []);
       const tRows = await sbUpsert('sprint_tactics', {
         ...(t._uuid ? { id: t._uuid } : {}),
-        local_id: t.id, sprint_id: sp._uuid, phase_id: ph._uuid,
+        user_id: getGoalsUserId(), local_id: t.id, sprint_id: sp._uuid, phase_id: ph._uuid,
         text: t.text, freq,
         days, times_per_week: t.timesPerWeek || null, sort_order: ti
-      }, 'local_id');
+      }, 'user_id,local_id');
       // Always update _uuid from the response
       if (tRows?.[0]?.id) t._uuid = tRows[0].id;
     }
 
     // Delete any tactics that were removed locally
     try {
-      const existingRows = await sbGet('sprint_tactics', `?phase_id=eq.${ph._uuid}&select=id`);
+      const existingRows = await sbGet('sprint_tactics', `?user_id=eq.${encodeURIComponent(getGoalsUserId())}&phase_id=eq.${ph._uuid}&select=id`);
       const keptUuids = new Set((ph.tactics || []).filter(t => t._uuid).map(t => t._uuid));
       for (const row of existingRows) {
         if (!keptUuids.has(row.id)) {
@@ -2964,7 +2962,7 @@ async function syncVision(areaId) {
   const area = areaId === 'career' ? 'work' : areaId;
   const content = DB.visions[areaId] || '';
   try {
-    await sbUpsert('visions', { area, content }, 'area');
+    await sbUpsert('visions', { user_id: getGoalsUserId(), area, content }, 'user_id,area');
   } catch(e) { console.error('syncVision failed:', e); }
 }
 
@@ -2977,9 +2975,9 @@ async function syncMetricLog(goalId, metricId) {
   try {
     for (const entry of logs) {
       await sbUpsert('metric_logs', {
-        metric_id: m._uuid, goal_id: g._uuid,
+        user_id: getGoalsUserId(), metric_id: m._uuid, goal_id: g._uuid,
         log_date: entry.date, value: entry.value, note: entry.note || null
-      }, 'metric_id,log_date');
+      }, 'user_id,metric_id,log_date');
     }
   } catch(e) { console.error('syncMetricLog failed:', e); }
 }
@@ -2993,13 +2991,13 @@ async function syncRetro(sprintId) {
 function saveDB(d) {
   // Data now lives in Supabase. Targeted sync functions handle writes.
   // localStorage write kept as offline fallback.
-  try { localStorage.setItem('gs2_db', JSON.stringify(d)); } catch(_) {}
+  try { localStorage.setItem(GOALS_DB_KEY, JSON.stringify(d)); } catch(_) {}
   writeGoalsSummary();
 }
 
 function loadLocalDB() {
   try {
-    return JSON.parse(localStorage.getItem('gs2_db') || 'null') || { visions:{}, goals:[], sprints:[] };
+    return JSON.parse(localStorage.getItem(GOALS_DB_KEY) || 'null') || { visions:{}, goals:[], sprints:[] };
   } catch(e) {
     return { visions:{}, goals:[], sprints:[] };
   }
@@ -3031,8 +3029,8 @@ let DB = { visions: {}, goals: [], sprints: [] };
 //  { 'YYYY-MM-DD': 'sick' | 'holiday' | 'rest' | 'travel' }
 //  Sick days also auto-pull from work module's dayTypes key.
 // ─────────────────────────────────────────
-const GOAL_EXEMPT_KEY = 'goal-exempt-days-v1';
-const WORK_DAY_TYPES_KEY = '30day-day-types-v1';
+const GOAL_EXEMPT_KEY = 'dt_goal-exempt-days-v1';
+const WORK_DAY_TYPES_KEY = 'dt_30day-day-types-v1';
 
 function getGoalExemptDays() {
   let manual = {};
@@ -4119,7 +4117,7 @@ async function loadFinanceSavingsGoalsFromSupabase() {
       }
       return { id: r.id, title: r.name, target, current, remaining, due: r.due_date || '', monthlyNeeded, source: 'finance' };
     });
-    localStorage.setItem('edgex_finance_savings_goals', JSON.stringify(items));
+    localStorage.setItem('dt_edgex_finance_savings_goals', JSON.stringify(items));
     renderFinanceSavingsGoals();
   } catch(e) {
     console.warn('Finance savings sync skipped:', e);
@@ -4130,7 +4128,7 @@ function renderFinanceSavingsGoals() {
   const el = document.getElementById('finance-savings-goals');
   if (!el) return;
   let items = [];
-  try { items = JSON.parse(localStorage.getItem('edgex_finance_savings_goals') || '[]'); } catch(_) {}
+  try { items = JSON.parse(localStorage.getItem('dt_edgex_finance_savings_goals') || '[]'); } catch(_) {}
   loadFinanceSavingsGoalsFromSupabase();
   if (!items.length) { el.innerHTML = ''; return; }
   const fmtMoney = n => Math.round(n || 0).toLocaleString('ko-KR');
@@ -4985,7 +4983,7 @@ function saveVBImages(arr) {
 }
 
 function visionMetaKey(areaId) {
-  return 'edgex_vision_meta_' + areaId;
+  return 'dt_edgex_vision_meta_' + areaId;
 }
 
 function getVisionMeta(areaId) {
@@ -5022,7 +5020,7 @@ async function syncGoalExtraToSupabase(key, value) {
   try {
     await fetch(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
       method: 'POST',
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         rows: [{ user_id: getGoalsUserId(), key, value, updated_at: new Date().toISOString() }]
       })
@@ -5036,7 +5034,7 @@ async function syncGoalExtrasFromSupabase() {
   try {
     const keyFilter = keys.join(',');
     const res = await fetch(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getGoalsUserId())}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Accept': 'application/json' }
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return;
     const rows = await res.json();
@@ -5886,7 +5884,7 @@ async function doLogout() {
     if (s.access_token) await fetch(`${SB_URL}/auth/v1/logout`, { method: 'POST', headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${s.access_token}` } });
   } catch(e) {}
   localStorage.removeItem('sb_session');
-  localStorage.removeItem('finance_session_ts');
+  localStorage.removeItem('dt_finance_session_ts');
   window.location.href = 'login.html';
 }
 

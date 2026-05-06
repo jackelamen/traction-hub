@@ -539,6 +539,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 /* ===================== CONFIG ===================== */
 const SUPABASE_URL = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
+const LEARN_ITEMS_KEY = 'dt_learn_items';
+const LEARN_SESSIONS_KEY = 'dt_learn_sessions';
+const LEARN_INSIGHTS_KEY = 'dt_learn_insights';
+const LEARN_DAILY_GOAL_KEY = 'dt_learn_daily_goal';
 
 /* ===================== STATE ===================== */
 let items = [];     // library items
@@ -546,10 +550,28 @@ let sessions = [];  // learning sessions
 let insights = [];  // captured insights
 
 /* ===================== SUPABASE ===================== */
+function getSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (s.access_token && s.expires_at > Math.floor(Date.now() / 1000)) return s;
+  } catch(e) {}
+  return null;
+}
+
+function getSbUserId() {
+  return getSession()?.user?.id || null;
+}
+
+(function authGate() {
+  if (!getSession()) window.location.href = 'login.html';
+})();
+
 async function sbFetch(path, opts = {}) {
+  const session = getSession();
+  if (!session) throw new Error('No Supabase session');
   const headers = {
     'apikey': SUPABASE_ANON,
-    'Authorization': `Bearer ${SUPABASE_ANON}`,
+    'Authorization': `Bearer ${session.access_token}`,
     'Content-Type': 'application/json',
     ...opts.headers
   };
@@ -576,18 +598,18 @@ function setSbStatus(ok) {
 async function loadAll() {
   try {
     const [it, se, ins] = await Promise.all([
-      sbFetch('learn_items?select=*&order=created_at.desc'),
-      sbFetch('learn_sessions?select=*&order=date.desc&limit=500'),
-      sbFetch('learn_insights?select=*&order=created_at.desc&limit=500')
+      sbFetch(`learn_items?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=created_at.desc`),
+      sbFetch(`learn_sessions?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=date.desc&limit=500`),
+      sbFetch(`learn_insights?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=created_at.desc&limit=500`)
     ]);
     items = it || [];
     sessions = se || [];
     insights = ins || [];
     setSbStatus(true);
   } catch {
-    items = JSON.parse(localStorage.getItem('learn_items') || '[]');
-    sessions = JSON.parse(localStorage.getItem('learn_sessions') || '[]');
-    insights = JSON.parse(localStorage.getItem('learn_insights') || '[]');
+    items = JSON.parse(localStorage.getItem(LEARN_ITEMS_KEY) || '[]');
+    sessions = JSON.parse(localStorage.getItem(LEARN_SESSIONS_KEY) || '[]');
+    insights = JSON.parse(localStorage.getItem(LEARN_INSIGHTS_KEY) || '[]');
     setSbStatus(false);
   }
   populateItemSelects();
@@ -599,9 +621,9 @@ async function loadAll() {
 }
 
 function persist() {
-  localStorage.setItem('learn_items', JSON.stringify(items));
-  localStorage.setItem('learn_sessions', JSON.stringify(sessions));
-  localStorage.setItem('learn_insights', JSON.stringify(insights));
+  localStorage.setItem(LEARN_ITEMS_KEY, JSON.stringify(items));
+  localStorage.setItem(LEARN_SESSIONS_KEY, JSON.stringify(sessions));
+  localStorage.setItem(LEARN_INSIGHTS_KEY, JSON.stringify(insights));
 }
 
 /* ===================== ITEM CRUD ===================== */
@@ -647,11 +669,12 @@ async function saveItem() {
     progress: parseInt(document.getElementById('im-progress').value) || 0,
     tags: document.getElementById('im-tags').value.split(',').map(t => t.trim()).filter(Boolean),
     why: document.getElementById('im-why').value.trim(),
-    rating: parseInt(document.getElementById('im-rating').value) || null
+    rating: parseInt(document.getElementById('im-rating').value) || null,
+    user_id: getSbUserId()
   };
   try {
     if (id) {
-      await sbFetch(`learn_items?id=eq.${id}`, { method: 'PATCH', prefer: 'return=representation', body: JSON.stringify(obj) });
+      await sbFetch(`learn_items?id=eq.${id}&user_id=eq.${encodeURIComponent(getSbUserId())}`, { method: 'PATCH', prefer: 'return=representation', body: JSON.stringify(obj) });
       const idx = items.findIndex(x => x.id === id);
       if (idx >= 0) items[idx] = { ...items[idx], ...obj };
     } else {
@@ -673,7 +696,7 @@ async function saveItem() {
 async function deleteItem() {
   const id = document.getElementById('im-id').value;
   if (!id || !confirm('Remove this item and all its sessions?')) return;
-  try { await sbFetch(`learn_items?id=eq.${id}`, { method: 'DELETE' }); } catch {}
+  try { await sbFetch(`learn_items?id=eq.${id}&user_id=eq.${encodeURIComponent(getSbUserId())}`, { method: 'DELETE' }); } catch {}
   items = items.filter(x => x.id !== id);
   sessions = sessions.filter(s => s.item_id !== id);
   persist();
@@ -711,7 +734,8 @@ async function saveSession() {
     duration_mins: duration,
     progress_after: progress,
     location: document.getElementById('log-location').value.trim(),
-    notes: document.getElementById('log-notes').value.trim()
+    notes: document.getElementById('log-notes').value.trim(),
+    user_id: getSbUserId()
   };
 
   try {
@@ -719,7 +743,7 @@ async function saveSession() {
     sessions.unshift(res?.[0] || { id: crypto.randomUUID(), ...obj, created_at: new Date().toISOString() });
     // Update item progress
     if (progress !== null) {
-      await sbFetch(`learn_items?id=eq.${itemId}`, { method: 'PATCH', body: JSON.stringify({ progress }) });
+      await sbFetch(`learn_items?id=eq.${itemId}&user_id=eq.${encodeURIComponent(getSbUserId())}`, { method: 'PATCH', body: JSON.stringify({ progress }) });
       const it = items.find(x => x.id === itemId);
       if (it) it.progress = progress;
     }
@@ -730,7 +754,7 @@ async function saveSession() {
 
   // Auto-save insight if provided
   if (insightText) {
-    const insObj = { item_id: itemId, type: 'Takeaway', text: insightText };
+    const insObj = { item_id: itemId, type: 'Takeaway', text: insightText, user_id: getSbUserId() };
     try {
       const res = await sbFetch('learn_insights', { method: 'POST', prefer: 'return=representation', body: JSON.stringify(insObj) });
       insights.unshift(res?.[0] || { id: crypto.randomUUID(), ...insObj, created_at: new Date().toISOString() });
@@ -774,11 +798,12 @@ async function saveInsight() {
   const obj = {
     item_id: document.getElementById('ins-item-id').value || null,
     type: document.getElementById('ins-type').value,
-    text
+    text,
+    user_id: getSbUserId()
   };
   try {
     if (id) {
-      await sbFetch(`learn_insights?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(obj) });
+      await sbFetch(`learn_insights?id=eq.${id}&user_id=eq.${encodeURIComponent(getSbUserId())}`, { method: 'PATCH', body: JSON.stringify(obj) });
       const idx = insights.findIndex(x => x.id === id);
       if (idx >= 0) insights[idx] = { ...insights[idx], ...obj };
     } else {
@@ -798,7 +823,7 @@ async function saveInsight() {
 async function deleteInsight() {
   const id = document.getElementById('ins-id').value;
   if (!id || !confirm('Delete this insight?')) return;
-  try { await sbFetch(`learn_insights?id=eq.${id}`, { method: 'DELETE' }); } catch {}
+  try { await sbFetch(`learn_insights?id=eq.${id}&user_id=eq.${encodeURIComponent(getSbUserId())}`, { method: 'DELETE' }); } catch {}
   insights = insights.filter(x => x.id !== id);
   persist();
   document.getElementById('insight-modal').style.display = 'none';
@@ -964,7 +989,7 @@ function renderInsights() {
 
 /* ===================== RENDER STATS ===================== */
 function renderStats() {
-  const dailyGoal = parseInt(localStorage.getItem('learn_daily_goal') || '30');
+  const dailyGoal = parseInt(localStorage.getItem(LEARN_DAILY_GOAL_KEY) || '30');
 
   // Stat strip
   const totalMins = sessions.reduce((s, x) => s + (x.duration_mins || 0), 0);
@@ -1069,11 +1094,11 @@ function populateItemSelects() {
 
 /* ===================== SETTINGS ===================== */
 function loadSettings() {
-  document.getElementById('setting-daily-goal').value = localStorage.getItem('learn_daily_goal') || '30';
+  document.getElementById('setting-daily-goal').value = localStorage.getItem(LEARN_DAILY_GOAL_KEY) || '30';
 }
 
 function saveSettings() {
-  localStorage.setItem('learn_daily_goal', document.getElementById('setting-daily-goal').value);
+  localStorage.setItem(LEARN_DAILY_GOAL_KEY, document.getElementById('setting-daily-goal').value);
   showToast('Settings saved');
 }
 
