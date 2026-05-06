@@ -3039,23 +3039,47 @@ function todayExemptType() {
 }
 
 function setGoalExemptToday(type) {
-  const today = new Date().toISOString().slice(0, 10);
+  setGoalExemptDate(new Date().toISOString().slice(0, 10), type);
+}
+
+function setGoalExemptDate(date, type) {
   let manual = {};
   try { manual = JSON.parse(localStorage.getItem(GOAL_EXEMPT_KEY) || '{}'); } catch(e) {}
-  // Check if this is a work-module sick day (read-only)
-  let workTypes = {};
-  try { workTypes = JSON.parse(localStorage.getItem(WORK_DAY_TYPES_KEY) || '{}'); } catch(e) {}
-  if (workTypes[today] === 'sick' && type === 'sick') { renderToday(); return; }
-  if (manual[today] === type) {
-    delete manual[today]; // toggle off
+  // Sick days from work module are read-only for today
+  const today = new Date().toISOString().slice(0, 10);
+  if (date === today) {
+    let workTypes = {};
+    try { workTypes = JSON.parse(localStorage.getItem(WORK_DAY_TYPES_KEY) || '{}'); } catch(e) {}
+    if (workTypes[today] === 'sick' && type === 'sick') { renderToday(); return; }
+  }
+  if (manual[date] === type) {
+    delete manual[date]; // toggle off
   } else {
-    manual[today] = type;
+    manual[date] = type;
   }
   localStorage.setItem(GOAL_EXEMPT_KEY, JSON.stringify(manual));
   localStorage.setItem(GOAL_EXEMPT_UPDATED_KEY, new Date().toISOString());
   syncGoalExtraToSupabase(GOAL_EXEMPT_KEY, manual);
   renderToday();
   renderTodayEnhancements();
+  // Re-render the past-day buttons if a date is selected
+  setTimeout(renderExemptPastButtons, 50);
+}
+
+function renderExemptPastButtons() {
+  const input = document.getElementById('exempt-past-date');
+  const container = document.getElementById('exempt-past-btns');
+  if (!input || !container) return;
+  const date = input.value;
+  if (!date) { container.innerHTML = ''; return; }
+  let manual = {};
+  try { manual = JSON.parse(localStorage.getItem(GOAL_EXEMPT_KEY) || '{}'); } catch(e) {}
+  const current = manual[date];
+  container.innerHTML = [['sick','🤒','Sick'],['holiday','🏖','Holiday'],['rest','😴','Rest'],['travel','✈','Travel']].map(function(item) {
+    const [type, icon, label] = item;
+    const active = current === type;
+    return `<button onclick="setGoalExemptDate('${date}','${type}')" style="padding:4px 10px;border-radius:20px;border:1.5px solid ${active?'rgba(255,255,255,0.6)':'rgba(255,255,255,0.2)'};background:${active?'rgba(255,255,255,0.2)':'transparent'};color:${active?'#fff':'rgba(255,255,255,0.5)'};font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s">${icon} ${label}</button>`;
+  }).join('');
 }
 
 // ─────────────────────────────────────────
@@ -3459,6 +3483,12 @@ function renderToday() {
                 return "<button onclick=\"setGoalExemptToday('"+type+"')\" style=\"padding:4px 10px;border-radius:20px;border:1.5px solid "+border+";background:"+bg+";color:"+color+";font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s\">"+icon+" "+label+"</button>";
               }).join('');
             })()}
+          </div>
+          <!-- Retroactive exempt day controls -->
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px">
+            <span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em">Mark past day:</span>
+            <input type="date" id="exempt-past-date" max="${new Date().toISOString().slice(0,10)}" style="padding:3px 8px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-size:11px;font-family:inherit;cursor:pointer" onchange="renderExemptPastButtons()"/>
+            <div id="exempt-past-btns" style="display:flex;gap:6px;flex-wrap:wrap"></div>
           </div>
         </div>
         <div class="today-note">
