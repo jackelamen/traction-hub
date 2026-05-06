@@ -232,6 +232,102 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
   .tab{flex:1}
 }
 
+/* ── Workout Planner ── */
+.wk-tabs{display:flex;gap:3px;background:#f3f4f8;border-radius:12px;padding:4px;margin-bottom:22px}
+.wk-tab{flex:1;border:none;background:transparent;padding:9px 10px;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-2);cursor:pointer;transition:background .15s,color .15s}
+.wk-tab.active{background:#fff;color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+.plan-week{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:20px}
+.plan-day-col{display:flex;flex-direction:column;gap:6px}
+.plan-day-hdr{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);text-align:center;padding-bottom:4px}
+.plan-day-hdr.today-col{color:var(--accent)}
+.plan-slot{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:10px 9px;cursor:pointer;transition:border-color .15s,box-shadow .15s;min-height:72px;display:flex;flex-direction:column;gap:4px;position:relative}
+.plan-slot:hover,.plan-slot.has-workout:hover{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.plan-slot.has-workout{border-color:rgba(14,165,233,.30);background:linear-gradient(135deg,#f0f9ff,#fff)}
+.plan-slot.rest-day{background:#f9fafb;border-style:dashed;border-color:#e5e7eb}
+.plan-slot.today-slot{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.plan-slot .wt-icon{font-size:18px;line-height:1}
+.plan-slot .wt-name{font-size:11px;font-weight:800;color:var(--text);line-height:1.2}
+.plan-slot .wt-meta{font-size:10px;color:var(--text-3);font-weight:600}
+.plan-slot .wt-goal-dot{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--green)}
+.plan-slot .add-hint{font-size:11px;color:var(--text-3);text-align:center;margin:auto}
+.wk-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(3px);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.wk-modal-backdrop.open{opacity:1;pointer-events:all}
+.wk-modal{background:#fff;border-radius:22px 22px 0 0;padding:24px 22px 32px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;transform:translateY(40px);transition:transform .22s cubic-bezier(.3,1,.4,1);box-shadow:0 -8px 48px rgba(0,0,0,.14)}
+.wk-modal-backdrop.open .wk-modal{transform:translateY(0)}
+.wk-modal h3{font-size:18px;font-weight:800;margin-bottom:4px}
+.wk-modal .sub{font-size:13px;color:var(--text-2);margin-bottom:18px}
+.wt-type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.wt-type-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;border-radius:12px;border:1.5px solid var(--border);background:#f9fafb;cursor:pointer;font-size:11px;font-weight:800;color:#374151;transition:all .15s}
+.wt-type-btn:hover,.wt-type-btn.selected{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+.wt-type-btn .em{font-size:22px;line-height:1}
+/* Log session view */
+.session-header{background:linear-gradient(135deg,#0f172a,#0c4a6e);border-radius:16px;padding:20px;color:#fff;margin-bottom:18px}
+.session-header h2{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.session-header .sh-meta{font-size:13px;color:rgba(255,255,255,.6);margin-top:3px}
+.exercise-list{display:flex;flex-direction:column;gap:10px}
+.ex-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.ex-card-hdr{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;user-select:none}
+.ex-card-hdr .ex-name{font-size:14px;font-weight:800;flex:1}
+.ex-card-hdr .ex-summary{font-size:12px;color:var(--text-2)}
+.ex-card-hdr .icon-chevron{font-size:18px;color:var(--text-3);transition:transform .15s}
+.ex-card.open .icon-chevron{transform:rotate(180deg)}
+.ex-sets{display:none;border-top:1px solid var(--border);padding:10px 14px 14px}
+.ex-card.open .ex-sets{display:block}
+.sets-grid{display:grid;grid-template-columns:28px 1fr 1fr 1fr 36px;gap:6px;align-items:center;margin-bottom:6px}
+.sets-grid .set-label{font-size:10px;font-weight:800;text-transform:uppercase;color:var(--text-3);letter-spacing:.06em}
+.set-row{display:grid;grid-template-columns:28px 1fr 1fr 1fr 36px;gap:6px;align-items:center;padding:5px 0}
+.set-num{font-size:13px;font-weight:800;color:var(--text-3);text-align:center}
+.set-input{background:#f3f4f8;border:1.5px solid transparent;border-radius:8px;text-align:center;font-weight:800;font-size:14px;padding:8px 4px;outline:none;width:100%;font-family:inherit;color:var(--text)}
+.set-input:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-dim)}
+.set-done-btn{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:#f9fafb;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.set-done-btn.done{background:var(--green);border-color:var(--green);color:#fff}
+.ex-add-set{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--accent);background:transparent;border:none;cursor:pointer;padding:4px 0;font-family:inherit}
+.ex-add-set .icon{font-size:16px}
+.session-timer{background:#f3f4f8;border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.timer-display{font-size:28px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.timer-btns{display:flex;gap:6px}
+.timer-btn{padding:8px 14px;border-radius:9px;border:none;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer}
+.timer-btn.start{background:var(--green);color:#fff}
+.timer-btn.stop{background:var(--red-light);color:var(--red)}
+.timer-btn.reset{background:#e5e7eb;color:#374151}
+/* Goal connector */
+.goal-link-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:#f9fafb;cursor:pointer;transition:border-color .15s}
+.goal-link-row:hover,.goal-link-row.linked{border-color:var(--green);background:var(--green-light)}
+.goal-link-row .gl-title{font-size:13px;font-weight:700;flex:1}
+.goal-link-row .gl-check{font-size:18px;color:var(--text-3)}
+.goal-link-row.linked .gl-check{color:var(--green)}
+/* History heatmap */
+.wk-heatmap{display:grid;grid-template-columns:repeat(13,1fr);gap:4px;margin:12px 0}
+.hm-cell{aspect-ratio:1;border-radius:5px;background:#f0f1f5;cursor:default;position:relative}
+.hm-cell.w1{background:#bae6fd}
+.hm-cell.w2{background:#7dd3fc}
+.hm-cell.w3{background:#38bdf8}
+.hm-cell.w4{background:#0ea5e9}
+.hm-cell.w5{background:#0369a1}
+.hm-cell .hm-tip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#111827;color:#fff;border-radius:7px;padding:5px 8px;font-size:10px;font-weight:700;white-space:nowrap;z-index:10}
+.hm-cell:hover .hm-tip{display:block}
+.session-log-row{display:grid;grid-template-columns:90px 1fr auto;gap:12px;align-items:center;padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.sl-date{font-size:13px;font-weight:800}
+.sl-date small{display:block;font-size:11px;color:var(--text-3);font-weight:600;margin-top:1px}
+.sl-chips{display:flex;gap:6px;flex-wrap:wrap}
+.sl-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:7px;background:#f3f4f8;font-size:11px;font-weight:800;color:#374151}
+.sl-vol{font-size:13px;font-weight:900;text-align:right;color:var(--text)}
+.sl-vol small{display:block;font-size:10px;color:var(--text-3);font-weight:700}
+/* Mobile-first session logger */
+.mob-log-fab{display:none;position:fixed;bottom:24px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#22c55e);border:none;box-shadow:0 6px 20px rgba(14,165,233,.42);cursor:pointer;z-index:50;align-items:center;justify-content:center}
+@media(max-width:900px){
+  .plan-week{grid-template-columns:repeat(7,1fr);gap:5px}
+  .plan-slot{min-height:60px;padding:7px 5px}
+  .plan-slot .wt-name{font-size:10px}
+  .plan-slot .add-hint{font-size:9px}
+  .wt-type-grid{grid-template-columns:repeat(3,1fr)}
+  .sets-grid,.set-row{grid-template-columns:22px 1fr 1fr 1fr 32px}
+  .session-header h2{font-size:18px}
+  .wk-heatmap{grid-template-columns:repeat(13,1fr)}
+  .session-log-row{grid-template-columns:1fr}
+  .sl-vol{text-align:left}
+  .mob-log-fab{display:flex}
+}
 /* ── Cmd+K Module Switcher ── */
 #cmd-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding-top:14vh;opacity:0;pointer-events:none;transition:opacity .15s}
 #cmd-backdrop.open{opacity:1;pointer-events:all}
@@ -268,6 +364,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <div class="nav-section-label">Main</div>
     <button class="nav-item active" id="nav-today" onclick="nav('today')"><span class="icon">today</span>Today</button>
     <button class="nav-item" id="nav-log" onclick="nav('log')"><span class="icon">edit_note</span>Daily Log</button>
+    <button class="nav-item" id="nav-workout" onclick="nav('workout')"><span class="icon">fitness_center</span>Workout</button>
     <button class="nav-item" id="nav-routines" onclick="nav('routines')"><span class="icon">repeat</span>Routines</button>
     <button class="nav-item" id="nav-trends" onclick="nav('trends')"><span class="icon">query_stats</span>Trends</button>
     <button class="nav-item" id="nav-settings" onclick="nav('settings')"><span class="icon">tune</span>Settings</button>
@@ -575,6 +672,189 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </div>
     </div>
   </section>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- WORKOUT PLANNER                                                -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <section id="view-workout" class="view">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+      <div class="page-header" style="margin-bottom:0">
+        <div class="page-date">Training OS</div>
+        <h1 class="page-title">Workout Planner</h1>
+        <p class="page-sub">Plan your week, log every session, track progress.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-secondary btn-sm" id="wk-prev-week" onclick="wkShiftWeek(-1)"><span class="icon" style="font-size:16px">chevron_left</span></button>
+        <span id="wk-week-label" style="font-size:13px;font-weight:700;color:var(--text-2)">This Week</span>
+        <button class="btn btn-secondary btn-sm" id="wk-next-week" onclick="wkShiftWeek(1)"><span class="icon" style="font-size:16px">chevron_right</span></button>
+        <button class="btn btn-primary btn-sm" onclick="wkStartSession(null)"><span class="icon" style="font-size:16px">play_arrow</span>Log Session</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="wk-tabs">
+      <button class="wk-tab active" id="wktab-plan" onclick="wkTab('plan')"><span class="icon" style="font-size:15px;vertical-align:middle">calendar_month</span> Plan</button>
+      <button class="wk-tab" id="wktab-log" onclick="wkTab('log')"><span class="icon" style="font-size:15px;vertical-align:middle">fitness_center</span> Session Log</button>
+      <button class="wk-tab" id="wktab-history" onclick="wkTab('history')"><span class="icon" style="font-size:15px;vertical-align:middle">bar_chart</span> History</button>
+    </div>
+
+    <!-- PLAN TAB -->
+    <div id="wk-pane-plan">
+      <div class="plan-week" id="wk-plan-grid"></div>
+
+      <!-- Goal connections -->
+      <div class="card card-pad" id="wk-goal-panel">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px">
+          <div>
+            <h2 style="font-size:16px;font-weight:800">Connected Health Goals</h2>
+            <p style="font-size:12px;color:var(--text-2)">Tag workouts to a goal. Sessions count toward your progress.</p>
+          </div>
+          <span class="badge badge-green" id="wk-goal-count">0 goals</span>
+        </div>
+        <div id="wk-goal-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <!-- Weekly summary stats -->
+      <div class="grid-4" style="margin-top:18px" id="wk-week-stats"></div>
+    </div>
+
+    <!-- SESSION LOG TAB -->
+    <div id="wk-pane-log" style="display:none">
+      <div id="wk-active-session">
+        <!-- filled by wkRenderActiveSession() -->
+        <div class="empty">
+          <div class="empty-icon"><span class="icon">fitness_center</span></div>
+          <strong>No active session</strong>
+          <span>Choose a planned workout or start a quick session.</span>
+          <button class="btn btn-primary" style="margin-top:8px" onclick="wkStartSession(null)"><span class="icon" style="font-size:17px">play_arrow</span>Start Quick Session</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="wk-pane-history" style="display:none">
+      <div class="card card-pad" style="margin-bottom:18px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px">
+          <div>
+            <h2 style="font-size:16px;font-weight:800">Training Heatmap</h2>
+            <p style="font-size:12px;color:var(--text-2)">13-week activity — darker = more volume.</p>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center;font-size:10px;font-weight:700;color:var(--text-3)">
+            <span>Less</span>
+            <div style="width:10px;height:10px;border-radius:3px;background:#f0f1f5"></div>
+            <div style="width:10px;height:10px;border-radius:3px;background:#bae6fd"></div>
+            <div style="width:10px;height:10px;border-radius:3px;background:#7dd3fc"></div>
+            <div style="width:10px;height:10px;border-radius:3px;background:#0ea5e9"></div>
+            <div style="width:10px;height:10px;border-radius:3px;background:#0369a1"></div>
+            <span>More</span>
+          </div>
+        </div>
+        <div class="wk-heatmap" id="wk-heatmap"></div>
+      </div>
+      <div class="grid-4" id="wk-history-stats" style="margin-bottom:18px"></div>
+      <div class="card card-pad">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px">
+          <div>
+            <h2 style="font-size:16px;font-weight:800">Session History</h2>
+            <p style="font-size:12px;color:var(--text-2)">Every logged session.</p>
+          </div>
+          <select id="wk-hist-filter" style="width:140px" onchange="wkRenderHistory()">
+            <option value="all">All types</option>
+            <option value="Strength">Strength</option>
+            <option value="Cardio">Cardio</option>
+            <option value="Mobility">Mobility</option>
+            <option value="Sport">Sport</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div id="wk-history-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKOUT: Day planner modal -->
+  <div class="wk-modal-backdrop" id="wk-day-modal" onclick="wkDayModalClose(event)">
+    <div class="wk-modal" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <h3 id="wk-day-modal-title">Monday</h3>
+        <button onclick="wkDayModalClose()" style="background:transparent;border:none;cursor:pointer;color:var(--text-3);font-size:22px;line-height:1">×</button>
+      </div>
+      <p class="sub" id="wk-day-modal-sub">Choose a workout for this day</p>
+
+      <!-- Workout type picker -->
+      <div class="form-section-label">Workout type</div>
+      <div class="wt-type-grid" id="wk-type-grid"></div>
+
+      <!-- Exercise template -->
+      <div id="wk-template-section">
+        <div class="form-section-label" style="margin-top:12px">Quick template</div>
+        <div id="wk-template-exercises" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+        <button class="btn btn-secondary btn-sm" onclick="wkAddTemplateExercise()"><span class="icon" style="font-size:15px">add</span>Add Exercise</button>
+      </div>
+
+      <!-- Notes -->
+      <div style="margin-top:14px">
+        <div class="form-section-label">Notes / intention</div>
+        <textarea id="wk-day-notes" rows="2" placeholder="e.g. Focus on form, keep rest short…" style="resize:none"></textarea>
+      </div>
+
+      <!-- Rest day toggle -->
+      <label style="display:flex;align-items:center;gap:10px;margin-top:14px;cursor:pointer;font-size:13px;font-weight:700;color:var(--text-2)">
+        <input type="checkbox" id="wk-rest-toggle" style="width:16px;height:16px;accent-color:var(--accent)" onchange="wkToggleRest()"/> Mark as rest day
+      </label>
+
+      <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="wkSaveDay()"><span class="icon" style="font-size:17px">save</span>Save</button>
+        <button class="btn btn-secondary btn-sm" onclick="wkStartSessionFromModal()"><span class="icon" style="font-size:16px">play_arrow</span>Start Session Now</button>
+        <button class="btn btn-danger btn-sm" onclick="wkClearDay()"><span class="icon" style="font-size:15px">delete</span>Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKOUT: Active session modal (mobile-first) -->
+  <div class="wk-modal-backdrop" id="wk-session-modal" onclick="wkSessionModalClose(event)">
+    <div class="wk-modal" onclick="event.stopPropagation()" style="border-radius:22px;max-width:600px;padding-bottom:40px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+        <h3 id="wk-sess-title">Session</h3>
+        <button onclick="wkSessionModalClose()" style="background:transparent;border:none;cursor:pointer;color:var(--text-3);font-size:22px;line-height:1">×</button>
+      </div>
+      <p class="sub" id="wk-sess-sub">Tap a set to mark it done</p>
+
+      <!-- Timer -->
+      <div class="session-timer">
+        <div>
+          <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:2px">Elapsed</div>
+          <div class="timer-display" id="wk-timer-display">0:00</div>
+        </div>
+        <div class="timer-btns">
+          <button class="timer-btn start" id="wk-timer-start" onclick="wkTimerToggle()">Start</button>
+          <button class="timer-btn reset" onclick="wkTimerReset()">Reset</button>
+        </div>
+      </div>
+
+      <!-- Exercise list -->
+      <div class="exercise-list" id="wk-sess-exercises"></div>
+
+      <button class="btn btn-secondary btn-sm" style="margin-top:12px;width:100%" onclick="wkAddExerciseToSession()"><span class="icon" style="font-size:16px">add</span>Add Exercise</button>
+
+      <!-- Goal link -->
+      <div style="margin-top:18px;margin-bottom:4px">
+        <div class="form-section-label">Link to health goal</div>
+        <div id="wk-sess-goal-links" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+
+      <!-- Notes -->
+      <div style="margin-top:14px">
+        <div class="form-section-label">Session notes</div>
+        <textarea id="wk-sess-notes" rows="2" placeholder="How it felt, PRs, what to adjust next time…" style="resize:none"></textarea>
+      </div>
+
+      <!-- Finish -->
+      <button class="btn btn-primary" style="width:100%;margin-top:18px;padding:14px" onclick="wkFinishSession()">
+        <span class="icon" style="font-size:18px">check_circle</span>Finish Session
+      </button>
+    </div>
+  </div>
 </main>
 </div>
 <div class="toast" id="toast"></div>
@@ -883,6 +1163,7 @@ function nav(view){
   if (view === 'routines') renderRoutines();
   if (view === 'trends') renderTrends();
   if (view === 'settings') renderSettings();
+  if (view === 'workout') wkRender();
 }
 function getLog(date = todayStr()){
   const log = db.logs[date] || {};
@@ -1763,6 +2044,666 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'Escape') { cmdCloseForce(); }
 });
+
+// ════════════════════════════════════════════════════════════════════
+// WORKOUT PLANNER
+// ════════════════════════════════════════════════════════════════════
+const WK_KEY = 'edgex_workout_v1';
+const WK_SESSIONS_KEY = 'edgex_workout_sessions_v1';
+const GOALS_KV_KEY = 'goals_kv_v2'; // goals module localStorage key
+
+const WK_TYPES = [
+  { id:'Strength',  label:'Strength',  em:'🏋️' },
+  { id:'Cardio',    label:'Cardio',    em:'🏃' },
+  { id:'Mobility',  label:'Mobility',  em:'🧘' },
+  { id:'HIIT',      label:'HIIT',      em:'⚡' },
+  { id:'Sport',     label:'Sport',     em:'🏅' },
+  { id:'Other',     label:'Other',     em:'💪' },
+];
+
+const WK_TEMPLATES = {
+  Strength: ['Squat', 'Bench Press', 'Deadlift', 'Overhead Press', 'Row'],
+  Cardio:   ['Run', 'Bike', 'Jump Rope', 'Swimming'],
+  Mobility: ['Hip Flexor Stretch', 'Thoracic Rotation', 'Ankle Circles', 'Cat-Cow'],
+  HIIT:     ['Burpees', 'Box Jumps', 'Mountain Climbers', 'Jump Squats'],
+  Sport:    ['Warm Up', 'Drill Practice', 'Match Play', 'Cool Down'],
+  Other:    ['Exercise 1', 'Exercise 2'],
+};
+
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAY_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+let wkDB = { plan: {}, weekOffset: 0 };   // plan: { 'YYYY-MM-DD': { type, exercises, notes, rest } }
+let wkSessions = [];                        // [{id, date, type, exercises, notes, goalIds, durationSec, completedAt}]
+let wkCurrentTab = 'plan';
+let wkWeekOffset = 0;
+let wkEditingDate = null;
+let wkSelectedType = null;
+let wkTemplateExercises = [];
+let wkActiveSession = null;
+let wkTimerInterval = null;
+let wkTimerSec = 0;
+let wkTimerRunning = false;
+
+function wkLoad() {
+  try { wkDB = JSON.parse(localStorage.getItem(WK_KEY) || '{}'); if (!wkDB.plan) wkDB.plan = {}; } catch(e) { wkDB = { plan:{} }; }
+  try { wkSessions = JSON.parse(localStorage.getItem(WK_SESSIONS_KEY) || '[]'); if (!Array.isArray(wkSessions)) wkSessions = []; } catch(e) { wkSessions = []; }
+}
+function wkSave() {
+  localStorage.setItem(WK_KEY, JSON.stringify(wkDB));
+  localStorage.setItem(WK_SESSIONS_KEY, JSON.stringify(wkSessions));
+}
+
+// ── Week helpers ─────────────────────────────────────────────────
+function wkWeekMonday(offset = 0) {
+  const d = new Date(); d.setHours(12,0,0,0);
+  const dow = (d.getDay() + 6) % 7; // Mon=0
+  d.setDate(d.getDate() - dow + offset * 7);
+  return d;
+}
+function wkDateStr(d) { return d.toISOString().split('T')[0]; }
+function wkWeekDates(offset = 0) {
+  const mon = wkWeekMonday(offset);
+  return Array.from({length:7}, (_, i) => { const d = new Date(mon); d.setDate(d.getDate() + i); return wkDateStr(d); });
+}
+function wkShiftWeek(dir) { wkWeekOffset += dir; wkRender(); }
+
+function wkGetHealthGoals() {
+  try {
+    const raw = localStorage.getItem(GOALS_KV_KEY);
+    if (!raw) return [];
+    const db = JSON.parse(raw);
+    const goals = db.goals || [];
+    return goals.filter(g => g.areaId === 'health' && g.status === 'active');
+  } catch(e) { return []; }
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function wkRender() {
+  wkLoad();
+  wkRenderPlan();
+  wkRenderGoalPanel();
+  wkRenderWeekStats();
+  if (wkCurrentTab === 'history') { wkRenderHeatmap(); wkRenderHistory(); wkRenderHistoryStats(); }
+  if (wkCurrentTab === 'log') wkRenderActiveSession();
+}
+
+function wkTab(tab) {
+  wkCurrentTab = tab;
+  ['plan','log','history'].forEach(t => {
+    document.getElementById('wktab-' + t)?.classList.toggle('active', t === tab);
+    const pane = document.getElementById('wk-pane-' + t);
+    if (pane) pane.style.display = t === tab ? 'block' : 'none';
+  });
+  if (tab === 'history') { wkRenderHeatmap(); wkRenderHistory(); wkRenderHistoryStats(); }
+  if (tab === 'log') wkRenderActiveSession();
+}
+
+// ── Plan grid ────────────────────────────────────────────────────
+function wkRenderPlan() {
+  const grid = document.getElementById('wk-plan-grid');
+  if (!grid) return;
+  const dates = wkWeekDates(wkWeekOffset);
+  const today = todayStr();
+
+  // Update week label
+  const mon = dates[0], sun = dates[6];
+  const fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  const label = document.getElementById('wk-week-label');
+  if (label) label.textContent = wkWeekOffset === 0 ? 'This Week' : wkWeekOffset === -1 ? 'Last Week' : wkWeekOffset === 1 ? 'Next Week' : `${fmt(mon)} – ${fmt(sun)}`;
+
+  grid.innerHTML = dates.map((ds, i) => {
+    const plan = wkDB.plan?.[ds];
+    const isToday = ds === today;
+    const hasSession = wkSessions.some(s => s.date === ds);
+    let inner = '';
+    if (plan?.rest) {
+      inner = `<div class="add-hint" style="color:var(--text-3)">😴<br>Rest</div>`;
+    } else if (plan?.type) {
+      const wt = WK_TYPES.find(w => w.id === plan.type) || WK_TYPES[0];
+      const goalLinked = (plan.goalIds || []).length > 0;
+      inner = `
+        ${goalLinked ? '<div class="wt-goal-dot"></div>' : ''}
+        <div class="wt-icon">${wt.em}</div>
+        <div class="wt-name">${wt.id}</div>
+        ${plan.exercises?.length ? `<div class="wt-meta">${plan.exercises.length} exercise${plan.exercises.length>1?'s':''}</div>` : ''}
+        ${hasSession ? '<div style="font-size:9px;color:var(--green);font-weight:800;margin-top:auto">✓ Logged</div>' : ''}
+      `;
+    } else {
+      inner = `<div class="add-hint">+ Add</div>`;
+    }
+    return `<div class="plan-day-col">
+      <div class="plan-day-hdr ${isToday ? 'today-col' : ''}">${DAYS[i]}<br><span style="font-size:11px;font-weight:600">${new Date(ds+'T12:00:00').getDate()}</span></div>
+      <div class="plan-slot ${plan?.type ? 'has-workout' : ''} ${plan?.rest ? 'rest-day' : ''} ${isToday ? 'today-slot' : ''}"
+           onclick="wkOpenDayModal('${ds}')">${inner}</div>
+    </div>`;
+  }).join('');
+}
+
+function wkRenderGoalPanel() {
+  const goals = wkGetHealthGoals();
+  const countEl = document.getElementById('wk-goal-count');
+  const listEl = document.getElementById('wk-goal-list');
+  if (countEl) countEl.textContent = goals.length + ' goal' + (goals.length !== 1 ? 's' : '');
+  if (!listEl) return;
+  if (!goals.length) {
+    listEl.innerHTML = `<div class="empty" style="padding:20px">
+      <span style="font-size:13px;color:var(--text-2)">No active health goals found. Add some in the <a href="goals.html" style="color:var(--accent)">Goals module</a> with the "Health" area tag.</span>
+    </div>`;
+    return;
+  }
+  listEl.innerHTML = goals.map(g => {
+    // count sessions linked to this goal
+    const linked = wkSessions.filter(s => (s.goalIds || []).includes(g.id)).length;
+    const streak = wkGoalStreak(g.id);
+    return `<div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:#f9fafb">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:var(--text)">${g.title}</div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:2px">${linked} session${linked!==1?'s':''} logged</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:18px;font-weight:900;color:var(--green)">${streak}</div>
+        <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3)">wk streak</div>
+      </div>
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
+    </div>`;
+  }).join('');
+}
+
+function wkGoalStreak(goalId) {
+  // Count consecutive weeks (ending this week) that had at least one session linked to this goal
+  let streak = 0;
+  for (let offset = 0; offset >= -52; offset--) {
+    const dates = wkWeekDates(offset);
+    const hit = wkSessions.some(s => dates.includes(s.date) && (s.goalIds || []).includes(goalId));
+    if (hit) streak++; else break;
+  }
+  return streak;
+}
+
+function wkRenderWeekStats() {
+  const el = document.getElementById('wk-week-stats');
+  if (!el) return;
+  const dates = wkWeekDates(wkWeekOffset);
+  const sessions = wkSessions.filter(s => dates.includes(s.date));
+  const planned = dates.filter(d => wkDB.plan?.[d]?.type).length;
+  const totalSec = sessions.reduce((a, s) => a + (s.durationSec || 0), 0);
+  const totalSets = sessions.reduce((a, s) => a + (s.exercises || []).reduce((b, ex) => b + (ex.sets || []).length, 0), 0);
+  const stats = [
+    { label:'Planned', value: planned, sub:'workouts this week', color:'var(--accent)' },
+    { label:'Completed', value: sessions.length, sub:'sessions logged', color:'var(--green)' },
+    { label:'Time', value: totalSec >= 60 ? Math.round(totalSec/60)+'m' : totalSec+'s', sub:'total logged', color:'var(--orange)' },
+    { label:'Sets Done', value: totalSets, sub:'across all sessions', color:'var(--purple)' },
+  ];
+  el.innerHTML = stats.map(s => `
+    <div class="stat-card" style="--accent:${s.color}">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value" style="color:${s.color};font-size:26px">${s.value}</div>
+      <div class="stat-sub">${s.sub}</div>
+    </div>`).join('');
+}
+
+// ── Day modal ────────────────────────────────────────────────────
+function wkOpenDayModal(dateStr) {
+  wkEditingDate = dateStr;
+  const plan = wkDB.plan?.[dateStr] || {};
+  const d = new Date(dateStr + 'T12:00:00');
+  const label = DAY_FULL[(d.getDay() + 6) % 7] + ', ' + d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+
+  document.getElementById('wk-day-modal-title').textContent = label;
+  document.getElementById('wk-day-modal-sub').textContent = 'Plan your training for this day';
+  document.getElementById('wk-rest-toggle').checked = !!plan.rest;
+  document.getElementById('wk-day-notes').value = plan.notes || '';
+  document.getElementById('wk-template-section').style.opacity = plan.rest ? '0.35' : '1';
+  document.getElementById('wk-template-section').style.pointerEvents = plan.rest ? 'none' : '';
+
+  // Type grid
+  wkSelectedType = plan.type || null;
+  wkRenderTypeGrid();
+
+  // Exercises
+  wkTemplateExercises = plan.exercises ? plan.exercises.map(e => ({...e})) : [];
+  wkRenderTemplateExercises();
+
+  document.getElementById('wk-day-modal').classList.add('open');
+}
+
+function wkDayModalClose(e) {
+  if (e && e.target !== document.getElementById('wk-day-modal')) return;
+  document.getElementById('wk-day-modal').classList.remove('open');
+}
+
+function wkRenderTypeGrid() {
+  const grid = document.getElementById('wk-type-grid');
+  if (!grid) return;
+  grid.innerHTML = WK_TYPES.map(t => `
+    <button class="wt-type-btn ${wkSelectedType === t.id ? 'selected' : ''}" onclick="wkSelectType('${t.id}')">
+      <span class="em">${t.em}</span>${t.label}
+    </button>`).join('');
+}
+
+function wkSelectType(typeId) {
+  wkSelectedType = typeId;
+  wkRenderTypeGrid();
+  if (!wkTemplateExercises.length) {
+    wkTemplateExercises = (WK_TEMPLATES[typeId] || []).map(name => ({ name, sets: 3, reps: '8-12', weight: '' }));
+  }
+  wkRenderTemplateExercises();
+}
+
+function wkRenderTemplateExercises() {
+  const el = document.getElementById('wk-template-exercises');
+  if (!el) return;
+  el.innerHTML = wkTemplateExercises.map((ex, i) => `
+    <div style="display:grid;grid-template-columns:1fr 60px 70px 28px;gap:6px;align-items:center">
+      <input type="text" value="${ex.name}" oninput="wkTemplateExercises[${i}].name=this.value" style="font-size:13px;padding:8px 10px" placeholder="Exercise name"/>
+      <input type="number" value="${ex.sets}" min="1" max="20" oninput="wkTemplateExercises[${i}].sets=+this.value" style="font-size:13px;padding:8px 6px;text-align:center" placeholder="Sets"/>
+      <input type="text" value="${ex.reps}" oninput="wkTemplateExercises[${i}].reps=this.value" style="font-size:13px;padding:8px 6px;text-align:center" placeholder="Reps"/>
+      <button onclick="wkRemoveTemplateEx(${i})" style="background:var(--red-light);color:var(--red);border:none;border-radius:8px;width:28px;height:34px;cursor:pointer;font-size:16px;line-height:1">×</button>
+    </div>`).join('');
+}
+
+function wkAddTemplateExercise() {
+  wkTemplateExercises.push({ name: '', sets: 3, reps: '10', weight: '' });
+  wkRenderTemplateExercises();
+}
+
+function wkRemoveTemplateEx(i) {
+  wkTemplateExercises.splice(i, 1);
+  wkRenderTemplateExercises();
+}
+
+function wkToggleRest() {
+  const isRest = document.getElementById('wk-rest-toggle').checked;
+  document.getElementById('wk-template-section').style.opacity = isRest ? '0.35' : '1';
+  document.getElementById('wk-template-section').style.pointerEvents = isRest ? 'none' : '';
+}
+
+function wkSaveDay() {
+  if (!wkEditingDate) return;
+  const rest = document.getElementById('wk-rest-toggle').checked;
+  const notes = document.getElementById('wk-day-notes').value.trim();
+  if (!wkDB.plan) wkDB.plan = {};
+  if (rest) {
+    wkDB.plan[wkEditingDate] = { rest: true, notes };
+  } else {
+    if (!wkSelectedType) { toast('Pick a workout type first'); return; }
+    wkDB.plan[wkEditingDate] = {
+      type: wkSelectedType,
+      exercises: wkTemplateExercises.filter(e => e.name.trim()),
+      notes,
+      goalIds: wkDB.plan[wkEditingDate]?.goalIds || []
+    };
+  }
+  wkSave();
+  document.getElementById('wk-day-modal').classList.remove('open');
+  wkRenderPlan();
+  wkRenderWeekStats();
+  toast('Workout saved');
+}
+
+function wkClearDay() {
+  if (!wkEditingDate) return;
+  delete wkDB.plan[wkEditingDate];
+  wkSave();
+  document.getElementById('wk-day-modal').classList.remove('open');
+  wkRenderPlan();
+  wkRenderWeekStats();
+  toast('Cleared');
+}
+
+function wkStartSessionFromModal() {
+  document.getElementById('wk-day-modal').classList.remove('open');
+  wkStartSession(wkEditingDate);
+}
+
+// ── Session logger ───────────────────────────────────────────────
+function wkStartSession(dateStr) {
+  const date = dateStr || todayStr();
+  const plan = wkDB.plan?.[date];
+  const type = plan?.type || 'Other';
+  const wt = WK_TYPES.find(w => w.id === type) || WK_TYPES[5];
+
+  wkActiveSession = {
+    id: 'sess-' + Date.now(),
+    date,
+    type,
+    exercises: plan?.exercises
+      ? plan.exercises.map(ex => ({
+          name: ex.name,
+          sets: Array.from({length: ex.sets || 3}, () => ({reps: ex.reps || '', weight: ex.weight || '', done: false}))
+        }))
+      : [{ name: '', sets: [{reps:'', weight:'', done:false},{reps:'', weight:'', done:false},{reps:'', weight:'', done:false}] }],
+    goalIds: plan?.goalIds || [],
+    notes: '',
+    durationSec: 0
+  };
+
+  wkTimerSec = 0; wkTimerRunning = false;
+  if (wkTimerInterval) { clearInterval(wkTimerInterval); wkTimerInterval = null; }
+  wkUpdateTimerDisplay();
+
+  const titleEl = document.getElementById('wk-sess-title');
+  const subEl = document.getElementById('wk-sess-sub');
+  if (titleEl) titleEl.textContent = `${wt.em} ${type} Session`;
+  if (subEl) subEl.textContent = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
+
+  wkRenderSessionExercises();
+  wkRenderSessionGoalLinks();
+
+  document.getElementById('wk-session-modal').classList.add('open');
+
+  // Switch to log tab
+  wkTab('log');
+}
+
+function wkSessionModalClose(e) {
+  if (e && e.target !== document.getElementById('wk-session-modal')) return;
+  if (wkTimerRunning) wkTimerToggle();
+  document.getElementById('wk-session-modal').classList.remove('open');
+}
+
+function wkRenderSessionExercises() {
+  const el = document.getElementById('wk-sess-exercises');
+  if (!el || !wkActiveSession) return;
+  el.innerHTML = wkActiveSession.exercises.map((ex, ei) => {
+    const doneCount = ex.sets.filter(s => s.done).length;
+    return `<div class="ex-card ${doneCount > 0 ? 'open' : ''}" id="ex-card-${ei}">
+      <div class="ex-card-hdr" onclick="wkToggleExCard(${ei})">
+        <div class="ex-name">
+          <input type="text" value="${ex.name}" placeholder="Exercise name" oninput="wkActiveSession.exercises[${ei}].name=this.value"
+            style="border:none;background:transparent;font-size:14px;font-weight:800;font-family:inherit;color:var(--text);outline:none;padding:0;width:100%" onclick="event.stopPropagation()"/>
+        </div>
+        <div class="ex-summary">${doneCount}/${ex.sets.length} sets</div>
+        <span class="icon icon-chevron">expand_more</span>
+      </div>
+      <div class="ex-sets">
+        <div class="sets-grid">
+          <div class="set-label">#</div>
+          <div class="set-label" style="text-align:center">Reps</div>
+          <div class="set-label" style="text-align:center">Weight</div>
+          <div class="set-label" style="text-align:center">Load</div>
+          <div></div>
+        </div>
+        ${ex.sets.map((set, si) => `
+          <div class="set-row">
+            <div class="set-num">${si+1}</div>
+            <input class="set-input" type="text" value="${set.reps}" placeholder="10" oninput="wkActiveSession.exercises[${ei}].sets[${si}].reps=this.value"/>
+            <input class="set-input" type="text" value="${set.weight}" placeholder="kg" oninput="wkActiveSession.exercises[${ei}].sets[${si}].weight=this.value"/>
+            <div class="set-input" style="background:${set.weight&&set.reps ? '#f0f9ff' : '#f3f4f8'};color:var(--text-2);font-size:12px">
+              ${set.weight && set.reps && !isNaN(parseFloat(set.weight)) ? (parseFloat(set.weight) * parseInt(set.reps) || '').toString().replace(/\..*/, '') + ' kg' : '—'}
+            </div>
+            <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="wkToggleSetDone(${ei},${si})">
+              <span class="icon fill" style="font-size:16px">${set.done ? 'check_circle' : 'radio_button_unchecked'}</span>
+            </button>
+          </div>`).join('')}
+        <button class="ex-add-set" onclick="wkAddSet(${ei})"><span class="icon">add_circle</span>Add Set</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function wkToggleExCard(i) {
+  document.getElementById('ex-card-' + i)?.classList.toggle('open');
+}
+
+function wkToggleSetDone(ei, si) {
+  if (!wkActiveSession) return;
+  wkActiveSession.exercises[ei].sets[si].done = !wkActiveSession.exercises[ei].sets[si].done;
+  wkRenderSessionExercises();
+  // Auto-open next exercise if all sets done in current
+  const ex = wkActiveSession.exercises[ei];
+  if (ex.sets.every(s => s.done) && ei + 1 < wkActiveSession.exercises.length) {
+    setTimeout(() => { document.getElementById('ex-card-' + (ei+1))?.classList.add('open'); }, 200);
+  }
+}
+
+function wkAddSet(ei) {
+  if (!wkActiveSession) return;
+  const last = wkActiveSession.exercises[ei].sets.slice(-1)[0] || {};
+  wkActiveSession.exercises[ei].sets.push({ reps: last.reps || '', weight: last.weight || '', done: false });
+  wkRenderSessionExercises();
+  document.getElementById('ex-card-' + ei)?.classList.add('open');
+}
+
+function wkAddExerciseToSession() {
+  if (!wkActiveSession) return;
+  wkActiveSession.exercises.push({ name: '', sets: [{reps:'',weight:'',done:false},{reps:'',weight:'',done:false},{reps:'',weight:'',done:false}] });
+  wkRenderSessionExercises();
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.ex-card');
+    const last = cards[cards.length - 1];
+    if (last) { last.classList.add('open'); last.scrollIntoView({behavior:'smooth', block:'center'}); }
+  }, 100);
+}
+
+function wkRenderSessionGoalLinks() {
+  const el = document.getElementById('wk-sess-goal-links');
+  if (!el || !wkActiveSession) return;
+  const goals = wkGetHealthGoals();
+  if (!goals.length) {
+    el.innerHTML = `<p style="font-size:12px;color:var(--text-3)">No active health goals. <a href="goals.html" style="color:var(--accent)">Add goals</a> in the Goals module.</p>`;
+    return;
+  }
+  el.innerHTML = goals.map(g => {
+    const linked = (wkActiveSession.goalIds || []).includes(g.id);
+    return `<div class="goal-link-row ${linked ? 'linked' : ''}" onclick="wkToggleGoalLink('${g.id}')">
+      <span class="icon fill gl-check">${linked ? 'check_circle' : 'radio_button_unchecked'}</span>
+      <span class="gl-title">${g.title}</span>
+    </div>`;
+  }).join('');
+}
+
+function wkToggleGoalLink(goalId) {
+  if (!wkActiveSession) return;
+  const ids = wkActiveSession.goalIds || [];
+  const idx = ids.indexOf(goalId);
+  if (idx >= 0) ids.splice(idx, 1); else ids.push(goalId);
+  wkActiveSession.goalIds = ids;
+  wkRenderSessionGoalLinks();
+}
+
+// ── Timer ────────────────────────────────────────────────────────
+function wkTimerToggle() {
+  if (wkTimerRunning) {
+    clearInterval(wkTimerInterval); wkTimerInterval = null; wkTimerRunning = false;
+    document.getElementById('wk-timer-start').textContent = 'Resume';
+    document.getElementById('wk-timer-start').className = 'timer-btn start';
+  } else {
+    const start = Date.now() - wkTimerSec * 1000;
+    wkTimerInterval = setInterval(() => {
+      wkTimerSec = Math.floor((Date.now() - start) / 1000);
+      wkUpdateTimerDisplay();
+    }, 1000);
+    wkTimerRunning = true;
+    document.getElementById('wk-timer-start').textContent = 'Pause';
+    document.getElementById('wk-timer-start').className = 'timer-btn stop';
+  }
+}
+
+function wkTimerReset() {
+  if (wkTimerRunning) { clearInterval(wkTimerInterval); wkTimerRunning = false; }
+  wkTimerSec = 0; wkUpdateTimerDisplay();
+  const btn = document.getElementById('wk-timer-start');
+  if (btn) { btn.textContent = 'Start'; btn.className = 'timer-btn start'; }
+}
+
+function wkUpdateTimerDisplay() {
+  const el = document.getElementById('wk-timer-display');
+  if (!el) return;
+  const m = Math.floor(wkTimerSec / 60), s = wkTimerSec % 60;
+  el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// ── Finish session ───────────────────────────────────────────────
+function wkFinishSession() {
+  if (!wkActiveSession) return;
+  if (wkTimerRunning) wkTimerToggle();
+  wkActiveSession.durationSec = wkTimerSec;
+  wkActiveSession.notes = document.getElementById('wk-sess-notes')?.value?.trim() || '';
+  wkActiveSession.completedAt = new Date().toISOString();
+  wkActiveSession.exercises = wkActiveSession.exercises.filter(e => e.name.trim());
+
+  // Remove any prior session on same date with same id (replace)
+  wkSessions = wkSessions.filter(s => s.id !== wkActiveSession.id);
+  wkSessions.unshift(wkActiveSession);
+  wkSave();
+
+  // Also write exercise minutes to the health log if we have duration
+  if (wkTimerSec > 0) {
+    const existingLog = db.logs[wkActiveSession.date] || {};
+    const addedMins = Math.round(wkTimerSec / 60);
+    const currentMins = parseInt(existingLog.exerciseMins || 0);
+    db.logs[wkActiveSession.date] = {
+      ...existingLog,
+      exerciseMins: currentMins + addedMins,
+      exerciseTypes: [...new Set([...(existingLog.exerciseTypes || []), wkActiveSession.type])]
+    };
+    saveData();
+  }
+
+  document.getElementById('wk-session-modal').classList.remove('open');
+  wkActiveSession = null;
+  wkTimerSec = 0;
+
+  wkRenderActiveSession();
+  wkRenderPlan();
+  wkRenderWeekStats();
+  toast('Session saved! 💪');
+}
+
+function wkRenderActiveSession() {
+  const el = document.getElementById('wk-active-session');
+  if (!el) return;
+  const todaySessions = wkSessions.filter(s => s.date === todayStr());
+  const plan = wkDB.plan?.[todayStr()];
+
+  let html = '';
+
+  // Today's plan
+  if (plan?.type || todaySessions.length > 0) {
+    html += `<div class="session-header" style="margin-bottom:18px">`;
+    if (plan?.type) {
+      const wt = WK_TYPES.find(w => w.id === plan.type) || WK_TYPES[5];
+      html += `<div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px">Today's Plan</div>
+        <h2>${wt.em} ${plan.type}</h2>
+        ${plan.exercises?.length ? `<div class="sh-meta">${plan.exercises.map(e=>e.name).join(', ')}</div>` : ''}
+        ${plan.notes ? `<div class="sh-meta" style="margin-top:6px;font-style:italic">"${plan.notes}"</div>` : ''}`;
+    } else {
+      html += `<h2>No plan set for today</h2><div class="sh-meta">Start a quick session or plan your week first.</div>`;
+    }
+    html += `<button class="btn btn-primary" style="margin-top:14px" onclick="wkStartSession('${todayStr()}')">
+      <span class="icon" style="font-size:17px">play_arrow</span>${todaySessions.length ? 'Log Another Session' : 'Start Session'}
+    </button></div>`;
+  }
+
+  // Today's completed sessions
+  if (todaySessions.length) {
+    html += `<h3 style="font-size:14px;font-weight:800;margin-bottom:10px;color:var(--green)">✓ ${todaySessions.length} Session${todaySessions.length>1?'s':''} Logged Today</h3>`;
+    html += todaySessions.map(s => wkSessionRowHtml(s)).join('');
+  }
+
+  if (!html) {
+    html = `<div class="empty">
+      <div class="empty-icon"><span class="icon">fitness_center</span></div>
+      <strong>No session today</strong>
+      <span>Start a session or plan your week in the Plan tab.</span>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center">
+        <button class="btn btn-primary btn-sm" onclick="wkStartSession(null)"><span class="icon" style="font-size:15px">play_arrow</span>Quick Session</button>
+        <button class="btn btn-secondary btn-sm" onclick="wkTab('plan')"><span class="icon" style="font-size:15px">calendar_month</span>Plan Week</button>
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ── History ──────────────────────────────────────────────────────
+function wkRenderHeatmap() {
+  const el = document.getElementById('wk-heatmap');
+  if (!el) return;
+  // 13 weeks × 7 days
+  const cells = [];
+  const now = new Date(); now.setHours(12,0,0,0);
+  const todayDow = (now.getDay() + 6) % 7;
+  const startDate = new Date(now);
+  startDate.setDate(startDate.getDate() - todayDow - 12 * 7);
+  for (let week = 0; week < 13; week++) {
+    for (let day = 0; day < 7; day++) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + week * 7 + day);
+      const ds = wkDateStr(d);
+      const sCount = wkSessions.filter(s => s.date === ds).length;
+      const lvl = sCount === 0 ? '' : sCount === 1 ? 'w1' : sCount === 2 ? 'w2' : sCount === 3 ? 'w3' : 'w4';
+      const label = d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + (sCount ? ` · ${sCount} session${sCount>1?'s':''}` : ' · rest');
+      cells.push(`<div class="hm-cell ${lvl}" title="${ds}"><div class="hm-tip">${label}</div></div>`);
+    }
+  }
+  el.innerHTML = cells.join('');
+}
+
+function wkRenderHistoryStats() {
+  const el = document.getElementById('wk-history-stats');
+  if (!el) return;
+  const total = wkSessions.length;
+  const thisWeekDates = wkWeekDates(0);
+  const thisWeek = wkSessions.filter(s => thisWeekDates.includes(s.date)).length;
+  const totalSec = wkSessions.reduce((a,s) => a+(s.durationSec||0), 0);
+  const totalSets = wkSessions.reduce((a,s) => a+(s.exercises||[]).reduce((b,e)=>b+(e.sets||[]).length,0), 0);
+  const stats = [
+    { label:'Total Sessions', value: total, sub:'all time', color:'var(--accent)' },
+    { label:'This Week', value: thisWeek, sub:'sessions', color:'var(--green)' },
+    { label:'Total Time', value: totalSec >= 3600 ? (totalSec/3600).toFixed(1)+'h' : Math.round(totalSec/60)+'m', sub:'logged', color:'var(--orange)' },
+    { label:'Total Sets', value: totalSets, sub:'across all sessions', color:'var(--purple)' },
+  ];
+  el.innerHTML = stats.map(s => `
+    <div class="stat-card" style="--accent:${s.color}">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value" style="color:${s.color};font-size:26px">${s.value}</div>
+      <div class="stat-sub">${s.sub}</div>
+    </div>`).join('');
+}
+
+function wkRenderHistory() {
+  const el = document.getElementById('wk-history-list');
+  if (!el) return;
+  const filter = document.getElementById('wk-hist-filter')?.value || 'all';
+  const list = wkSessions.filter(s => filter === 'all' || s.type === filter);
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon"><span class="icon">history</span></div><strong>No sessions yet</strong><span>Log your first session to see it here.</span></div>`;
+    return;
+  }
+  el.innerHTML = list.map(s => wkSessionRowHtml(s)).join('');
+}
+
+function wkSessionRowHtml(s) {
+  const d = new Date(s.date + 'T12:00:00');
+  const wt = WK_TYPES.find(w => w.id === s.type) || WK_TYPES[5];
+  const sets = (s.exercises || []).reduce((a,e) => a+(e.sets||[]).length, 0);
+  const donesets = (s.exercises || []).reduce((a,e) => a+(e.sets||[]).filter(x=>x.done).length, 0);
+  const mins = s.durationSec ? Math.round(s.durationSec/60) : null;
+  const goalCount = (s.goalIds || []).length;
+  return `<div class="session-log-row">
+    <div>
+      <div class="sl-date">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+      <small>${d.toLocaleDateString('en-US',{weekday:'short'})}</small>
+    </div>
+    <div class="sl-chips">
+      <span class="sl-chip">${wt.em} ${s.type}</span>
+      ${s.exercises?.length ? `<span class="sl-chip"><span class="icon" style="font-size:12px">exercise</span>${s.exercises.length} exercises</span>` : ''}
+      ${sets ? `<span class="sl-chip">${donesets}/${sets} sets</span>` : ''}
+      ${goalCount ? `<span class="sl-chip" style="background:var(--green-light);color:var(--green)"><span class="icon" style="font-size:12px">flag</span>${goalCount} goal${goalCount>1?'s':''}</span>` : ''}
+      ${s.notes ? `<span class="sl-chip" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.notes}">💬 ${s.notes}</span>` : ''}
+    </div>
+    <div class="sl-vol">${mins !== null ? mins+'m' : '—'}<small>${sets ? sets+' sets' : ''}</small></div>
+  </div>`;
+}
+
+// ── Also wire into today card: show today's workout plan ─────────
+function wkGetTodayPlan() {
+  wkLoad();
+  return wkDB.plan?.[todayStr()] || null;
+}
 </script>
 
 <!-- Cmd+K Module Switcher Modal -->
