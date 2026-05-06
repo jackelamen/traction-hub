@@ -2887,54 +2887,55 @@ async function syncSprintFull(sprintId) {
   if (!sp) return;
   const goalObj = DB.goals.find(g => g.id === sp.goalId);
   if (!goalObj?._uuid) return;
-  try {
-    const rows = await sbUpsert('sprints', {
-      ...(sp._uuid ? { id: sp._uuid } : {}),
-      local_id: sp.id, goal_id: goalObj._uuid,
-      name: sp.name, outcome: sp.outcome || null,
-      start_date: sp.startDate || null, end_date: sp.endDate || null,
-      week_checks: sp.weekChecks || {}, reflections: sp.reflections || {}, retro: sp.retro || null
-    }, 'local_id');
-    if (!sp._uuid && rows?.[0]?.id) sp._uuid = rows[0].id;
 
-    // Upsert phases + tactics
-    for (let pi = 0; pi < (sp.phases || []).length; pi++) {
-      const ph = sp.phases[pi];
-      if (!ph) continue;
-      const phRows = await sbUpsert('sprint_phases', {
-        ...(ph._uuid ? { id: ph._uuid } : {}),
-        sprint_id: sp._uuid, phase_index: pi,
-        name: ph.name, description: ph.desc || null
-      }, 'sprint_id,phase_index');
-      if (!ph._uuid && phRows?.[0]?.id) ph._uuid = phRows[0].id;
+  // Upsert the sprint row
+  const rows = await sbUpsert('sprints', {
+    ...(sp._uuid ? { id: sp._uuid } : {}),
+    local_id: sp.id, goal_id: goalObj._uuid,
+    name: sp.name, outcome: sp.outcome || null,
+    start_date: sp.startDate || null, end_date: sp.endDate || null,
+    week_checks: sp.weekChecks || {}, reflections: sp.reflections || {}, retro: sp.retro || null
+  }, 'local_id');
+  if (!sp._uuid && rows?.[0]?.id) sp._uuid = rows[0].id;
 
-      for (let ti = 0; ti < (ph.tactics || []).length; ti++) {
-        const t = ph.tactics[ti];
-        if (!t?.text?.trim()) continue;
-        const freq = t.freq === 'weekdays' ? 'custom' : (t.freq || 'weekly');
-        const days = t.freq === 'weekdays' ? [0,1,2,3,4] : (t.days || []);
-        const tRows = await sbUpsert('sprint_tactics', {
-          ...(t._uuid ? { id: t._uuid } : {}),
-          local_id: t.id, sprint_id: sp._uuid, phase_id: ph._uuid,
-          text: t.text, freq,
-          days, times_per_week: t.timesPerWeek || null, sort_order: ti
-        }, 'local_id');
-        if (!t._uuid && tRows?.[0]?.id) t._uuid = tRows[0].id;
-      }
+  // Upsert phases + tactics
+  for (let pi = 0; pi < (sp.phases || []).length; pi++) {
+    const ph = sp.phases[pi];
+    if (!ph) continue;
+    const phRows = await sbUpsert('sprint_phases', {
+      ...(ph._uuid ? { id: ph._uuid } : {}),
+      sprint_id: sp._uuid, phase_index: pi,
+      name: ph.name, description: ph.desc || null
+    }, 'sprint_id,phase_index');
+    // Always update _uuid from the response (covers both new and existing phases)
+    if (phRows?.[0]?.id) ph._uuid = phRows[0].id;
 
-      // Delete any tactics that were removed locally — fetch all tactic UUIDs for
-      // this phase from Supabase and delete any that are no longer in the local list.
-      try {
-        const existingRows = await sbGet('sprint_tactics', `?phase_id=eq.${ph._uuid}&select=id`);
-        const keptUuids = new Set((ph.tactics || []).filter(t => t._uuid).map(t => t._uuid));
-        for (const row of existingRows) {
-          if (!keptUuids.has(row.id)) {
-            await fetch(`${SB_URL}/rest/v1/sprint_tactics?id=eq.${row.id}`, { method: 'DELETE', headers: sbHeaders() });
-          }
-        }
-      } catch(e) { console.warn('tactic cleanup failed:', e); }
+    for (let ti = 0; ti < (ph.tactics || []).length; ti++) {
+      const t = ph.tactics[ti];
+      if (!t?.text?.trim()) continue;
+      const freq = t.freq === 'weekdays' ? 'custom' : (t.freq || 'weekly');
+      const days = t.freq === 'weekdays' ? [0,1,2,3,4] : (t.days || []);
+      const tRows = await sbUpsert('sprint_tactics', {
+        ...(t._uuid ? { id: t._uuid } : {}),
+        local_id: t.id, sprint_id: sp._uuid, phase_id: ph._uuid,
+        text: t.text, freq,
+        days, times_per_week: t.timesPerWeek || null, sort_order: ti
+      }, 'local_id');
+      // Always update _uuid from the response
+      if (tRows?.[0]?.id) t._uuid = tRows[0].id;
     }
-  } catch(e) { console.error('syncSprintFull failed:', e); }
+
+    // Delete any tactics that were removed locally
+    try {
+      const existingRows = await sbGet('sprint_tactics', `?phase_id=eq.${ph._uuid}&select=id`);
+      const keptUuids = new Set((ph.tactics || []).filter(t => t._uuid).map(t => t._uuid));
+      for (const row of existingRows) {
+        if (!keptUuids.has(row.id)) {
+          await fetch(`${SB_URL}/rest/v1/sprint_tactics?id=eq.${row.id}`, { method: 'DELETE', headers: sbHeaders() });
+        }
+      }
+    } catch(e) { console.warn('tactic cleanup failed:', e); }
+  }
 }
 
 // Called after saving a vision statement
@@ -4599,8 +4600,13 @@ async function saveSprint(){
     savedSprintId = id;
   }
   else{savedSprintId=uid(); DB.sprints.push({id:savedSprintId,weekChecks:{},reflections:{},...data});}
+  try {
+    await syncSprintFull(savedSprintId);
+  } catch(e) {
+    console.error('syncSprintFull failed:', e);
+    alert('Your cycle was saved locally but failed to sync to the cloud: ' + (e?.message || e));
+  }
   saveDB(DB);
-  await syncSprintFull(savedSprintId);
   closeSheet('sheet-new-sprint');
   if(currentView==='today') renderToday();
   if(currentView==='cycles') renderCycles();
