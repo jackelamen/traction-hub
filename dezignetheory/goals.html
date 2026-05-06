@@ -2312,7 +2312,14 @@ body {
             <textarea id="nss-p1-desc" class="inp" rows="2" placeholder="Focus for this phase..." style="margin-bottom:10px;font-size:13px"></textarea>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
               <span style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em">Actions</span>
-              <button class="btn btn-ghost btn-xs" onclick="addPhaseTactic(0)"><span class="icon" style="font-size:14px">add</span>Add</button>
+              <div style="display:flex;align-items:center;gap:6px">
+                <select onchange="copyTacticsToPhase(0,parseInt(this.value));this.selectedIndex=0" class="inp" style="padding:4px 8px;font-size:11px;width:auto;color:var(--text-3);background:transparent;border-color:var(--border-low)">
+                  <option value="" disabled selected>Copy from…</option>
+                  <option value="1">Phase 2</option>
+                  <option value="2">Phase 3</option>
+                </select>
+                <button class="btn btn-ghost btn-xs" onclick="addPhaseTactic(0)"><span class="icon" style="font-size:14px">add</span>Add</button>
+              </div>
             </div>
             <div id="nss-p1-tactics" style="display:flex;flex-direction:column;gap:6px"></div>
           </div>
@@ -2325,7 +2332,14 @@ body {
             <textarea id="nss-p2-desc" class="inp" rows="2" placeholder="Focus for this phase..." style="margin-bottom:10px;font-size:13px"></textarea>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
               <span style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em">Actions</span>
-              <button class="btn btn-ghost btn-xs" onclick="addPhaseTactic(1)"><span class="icon" style="font-size:14px">add</span>Add</button>
+              <div style="display:flex;align-items:center;gap:6px">
+                <select onchange="copyTacticsToPhase(1,parseInt(this.value));this.selectedIndex=0" class="inp" style="padding:4px 8px;font-size:11px;width:auto;color:var(--text-3);background:transparent;border-color:var(--border-low)">
+                  <option value="" disabled selected>Copy from…</option>
+                  <option value="0">Phase 1</option>
+                  <option value="2">Phase 3</option>
+                </select>
+                <button class="btn btn-ghost btn-xs" onclick="addPhaseTactic(1)"><span class="icon" style="font-size:14px">add</span>Add</button>
+              </div>
             </div>
             <div id="nss-p2-tactics" style="display:flex;flex-direction:column;gap:6px"></div>
           </div>
@@ -2338,7 +2352,14 @@ body {
             <textarea id="nss-p3-desc" class="inp" rows="2" placeholder="Focus for this phase..." style="margin-bottom:10px;font-size:13px"></textarea>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
               <span style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em">Actions</span>
-              <button class="btn btn-ghost btn-xs" onclick="addPhaseTactic(2)"><span class="icon" style="font-size:14px">add</span>Add</button>
+              <div style="display:flex;align-items:center;gap:6px">
+                <select onchange="copyTacticsToPhase(2,parseInt(this.value));this.selectedIndex=0" class="inp" style="padding:4px 8px;font-size:11px;width:auto;color:var(--text-3);background:transparent;border-color:var(--border-low)">
+                  <option value="" disabled selected>Copy from…</option>
+                  <option value="0">Phase 1</option>
+                  <option value="1">Phase 2</option>
+                </select>
+                <button class="btn btn-ghost btn-xs" onclick="addPhaseTactic(2)"><span class="icon" style="font-size:14px">add</span>Add</button>
+              </div>
             </div>
             <div id="nss-p3-tactics" style="display:flex;flex-direction:column;gap:6px"></div>
           </div>
@@ -4490,6 +4511,13 @@ function autoEndDate(){
 }
 function addPhaseTactic(pi,text=''){phaseTacticRows[pi].push({id:uid(),text,freq:'weekly',days:[]});renderPhaseTactics(pi);}
 function removePhaseTactic(pi,id){phaseTacticRows[pi]=phaseTacticRows[pi].filter(r=>r.id!==id);renderPhaseTactics(pi);}
+function copyTacticsToPhase(targetPi,sourcePi){
+  const source=phaseTacticRows[sourcePi]||[];
+  if(!source.length) return;
+  const copies=source.map(t=>({id:uid(),text:t.text,freq:t.freq||'weekly',days:[...(t.days||[])],timesPerWeek:t.timesPerWeek||null}));
+  phaseTacticRows[targetPi]=[...phaseTacticRows[targetPi],...copies];
+  renderPhaseTactics(targetPi);
+}
 function renderPhaseTactics(pi){
   const el=document.getElementById(`nss-p${pi+1}-tactics`); if(!el) return;
   const DAY_SHORT=['M','T','W','T','F','S','S'];
