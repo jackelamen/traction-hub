@@ -3569,12 +3569,13 @@ function renderToday() {
         // N-times-per-week: show N tappable slots, fill them as you log completions
         const n = xpwTarget(t);
         const c = xpwDoneCount(t, checks);
-        const didToday = xpwDidToday(t, checks);
+        const didToday = isCurrentWk ? xpwDidToday(t, checks) : false;
         const allFilled = c >= n;
         const slots = Array.from({length:n},(_,i) => {
           const key = `${t.id}_${i}`;
           const filled = !!checks[key];
           // Allow un-checking a filled slot, or filling the next empty slot in order
+          // Past weeks: no per-day limit, fill freely
           const isNext = !filled && i === c; // next available slot
           const clickable = filled || (isNext && !didToday);
           const bg = filled ? 'var(--green)' : isNext ? 'var(--blue-dim)' : 'var(--bg)';
@@ -3986,8 +3987,9 @@ function toggleXpw(sprintId, week, tacticId, slotIdx, el) {
   if (was) {
     delete sp.weekChecks[week][key];
   } else {
+    const isPastWeek = week < sprintCurrentWeek(sp);
     const tactic = tacticsForWeek(sp, week).find(t => t.id === tacticId);
-    if (tactic && xpwDidToday(tactic, sp.weekChecks[week])) return;
+    if (!isPastWeek && tactic && xpwDidToday(tactic, sp.weekChecks[week])) return;
     sp.weekChecks[week][key] = localDateKey();
   }
   saveDB(DB); syncSprint(sprintId);
