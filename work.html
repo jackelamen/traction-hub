@@ -3410,7 +3410,16 @@ function shouldSyncTractionKey(key) {
 
 // Fixed user ID — single user app, same ID on every device
 const SB_USER_ID = 'jack_traction_hub_v1';
-function getSbUserId() { return SB_USER_ID; }
+function getAuthenticatedSbUserId() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s?.user?.id || null;
+  } catch(e) { return null; }
+}
+function getSbUserId() { return getAuthenticatedSbUserId() || SB_USER_ID; }
+function getReadableWorkUserIds() {
+  return [...new Set([getSbUserId(), SB_USER_ID].filter(Boolean))];
+}
 
 // Returns the current session JWT (needed for RLS-protected data requests)
 function getSbToken() {
@@ -3532,6 +3541,63 @@ async function pushAllToSupabase() {
   }
 }
 
+function collectWorkSnapshotRows() {
+  const nowIso = new Date().toISOString();
+  const rows = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!shouldSyncTractionKey(key)) continue;
+    let parsed;
+    try { parsed = JSON.parse(localStorage.getItem(key)); }
+    catch(e) { parsed = localStorage.getItem(key); }
+    rows.push({ user_id: getSbUserId(), key, value: parsed, updated_at: nowIso });
+  }
+  return rows;
+}
+
+async function publishWorkSnapshotToSupabase() {
+  const rows = collectWorkSnapshotRows();
+  if (!rows.length) throw new Error('No Work data keys found to publish.');
+  const res = await fetchWithTimeout(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
+    method: 'POST',
+    headers: {
+      'apikey': SB_ANON,
+      'Authorization': `Bearer ${getSbToken()}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ rows })
+  });
+  if (!res.ok) throw new Error(`publish failed: ${res.status} ${await res.text()}`);
+  rows.forEach(row => {
+    _dirtySyncKeys.delete(row.key);
+    _setLsTimestamp(row.key, Date.now());
+  });
+  return rows.length;
+}
+
+async function maybePublishDesktopWorkSnapshot() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('publishDesktopWork') !== '1') return false;
+  const rows = collectWorkSnapshotRows();
+  const setup = getMorningSetup();
+  const details = [
+    `Work keys to publish: ${rows.length}`,
+    `Morning setup date: ${setup?.date || '--'}`,
+    `Gratitude: ${setup?.gratitude ? 'present' : 'blank'}`,
+    `Priorities: ${(setup?.priorities || []).filter(Boolean).length}`
+  ].join('\n');
+  const ok = confirm(`Publish this desktop's Work data to the cloud?\n\n${details}\n\nOnly continue if this desktop is showing the correct Work data.`);
+  if (!ok) return false;
+  try {
+    const count = await publishWorkSnapshotToSupabase();
+    alert(`Desktop Work data published: ${count} keys.`);
+    return true;
+  } catch(e) {
+    alert(e.message || String(e));
+    return false;
+  }
+}
+
 // Throttle: fire immediately, then ignore calls for 3 seconds
 const _sbPushThrottled = (() => {
   let busy = false;
@@ -3561,8 +3627,9 @@ localStorage.removeItem = function(key) {
 // On page load: pull all data from Supabase into localStorage, then boot the app
 async function syncFromSupabase() {
   try {
+    const userFilter = getReadableWorkUserIds().map(id => `"${id}"`).join(',');
     const res = await fetchWithTimeout(
-      `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=neq.${encodeURIComponent(OLD_DAILY_SIGNALS_KEY)}&select=key,value,updated_at`,
+      `${SB_URL}/rest/v1/traction_data?user_id=in.(${encodeURIComponent(userFilter)})&key=neq.${encodeURIComponent(OLD_DAILY_SIGNALS_KEY)}&select=user_id,key,value,updated_at`,
       { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' } }
     );
     if (!res.ok) {
@@ -3572,7 +3639,7 @@ async function syncFromSupabase() {
     const rows = await res.json();
     console.log('[Supabase] loaded', rows.length, 'keys from cloud');
     const localTs = _getLsTimestamps();
-    rows.forEach(({ key, value, updated_at }) => {
+    preferWorkRows(rows).forEach(({ key, value, updated_at }) => {
       if (NO_SYNC_KEYS.has(key)) return;
       // Never overwrite a key that was written locally more recently than the cloud copy
       const cloudMs = updated_at ? new Date(updated_at).getTime() : 0;
@@ -3592,6 +3659,27 @@ async function syncFromSupabase() {
   } catch(e) {
     console.warn('[Supabase] syncFromSupabase error:', e);
   }
+}
+
+function preferWorkRows(rows = []) {
+  const writableId = getSbUserId();
+  const byKey = new Map();
+  rows.forEach(row => {
+    if (!shouldSyncTractionKey(row.key)) return;
+    const current = byKey.get(row.key);
+    if (!current) {
+      byKey.set(row.key, row);
+      return;
+    }
+    const rowIsWritable = row.user_id === writableId;
+    const currentIsWritable = current.user_id === writableId;
+    const rowMs = new Date(row.updated_at || 0).getTime();
+    const currentMs = new Date(current.updated_at || 0).getTime();
+    if ((rowIsWritable && !currentIsWritable) || (rowIsWritable === currentIsWritable && rowMs > currentMs)) {
+      byKey.set(row.key, row);
+    }
+  });
+  return [...byKey.values()];
 }
 
 // ── Asana Tasks (baked in at generation time) ───────────────────
@@ -11094,7 +11182,14 @@ function renderWeeklyIntentionHero() {
 
 // Hydrate from Supabase first, then boot
 // Must await authReady so token is refreshed before the sync fetch runs
-authReady.then(() => syncFromSupabase()).finally(() => {
+authReady.then(async () => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('publishDesktopWork') === '1') {
+    await maybePublishDesktopWorkSnapshot();
+    return;
+  }
+  await syncFromSupabase();
+}).finally(() => {
   bootApp();
   _sbBootComplete = true; // now allow writes to trigger uploads
   // Push local state to cloud every 60s (safety net)
