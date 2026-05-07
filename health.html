@@ -1323,7 +1323,9 @@ function getLog(date = todayStr()){
     exerciseMins: pick(log.exerciseMins, signal.exerciseMins),
     weight: pick(log.weight, signal.weight)
   };
-  return Object.keys(merged).length ? merged : null;
+  const meaningful = ['sleepHours','steps','water','exerciseMins','weight','nutrition','energy','sleepQuality','pain','notes']
+    .some(key => merged[key] !== null && merged[key] !== undefined && merged[key] !== '');
+  return meaningful ? merged : null;
 }
 function readiness(log){
   if (!log) return null;
@@ -2164,6 +2166,16 @@ async function maybePublishDeviceHealthSnapshot() {
 }
 async function bootHealth() {
   await authReady; // ensure token is refreshed before we try to sync
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('publishDesktopHealth') === '1') {
+    db = loadData();
+    renderAll();
+    _sbBootComplete = true;
+    await maybePublishDeviceHealthSnapshot();
+    renderHealthSyncDebug();
+    _startPeriodicSync();
+    return;
+  }
   await syncFromSupabase();
   db = loadData();
   renderAll();
