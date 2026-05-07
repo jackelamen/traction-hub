@@ -632,9 +632,10 @@ async function pushAllToSupabase() {
   if (!userId) return;
   const rows = [];
   const timestamps = _getLsTimestamps();
+  const syncKeys = new Set([STORAGE_KEY, SUMMARY_KEY]);
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (NO_SYNC_KEYS.has(key)) continue;
+    if (NO_SYNC_KEYS.has(key) || !syncKeys.has(key)) continue;
     let parsed; try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
     const updatedAtMs = timestamps[key];
     const updatedAt = Number.isFinite(updatedAtMs) ? new Date(updatedAtMs).toISOString() : '1970-01-01T00:00:00.000Z';
@@ -680,7 +681,7 @@ async function syncFromSupabase() {
       if (!keys.has(key)) return;
       const remoteTs = new Date(updated_at).getTime();
       const localTs  = timestamps[key] || 0;
-      if (remoteTs > localTs) _setSyncedLsValue(key, value, remoteTs);
+      if (remoteTs > localTs) _setSyncedLsValue(key, mergeRemoteValue(key, value), remoteTs);
     });
   } catch(e) { console.warn('[Wellness] sync failed', e); }
 }
@@ -759,12 +760,57 @@ const BREATH_PRESETS = [
 let currentBreathPreset = BREATH_PRESETS[0];
 
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
-function todayStr(){ return new Date().toISOString().split('T')[0]; }
+function todayStr(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 function fmtDate(str){ return new Date(str + 'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function uid(prefix){
   if (globalThis.crypto?.randomUUID) return `${prefix}-${globalThis.crypto.randomUUID()}`;
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+}
+function mergeById(localRows = [], remoteRows = []) {
+  const merged = new Map();
+  [...localRows, ...remoteRows].forEach(row => {
+    if (!row || !row.id) return;
+    merged.set(row.id, { ...(merged.get(row.id) || {}), ...row });
+  });
+  return [...merged.values()];
+}
+function mergeCheckins(localMap = {}, remoteMap = {}) {
+  const merged = { ...localMap, ...remoteMap };
+  Object.keys(localMap || {}).forEach(date => {
+    const localRow = localMap[date];
+    const remoteRow = remoteMap?.[date];
+    const localMs = new Date(localRow?.savedAt || 0).getTime();
+    const remoteMs = new Date(remoteRow?.savedAt || 0).getTime();
+    if (!remoteRow || localMs > remoteMs) merged[date] = localRow;
+    else if (date === todayStr()) merged[date] = mergeNonEmpty(remoteRow, localRow);
+  });
+  return merged;
+}
+function mergeNonEmpty(base = {}, overlay = {}) {
+  const next = { ...base };
+  Object.entries(overlay || {}).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== '') next[key] = value;
+  });
+  return next;
+}
+function mergeRemoteValue(key, remoteValue) {
+  if (key !== STORAGE_KEY) return remoteValue;
+  const local = loadData();
+  const remote = remoteValue && typeof remoteValue === 'object' ? remoteValue : {};
+  return {
+    ...clone(DEFAULTS),
+    ...remote,
+    checkins: mergeCheckins(local.checkins || {}, remote.checkins || {}),
+    practices: mergeById(local.practices || [], remote.practices || []),
+    thoughts: mergeById(local.thoughts || [], remote.thoughts || [])
+  };
 }
 function loadData(){ try { return { ...clone(DEFAULTS), ...(JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')) }; } catch(e) { return clone(DEFAULTS); } }
 function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); writeSummary(); }

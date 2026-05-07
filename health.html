@@ -937,7 +937,13 @@ let trendStartDate = null;
 let trendEndDate = null;
 
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
-function todayStr(){ return new Date().toISOString().split('T')[0]; }
+function todayStr(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 function fmtDate(str){ return new Date(str + 'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
 function uid(prefix){
   if (globalThis.crypto?.randomUUID) return `${prefix}-${globalThis.crypto.randomUUID()}`;
@@ -986,9 +992,20 @@ async function deleteKeyFromSupabase(key) {
 async function pushAllToSupabase() {
   const rows = [];
   const timestamps = _getLsTimestamps();
+  const syncKeys = new Set([
+    STORAGE_KEY,
+    SUMMARY_KEY,
+    DAILY_SIGNALS_KEY,
+    WORK_TRACTION_KEY,
+    WORK_STEPS_KEY,
+    WORK_STEPS_ONLY_KEY,
+    WORK_WATER_KEY,
+    'edgex_workout_v1',
+    'edgex_workout_sessions_v1'
+  ]);
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (NO_SYNC_KEYS.has(key)) continue;
+    if (NO_SYNC_KEYS.has(key) || !syncKeys.has(key)) continue;
     let parsed; try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
     const updatedAtMs = timestamps[key];
     const updatedAt = Number.isFinite(updatedAtMs) ? new Date(updatedAtMs).toISOString() : '1970-01-01T00:00:00.000Z';
@@ -1042,7 +1059,7 @@ async function syncFromSupabase() {
       if (!keys.has(key)) return;
       const remoteTs = new Date(updated_at).getTime();
       const localTs  = timestamps[key] || 0;
-      if (remoteTs > localTs) _setSyncedLsValue(key, value, remoteTs);
+      if (remoteTs > localTs) _setSyncedLsValue(key, mergeRemoteValue(key, value), remoteTs);
     });
   } catch(e) { console.warn('[Health] sync failed', e); }
 }
@@ -1082,6 +1099,49 @@ function updateDailySignal(date, patch) {
 function parseStore(key, fallback = {}) {
   try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
   catch(e) { return fallback; }
+}
+function mergeByDate(localMap = {}, remoteMap = {}) {
+  const merged = { ...localMap, ...remoteMap };
+  Object.keys(localMap || {}).forEach(date => {
+    const localRow = localMap[date];
+    const remoteRow = remoteMap?.[date];
+    if (!remoteRow) merged[date] = localRow;
+    else {
+      const localMs = new Date(localRow?.savedAt || localRow?.updatedAt || 0).getTime();
+      const remoteMs = new Date(remoteRow?.savedAt || remoteRow?.updatedAt || 0).getTime();
+      if (localMs > remoteMs) merged[date] = localRow;
+      else if (date === todayStr()) merged[date] = mergeNonEmpty(remoteRow, localRow);
+    }
+  });
+  return merged;
+}
+function mergeNonEmpty(base = {}, overlay = {}) {
+  const next = { ...base };
+  Object.entries(overlay || {}).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== '') next[key] = value;
+  });
+  return next;
+}
+function mergeCheckMaps(localMap = {}, remoteMap = {}) {
+  const merged = { ...localMap, ...remoteMap };
+  Object.keys(localMap || {}).forEach(date => {
+    merged[date] = { ...(remoteMap?.[date] || {}), ...(localMap[date] || {}) };
+  });
+  return merged;
+}
+function mergeRemoteValue(key, remoteValue) {
+  if (key === STORAGE_KEY) {
+    const local = loadData();
+    const remote = remoteValue && typeof remoteValue === 'object' ? remoteValue : {};
+    return {
+      settings: { ...DEFAULTS.settings, ...(local.settings || {}), ...(remote.settings || {}) },
+      routines: remote.routines || local.routines || clone(DEFAULTS.routines),
+      logs: mergeByDate(local.logs || {}, remote.logs || {}),
+      checks: mergeCheckMaps(local.checks || {}, remote.checks || {})
+    };
+  }
+  if (key === DAILY_SIGNALS_KEY) return mergeByDate(getDailySignals(), remoteValue || {});
+  return remoteValue;
 }
 function shouldUseWorkSignal(existing, sourceUpdatedAt) {
   if (!existing) return true;

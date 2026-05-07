@@ -3402,6 +3402,10 @@ const NO_SYNC_KEYS = new Set([
 ]);
 
 // Everything else gets synced — no allowlist needed
+function shouldSyncTractionKey(key) {
+  if (NO_SYNC_KEYS.has(key)) return false;
+  return key.startsWith('dt_');
+}
 
 // User ID derived from authenticated Supabase session
 function getSbUserId() {
@@ -3497,7 +3501,7 @@ async function pushAllToSupabase() {
   const timestamps = _getLsTimestamps();
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (NO_SYNC_KEYS.has(key)) continue;
+    if (!shouldSyncTractionKey(key)) continue;
     let parsed;
     try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
     const updatedAtMs = timestamps[key];
