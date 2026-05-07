@@ -884,6 +884,18 @@ const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const SB_USER_ID = 'jack_traction_hub_v1';
 const HEALTH_BUILD = 'health-sync-diagnostic-2026-05-07';
 let _lastHealthSync = { status: 'not started', rows: [], error: '' };
+function getSbUserId() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s?.user?.id || null;
+  } catch(e) { return null; }
+}
+function getWritableHealthUserId() {
+  return getSbUserId() || SB_USER_ID;
+}
+function getReadableHealthUserIds() {
+  return [...new Set([getWritableHealthUserId(), SB_USER_ID].filter(Boolean))];
+}
 function getSbToken() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
@@ -987,7 +999,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
 async function deleteKeyFromSupabase(key) {
   if (NO_SYNC_KEYS.has(key)) return;
   try {
-    await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=eq.${encodeURIComponent(key)}`, {
+    await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getWritableHealthUserId())}&key=eq.${encodeURIComponent(key)}`, {
       method: 'DELETE',
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}` }
     });
@@ -1014,7 +1026,7 @@ async function pushAllToSupabase() {
     let parsed; try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
     const updatedAtMs = timestamps[key];
     const updatedAt = Number.isFinite(updatedAtMs) ? new Date(updatedAtMs).toISOString() : '1970-01-01T00:00:00.000Z';
-    rows.push({ user_id: SB_USER_ID, key, value: parsed, updated_at: updatedAt });
+    rows.push({ user_id: getWritableHealthUserId(), key, value: parsed, updated_at: updatedAt });
   }
   if (!rows.length) return;
   try {
@@ -1033,7 +1045,7 @@ async function publishHealthSnapshotToSupabase() {
     let parsed;
     try { parsed = JSON.parse(localStorage.getItem(key)); }
     catch(e) { parsed = localStorage.getItem(key); }
-    return { user_id: SB_USER_ID, key, value: parsed || {}, updated_at: nowIso };
+    return { user_id: getWritableHealthUserId(), key, value: parsed || {}, updated_at: nowIso };
   });
   const res = await fetchWithTimeout(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
     method: 'POST',
@@ -1077,7 +1089,8 @@ async function syncFromSupabase() {
       'edgex_workout_sessions_v1'
     ]);
     const keyFilter = [...keys].join(',');
-    const res = await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
+    const userFilter = getReadableHealthUserIds().map(id => `"${id}"`).join(',');
+    const res = await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=in.(${encodeURIComponent(userFilter)})&key=in.(${encodeURIComponent(keyFilter)})&select=user_id,key,value,updated_at`, {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' }
     });
     if (!res.ok) {
@@ -1088,10 +1101,11 @@ async function syncFromSupabase() {
     const rows = await res.json();
     _lastHealthSync = {
       status: 'ok',
-      rows: rows.map(({ key, value, updated_at }) => ({ key, updated_at, score: healthScoreFromRemoteValue(key, value) })),
+      rows: rows.map(({ user_id, key, value, updated_at }) => ({ user_id, key, updated_at, score: healthScoreFromRemoteValue(key, value) })),
       error: ''
     };
-    rows.forEach(({ key, value, updated_at }) => {
+    const preferredRows = preferHealthRows(rows);
+    preferredRows.forEach(({ key, value, updated_at }) => {
       if (!keys.has(key)) return;
       const remoteTs = new Date(updated_at).getTime();
       const localTs  = timestamps[key] || 0;
@@ -1194,6 +1208,25 @@ function healthScoreFromRemoteValue(key, value) {
   } finally {
     db = previousDb;
   }
+}
+function preferHealthRows(rows = []) {
+  const writableId = getWritableHealthUserId();
+  const byKey = new Map();
+  rows.forEach(row => {
+    const current = byKey.get(row.key);
+    if (!current) {
+      byKey.set(row.key, row);
+      return;
+    }
+    const rowIsWritable = row.user_id === writableId;
+    const currentIsWritable = current.user_id === writableId;
+    const rowMs = new Date(row.updated_at || 0).getTime();
+    const currentMs = new Date(current.updated_at || 0).getTime();
+    if ((rowIsWritable && !currentIsWritable) || (rowIsWritable === currentIsWritable && rowMs > currentMs)) {
+      byKey.set(row.key, row);
+    }
+  });
+  return [...byKey.values()];
 }
 function mergeNonEmpty(base = {}, overlay = {}) {
   const next = { ...base };
@@ -2157,7 +2190,7 @@ function renderHealthSyncDebug() {
     `Local filled fields: ${filledHealthFieldCount(localToday)}`,
     `Summary score: ${summary?.score ?? '--'} | updated: ${summary?.updatedAt || '--'}`,
     `Cloud sync: ${_lastHealthSync.status}${_lastHealthSync.error ? ' - ' + _lastHealthSync.error : ''}`,
-    `Cloud rows: ${_lastHealthSync.rows.map(r => `${r.key} score=${r.score ?? '--'} updated=${r.updated_at || '--'}`).join(' | ') || '--'}`
+    `Cloud rows: ${_lastHealthSync.rows.map(r => `${r.user_id || '?'}:${r.key} score=${r.score ?? '--'} updated=${r.updated_at || '--'}`).join(' | ') || '--'}`
   ].join('\n');
   document.body.appendChild(box);
 }
