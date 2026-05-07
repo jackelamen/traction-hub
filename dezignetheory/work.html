@@ -1304,105 +1304,38 @@
         </div>
       </div>
 
-      <!-- Box Breathing Widget -->
-      <div id="box-breath-card" class="relative rounded-xl overflow-hidden shadow-lg" style="aspect-ratio:16/9; min-height:220px; background-image:url('sunrise.jpg'); background-size:cover; background-position:center">
-        <!-- Dark overlay -->
-        <div class="absolute inset-0" style="background:linear-gradient(to bottom, rgba(8,4,20,0.45) 0%, rgba(8,4,20,0.20) 40%, rgba(8,4,20,0.50) 100%)"></div>
-        <!-- Fullscreen button -->
-        <button onclick="expandBoxBreath()" title="Full screen"
-          class="absolute top-3 right-3 z-20 w-7 h-7 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/25 transition-colors">
-          <span class="material-symbols-outlined text-white text-base">fullscreen</span>
-        </button>
-        <!-- Idle state -->
-        <div id="bbx-idle" class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
-          <span class="text-xs font-bold text-[#b9e7f3]/70 uppercase tracking-widest mb-1">Today's Focus</span>
-          <h4 class="text-lg font-bold text-white">Cultivating Stillness</h4>
-          <p class="text-white/60 text-xs text-center">4×4×4×4 box breathing · 60 seconds · one round</p>
-          <button onclick="startBoxBreath()" class="mt-2 flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white text-xs font-bold px-5 py-2.5 rounded-full transition-all hover:scale-105 active:scale-95">
-            <span class="material-symbols-outlined text-base">play_arrow</span>
-            Begin
-          </button>
-        </div>
-
-        <!-- Countdown intro state -->
-        <div id="bbx-countdown" class="hidden absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <span class="text-xs font-bold text-white/50 uppercase tracking-widest">Let's begin</span>
-          <span id="bbx-countdown-num" class="text-6xl font-black text-white tabular-nums leading-none" style="text-shadow:0 0 40px rgba(185,231,243,0.6)">3</span>
-          <span class="text-xs text-white/30">find a comfortable position</span>
-        </div>
-
-        <!-- Active breathing state -->
-        <div id="bbx-active" class="hidden absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
-          <!-- Breathing circle + progress arc -->
-          <div class="relative flex items-center justify-center flex-shrink-0" style="width:110px;height:110px">
-            <!-- Progress arc (circle) -->
-            <svg id="bbx-svg" width="110" height="110" viewBox="0 0 110 110" style="display:block;position:absolute;top:0;left:0">
-              <!-- Track -->
-              <circle cx="55" cy="55" r="50"
-                fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="4"/>
-              <!-- Animated arc -->
-              <circle id="bbx-ring" cx="55" cy="55" r="50"
-                fill="none" stroke="#f97316" stroke-width="4"
-                stroke-linecap="round"
-                stroke-dasharray="314"
-                stroke-dashoffset="314"
-                style="transform-origin:55px 55px; transform:rotate(-90deg); transition:stroke-dashoffset 0.15s linear, stroke 0.5s ease"/>
-            </svg>
-            <!-- Breathing orb — expands on inhale, shrinks on exhale -->
-            <div id="bbx-orb"
-              class="rounded-full"
-              style="width:40px;height:40px;background:radial-gradient(circle at 38% 38%, rgba(185,231,243,0.25), rgba(26,79,138,0.75));box-shadow:0 0 12px rgba(185,231,243,0.25);transition:width 1s ease-in-out, height 1s ease-in-out, box-shadow 0.6s ease, background 0.5s ease">
+      <!-- Wellness Practice Connector -->
+      <div class="bg-surface-container-lowest rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-gray-100 flex items-start justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="material-symbols-outlined text-primary text-base">self_improvement</span>
+              <span class="text-[11px] font-bold text-on-surface/70 uppercase tracking-widest">Wellness Practice</span>
             </div>
-            <!-- Inner content overlaid on orb -->
-            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span id="bbx-count" class="text-2xl font-black text-white tabular-nums leading-none">4</span>
-              <span id="bbx-sub" class="text-[8px] font-bold text-white/60 uppercase tracking-widest mt-0.5">inhale</span>
-            </div>
+            <h4 class="text-base font-extrabold text-on-surface">Use the Wellness timer</h4>
+            <p class="text-xs text-on-surface-variant mt-1">Meditation, breathwork, music, and notes now live in Wellness.</p>
           </div>
-
-          <!-- Phase label -->
-          <div id="bbx-phase-label" class="text-base font-extrabold text-white tracking-wide relative z-10">Breathe In</div>
-          <div id="bbx-phase-sub" class="text-xs text-white/50 relative z-10">box breathing · 4 × 4 × 4 × 4</div>
-
-          <!-- Phase dots -->
-          <div class="flex gap-2 mt-1 relative z-10">
-            <div id="bbxd-in"   class="w-2 h-2 rounded-full bg-white/20 transition-all duration-300"></div>
-            <div id="bbxd-h1"   class="w-2 h-2 rounded-full bg-white/20 transition-all duration-300"></div>
-            <div id="bbxd-out"  class="w-2 h-2 rounded-full bg-white/20 transition-all duration-300"></div>
-            <div id="bbxd-h2"   class="w-2 h-2 rounded-full bg-white/20 transition-all duration-300"></div>
-          </div>
-
-          <button onclick="stopBoxBreath()" class="mt-1 text-white/30 hover:text-white/70 transition-colors text-xs relative z-10">stop</button>
+          <span id="wellness-practice-badge" class="text-[10px] font-bold px-2 py-1 rounded-full bg-indigo-50 text-primary whitespace-nowrap">0 min</span>
         </div>
-
-        <!-- Done state -->
-        <div id="bbx-done" class="hidden absolute inset-0 flex flex-col items-center justify-center gap-2 p-6">
-          <span class="text-3xl">🌅</span>
-          <p class="text-white font-extrabold text-base">Round complete</p>
-          <p id="bbx-done-summary" class="text-white/60 text-xs text-center"></p>
-          <div class="flex gap-3 mt-1">
-            <button onclick="resetBoxBreath()" class="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white text-xs font-bold px-4 py-2 rounded-full transition-all hover:scale-105">
-              <span class="material-symbols-outlined text-sm">replay</span>
-              Again
-            </button>
-            <button onclick="viewBreathLog()" class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white text-xs font-bold px-4 py-2 rounded-full transition-all">
-              <span class="material-symbols-outlined text-sm">list</span>
-              Today's log
-            </button>
+        <div class="p-4 space-y-3">
+          <div id="wellness-practice-summary" class="rounded-xl bg-surface-container p-3 text-xs text-on-surface-variant">
+            No Wellness practice saved today.
           </div>
-        </div>
-      </div>
-
-      <!-- Box Breath Log -->
-      <div id="breath-log-panel" class="hidden bg-surface-container-lowest rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary text-base">self_improvement</span>
-            <span class="text-[11px] font-bold text-on-surface/70 uppercase tracking-widest">Box Breathing Log</span>
+          <div class="grid grid-cols-2 gap-2">
+            <a href="wellness.html?view=meditate&preset=two-minute" class="flex items-center justify-center gap-1.5 rounded-xl bg-primary text-white text-xs font-bold py-2.5 hover:bg-[#0EA5E9] transition-colors">
+              <span class="material-symbols-outlined text-sm">air</span>
+              2-min reset
+            </a>
+            <a href="wellness.html?view=meditate&preset=box" class="flex items-center justify-center gap-1.5 rounded-xl bg-surface-container-high text-on-surface text-xs font-bold py-2.5 hover:bg-outline-variant/20 transition-colors">
+              <span class="material-symbols-outlined text-sm">grid_view</span>
+              Box breathing
+            </a>
           </div>
-          <span id="breath-log-badge" class="text-[10px] font-bold font-bold" style="color:#4f46e5;background:#eef2ff px-2 py-0.5 rounded-full"></span>
+          <a href="wellness.html?view=journal&type=practice" class="flex items-center justify-center gap-1.5 rounded-xl border border-outline-variant/20 text-on-surface-variant text-xs font-bold py-2.5 hover:bg-surface-container transition-colors">
+            <span class="material-symbols-outlined text-sm">auto_stories</span>
+            View Wellness practice notes
+          </a>
         </div>
-        <div id="breath-log-list" class="divide-y divide-gray-100 max-h-40 overflow-y-auto"></div>
       </div>
 
 
@@ -3408,6 +3341,8 @@ const NOTION_URL  = 'https://www.notion.so/27f990778487423a94395d4167e276e0';
 const SESSION_KEY  = 'dt_30day-sessions-v1';
 const BREATH_KEY   = 'dt_30day-breath-v1';
 const TIMER_KEY    = 'dt_30day-timer-v1';
+const WELLNESS_STORAGE_KEY = STORAGE_KEY.startsWith('dt_') ? 'dt_edgex_wellness_v1' : 'edgex_wellness_v1';
+const WELLNESS_SUMMARY_KEY = STORAGE_KEY.startsWith('dt_') ? 'dt_edgex_wellness_summary' : 'edgex_wellness_summary';
 
 // ── Supabase Sync ────────────────────────────────────────────────
 const SB_URL    = 'https://mdkyijbgvxedelcqcouu.supabase.co';
@@ -3828,6 +3763,9 @@ function todayStr() {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 // ── Daily Quote ─────────────────────────────────────────────────
@@ -5908,7 +5846,7 @@ function saveEntry() {
   // Session stats
   const todaySessions = sessionLog[today] || [];
   const totalMins     = todaySessions.reduce((a, s) => a + (s.dur || 0), 0);
-  const breathRounds  = (breathLog[today] || []).length;
+  const breathRounds  = getRegulationRoundCount(today);
 
   const pillar1 = sanctuary && ledger && noConsume;
   const pillar2 = timer && horizon && walk;
@@ -6730,11 +6668,13 @@ function saveBreathRound() {
 }
 
 function renderBreathLog() {
+  renderWellnessPracticeCard();
   const today   = todayStr();
   const entries = breathLog[today] || [];
   const panel   = document.getElementById('breath-log-panel');
   const list    = document.getElementById('breath-log-list');
   const badge   = document.getElementById('breath-log-badge');
+  if (!panel || !list || !badge) return;
 
   if (entries.length === 0) { panel.classList.add('hidden'); return; }
   panel.classList.remove('hidden');
@@ -6758,7 +6698,47 @@ function renderBreathLog() {
 
 function viewBreathLog() {
   renderBreathLog();
-  document.getElementById('breath-log-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('breath-log-panel')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function getWellnessData() {
+  try { return JSON.parse(localStorage.getItem(WELLNESS_STORAGE_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function getWellnessPractices(date=todayStr()) {
+  const data = getWellnessData();
+  return Array.isArray(data.practices) ? data.practices.filter(p => p.date === date) : [];
+}
+function getWellnessPracticeStats(date=todayStr()) {
+  const practices = getWellnessPractices(date);
+  const minutes = practices.reduce((sum,p) => sum + (parseInt(p.minutes) || 0), 0);
+  return { practices, minutes, count: practices.length };
+}
+function getRegulationRoundCount(date=todayStr()) {
+  const breathRounds = (breathLog[date] || []).length;
+  const wellnessRounds = getWellnessPracticeStats(date).count;
+  return breathRounds + wellnessRounds;
+}
+function renderWellnessPracticeCard() {
+  const badge = document.getElementById('wellness-practice-badge');
+  const summary = document.getElementById('wellness-practice-summary');
+  if (!badge || !summary) return;
+  const stats = getWellnessPracticeStats();
+  badge.textContent = `${stats.minutes} min`;
+  if (!stats.count) {
+    summary.innerHTML = 'No Wellness practice saved today. Launch the shared timer to log meditation, breathwork, music, and notes in one place.';
+    return;
+  }
+  const latest = stats.practices[0];
+  const note = latest?.note ? ` · ${latest.note}` : '';
+  summary.innerHTML = `
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <div class="font-black text-on-surface">${stats.count} practice${stats.count !== 1 ? 's' : ''} · ${stats.minutes} min today</div>
+        <div class="mt-1">${escapeHtml(latest?.type || 'Practice')}${latest?.after ? ' · '+escapeHtml(latest.after) : ''}${escapeHtml(note)}</div>
+      </div>
+      <span class="material-symbols-outlined text-primary text-base">check_circle</span>
+    </div>`;
 }
 
 function resetBoxBreath() {
@@ -7821,7 +7801,7 @@ function computeFocusScore() {
   const today   = todayStr();
   const log     = logs[today] || {};
   const sessions = sessionLog[today] || [];
-  const breaths  = breathLog[today]  || [];
+  const regulationRounds = getRegulationRoundCount(today);
   const distracts = distractLog[today] || [];
 
   const effectiveWalks = walkCount > 0 ? walkCount : (log.walks || 0);
@@ -7842,7 +7822,7 @@ function computeFocusScore() {
   score += Math.min(4, sessions.length) * 5;
   const stepsVal = parseInt(document.getElementById('eod-inp-steps')?.value) || currentSteps;
   score += Math.round(Math.min(1, stepsVal / STEP_GOAL) * 15);
-  score += Math.min(4, breaths.length) * 2.5;
+  score += Math.min(4, regulationRounds) * 2.5;
   if (distracts.length === 0) score += 5;
 
   return Math.round(Math.min(100, score));
@@ -7880,14 +7860,14 @@ function updateFocusScore() {
 
   const today    = todayStr();
   const sessions = sessionLog[today] || [];
-  const breaths  = breathLog[today]  || [];
+  const regulationRounds = getRegulationRoundCount(today);
   const distracts = distractLog[today] || [];
   const stepsVal  = parseInt(document.getElementById('eod-inp-steps')?.value) || currentSteps;
 
   breakEl.textContent =
     `${sessions.length} session${sessions.length !== 1 ? 's' : ''} · ` +
     `${stepsVal.toLocaleString()} steps · ` +
-    `${breaths.length} breath round${breaths.length !== 1 ? 's' : ''} · ` +
+    `${regulationRounds} regulation practice${regulationRounds !== 1 ? 's' : ''} · ` +
     `${distracts.length} distraction${distracts.length !== 1 ? 's' : ''}`;
 }
 
@@ -10254,6 +10234,7 @@ function renderAll() {
   renderTable();
   renderRecentHistoryPreview();
   renderDistractionAnalysis();
+  renderWellnessPracticeCard();
   updateTBNavBadge(); // also calls renderSidebarTB()
   if (_currentPage === 'timeblocks') renderTBPage();
 }
@@ -10265,7 +10246,8 @@ const DATA_KEYS = [
   'dt_30day-steps-v1', 'dt_morning-setup-v1', 'dt_30day-tomorrow-v1',
   'dt_30day-tracks-v1', 'dt_30day-tags-v1', 'dt_30day-playlists-v1',
   'dt_30day-music-v1', 'dt_30day-water-v1', 'dt_30day-asana-pending-v1',
-  'dt_notion-page-map-v1', 'dt_notion-token-v1'
+  'dt_notion-page-map-v1', 'dt_notion-token-v1',
+  'dt_edgex_wellness_v1', 'dt_edgex_wellness_summary'
 ];
 
 function exportAllData() {

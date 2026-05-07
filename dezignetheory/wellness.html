@@ -1459,12 +1459,26 @@ function importData(input){
   reader.readAsText(file); input.value='';
 }
 function resetData(){ if(!confirm('Clear all Wellness module data from this browser?')) return; db=clone(DEFAULTS); saveData(); renderToday(); toast('Wellness data reset'); }
+function applyInitialRoute(){
+  const params=new URLSearchParams(window.location.search);
+  const view=params.get('view');
+  if(['today','checkin','reset','meditate','inbox','journal','trends','settings'].includes(view)) nav(view);
+  const preset=params.get('preset');
+  if(preset && view==='meditate') selectBreathPreset(preset);
+  const journalType=params.get('type');
+  if(journalType && view==='journal') {
+    const typeEl=document.getElementById('journal-type');
+    if(typeEl) typeEl.value=journalType;
+    renderJournal();
+  }
+}
 writeSummary();
 renderToday();
 renderTimer();
 renderBreathPresets();
 syncPracticeTypeToPreset();
 updateBreathGuide();
+applyInitialRoute();
 
 // ── Boot: pull from Supabase then re-render ──────────────────────
 async function bootWellness() {
@@ -1473,6 +1487,10 @@ async function bootWellness() {
   _sbBootComplete = true;
   writeSummary();
   renderToday();
+  if(currentView==='journal') renderJournal();
+  if(currentView==='meditate') { renderTimer(); renderBreathPresets(); updateBreathGuide(); }
+  if(currentView==='inbox') renderThoughts();
+  if(currentView==='trends') renderTrends();
   _startPeriodicSync();
 }
 bootWellness();
