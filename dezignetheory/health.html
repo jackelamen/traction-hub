@@ -800,6 +800,8 @@ const WORK_WATER_KEY = 'dt_30day-water-v1';
 
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
+const HEALTH_BUILD = 'health-sync-diagnostic-2026-05-07';
+let _lastHealthSync = { status: 'not started', rows: [], error: '' };
 // User ID derived from authenticated Supabase session
 function getSbUserId() {
   try {
@@ -969,6 +971,7 @@ localStorage.removeItem = function(key) {
 };
 async function syncFromSupabase() {
   try {
+    _lastHealthSync = { status: 'started', rows: [], error: '' };
     const keys = new Set([
       STORAGE_KEY,
       SUMMARY_KEY,
@@ -982,9 +985,17 @@ async function syncFromSupabase() {
     const res = await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(getSbUserId())}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' }
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      _lastHealthSync = { status: 'failed', rows: [], error: `${res.status} ${await res.text()}` };
+      return;
+    }
     const timestamps = _getLsTimestamps();
     const rows = await res.json();
+    _lastHealthSync = {
+      status: 'ok',
+      rows: rows.map(({ key, value, updated_at }) => ({ key, updated_at, score: healthScoreFromRemoteValue(key, value) })),
+      error: ''
+    };
     rows.forEach(({ key, value, updated_at }) => {
       if (!keys.has(key)) return;
       const remoteTs = new Date(updated_at).getTime();
@@ -998,7 +1009,10 @@ async function syncFromSupabase() {
         _setSyncedLsValue(key, mergeRemoteValue(key, value), remoteTs);
       }
     });
-  } catch(e) { console.warn('[Health] sync failed', e); }
+  } catch(e) {
+    _lastHealthSync = { status: 'error', rows: [], error: e?.message || String(e) };
+    console.warn('[Health] sync failed', e);
+  }
 }
 const _sbPullThrottled = (() => {
   let busy = false;
@@ -1066,6 +1080,25 @@ function filledHealthFieldCount(row = {}) {
     const value = row?.[key];
     return count + (value !== null && value !== undefined && value !== '' ? 1 : 0);
   }, 0);
+}
+function healthScoreFromRemoteValue(key, value) {
+  if (key === SUMMARY_KEY) return value?.score ?? null;
+  if (key !== STORAGE_KEY || !value || typeof value !== 'object') return null;
+  const remoteDb = {
+    settings: { ...DEFAULTS.settings, ...(value.settings || {}) },
+    logs: value.logs || {},
+    checks: value.checks || {},
+    routines: value.routines || []
+  };
+  const log = remoteDb.logs?.[todayStr()];
+  if (!log) return null;
+  const previousDb = db;
+  try {
+    db = { ...previousDb, settings: remoteDb.settings };
+    return readiness(log);
+  } finally {
+    db = previousDb;
+  }
 }
 function mergeNonEmpty(base = {}, overlay = {}) {
   const next = { ...base };
@@ -2008,6 +2041,29 @@ function resetData(){
 }
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function renderAll() { syncWorkHealthSignals(); writeSummary(); renderToday(); }
+function renderHealthSyncDebug() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('healthSyncDebug') !== '1') return;
+  const log = getLog();
+  const score = readiness(log);
+  const storage = parseStore(STORAGE_KEY, {});
+  const summary = parseStore(SUMMARY_KEY, null);
+  const localToday = storage?.logs?.[todayStr()] || {};
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:99999;max-width:420px;background:#111827;color:#f9fafb;border:1px solid #374151;border-radius:14px;padding:14px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 18px 50px rgba(0,0,0,.35);white-space:pre-wrap';
+  box.textContent = [
+    `Build: ${HEALTH_BUILD}`,
+    `Today: ${todayStr()}`,
+    `Displayed score: ${score ?? '--'}`,
+    `Displayed sleep: ${log?.sleepHours || '--'} | steps: ${log?.steps || '--'} | water: ${log?.water || '--'}`,
+    `Local savedAt: ${localToday.savedAt || '--'}`,
+    `Local filled fields: ${filledHealthFieldCount(localToday)}`,
+    `Summary score: ${summary?.score ?? '--'} | updated: ${summary?.updatedAt || '--'}`,
+    `Cloud sync: ${_lastHealthSync.status}${_lastHealthSync.error ? ' - ' + _lastHealthSync.error : ''}`,
+    `Cloud rows: ${_lastHealthSync.rows.map(r => `${r.key} score=${r.score ?? '--'} updated=${r.updated_at || '--'}`).join(' | ') || '--'}`
+  ].join('\n');
+  document.body.appendChild(box);
+}
 async function maybePublishDeviceHealthSnapshot() {
   const params = new URLSearchParams(window.location.search);
   if (params.get('publishDesktopHealth') !== '1') return;
@@ -2025,6 +2081,10 @@ async function maybePublishDeviceHealthSnapshot() {
   _dirtySyncKeys.add(SUMMARY_KEY);
   _dirtySyncKeys.add(DAILY_SIGNALS_KEY);
   await pushAllToSupabase();
+  await syncFromSupabase();
+  db = loadData();
+  renderAll();
+  renderHealthSyncDebug();
   toast('Desktop Health data published');
 }
 async function bootHealth() {
@@ -2035,6 +2095,7 @@ async function bootHealth() {
   _sbBootComplete = true;
   _sbPushThrottled();
   await maybePublishDeviceHealthSnapshot();
+  renderHealthSyncDebug();
   _startPeriodicSync();
 }
 bootHealth();
