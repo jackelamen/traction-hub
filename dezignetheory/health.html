@@ -2008,6 +2008,25 @@ function resetData(){
 }
 function escapeHTML(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function renderAll() { syncWorkHealthSignals(); writeSummary(); renderToday(); }
+async function maybePublishDeviceHealthSnapshot() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('publishDesktopHealth') !== '1') return;
+  const log = getLog();
+  const score = readiness(log);
+  const details = [
+    `Score: ${score ?? '--'}`,
+    `Sleep: ${log?.sleepHours || '--'}h`,
+    `Steps: ${log?.steps ? Number(log.steps).toLocaleString() : '--'}`,
+    `Water: ${log?.water || '--'}L`
+  ].join('\n');
+  const ok = confirm(`Publish this browser's Health data to the cloud?\n\n${details}\n\nOnly continue if this desktop is showing the correct current Health data.`);
+  if (!ok) return;
+  _dirtySyncKeys.add(STORAGE_KEY);
+  _dirtySyncKeys.add(SUMMARY_KEY);
+  _dirtySyncKeys.add(DAILY_SIGNALS_KEY);
+  await pushAllToSupabase();
+  toast('Desktop Health data published');
+}
 async function bootHealth() {
   await authReady; // ensure token is refreshed before we try to sync
   await syncFromSupabase();
@@ -2015,6 +2034,7 @@ async function bootHealth() {
   renderAll();
   _sbBootComplete = true;
   _sbPushThrottled();
+  await maybePublishDeviceHealthSnapshot();
   _startPeriodicSync();
 }
 bootHealth();
