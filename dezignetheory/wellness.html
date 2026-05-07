@@ -580,11 +580,14 @@ async function deleteKeyFromSupabase(key) {
 }
 async function pushAllToSupabase() {
   const rows = [];
+  const timestamps = _getLsTimestamps();
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (NO_SYNC_KEYS.has(key)) continue;
     let parsed; try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
-    rows.push({ user_id: getSbUserId(), key, value: parsed, updated_at: new Date().toISOString() });
+    const updatedAtMs = timestamps[key];
+    const updatedAt = Number.isFinite(updatedAtMs) ? new Date(updatedAtMs).toISOString() : '1970-01-01T00:00:00.000Z';
+    rows.push({ user_id: getSbUserId(), key, value: parsed, updated_at: updatedAt });
   }
   if (!rows.length) return;
   try {
