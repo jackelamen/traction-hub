@@ -553,7 +553,8 @@ function getSbToken() {
 }
 
 // ── Auth gate ────────────────────────────────────────────────────
-(async function checkAuth() {
+// Captured as a promise so bootWellness() can await it before syncing
+const authReady = (async function checkAuth() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
     if (!s.access_token) { window.location.href = 'login.html'; return; }
@@ -588,6 +589,7 @@ const _lsSet = localStorage.setItem.bind(localStorage);
 const _lsGet = localStorage.getItem.bind(localStorage);
 const _lsRemove = localStorage.removeItem.bind(localStorage);
 let _sbBootComplete = false;
+let _dirtySyncKeys = new Set();
 const NO_SYNC_KEYS = new Set(['sb_session', '_edgex_ls_timestamps', 'morning-setup-done', 'edgex_daily_signals_v1']);
 const LS_TIMESTAMPS_KEY = '_edgex_ls_timestamps';
 function _getLsTimestamps() { try { return JSON.parse(_lsGet(LS_TIMESTAMPS_KEY) || '{}'); } catch(e) { return {}; } }
@@ -630,10 +632,13 @@ async function pushAllToSupabase() {
   if (!userId) return;
   const rows = [];
   const timestamps = _getLsTimestamps();
+  const dirtyKeys = new Set(_dirtySyncKeys);
+  if (!dirtyKeys.size) return;
   const syncKeys = new Set([STORAGE_KEY, SUMMARY_KEY]);
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (NO_SYNC_KEYS.has(key) || !syncKeys.has(key)) continue;
+    if (!dirtyKeys.has(key)) continue;
     let parsed; try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
     const updatedAtMs = timestamps[key];
     const updatedAt = Number.isFinite(updatedAtMs) ? new Date(updatedAtMs).toISOString() : '1970-01-01T00:00:00.000Z';
@@ -641,11 +646,12 @@ async function pushAllToSupabase() {
   }
   if (!rows.length) return;
   try {
-    await fetchWithTimeout(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
+    const res = await fetchWithTimeout(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
       method: 'POST',
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows })
     });
+    if (res.ok) rows.forEach(row => _dirtySyncKeys.delete(row.key));
   } catch(e) { console.warn('[Wellness] push failed', e); }
 }
 const _sbPushThrottled = (() => {
@@ -655,7 +661,10 @@ const _sbPushThrottled = (() => {
 localStorage.setItem = function(key, value) {
   _lsSet(key, value);
   if (!NO_SYNC_KEYS.has(key)) _touchLsTimestamp(key);
-  if (_sbBootComplete && !NO_SYNC_KEYS.has(key)) _sbPushThrottled();
+  if (_sbBootComplete && !NO_SYNC_KEYS.has(key)) {
+    _dirtySyncKeys.add(key);
+    _sbPushThrottled();
+  }
 };
 localStorage.removeItem = function(key) {
   _lsRemove(key);
@@ -679,7 +688,13 @@ async function syncFromSupabase() {
       if (!keys.has(key)) return;
       const remoteTs = new Date(updated_at).getTime();
       const localTs  = timestamps[key] || 0;
-      if (remoteTs > localTs) _setSyncedLsValue(key, mergeRemoteValue(key, value), remoteTs);
+      if (key === STORAGE_KEY) {
+        const merged = mergeRemoteValue(key, value);
+        _setSyncedLsValue(key, merged, Math.max(remoteTs || 0, localTs || 0, Date.now()));
+        if (JSON.stringify(merged) !== JSON.stringify(value)) _dirtySyncKeys.add(key);
+      } else if (remoteTs > localTs) {
+        _setSyncedLsValue(key, mergeRemoteValue(key, value), remoteTs);
+      }
     });
   } catch(e) { console.warn('[Wellness] sync failed', e); }
 }
@@ -787,7 +802,7 @@ function mergeCheckins(localMap = {}, remoteMap = {}) {
     const localMs = new Date(localRow?.savedAt || 0).getTime();
     const remoteMs = new Date(remoteRow?.savedAt || 0).getTime();
     if (!remoteRow || localMs > remoteMs) merged[date] = localRow;
-    else if (date === todayStr()) merged[date] = mergeNonEmpty(remoteRow, localRow);
+    else if (date === todayStr() && (!Number.isFinite(localMs) || localMs <= 0)) merged[date] = mergeNonEmpty(remoteRow, localRow);
   });
   return merged;
 }
@@ -1526,11 +1541,13 @@ applyInitialRoute();
 
 // ── Boot: pull from Supabase then re-render ──────────────────────
 async function bootWellness() {
+  await authReady; // ensure token is refreshed before we try to sync
   await syncFromSupabase();
   db = loadData();
-  _sbBootComplete = true;
   writeSummary();
   renderToday();
+  _sbBootComplete = true;
+  _sbPushThrottled();
   if(currentView==='journal') renderJournal();
   if(currentView==='meditate') { renderTimer(); renderBreathPresets(); updateBreathGuide(); }
   if(currentView==='inbox') renderThoughts();

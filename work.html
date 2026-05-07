@@ -3349,7 +3349,8 @@ const SB_URL    = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 
 // ── Auth gate ────────────────────────────────────────────────────
-(async function checkAuth() {
+// Captured as a promise so the boot sequence can await it before syncing
+const authReady = (async function checkAuth() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
     if (!s.access_token) { window.location.href = 'login.html'; return; }
@@ -3424,6 +3425,7 @@ const _lsSet = localStorage.setItem.bind(localStorage);
 const _lsGet = localStorage.getItem.bind(localStorage);
 const _lsRemove = localStorage.removeItem.bind(localStorage);
 let _sbBootComplete = false; // don't push during initial hydration
+let _dirtySyncKeys = new Set();
 
 // Track when each key was last written locally (epoch ms), so pull never clobbers newer local data
 const LS_TIMESTAMPS_KEY = '_edgex_ls_timestamps';
@@ -3491,13 +3493,16 @@ async function deleteKeyFromSupabase(key) {
   }
 }
 
-// Push ALL current localStorage keys to Supabase in one batch
+// Push only keys changed in this page session, so stale browser caches cannot overwrite cloud data.
 async function pushAllToSupabase() {
   const rows = [];
   const timestamps = _getLsTimestamps();
+  const dirtyKeys = new Set(_dirtySyncKeys);
+  if (!dirtyKeys.size) return;
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (!shouldSyncTractionKey(key)) continue;
+    if (!dirtyKeys.has(key)) continue;
     let parsed;
     try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
     const updatedAtMs = timestamps[key];
@@ -3520,6 +3525,7 @@ async function pushAllToSupabase() {
       console.warn('[Supabase] push error:', res.status, err);
     } else {
       console.log('[Supabase] pushed', rows.length, 'keys to cloud');
+      rows.forEach(row => _dirtySyncKeys.delete(row.key));
     }
   } catch(e) {
     console.warn('[Supabase] push failed:', e);
@@ -3539,7 +3545,10 @@ const _sbPushThrottled = (() => {
 localStorage.setItem = function(key, value) {
   _lsSet(key, value);
   if (!NO_SYNC_KEYS.has(key)) _touchLsTimestamp(key);
-  if (_sbBootComplete && !NO_SYNC_KEYS.has(key)) _sbPushThrottled();
+  if (_sbBootComplete && !NO_SYNC_KEYS.has(key)) {
+    _dirtySyncKeys.add(key);
+    _sbPushThrottled();
+  }
 };
 
 localStorage.removeItem = function(key) {
@@ -11084,7 +11093,8 @@ function renderWeeklyIntentionHero() {
 // ═══════════════════════════════════════════════════════════════
 
 // Hydrate from Supabase first, then boot
-syncFromSupabase().finally(() => {
+// Must await authReady so token is refreshed before the sync fetch runs
+authReady.then(() => syncFromSupabase()).finally(() => {
   bootApp();
   _sbBootComplete = true; // now allow writes to trigger uploads
   // Push local state to cloud every 60s (safety net)
