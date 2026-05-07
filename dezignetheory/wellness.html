@@ -565,7 +565,7 @@ function getSbToken() {
     if (s.refresh_token) {
       const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
         method: 'POST',
-        headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}`, 'Content-Type': 'application/json' },
+        headers: { 'apikey': SB_ANON, 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: s.refresh_token })
       });
       if (res.ok) {
