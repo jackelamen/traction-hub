@@ -1046,11 +1046,26 @@ function mergeByDate(localMap = {}, remoteMap = {}) {
     else {
       const localMs = new Date(localRow?.savedAt || localRow?.updatedAt || 0).getTime();
       const remoteMs = new Date(remoteRow?.savedAt || remoteRow?.updatedAt || 0).getTime();
+      if (date === todayStr()) {
+        const localFilled = filledHealthFieldCount(localRow);
+        const remoteFilled = filledHealthFieldCount(remoteRow);
+        if (remoteFilled > localFilled) merged[date] = mergeNonEmpty(localRow, remoteRow);
+        else if (localFilled > remoteFilled && localMs > remoteMs) merged[date] = mergeNonEmpty(remoteRow, localRow);
+        else if (remoteMs > localMs) merged[date] = mergeNonEmpty(localRow, remoteRow);
+        else if (localMs > remoteMs) merged[date] = mergeNonEmpty(remoteRow, localRow);
+        else merged[date] = mergeNonEmpty(localRow, remoteRow);
+        return;
+      }
       if (localMs > remoteMs) merged[date] = localRow;
-      else if (date === todayStr() && (!Number.isFinite(localMs) || localMs <= 0)) merged[date] = mergeNonEmpty(remoteRow, localRow);
     }
   });
   return merged;
+}
+function filledHealthFieldCount(row = {}) {
+  return ['sleepHours','steps','water','exerciseMins','weight','nutrition','notes'].reduce((count, key) => {
+    const value = row?.[key];
+    return count + (value !== null && value !== undefined && value !== '' ? 1 : 0);
+  }, 0);
 }
 function mergeNonEmpty(base = {}, overlay = {}) {
   const next = { ...base };
