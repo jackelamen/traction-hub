@@ -86,6 +86,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .mini-item small{display:block;color:var(--text-2);font-size:12px;margin-top:2px}
 .thought-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff}
 .thought-row.done{opacity:.55;background:#f9fafb}
+.memory-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.memory-tile{border:1px solid var(--border);border-radius:12px;background:#fff;padding:12px;min-height:96px}
+.memory-tile strong{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:var(--text);margin-bottom:7px}
+.memory-tile .icon{font-size:16px;color:var(--accent)}
+.memory-tile p{font-size:13px;color:var(--text-2);white-space:pre-wrap}
+.journal-toolbar{display:grid;grid-template-columns:1fr 150px 140px;gap:10px;margin-bottom:14px}
+.journal-feed{display:flex;flex-direction:column;gap:12px}
+.entry-card{border:1px solid var(--border);border-radius:14px;background:#fff;padding:15px;box-shadow:var(--shadow-sm)}
+.entry-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.entry-title{font-size:14px;font-weight:800;color:var(--text)}
+.entry-meta{font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.entry-body{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.entry-field{border-radius:12px;background:#f9fafb;border:1px solid var(--border);padding:10px}
+.entry-field strong{display:block;font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.entry-field p{font-size:13px;color:var(--text-2);white-space:pre-wrap}
+.entry-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .coach-card{border:1px solid var(--border);border-radius:14px;background:#fff;padding:15px}
 .coach-card.soft{background:linear-gradient(135deg,#f8fafc,#f5f3ff);border-color:rgba(124,58,237,.16)}
 .coach-card.blue{background:linear-gradient(135deg,#f8fafc,#eff6ff);border-color:rgba(14,165,233,.16)}
@@ -162,7 +178,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .empty span{font-size:13px;line-height:1.5}
 .toast{position:fixed;right:24px;bottom:24px;background:#111827;color:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 10px 24px rgba(0,0,0,.22);font-size:13px;font-weight:700;display:none;z-index:100}
 .hidden-file{display:none}
-@media(max-width:900px){#sidebar{position:static;width:100%;height:auto}#app{display:block}#main{margin-left:0}.view{padding:22px 18px 70px}.grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.reset-grid,.score-grid{grid-template-columns:1fr}.well-ring{margin:0 auto}}
+@media(max-width:900px){#sidebar{position:static;width:100%;height:auto}#app{display:block}#main{margin-left:0}.view{padding:22px 18px 70px}.grid-4,.grid-3,.grid-2,.form-grid,.hero-content,.reset-grid,.score-grid,.memory-grid,.entry-body,.journal-toolbar{grid-template-columns:1fr}.well-ring{margin:0 auto}}
 @media(max-width:600px){.tabs{width:100%}.tab{flex:1}.timer-time{font-size:38px}.breath-visual{width:178px;height:178px}.breath-orb{width:136px;height:136px}.breath-presets{grid-template-columns:1fr}.meditation-fullscreen .breath-visual{width:280px;height:280px}.meditation-fullscreen .breath-orb{width:214px;height:214px}.meditation-fullscreen .timer-time{font-size:54px}}
 
 /* ── Cmd+K Module Switcher ── */
@@ -202,6 +218,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <button class="nav-item" id="nav-reset" onclick="nav('reset')"><span class="icon">restart_alt</span>Reset Tools</button>
     <button class="nav-item" id="nav-meditate" onclick="nav('meditate')"><span class="icon">timer</span>Meditate</button>
     <button class="nav-item" id="nav-inbox" onclick="nav('inbox')"><span class="icon">inbox</span>Mental Load</button>
+    <button class="nav-item" id="nav-journal" onclick="nav('journal')"><span class="icon">auto_stories</span>Journal</button>
     <button class="nav-item" id="nav-trends" onclick="nav('trends')"><span class="icon">query_stats</span>Trends</button>
     <button class="nav-item" id="nav-settings" onclick="nav('settings')"><span class="icon">tune</span>Settings</button>
   </div>
@@ -281,6 +298,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <div class="mini-list" id="recent-checkins"></div>
       </div>
     </div>
+    <div class="card card-pad" style="margin-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px">
+        <div><h2 style="font-size:16px;font-weight:800">Today's Journal</h2><p style="font-size:12px;color:var(--text-2)">The saved words from today's check-in, practice, and mental load.</p></div>
+        <button class="btn btn-secondary btn-sm" onclick="nav('journal')"><span class="icon" style="font-size:15px">auto_stories</span>All Writing</button>
+      </div>
+      <div id="wellness-memory"></div>
+    </div>
   </section>
 
   <section id="view-checkin" class="view">
@@ -324,6 +348,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
         <button class="btn btn-primary" onclick="saveCheckin()"><span class="icon" style="font-size:17px">save</span>Save Check-In</button>
         <button class="btn btn-secondary" onclick="sendLoopToInbox()"><span class="icon" style="font-size:17px">move_to_inbox</span>Send Loop to Inbox</button>
+        <button class="btn btn-secondary" onclick="nav('journal')"><span class="icon" style="font-size:17px">auto_stories</span>View Saved Writing</button>
         <button class="btn btn-danger" onclick="deleteCheckin()"><span class="icon" style="font-size:17px">delete</span>Delete This Date</button>
       </div>
     </div>
@@ -411,6 +436,30 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <div class="mini-list" id="thought-list"></div>
   </section>
 
+  <section id="view-journal" class="view">
+    <div class="page-header">
+      <div class="page-date">Saved writing</div>
+      <h1 class="page-title">Wellness Journal</h1>
+      <p class="page-sub">Search everything you have written in check-ins, session notes, and mental load.</p>
+    </div>
+    <div class="card card-pad">
+      <div class="journal-toolbar">
+        <input id="journal-search" type="search" placeholder="Search reflections, reframes, notes, or loops..." oninput="renderJournal()"/>
+        <select id="journal-type" onchange="renderJournal()">
+          <option value="all">All writing</option>
+          <option value="checkin">Check-ins</option>
+          <option value="practice">Practice notes</option>
+          <option value="thought">Open loops</option>
+        </select>
+        <select id="journal-sort" onchange="renderJournal()">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+      </div>
+      <div id="journal-results" class="journal-feed"></div>
+    </div>
+  </section>
+
   <section id="view-trends" class="view">
     <div class="page-header">
       <div class="page-date">Patterns over time</div>
@@ -492,7 +541,12 @@ const STORAGE_KEY = 'edgex_wellness_v1';
 const SUMMARY_KEY = 'edgex_wellness_summary';
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
-const SB_USER_ID = 'jack_traction_hub_v1';
+function getSbUserId() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s?.user?.id || null;
+  } catch(e) { return null; }
+}
 function getSbToken() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
@@ -564,14 +618,18 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
 }
 async function deleteKeyFromSupabase(key) {
   if (NO_SYNC_KEYS.has(key)) return;
+  const userId = getSbUserId();
+  if (!userId) return;
   try {
-    await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=eq.${encodeURIComponent(key)}`, {
+    await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(userId)}&key=eq.${encodeURIComponent(key)}`, {
       method: 'DELETE',
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}` }
     });
   } catch(e) { console.warn('[Wellness] delete key failed', key, e); }
 }
 async function pushAllToSupabase() {
+  const userId = getSbUserId();
+  if (!userId) return;
   const rows = [];
   const timestamps = _getLsTimestamps();
   for (let i = 0; i < localStorage.length; i++) {
@@ -580,7 +638,7 @@ async function pushAllToSupabase() {
     let parsed; try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
     const updatedAtMs = timestamps[key];
     const updatedAt = Number.isFinite(updatedAtMs) ? new Date(updatedAtMs).toISOString() : '1970-01-01T00:00:00.000Z';
-    rows.push({ user_id: SB_USER_ID, key, value: parsed, updated_at: updatedAt });
+    rows.push({ user_id: userId, key, value: parsed, updated_at: updatedAt });
   }
   if (!rows.length) return;
   try {
@@ -608,8 +666,10 @@ localStorage.removeItem = function(key) {
 };
 async function syncFromSupabase() {
   try {
+    const userId = getSbUserId();
+    if (!userId) return;
     const keyFilter = [STORAGE_KEY, SUMMARY_KEY].join(',');
-    const res = await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(SB_USER_ID)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
+    const res = await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(userId)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return;
@@ -663,7 +723,10 @@ let remaining = duration;
 let timer = null;
 let breath = null;
 let introTimer = null;
+let audioFadeTimer = null;
+let audioFadeStarted = false;
 let breathStartedAt = 0;
+const MEDITATION_FADE_SECONDS = 10;
 const BREATH_PRESETS = [
   { id:'two-minute', label:'2-Minute Breathing', pattern:'4-2-6-2', minutes:2, practiceType:'2-Minute Breathing', phases:[
     { key:'in', label:'Inhale', seconds:4, scaleStart:.12, scaleEnd:1.14, color:'#c4b5fd' },
@@ -717,6 +780,7 @@ function nav(view){
   if(view==='reset') renderResetTools();
   if(view==='meditate') { renderTimer(); renderBreathPresets(); updateBreathGuide(); }
   if(view==='inbox') renderThoughts();
+  if(view==='journal') renderJournal();
   if(view==='trends') renderTrends();
 }
 function getCheckin(date=todayStr()){ return db.checkins[date] || null; }
@@ -785,6 +849,7 @@ function renderToday(){
   renderWellnessCoach(c, score);
   renderSuggestedReset(score,c);
   renderRecent();
+  renderMemory();
 }
 function stat(label,value,sub){ return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></div>`; }
 function moodLabel(v){ return {1:'Heavy',2:'Low',3:'Neutral',4:'Good',5:'Bright'}[v] || '--'; }
@@ -888,8 +953,48 @@ function renderRecent(){
   if(!entries.length){ el.innerHTML='<div class="empty"><div class="empty-icon"><span class="icon">self_improvement</span></div><strong>No check-ins yet</strong><span>Hit Check In to record your first entry.</span></div>'; return; }
   el.innerHTML=entries.map(([date,c])=>{
     const score=clarityScore(c);
-    return `<div class="mini-item"><div><strong>${fmtDate(date)}</strong><small>${escapeHTML(c.state||'Unlabeled')} · stress ${c.stress||'--'} · clarity ${c.clarity||'--'}</small></div><span class="badge ${score>=80?'badge-green':score>=60?'badge-blue':score>=40?'badge-orange':'badge-red'}">${score}</span></div>`;
+    const text=[c.present,c.lighter,c.loop,c.reframe].filter(Boolean).join(' ');
+    return `<div class="mini-item" style="align-items:flex-start;cursor:pointer" onclick="openCheckin('${date}')">
+      <div>
+        <strong>${fmtDate(date)}</strong>
+        <small>${escapeHTML(c.state||'Unlabeled')} · stress ${c.stress||'--'} · clarity ${c.clarity||'--'}</small>
+        ${text ? `<small style="color:var(--text);font-weight:600;margin-top:7px">${escapeHTML(excerpt(text,130))}</small>` : ''}
+      </div>
+      <span class="badge ${score>=80?'badge-green':score>=60?'badge-blue':score>=40?'badge-orange':'badge-red'}">${score ?? '--'}</span>
+    </div>`;
   }).join('');
+}
+function renderMemory(){
+  const el=document.getElementById('wellness-memory');
+  if(!el) return;
+  const c=getCheckin();
+  const practices=db.practices.filter(p=>p.date===todayStr() && p.note).slice(0,2);
+  const loops=db.thoughts.filter(t=>!t.done).slice(0,3);
+  if(!c && !practices.length && !loops.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon"><span class="icon">auto_stories</span></div><strong>No writing saved today</strong><span>Check in, save a session note, or add a mental-load item and it will appear here.</span></div>';
+    return;
+  }
+  const tiles=[
+    memoryTile('psychology','Present',c?.present,'Check in to name what is true right now.'),
+    memoryTile('light_mode','Lighter',c?.lighter,'Save one adjustment, support, boundary, or reset.'),
+    memoryTile('loop','Loop & reframe',[c?.loop,c?.reframe].filter(Boolean).join('\n\n'),'Optional loops and reframes show here.'),
+    memoryTile('timer','Practice notes',practices.map(p=>`${p.type}: ${p.note}`).join('\n\n'),'Save a note after meditation or breathwork.'),
+    memoryTile('inbox','Open loops',loops.map(t=>`${t.type}: ${t.text}`).join('\n'),'Add thoughts to the mental load inbox.')
+  ].filter(Boolean);
+  el.innerHTML=`<div class="memory-grid">${tiles.join('')}</div>`;
+}
+function memoryTile(icon,title,text,empty){
+  const body=(text||'').trim();
+  return `<div class="memory-tile"><strong><span class="icon">${icon}</span>${title}</strong><p>${escapeHTML(body || empty)}</p></div>`;
+}
+function excerpt(text,len=160){
+  const clean=String(text||'').replace(/\s+/g,' ').trim();
+  return clean.length>len ? clean.slice(0,len-1).trim()+'...' : clean;
+}
+function openCheckin(date){
+  nav('checkin');
+  setVal('log-date',date);
+  loadTodayIntoForm();
 }
 function setVal(id,v){ document.getElementById(id).value=v; }
 function val(id){ return document.getElementById(id).value; }
@@ -909,6 +1014,7 @@ function saveCheckin(){
   saveData();
   toast('Wellness check-in saved');
   renderToday();
+  if(currentView==='journal') renderJournal();
 }
 function deleteCheckin(){
   const date=val('log-date') || todayStr();
@@ -918,6 +1024,7 @@ function deleteCheckin(){
   saveData();
   loadTodayIntoForm();
   renderToday();
+  if(currentView==='journal') renderJournal();
   toast('Check-in deleted');
 }
 function sendLoopToInbox(){
@@ -925,6 +1032,7 @@ function sendLoopToInbox(){
   if(!text){ toast('No looping thought to send'); return; }
   db.thoughts.unshift({ id:uid('t'), text, type:'Hold', done:false, createdAt:new Date().toISOString() });
   saveData();
+  if(currentView==='journal') renderJournal();
   toast('Sent to mental load inbox');
 }
 function renderResetTools(){
@@ -949,6 +1057,7 @@ function clearMeditationTimers(){
   clearInterval(timer);
   clearInterval(breath);
   clearInterval(introTimer);
+  clearAudioFade(true);
   timer=null;
   breath=null;
   introTimer=null;
@@ -1061,8 +1170,21 @@ function startSessionTimer(){
   timer=setInterval(()=>{
     remaining--;
     renderTimer();
-    if(remaining<=0){ clearMeditationTimers(); pauseMeditationAudio(); setTimerButtonHTML('<span class="icon" style="font-size:17px">play_arrow</span>Start'); setTimerPhase('Complete'); toast('Session complete'); }
+    updateMeditationFade();
+    if(remaining<=0) completeMeditationSession();
   },1000);
+}
+function completeMeditationSession(){
+  clearInterval(timer);
+  clearInterval(breath);
+  clearInterval(introTimer);
+  timer=null;
+  breath=null;
+  introTimer=null;
+  fadeOutMeditationAudio();
+  setTimerButtonHTML('<span class="icon" style="font-size:17px">play_arrow</span>Start');
+  setTimerPhase('Complete');
+  toast('Session complete');
 }
 function startIntroCountdown(){
   let step=0;
@@ -1100,20 +1222,62 @@ function closeMeditationFullscreen(){
   document.getElementById('meditation-fullscreen')?.classList.remove('open');
 }
 function shouldSyncAudio(){ return document.getElementById('audio-sync')?.checked; }
+function clearAudioFade(restoreVolume=false){
+  clearInterval(audioFadeTimer);
+  audioFadeTimer=null;
+  audioFadeStarted=false;
+  if(restoreVolume) {
+    const audio=document.getElementById('meditation-audio');
+    if(audio) audio.volume=1;
+  }
+}
 function playMeditationAudio(){
   if(!shouldSyncAudio()) return;
+  clearAudioFade(true);
   const audio=document.getElementById('meditation-audio');
   if(audio) audio.play().catch(()=>toast('Use the audio controls to start music'));
 }
 function pauseMeditationAudio(){
+  clearAudioFade(true);
   const audio=document.getElementById('meditation-audio');
   if(audio) audio.pause();
 }
 function stopMeditationAudio(){
+  clearAudioFade(true);
   const audio=document.getElementById('meditation-audio');
   if(!audio) return;
   audio.pause();
   audio.currentTime=0;
+  audio.volume=1;
+}
+function updateMeditationFade(){
+  if(audioFadeStarted || !shouldSyncAudio()) return;
+  const fadeWindow=Math.min(MEDITATION_FADE_SECONDS, Math.max(1,duration));
+  if(remaining>fadeWindow) return;
+  fadeMeditationAudioOver(Math.max(remaining,1));
+}
+function fadeMeditationAudioOver(seconds){
+  const audio=document.getElementById('meditation-audio');
+  if(!audio || audio.paused) return;
+  clearAudioFade(false);
+  audioFadeStarted=true;
+  const startVolume=Number.isFinite(audio.volume) ? audio.volume : 1;
+  const startedAt=Date.now();
+  const durationMs=Math.max(1,seconds)*1000;
+  audioFadeTimer=setInterval(()=>{
+    const progress=Math.min(1,(Date.now()-startedAt)/durationMs);
+    audio.volume=Math.max(0,startVolume*(1-progress));
+    if(progress>=1){
+      clearAudioFade(false);
+      audio.pause();
+      audio.volume=1;
+    }
+  },100);
+}
+function fadeOutMeditationAudio(){
+  const audio=document.getElementById('meditation-audio');
+  if(!audio || audio.paused) return;
+  fadeMeditationAudioOver(1.6);
 }
 function toggleTimer(){
   if(timer || introTimer){ clearMeditationTimers(); breathStartedAt=0; pauseMeditationAudio(); setTimerButtonHTML('<span class="icon" style="font-size:17px">play_arrow</span>Start'); setTimerPhase('Paused'); return; }
@@ -1127,20 +1291,86 @@ function savePractice(){
   db.practices.unshift({ id:uid('p'), date:todayStr(), minutes, type:val('practice-type'), after:val('after-state'), note:val('practice-note'), savedAt:new Date().toISOString() });
   setVal('practice-note',''); setVal('after-state','');
   saveData(); renderToday(); toast('Practice saved');
+  if(currentView==='journal') renderJournal();
 }
 function addThought(){
   const text=val('thought-input').trim();
   if(!text) return;
   db.thoughts.unshift({ id:uid('t'), text, type:val('thought-type'), done:false, createdAt:new Date().toISOString() });
   setVal('thought-input',''); saveData(); renderThoughts(); toast('Loop added');
+  if(currentView==='journal') renderJournal();
 }
 function renderThoughts(){
   const el=document.getElementById('thought-list');
   if(!db.thoughts.length){ el.innerHTML='<div class="empty"><div class="empty-icon"><span class="icon">loop</span></div><strong>No open loops</strong><span>Clear mind. Add a thought above if something keeps circling.</span></div>'; return; }
   el.innerHTML=db.thoughts.map(t=>`<div class="thought-row ${t.done?'done':''}"><div><strong>${escapeHTML(t.text)}</strong><small>${escapeHTML(t.type)} · ${new Date(t.createdAt).toLocaleDateString()}</small></div><div style="display:flex;gap:6px"><button class="btn btn-icon" onclick="toggleThought('${t.id}')" title="Toggle"><span class="icon">${t.done?'undo':'check'}</span></button><button class="btn btn-icon" onclick="deleteThought('${t.id}')" title="Delete"><span class="icon">close</span></button></div></div>`).join('');
 }
-function toggleThought(id){ const t=db.thoughts.find(x=>x.id===id); if(t) t.done=!t.done; saveData(); renderThoughts(); }
-function deleteThought(id){ db.thoughts=db.thoughts.filter(t=>t.id!==id); saveData(); renderThoughts(); }
+function toggleThought(id){ const t=db.thoughts.find(x=>x.id===id); if(t) t.done=!t.done; saveData(); renderThoughts(); if(currentView==='journal') renderJournal(); }
+function deleteThought(id){ db.thoughts=db.thoughts.filter(t=>t.id!==id); saveData(); renderThoughts(); if(currentView==='journal') renderJournal(); }
+function collectJournalEntries(){
+  const checkins=Object.entries(db.checkins).map(([date,c])=>({
+    kind:'checkin',
+    date,
+    title:'Check-in',
+    meta:`${c.state || 'Unlabeled'} · mood ${c.mood || '--'} · stress ${c.stress || '--'} · clarity ${c.clarity || '--'}`,
+    fields:[
+      ['What is present?',c.present],
+      ['What would make today lighter?',c.lighter],
+      ['Looping thought',c.loop],
+      ['Reframe',c.reframe]
+    ].filter(([,v])=>String(v||'').trim()),
+    action:`<button class="btn btn-secondary btn-sm" onclick="openCheckin('${date}')"><span class="icon" style="font-size:15px">edit_note</span>Edit check-in</button>`,
+    search:[date,c.state,c.present,c.lighter,c.loop,c.reframe].join(' ')
+  }));
+  const practices=db.practices.map(p=>({
+    kind:'practice',
+    date:p.date || (p.savedAt || '').slice(0,10) || todayStr(),
+    title:'Practice note',
+    meta:`${p.type || 'Practice'} · ${p.minutes || 0} min${p.after ? ' · '+p.after : ''}`,
+    fields:[['Note',p.note]].filter(([,v])=>String(v||'').trim()),
+    action:`<button class="btn btn-secondary btn-sm" onclick="nav('meditate')"><span class="icon" style="font-size:15px">timer</span>Practice</button>`,
+    search:[p.date,p.type,p.after,p.note].join(' ')
+  })).filter(e=>e.fields.length);
+  const thoughts=db.thoughts.map(t=>({
+    kind:'thought',
+    date:(t.createdAt || '').slice(0,10) || todayStr(),
+    title:t.done ? 'Resolved loop' : 'Open loop',
+    meta:`${t.type || 'Hold'} · ${t.done ? 'resolved' : 'active'}`,
+    fields:[['Thought / worry / decision',t.text]].filter(([,v])=>String(v||'').trim()),
+    action:`<button class="btn btn-secondary btn-sm" onclick="nav('inbox')"><span class="icon" style="font-size:15px">inbox</span>Open inbox</button>`,
+    search:[t.type,t.text,t.done ? 'resolved' : 'open'].join(' ')
+  }));
+  return [...checkins,...practices,...thoughts].filter(e=>e.fields.length);
+}
+function renderJournal(){
+  const el=document.getElementById('journal-results');
+  if(!el) return;
+  const q=(document.getElementById('journal-search')?.value || '').trim().toLowerCase();
+  const type=document.getElementById('journal-type')?.value || 'all';
+  const sort=document.getElementById('journal-sort')?.value || 'newest';
+  let entries=collectJournalEntries();
+  if(type!=='all') entries=entries.filter(e=>e.kind===type);
+  if(q) entries=entries.filter(e=>e.search.toLowerCase().includes(q));
+  entries.sort((a,b)=>sort==='oldest' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
+  if(!entries.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon"><span class="icon">search</span></div><strong>No saved writing found</strong><span>Try a different search, or add a check-in, practice note, or mental-load item.</span></div>';
+    return;
+  }
+  el.innerHTML=entries.map(journalEntryCard).join('');
+}
+function journalEntryCard(entry){
+  const badge={checkin:'badge-purple',practice:'badge-blue',thought:'badge-orange'}[entry.kind] || 'badge-purple';
+  return `<div class="entry-card">
+    <div class="entry-head">
+      <div><div class="entry-title">${escapeHTML(entry.title)} · ${fmtDate(entry.date)}</div><div class="entry-meta">${escapeHTML(entry.meta)}</div></div>
+      <span class="badge ${badge}">${entry.kind}</span>
+    </div>
+    <div class="entry-body">
+      ${entry.fields.map(([label,value])=>`<div class="entry-field"><strong>${escapeHTML(label)}</strong><p>${escapeHTML(value)}</p></div>`).join('')}
+    </div>
+    <div class="entry-actions">${entry.action}</div>
+  </div>`;
+}
 function setTrend(metric){
   trendMetric=metric;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -1215,7 +1445,7 @@ function writeSummary(){
   const c=getCheckin();
   const score=clarityScore(c);
   const openLoops=db.thoughts.filter(t=>!t.done).length;
-  localStorage.setItem('edgex_wellness_summary', JSON.stringify({ score, openLoops, minutes:practiceMinutesToday(), date:todayStr(), updatedAt:new Date().toISOString() }));
+  localStorage.setItem(SUMMARY_KEY, JSON.stringify({ score, openLoops, minutes:practiceMinutesToday(), date:todayStr(), updatedAt:new Date().toISOString() }));
 }
 function exportData(){
   const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
