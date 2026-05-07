@@ -970,9 +970,12 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
 
 async function fetchTractionValue(key) {
   try {
+    // Always resolve the freshest token — authReady may have just refreshed it
+    const session = await authReady;
+    const token = session?.access_token || getSbToken();
     const url = `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(EDGEX_KV_USER_ID)}&key=eq.${encodeURIComponent(key)}&select=value,updated_at&limit=1`;
     const res = await fetchWithTimeout(url, {
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' }
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
     });
     if (!res.ok) return null;
     const rows = await res.json();
@@ -1056,11 +1059,14 @@ function renderHealthSummary(data, delay = 1000) {
   }
   const completed = data.checked ?? 0;
   const total = data.total ?? 4;
-  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-  document.getElementById('health-pct').textContent = pct + '%';
+  const score = data.score ?? null;
+  const routinesPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  // Prefer the computed health score if available; fall back to routine completion %
+  const ringPct = score != null ? score : routinesPct;
+  document.getElementById('health-pct').textContent = score != null ? score : (routinesPct + '%');
   document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
   setText('health-status', completed + ' of ' + total + ' routines complete');
-  animateRing('.health-ring', pct, delay);
+  animateRing('.health-ring', ringPct, delay);
   reportModuleStatus('health', isUpdatedToday(data) ? 'fresh' : 'stale');
 }
 
