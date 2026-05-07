@@ -1449,6 +1449,12 @@
       <p class="text-xs mt-0.5" style="color:#9ca3af" id="tb-page-subtitle">Plan your workday with intention</p>
     </div>
     <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1 rounded-xl p-1" style="background:#f3f4f6">
+        <button id="tb-date-today-btn" onclick="tbSetDate(todayStr())"
+          class="text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors">Today</button>
+        <button id="tb-date-tomorrow-btn" onclick="tbSetDate(tomorrowStr())"
+          class="text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors">Tomorrow</button>
+      </div>
       <button onclick="tbClearDay()" class="text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors" style="color:#9ca3af">Clear day</button>
       <button onclick="openTBCreateModal()" class="btn-primary">
         <span class="material-symbols-outlined text-base">add</span>
@@ -8493,6 +8499,37 @@ function tbTodayBlocks() {
   return tbGetDay(todayStr()) || [];
 }
 
+function addDaysStr(dateStr, days) {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function tomorrowStr() {
+  return addDaysStr(todayStr(), 1);
+}
+
+function tbActiveDate() {
+  const allowed = [todayStr(), tomorrowStr()];
+  if (!allowed.includes(_tbSelectedDate)) _tbSelectedDate = todayStr();
+  return _tbSelectedDate;
+}
+
+function tbActiveBlocks() {
+  return tbGetDay(tbActiveDate()) || [];
+}
+
+function tbMutationDate() {
+  return _currentPage === 'timeblocks' ? tbActiveDate() : todayStr();
+}
+
+function tbMutationBlocks() {
+  return tbGetDay(tbMutationDate()) || [];
+}
+
 function tbMakeId() {
   return uid('tb');
 }
@@ -8731,7 +8768,7 @@ function openAddBlockModal() {
 }
 
 function tbEditBlock(blockId) {
-  const blocks = tbTodayBlocks();
+  const blocks = tbMutationBlocks();
   const block = blocks.find(b => b.id === blockId);
   if (!block) return;
   tbEditingBlockId = blockId;
@@ -8754,8 +8791,8 @@ function saveBlock() {
   const start = document.getElementById('block-start-input').value;
   if (!name) { showToast('Please enter a block name.'); return; }
 
-  const today  = todayStr();
-  const blocks = tbTodayBlocks();
+  const date   = tbMutationDate();
+  const blocks = tbMutationBlocks();
 
   if (tbEditingBlockId) {
     const idx = blocks.findIndex(b => b.id === tbEditingBlockId);
@@ -8771,22 +8808,22 @@ function saveBlock() {
     showToast(`Block "${name}" added.`);
   }
 
-  tbSaveDay(today, blocks);
+  tbSaveDay(date, blocks);
   closeAddBlockModal();
   renderTimeBlocks();
 }
 
 function tbDeleteBlock(blockId) {
-  const today  = todayStr();
-  const blocks = tbTodayBlocks().filter(b => b.id !== blockId);
-  tbSaveDay(today, blocks);
+  const date   = tbMutationDate();
+  const blocks = tbMutationBlocks().filter(b => b.id !== blockId);
+  tbSaveDay(date, blocks);
   renderTimeBlocks();
   showToast('Block removed.');
 }
 
 // ── Task CRUD ─────────────────────────────────────────────────
 function openAddBlockTaskModalFor(blockId) {
-  const blocks = tbTodayBlocks();
+  const blocks = tbMutationBlocks();
   const block = blocks.find(b => b.id === blockId);
   if (!block) return;
   tbEditingBlockTaskBlockId = blockId;
@@ -8810,7 +8847,7 @@ function closeAddBlockTaskModal() {
 
 function renderBTTaskList(query) {
   const q = query.toLowerCase().trim();
-  const blocks  = tbTodayBlocks();
+  const blocks  = tbMutationBlocks();
   const usedGids = new Set(blocks.flatMap(b => (b.tasks||[]).filter(t=>t.gid).map(t=>t.gid)));
   const matches = ASANA_TASKS
     .filter(t => !usedGids.has(t.gid) && (!q || t.name.toLowerCase().includes(q)));
@@ -8868,8 +8905,8 @@ function saveBlockTask() {
 }
 
 function tbAddTaskToBlock(blockId, taskData) {
-  const today  = todayStr();
-  const blocks = tbTodayBlocks();
+  const date   = tbMutationDate();
+  const blocks = tbMutationBlocks();
   const block  = blocks.find(b => b.id === blockId);
   if (!block) return;
   if (!block.tasks) block.tasks = [];
@@ -8883,40 +8920,40 @@ function tbAddTaskToBlock(blockId, taskData) {
     done: false,
     blockColor,
   });
-  tbSaveDay(today, blocks);
+  tbSaveDay(date, blocks);
   renderTimeBlocks();
   showToast(`"${taskData.name}" added.`);
 }
 
 function tbToggleTaskDone(blockId, taskId) {
-  const today  = todayStr();
-  const blocks = tbTodayBlocks();
+  const date   = tbMutationDate();
+  const blocks = tbMutationBlocks();
   const block  = blocks.find(b => b.id === blockId);
   if (!block) return;
   const task = (block.tasks || []).find(t => t.id === taskId);
   if (task) task.done = !task.done;
-  tbSaveDay(today, blocks);
+  tbSaveDay(date, blocks);
   renderTimeBlocks();
 }
 
 function tbToggleTaskPriority(blockId, taskId) {
-  const today  = todayStr();
-  const blocks = tbTodayBlocks();
+  const date   = tbMutationDate();
+  const blocks = tbMutationBlocks();
   const block  = blocks.find(b => b.id === blockId);
   if (!block) return;
   const task = (block.tasks || []).find(t => t.id === taskId);
   if (task) task.priority = !task.priority;
-  tbSaveDay(today, blocks);
+  tbSaveDay(date, blocks);
   renderTimeBlocks();
 }
 
 function tbDeleteTask(blockId, taskId) {
-  const today  = todayStr();
-  const blocks = tbTodayBlocks();
+  const date   = tbMutationDate();
+  const blocks = tbMutationBlocks();
   const block  = blocks.find(b => b.id === blockId);
   if (!block) return;
   block.tasks = (block.tasks || []).filter(t => t.id !== taskId);
-  tbSaveDay(today, blocks);
+  tbSaveDay(date, blocks);
   renderTimeBlocks();
 }
 
@@ -8970,15 +9007,16 @@ let _tbDropGid       = null;
 let _tbDropName      = null;
 let _tbInlineAsanaOpen = false;
 let _tbEditBlockId   = null; // null = new
+let _tbSelectedDate  = todayStr();
 
 // ── Page render ───────────────────────────────────────────────
 function renderTBPage() {
-  const today = todayStr();
-  const d = new Date(today + 'T00:00:00');
+  const activeDate = tbActiveDate();
+  const d = new Date(activeDate + 'T00:00:00');
   document.getElementById('tb-page-date').textContent =
     d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
 
-  const blocks = tbTodayBlocks();
+  const blocks = tbActiveBlocks();
   const totalMins = blocks.reduce((a, b) => a + (b.dur || 0), 0);
   const taskCount = blocks.flatMap(b => b.tasks || []).length;
   document.getElementById('tb-page-subtitle').textContent =
@@ -8986,10 +9024,31 @@ function renderTBPage() {
       ? `${blocks.length} block${blocks.length !== 1 ? 's' : ''} · ${totalMins} min planned · ${taskCount} task${taskCount !== 1 ? 's' : ''}`
       : 'Plan your workday with intention';
 
+  updateTBDateControls();
   renderTBTimeline();
   renderTBPriorityCards();
   renderTBAsanaPanel('');
   updateTBNavBadge();
+}
+
+function tbSetDate(date) {
+  _tbSelectedDate = date;
+  renderTBPage();
+}
+
+function updateTBDateControls() {
+  const activeDate = tbActiveDate();
+  [
+    ['tb-date-today-btn', todayStr()],
+    ['tb-date-tomorrow-btn', tomorrowStr()]
+  ].forEach(([id, date]) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const active = activeDate === date;
+    btn.style.background = active ? '#fff' : 'transparent';
+    btn.style.color = active ? '#111827' : '#9ca3af';
+    btn.style.boxShadow = active ? '0 1px 3px rgba(15,23,42,0.08)' : 'none';
+  });
 }
 
 function updateTBNavBadge() {
@@ -9232,7 +9291,7 @@ function renderTBTimeline() {
   // ── Blocks ────────────────────────────────────────────────────
   blockLayer.innerHTML = '';
   blockLayer.style.cssText = 'position:absolute;inset:0;z-index:2;height:' + totalPx + 'px';
-  const blocks = tbTodayBlocks().sort((a, b) => (a.start||'').localeCompare(b.start||''));
+  const blocks = tbActiveBlocks().sort((a, b) => (a.start||'').localeCompare(b.start||''));
   blocks.forEach(block => blockLayer.appendChild(tbBuildBlockEl(block)));
 
   positionTBNowLine();
@@ -9402,7 +9461,7 @@ function tbPageAddTask(blockId) {
 
 // ── Priority cards ────────────────────────────────────────────
 function renderTBPriorityCards() {
-  const blocks = tbTodayBlocks();
+  const blocks = tbActiveBlocks();
   const priorities = blocks.flatMap(b =>
     (b.tasks || []).filter(t => t.priority).map(t => ({ ...t, blockName: b.name, blockColor: b.color || '#7C3AED' }))
   );
@@ -9430,7 +9489,7 @@ function renderTBAsanaPanel(query) {
   const panel = document.getElementById('tb-asana-panel');
   if (!panel) return;
   const q = (query || '').toLowerCase().trim();
-  const usedGids = new Set(tbTodayBlocks().flatMap(b => (b.tasks||[]).filter(t=>t.gid).map(t=>t.gid)));
+  const usedGids = new Set(tbActiveBlocks().flatMap(b => (b.tasks||[]).filter(t=>t.gid).map(t=>t.gid)));
   const tasks = ASANA_TASKS.filter(t => !usedGids.has(t.gid) && (!q || t.name.toLowerCase().includes(q)));
 
   panel.innerHTML = '';
@@ -9466,6 +9525,10 @@ function renderTBAsanaPanel(query) {
 function positionTBNowLine() {
   const line = document.getElementById('tb-now-line');
   if (!line) return;
+  if (tbActiveDate() !== todayStr()) {
+    line.style.display = 'none';
+    return;
+  }
   const now = new Date();
   const totalMins = now.getHours() * 60 + now.getMinutes();
   if (totalMins < TB_START_HOUR * 60 || totalMins > TB_END_HOUR * 60) {
@@ -9505,8 +9568,8 @@ function stopTBNowLine() {
 
 // ── Create block from timeline drop ──────────────────────────
 function tbCreateBlockWithTask(startStr, gid, name) {
-  const today = todayStr();
-  const blocks = tbTodayBlocks();
+  const date = tbActiveDate();
+  const blocks = tbActiveBlocks();
   const cat = TB_CATEGORIES[0];
   const newBlock = {
     id: tbMakeId(), name: name || 'New Block',
@@ -9516,14 +9579,14 @@ function tbCreateBlockWithTask(startStr, gid, name) {
     newBlock.tasks.push({ id: tbMakeId(), gid: gid || null, name: name || 'Task', dur: 30, priority: false, done: false, blockColor: cat.color });
   }
   blocks.push(newBlock);
-  tbSaveDay(today, blocks);
+  tbSaveDay(date, blocks);
   renderTBPage();
   showToast(`Block created at ${startStr}.`);
 }
 
 // ── Quick edit block (click on block) ────────────────────────
 function tbQuickEditBlock(blockId) {
-  const blocks = tbTodayBlocks();
+  const blocks = tbActiveBlocks();
   const block = blocks.find(b => b.id === blockId);
   if (!block) return;
   _tbEditBlockId = blockId;
@@ -9771,8 +9834,8 @@ function tbConfirmCreate() {
 
   if (!name) { showToast('Please enter a block name.'); return; }
 
-  const today  = todayStr();
-  const blocks = tbTodayBlocks();
+  const date   = tbActiveDate();
+  const blocks = tbActiveBlocks();
   const blockColor = col;
 
   if (_tbEditBlockId) {
@@ -9793,15 +9856,17 @@ function tbConfirmCreate() {
     showToast(`"${name}" block created.`);
   }
 
-  tbSaveDay(today, blocks);
+  tbSaveDay(date, blocks);
   closeTBCreateModal();
   renderTBPage();
   renderTimeBlocks(); // refresh dashboard section too
 }
 
 function tbClearDay() {
-  if (!confirm('Clear all time blocks for today?')) return;
-  tbSaveDay(todayStr(), []);
+  const date = tbActiveDate();
+  const label = date === tomorrowStr() ? 'tomorrow' : 'today';
+  if (!confirm(`Clear all time blocks for ${label}?`)) return;
+  tbSaveDay(date, []);
   renderTBPage();
   renderTimeBlocks();
   showToast('Day cleared.');
