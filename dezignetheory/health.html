@@ -1035,7 +1035,7 @@ function mergeByDate(localMap = {}, remoteMap = {}) {
       const localMs = new Date(localRow?.savedAt || localRow?.updatedAt || 0).getTime();
       const remoteMs = new Date(remoteRow?.savedAt || remoteRow?.updatedAt || 0).getTime();
       if (localMs > remoteMs) merged[date] = localRow;
-      else if (date === todayStr()) merged[date] = mergeNonEmpty(remoteRow, localRow);
+      else if (date === todayStr() && (!Number.isFinite(localMs) || localMs <= 0)) merged[date] = mergeNonEmpty(remoteRow, localRow);
     }
   });
   return merged;
@@ -1050,7 +1050,11 @@ function mergeNonEmpty(base = {}, overlay = {}) {
 function mergeCheckMaps(localMap = {}, remoteMap = {}) {
   const merged = { ...localMap, ...remoteMap };
   Object.keys(localMap || {}).forEach(date => {
-    merged[date] = { ...(remoteMap?.[date] || {}), ...(localMap[date] || {}) };
+    const remoteChecks = remoteMap?.[date] || {};
+    const localChecks = localMap[date] || {};
+    const checks = { ...remoteChecks, ...localChecks };
+    Object.keys(checks).forEach(id => { checks[id] = !!remoteChecks[id] || !!localChecks[id]; });
+    merged[date] = checks;
   });
   return merged;
 }
@@ -1175,13 +1179,14 @@ function nav(view){
 function getLog(date = todayStr()){
   const log = db.logs[date] || {};
   const signal = getSignal(date);
+  const pick = (primary, fallback) => primary != null && primary !== '' ? primary : fallback;
   const merged = {
     ...log,
-    steps: log.steps != null && log.steps !== '' ? log.steps : (signal.steps ?? log.steps),
-    water: log.water != null && log.water !== '' ? log.water : (signal.waterOz != null ? +(signal.waterOz / 33.814).toFixed(2) : log.water),
-    sleepHours: signal.sleepHours ?? log.sleepHours,
-    exerciseMins: signal.exerciseMins ?? log.exerciseMins,
-    weight: signal.weight ?? log.weight
+    steps: pick(log.steps, signal.steps),
+    water: pick(log.water, signal.waterOz != null ? +(signal.waterOz / 33.814).toFixed(2) : undefined),
+    sleepHours: pick(log.sleepHours, signal.sleepHours),
+    exerciseMins: pick(log.exerciseMins, signal.exerciseMins),
+    weight: pick(log.weight, signal.weight)
   };
   return Object.keys(merged).length ? merged : null;
 }
