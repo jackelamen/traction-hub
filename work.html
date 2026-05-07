@@ -11184,14 +11184,11 @@ function renderWeeklyIntentionHero() {
 // Must await authReady so token is refreshed before the sync fetch runs
 authReady.then(async () => {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('publishDesktopWork') === '1') {
-    await maybePublishDesktopWorkSnapshot();
-    return;
-  }
-  await syncFromSupabase();
-}).finally(() => {
+  if (params.get('publishDesktopWork') !== '1') await syncFromSupabase();
+}).finally(async () => {
   bootApp();
   _sbBootComplete = true; // now allow writes to trigger uploads
+  await maybePublishDesktopWorkSnapshot();
   // Push local state to cloud every 60s (safety net)
   setInterval(_sbPushThrottled, 60000);
   // Pull fresh data from cloud every 30s (cross-device sync)
