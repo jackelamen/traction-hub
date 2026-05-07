@@ -11,6 +11,12 @@ const FROM_EMAIL = Deno.env.get("FINANCE_PIN_FROM_EMAIL") || "EDGEx <onboarding@
 const PIN_TTL_MINUTES = 5;
 const MAX_ATTEMPTS = 5;
 
+class PublicError extends Error {
+  constructor(message: string, readonly status = 400) {
+    super(message);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return json({}, 200);
@@ -34,9 +40,11 @@ Deno.serve(async (req) => {
     }
     return json({ error: "Unknown action" }, 400);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected error";
-    const status = message === "Unauthorized" ? 401 : 500;
-    return json({ error: message }, status);
+    if (error instanceof PublicError) {
+      return json({ error: error.message }, error.status);
+    }
+    console.error(error);
+    return json({ error: "Could not process finance PIN request." }, 500);
   }
 });
 
@@ -50,16 +58,16 @@ function assertConfigured() {
 }
 
 async function getUser(authHeader: string) {
-  if (!authHeader.startsWith("Bearer ")) throw new Error("Unauthorized");
+  if (!authHeader.startsWith("Bearer ")) throw new PublicError("Unauthorized", 401);
   const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: {
       apikey: SERVICE_ROLE_KEY,
       Authorization: authHeader,
     },
   });
-  if (!res.ok) throw new Error("Unauthorized");
+  if (!res.ok) throw new PublicError("Unauthorized", 401);
   const user = await res.json();
-  if (!user?.id || !user?.email) throw new Error("Unauthorized");
+  if (!user?.id || !user?.email) throw new PublicError("Unauthorized", 401);
   return { id: user.id as string, email: user.email as string };
 }
 

@@ -2972,7 +2972,7 @@
 <!-- ═══════════════════════ BOX BREATH FULLSCREEN ═══════════════════════ -->
 <div id="bbx-fs-backdrop" class="hidden fixed inset-0 z-[90] flex flex-col items-center justify-center" style="background:#0e1a2e">
   <!-- Background: lake sunrise photo -->
-  <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('sunrise.jpg')"></div>
+  <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('../sunrise.jpg')"></div>
   <!-- Dark overlay for readability -->
   <div class="absolute inset-0" style="background:linear-gradient(to bottom, rgba(8,4,20,0.50) 0%, rgba(8,4,20,0.25) 40%, rgba(8,4,20,0.30) 65%, rgba(8,4,20,0.60) 100%)"></div>
   <!-- Exit button -->
@@ -6450,29 +6450,39 @@ const BBX_ORB = {
 
 let bbxFullscreen = false;
 
+function bbxEl(id) {
+  return document.getElementById(id);
+}
+
+function bbxHidden(id) {
+  return bbxEl(id)?.classList.contains('hidden') ?? true;
+}
+
 function expandBoxBreath() {
   bbxFullscreen = true;
-  const fs = document.getElementById('bbx-fs-backdrop');
+  const fs = bbxEl('bbx-fs-backdrop');
+  if (!fs) return;
   fs.classList.remove('hidden');
   // Sync current state into the fullscreen overlay
-  const isActive = !document.getElementById('bbx-active').classList.contains('hidden');
-  const isDone   = !document.getElementById('bbx-done').classList.contains('hidden');
-  document.getElementById('bbx-fs-idle').classList.toggle('hidden', isActive || isDone);
-  document.getElementById('bbx-fs-active').classList.toggle('hidden', !isActive);
-  document.getElementById('bbx-fs-done').classList.toggle('hidden', !isDone);
+  const isActive = !bbxHidden('bbx-active') || !bbxHidden('bbx-fs-active');
+  const isDone   = !bbxHidden('bbx-done') || !bbxHidden('bbx-fs-done');
+  bbxEl('bbx-fs-idle')?.classList.toggle('hidden', isActive || isDone);
+  bbxEl('bbx-fs-active')?.classList.toggle('hidden', !isActive);
+  bbxEl('bbx-fs-done')?.classList.toggle('hidden', !isDone);
   if (isActive) {
     // Mirror current phase state to fullscreen
     bbxApplyPhase(bbxPhaseIdx, BBX_SECS - bbxTickInPhase);
   }
   if (isDone) {
-    const summary = document.getElementById('bbx-done-summary').textContent;
-    document.getElementById('bbx-fs-done-summary').textContent = summary;
+    const summary = bbxEl('bbx-done-summary')?.textContent || bbxEl('bbx-fs-done-summary')?.textContent || '';
+    const fsSummary = bbxEl('bbx-fs-done-summary');
+    if (fsSummary) fsSummary.textContent = summary;
   }
 }
 
 function collapseBoxBreath() {
   bbxFullscreen = false;
-  document.getElementById('bbx-fs-backdrop').classList.add('hidden');
+  bbxEl('bbx-fs-backdrop')?.classList.add('hidden');
 }
 
 function startBoxBreath() {
@@ -6481,36 +6491,36 @@ function startBoxBreath() {
   bbxCycle       = 0;
 
   // Show countdown first
-  document.getElementById('bbx-idle').classList.add('hidden');
-  document.getElementById('bbx-active').classList.add('hidden');
-  document.getElementById('bbx-done').classList.add('hidden');
-  document.getElementById('bbx-countdown').classList.remove('hidden');
+  bbxEl('bbx-idle')?.classList.add('hidden');
+  bbxEl('bbx-active')?.classList.add('hidden');
+  bbxEl('bbx-done')?.classList.add('hidden');
+  bbxEl('bbx-countdown')?.classList.remove('hidden');
   if (bbxFullscreen) {
-    document.getElementById('bbx-fs-idle').classList.add('hidden');
-    document.getElementById('bbx-fs-active').classList.add('hidden');
-    document.getElementById('bbx-fs-done').classList.add('hidden');
+    bbxEl('bbx-fs-idle')?.classList.add('hidden');
+    bbxEl('bbx-fs-active')?.classList.add('hidden');
+    bbxEl('bbx-fs-done')?.classList.add('hidden');
     // Reuse countdown overlay in fullscreen too — show phase label area as countdown
-    document.getElementById('bbx-fs-phase-label').textContent = "Let's begin";
-    document.getElementById('bbx-fs-phase-sub').textContent   = 'find a comfortable position';
-    document.getElementById('bbx-fs-count').textContent = '3';
-    document.getElementById('bbx-fs-sub').textContent   = '';
-    document.getElementById('bbx-fs-active').classList.remove('hidden');
+    if (bbxEl('bbx-fs-phase-label')) bbxEl('bbx-fs-phase-label').textContent = "Let's begin";
+    if (bbxEl('bbx-fs-phase-sub')) bbxEl('bbx-fs-phase-sub').textContent = 'find a comfortable position';
+    if (bbxEl('bbx-fs-count')) bbxEl('bbx-fs-count').textContent = '3';
+    if (bbxEl('bbx-fs-sub')) bbxEl('bbx-fs-sub').textContent = '';
+    bbxEl('bbx-fs-active')?.classList.remove('hidden');
   }
 
   let count = 3;
-  const numEl   = document.getElementById('bbx-countdown-num');
-  const fsCount = document.getElementById('bbx-fs-count');
-  numEl.textContent = count;
+  const numEl   = bbxEl('bbx-countdown-num');
+  const fsCount = bbxEl('bbx-fs-count');
+  if (numEl) numEl.textContent = count;
 
   bbxCountdownInterval = setInterval(() => {
     count--;
     if (count > 0) {
-      numEl.textContent = count;
+      if (numEl) numEl.textContent = count;
       if (fsCount) fsCount.textContent = count;
     } else {
       clearInterval(bbxCountdownInterval);
       bbxCountdownInterval = null;
-      document.getElementById('bbx-countdown').classList.add('hidden');
+      bbxEl('bbx-countdown')?.classList.add('hidden');
       _startBoxBreathActive();
     }
   }, 1000);
@@ -6518,16 +6528,16 @@ function startBoxBreath() {
 
 function _startBoxBreathActive() {
   // Inline widget
-  document.getElementById('bbx-done').classList.add('hidden');
-  document.getElementById('bbx-active').classList.remove('hidden');
+  bbxEl('bbx-done')?.classList.add('hidden');
+  bbxEl('bbx-active')?.classList.remove('hidden');
   // Fullscreen overlay
-  document.getElementById('bbx-fs-idle').classList.add('hidden');
-  document.getElementById('bbx-fs-done').classList.add('hidden');
-  document.getElementById('bbx-fs-active').classList.remove('hidden');
+  bbxEl('bbx-fs-idle')?.classList.add('hidden');
+  bbxEl('bbx-fs-done')?.classList.add('hidden');
+  bbxEl('bbx-fs-active')?.classList.remove('hidden');
 
   // Reset orbs to exhale (small) size instantly — no transition — so first inhale animates from small
-  const orb   = document.getElementById('bbx-orb');
-  const fsOrb = document.getElementById('bbx-fs-orb');
+  const orb   = bbxEl('bbx-orb');
+  const fsOrb = bbxEl('bbx-fs-orb');
   if (orb)   { orb.style.transition = 'none';   orb.style.width   = BBX_ORB.h2.size;  orb.style.height   = BBX_ORB.h2.size; }
   if (fsOrb) { fsOrb.style.transition = 'none'; fsOrb.style.width = BBX_ORB.h2.fsSiz; fsOrb.style.height = BBX_ORB.h2.fsSiz; }
 
@@ -6561,11 +6571,11 @@ function bbxTick() {
       bbxInterval = null;
       saveBreathRound();
       // Inline widget
-      document.getElementById('bbx-active').classList.add('hidden');
-      document.getElementById('bbx-done').classList.remove('hidden');
+      bbxEl('bbx-active')?.classList.add('hidden');
+      bbxEl('bbx-done')?.classList.remove('hidden');
       // Fullscreen overlay
-      document.getElementById('bbx-fs-active').classList.add('hidden');
-      document.getElementById('bbx-fs-done').classList.remove('hidden');
+      bbxEl('bbx-fs-active')?.classList.add('hidden');
+      bbxEl('bbx-fs-done')?.classList.remove('hidden');
       return;
     }
     bbxApplyPhase(bbxPhaseIdx, BBX_SECS);
@@ -6585,15 +6595,17 @@ function bbxApplyPhase(idx, remaining) {
   const subLabel = phase.key === 'in' ? 'inhale' : phase.key === 'out' ? 'exhale' : 'hold';
 
   // ── Inline widget ──
-  document.getElementById('bbx-count').textContent = remaining;
-  document.getElementById('bbx-sub').textContent   = subLabel;
-  document.getElementById('bbx-phase-label').textContent = phase.label;
-  document.getElementById('bbx-phase-sub').textContent   = phase.sub;
-  document.getElementById('bbx-ring').style.strokeDashoffset = offset;
-  document.getElementById('bbx-ring').style.stroke = phase.color;
+  if (bbxEl('bbx-count')) bbxEl('bbx-count').textContent = remaining;
+  if (bbxEl('bbx-sub')) bbxEl('bbx-sub').textContent = subLabel;
+  if (bbxEl('bbx-phase-label')) bbxEl('bbx-phase-label').textContent = phase.label;
+  if (bbxEl('bbx-phase-sub')) bbxEl('bbx-phase-sub').textContent = phase.sub;
+  if (bbxEl('bbx-ring')) {
+    bbxEl('bbx-ring').style.strokeDashoffset = offset;
+    bbxEl('bbx-ring').style.stroke = phase.color;
+  }
 
   // Orb animation — only animate at phase transitions (remaining === BBX_SECS)
-  const orb = document.getElementById('bbx-orb');
+  const orb = bbxEl('bbx-orb');
   if (orb && remaining === BBX_SECS) {
     const o = BBX_ORB[phase.key] || BBX_ORB.h2;
     const dur = (phase.key === 'in' || phase.key === 'out') ? `${BBX_SECS * 0.85}s` : '0.3s';
@@ -6606,22 +6618,24 @@ function bbxApplyPhase(idx, remaining) {
 
   // Inline dots
   BBX_PHASES.forEach((p, i) => {
-    const el = document.getElementById(p.dot);
+    const el = bbxEl(p.dot);
     if (!el) return;
     el.style.background = i === idx ? phase.color : 'rgba(255,255,255,0.2)';
     el.style.transform  = i === idx ? 'scale(1.5)' : 'scale(1)';
   });
 
   // ── Fullscreen overlay ──
-  document.getElementById('bbx-fs-count').textContent = remaining;
-  document.getElementById('bbx-fs-sub').textContent   = subLabel;
-  document.getElementById('bbx-fs-phase-label').textContent = phase.label;
-  document.getElementById('bbx-fs-phase-sub').textContent   = phase.sub;
-  document.getElementById('bbx-fs-ring').style.strokeDashoffset = fsOffset;
-  document.getElementById('bbx-fs-ring').style.stroke = phase.color;
+  if (bbxEl('bbx-fs-count')) bbxEl('bbx-fs-count').textContent = remaining;
+  if (bbxEl('bbx-fs-sub')) bbxEl('bbx-fs-sub').textContent = subLabel;
+  if (bbxEl('bbx-fs-phase-label')) bbxEl('bbx-fs-phase-label').textContent = phase.label;
+  if (bbxEl('bbx-fs-phase-sub')) bbxEl('bbx-fs-phase-sub').textContent = phase.sub;
+  if (bbxEl('bbx-fs-ring')) {
+    bbxEl('bbx-fs-ring').style.strokeDashoffset = fsOffset;
+    bbxEl('bbx-fs-ring').style.stroke = phase.color;
+  }
 
   // Fullscreen orb
-  const fsOrb = document.getElementById('bbx-fs-orb');
+  const fsOrb = bbxEl('bbx-fs-orb');
   if (fsOrb && remaining === BBX_SECS) {
     const o = BBX_ORB[phase.key] || BBX_ORB.h2;
     const dur = (phase.key === 'in' || phase.key === 'out') ? `${BBX_SECS * 0.85}s` : '0.3s';
@@ -6634,7 +6648,7 @@ function bbxApplyPhase(idx, remaining) {
 
   BBX_PHASES.forEach((p, i) => {
     const fsId = p.dot.replace('bbxd-', 'bbxd-fs-');
-    const el = document.getElementById(fsId);
+    const el = bbxEl(fsId);
     if (!el) return;
     el.style.background = i === idx ? phase.color : 'rgba(255,255,255,0.2)';
     el.style.transform  = i === idx ? 'scale(1.5)' : 'scale(1)';
@@ -6647,17 +6661,17 @@ function stopBoxBreath() {
   bbxInterval = null;
   bbxCountdownInterval = null;
   // Inline widget
-  document.getElementById('bbx-active').classList.add('hidden');
-  document.getElementById('bbx-countdown').classList.add('hidden');
-  document.getElementById('bbx-idle').classList.remove('hidden');
+  bbxEl('bbx-active')?.classList.add('hidden');
+  bbxEl('bbx-countdown')?.classList.add('hidden');
+  bbxEl('bbx-idle')?.classList.remove('hidden');
   // Reset orb to resting state
-  const orb = document.getElementById('bbx-orb');
+  const orb = bbxEl('bbx-orb');
   if (orb) { orb.style.width = '40px'; orb.style.height = '40px'; }
-  const fsOrb = document.getElementById('bbx-fs-orb');
+  const fsOrb = bbxEl('bbx-fs-orb');
   if (fsOrb) { fsOrb.style.width = '96px'; fsOrb.style.height = '96px'; }
   // Fullscreen overlay
-  document.getElementById('bbx-fs-active').classList.add('hidden');
-  document.getElementById('bbx-fs-idle').classList.remove('hidden');
+  bbxEl('bbx-fs-active')?.classList.add('hidden');
+  bbxEl('bbx-fs-idle')?.classList.remove('hidden');
 }
 
 function saveBreathRound() {
@@ -6675,8 +6689,8 @@ function saveBreathRound() {
   // Update done-state summary (inline + fullscreen)
   const todayRounds = breathLog[today].length;
   const summaryText = `Round ${todayRounds} logged · ${todayRounds * 64}s of stillness today`;
-  document.getElementById('bbx-done-summary').textContent = summaryText;
-  document.getElementById('bbx-fs-done-summary').textContent = summaryText;
+  if (bbxEl('bbx-done-summary')) bbxEl('bbx-done-summary').textContent = summaryText;
+  if (bbxEl('bbx-fs-done-summary')) bbxEl('bbx-fs-done-summary').textContent = summaryText;
   renderBreathLog();
 }
 
@@ -6756,13 +6770,13 @@ function renderWellnessPracticeCard() {
 
 function resetBoxBreath() {
   // Inline widget
-  document.getElementById('bbx-done').classList.add('hidden');
-  document.getElementById('bbx-idle').classList.remove('hidden');
-  document.getElementById('bbx-ring').setAttribute('stroke-dashoffset', BBX_CIRCUMF);
+  bbxEl('bbx-done')?.classList.add('hidden');
+  bbxEl('bbx-idle')?.classList.remove('hidden');
+  bbxEl('bbx-ring')?.setAttribute('stroke-dashoffset', BBX_CIRCUMF);
   // Fullscreen overlay
-  document.getElementById('bbx-fs-done').classList.add('hidden');
-  document.getElementById('bbx-fs-idle').classList.remove('hidden');
-  document.getElementById('bbx-fs-ring').setAttribute('stroke-dashoffset', BBX_FS_CIRCUMF);
+  bbxEl('bbx-fs-done')?.classList.add('hidden');
+  bbxEl('bbx-fs-idle')?.classList.remove('hidden');
+  bbxEl('bbx-fs-ring')?.setAttribute('stroke-dashoffset', BBX_FS_CIRCUMF);
 }
 
 // ═══════════════════════════════════════════════════════════════
