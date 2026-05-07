@@ -844,6 +844,15 @@ async function doLogout() {
 
 const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.3
 const EDGEX_KV_USER_ID = 'jack_traction_hub_v1';
+function getEdgexUserIds() {
+  const ids = [];
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    if (s?.user?.id) ids.push(s.user.id);
+  } catch(e) {}
+  ids.push(EDGEX_KV_USER_ID);
+  return [...new Set(ids.filter(Boolean))];
+}
 function getSbToken() {
   try {
     const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
@@ -973,7 +982,8 @@ async function fetchTractionValue(key) {
     // Always resolve the freshest token — authReady may have just refreshed it
     const session = await authReady;
     const token = session?.access_token || getSbToken();
-    const url = `${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(EDGEX_KV_USER_ID)}&key=eq.${encodeURIComponent(key)}&select=value,updated_at&limit=1`;
+    const userFilter = getEdgexUserIds().map(id => `"${id}"`).join(',');
+    const url = `${SB_URL}/rest/v1/traction_data?user_id=in.(${encodeURIComponent(userFilter)})&key=eq.${encodeURIComponent(key)}&select=user_id,value,updated_at&order=updated_at.desc&limit=3`;
     const res = await fetchWithTimeout(url, {
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
     });
@@ -1057,15 +1067,11 @@ function renderHealthSummary(data, delay = 1000) {
     reportModuleStatus('health', 'empty');
     return;
   }
-  const completed = data.checked ?? 0;
-  const total = data.total ?? 4;
   const score = data.score ?? null;
-  const routinesPct = total > 0 ? Math.round((completed / total) * 100) : 0;
-  // Prefer the computed health score if available; fall back to routine completion %
-  const ringPct = score != null ? score : routinesPct;
-  document.getElementById('health-pct').textContent = score != null ? score : (routinesPct + '%');
-  document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
-  setText('health-status', completed + ' of ' + total + ' routines complete');
+  const ringPct = score != null ? score : 0;
+  document.getElementById('health-pct').textContent = score != null ? score : '—';
+  document.getElementById('health-meta').textContent = 'health score';
+  setText('health-status', score != null ? score + ' Health Score today' : 'No Health Score yet');
   animateRing('.health-ring', ringPct, delay);
   reportModuleStatus('health', isUpdatedToday(data) ? 'fresh' : 'stale');
 }

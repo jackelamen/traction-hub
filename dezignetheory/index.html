@@ -1062,15 +1062,11 @@ function renderHealthSummary(data, delay = 1000) {
     reportModuleStatus('health', 'empty');
     return;
   }
-  const completed = data.checked ?? 0;
-  const total = data.total ?? 4;
   const score = data.score ?? null;
-  const routinesPct = total > 0 ? Math.round((completed / total) * 100) : 0;
-  // Prefer the computed health score if available; fall back to routine completion %
-  const ringPct = score != null ? score : routinesPct;
-  document.getElementById('health-pct').textContent = score != null ? score : (routinesPct + '%');
-  document.getElementById('health-meta').textContent = completed + '/' + total + ' done';
-  setText('health-status', completed + ' of ' + total + ' routines complete');
+  const ringPct = score != null ? score : 0;
+  document.getElementById('health-pct').textContent = score != null ? score : '—';
+  document.getElementById('health-meta').textContent = 'health score';
+  setText('health-status', score != null ? score + ' Health Score today' : 'No Health Score yet');
   animateRing('.health-ring', ringPct, delay);
   reportModuleStatus('health', isUpdatedToday(data) ? 'fresh' : 'stale');
 }
