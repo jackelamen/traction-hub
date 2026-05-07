@@ -539,6 +539,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 /* ===================== CONFIG ===================== */
 const SUPABASE_URL = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
+const LEARN_ITEMS_KEY = 'learn_items';
+const LEARN_SESSIONS_KEY = 'learn_sessions';
+const LEARN_INSIGHTS_KEY = 'learn_insights';
+const LEARN_DAILY_GOAL_KEY = 'learn_daily_goal';
 
 /* ===================== STATE ===================== */
 let items = [];     // library items
@@ -585,20 +589,25 @@ function setSbStatus(ok) {
 
 /* ===================== DATA ===================== */
 async function loadAll() {
+  const localItems = JSON.parse(localStorage.getItem(LEARN_ITEMS_KEY) || '[]');
+  const localSessions = JSON.parse(localStorage.getItem(LEARN_SESSIONS_KEY) || '[]');
+  const localInsights = JSON.parse(localStorage.getItem(LEARN_INSIGHTS_KEY) || '[]');
   try {
     const [it, se, ins] = await Promise.all([
       sbFetch(`learn_items?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=created_at.desc`),
       sbFetch(`learn_sessions?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=date.desc&limit=500`),
       sbFetch(`learn_insights?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=created_at.desc&limit=500`)
     ]);
-    items = it || [];
-    sessions = se || [];
-    insights = ins || [];
+    items = mergeById(it || [], localItems);
+    sessions = mergeById(se || [], localSessions).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    insights = mergeById(ins || [], localInsights);
+    persist();
+    syncLearningLocalOnly(it || [], se || [], ins || []);
     setSbStatus(true);
   } catch {
-    items = JSON.parse(localStorage.getItem('learn_items') || '[]');
-    sessions = JSON.parse(localStorage.getItem('learn_sessions') || '[]');
-    insights = JSON.parse(localStorage.getItem('learn_insights') || '[]');
+    items = localItems;
+    sessions = localSessions;
+    insights = localInsights;
     setSbStatus(false);
   }
   populateItemSelects();
@@ -610,9 +619,37 @@ async function loadAll() {
 }
 
 function persist() {
-  localStorage.setItem('learn_items', JSON.stringify(items));
-  localStorage.setItem('learn_sessions', JSON.stringify(sessions));
-  localStorage.setItem('learn_insights', JSON.stringify(insights));
+  localStorage.setItem(LEARN_ITEMS_KEY, JSON.stringify(items));
+  localStorage.setItem(LEARN_SESSIONS_KEY, JSON.stringify(sessions));
+  localStorage.setItem(LEARN_INSIGHTS_KEY, JSON.stringify(insights));
+}
+
+function mergeById(cloudRows, localRows) {
+  const merged = new Map();
+  [...localRows, ...cloudRows].forEach(row => {
+    if (!row || !row.id) return;
+    merged.set(row.id, { ...(merged.get(row.id) || {}), ...row });
+  });
+  return [...merged.values()];
+}
+
+async function syncLearningLocalOnly(cloudItems, cloudSessions, cloudInsights) {
+  const cloudItemIds = new Set((cloudItems || []).map(r => r.id));
+  const cloudSessionIds = new Set((cloudSessions || []).map(r => r.id));
+  const cloudInsightIds = new Set((cloudInsights || []).map(r => r.id));
+  try {
+    for (const item of items.filter(r => r.id && !cloudItemIds.has(r.id))) {
+      await sbFetch('learn_items?on_conflict=id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: JSON.stringify({ ...item, user_id: getSbUserId() }) });
+    }
+    for (const session of sessions.filter(r => r.id && !cloudSessionIds.has(r.id))) {
+      await sbFetch('learn_sessions?on_conflict=id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: JSON.stringify({ ...session, user_id: getSbUserId() }) });
+    }
+    for (const insight of insights.filter(r => r.id && !cloudInsightIds.has(r.id))) {
+      await sbFetch('learn_insights?on_conflict=id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: JSON.stringify({ ...insight, user_id: getSbUserId() }) });
+    }
+  } catch(e) {
+    console.warn('Learning local recovery sync skipped:', e.message);
+  }
 }
 
 /* ===================== ITEM CRUD ===================== */
@@ -730,15 +767,16 @@ async function saveSession() {
   try {
     const res = await sbFetch('learn_sessions', { method: 'POST', prefer: 'return=representation', body: JSON.stringify(obj) });
     sessions.unshift(res?.[0] || { id: crypto.randomUUID(), ...obj, created_at: new Date().toISOString() });
-    // Update item progress
-    if (progress !== null) {
-      await sbFetch(`learn_items?id=eq.${itemId}&user_id=eq.${encodeURIComponent(getSbUserId())}`, { method: 'PATCH', body: JSON.stringify({ progress }) });
-      const it = items.find(x => x.id === itemId);
-      if (it) it.progress = progress;
-    }
   } catch {
     sessions.unshift({ id: crypto.randomUUID(), ...obj, created_at: new Date().toISOString() });
-    if (progress !== null) { const it = items.find(x => x.id === itemId); if (it) it.progress = progress; }
+  }
+
+  if (progress !== null) {
+    try {
+      await sbFetch(`learn_items?id=eq.${itemId}&user_id=eq.${encodeURIComponent(getSbUserId())}`, { method: 'PATCH', body: JSON.stringify({ progress }) });
+    } catch {}
+    const it = items.find(x => x.id === itemId);
+    if (it) it.progress = progress;
   }
 
   // Auto-save insight if provided
@@ -978,7 +1016,7 @@ function renderInsights() {
 
 /* ===================== RENDER STATS ===================== */
 function renderStats() {
-  const dailyGoal = parseInt(localStorage.getItem('learn_daily_goal') || '30');
+  const dailyGoal = parseInt(localStorage.getItem(LEARN_DAILY_GOAL_KEY) || '30');
 
   // Stat strip
   const totalMins = sessions.reduce((s, x) => s + (x.duration_mins || 0), 0);
@@ -1083,11 +1121,11 @@ function populateItemSelects() {
 
 /* ===================== SETTINGS ===================== */
 function loadSettings() {
-  document.getElementById('setting-daily-goal').value = localStorage.getItem('learn_daily_goal') || '30';
+  document.getElementById('setting-daily-goal').value = localStorage.getItem(LEARN_DAILY_GOAL_KEY) || '30';
 }
 
 function saveSettings() {
-  localStorage.setItem('learn_daily_goal', document.getElementById('setting-daily-goal').value);
+  localStorage.setItem(LEARN_DAILY_GOAL_KEY, document.getElementById('setting-daily-goal').value);
   showToast('Settings saved');
 }
 

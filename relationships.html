@@ -482,6 +482,38 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
           <input type="text" id="pm-location" placeholder="City, Country"/>
         </div>
       </div>
+      <div class="form-section-label">Contact Information</div>
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="field">
+          <label>Phone</label>
+          <input type="tel" id="pm-phone" placeholder="+1 555 123 4567"/>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="pm-email" placeholder="name@example.com"/>
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="field">
+          <label>Birthday</label>
+          <input type="date" id="pm-birthday"/>
+        </div>
+        <div class="field">
+          <label>Preferred contact</label>
+          <select id="pm-preferred-contact">
+            <option value="">Not set</option>
+            <option value="Message">Message</option>
+            <option value="Call">Call</option>
+            <option value="Email">Email</option>
+            <option value="In-person">In-person</option>
+            <option value="Social">Social</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:12px">
+        <label>Social / Website</label>
+        <input type="text" id="pm-social" placeholder="@handle, LinkedIn, website, or profile URL"/>
+      </div>
       <div class="field" style="margin-bottom:12px">
         <label>Tags (comma separated)</label>
         <input type="text" id="pm-tags" placeholder="e.g. mentor, travel, startup, family"/>
@@ -548,9 +580,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 const SUPABASE_URL = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const DEFAULT_CADENCES = { Inner: 14, Close: 30, Extended: 60, Professional: 45, Acquaintance: 90 };
+const REL_PEOPLE_KEY = 'rel_people';
+const REL_INTERACTIONS_KEY = 'rel_interactions';
+const REL_INTENTIONS_KEY = 'rel_intentions';
+const REL_CADENCES_KEY = 'rel_cadences';
 
 /* ===================== STATE ===================== */
-let people = [];       // [{id, name, circle, strength, cadence, tags, notes, how, location, last_contact_date}]
+let people = [];       // [{id, name, circle, strength, cadence, tags, notes, how, location, phone, email, birthday, social, preferred_contact, last_contact_date}]
 let interactions = []; // [{id, person_id, date, type, initiated, notes, followup}]
 let intentions = [];   // [{id, person_id, how, why, week_id, done}]
 
@@ -594,22 +630,26 @@ function setSbStatus(ok) {
 
 /* ===================== DATA LOADING ===================== */
 async function loadAll() {
+  const localPeople = JSON.parse(localStorage.getItem(REL_PEOPLE_KEY) || '[]');
+  const localInteractions = JSON.parse(localStorage.getItem(REL_INTERACTIONS_KEY) || '[]');
   try {
     const [p, ix] = await Promise.all([
       sbFetch(`rel_people?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=name.asc`),
       sbFetch(`rel_interactions?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=date.desc&limit=500`)
     ]);
-    people = p || [];
-    interactions = ix || [];
+    people = mergeById(p || [], localPeople);
+    interactions = mergeById(ix || [], localInteractions).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    persist();
+    syncLocalOnlyRows(p || [], ix || []);
     setSbStatus(true);
   } catch (e) {
-    people = JSON.parse(localStorage.getItem('rel_people') || '[]');
-    interactions = JSON.parse(localStorage.getItem('rel_interactions') || '[]');
+    people = localPeople;
+    interactions = localInteractions;
     setSbStatus(false);
   }
   // Load intentions from localStorage (they are week-scoped and ephemeral)
   const weekId = getWeekId();
-  const stored = JSON.parse(localStorage.getItem('rel_intentions') || '[]');
+  const stored = JSON.parse(localStorage.getItem(REL_INTENTIONS_KEY) || '[]');
   intentions = stored.filter(i => i.week_id === weekId);
 
   populatePersonSelects();
@@ -621,8 +661,34 @@ async function loadAll() {
 }
 
 function persist() {
-  localStorage.setItem('rel_people', JSON.stringify(people));
-  localStorage.setItem('rel_interactions', JSON.stringify(interactions));
+  localStorage.setItem(REL_PEOPLE_KEY, JSON.stringify(people));
+  localStorage.setItem(REL_INTERACTIONS_KEY, JSON.stringify(interactions));
+}
+
+function mergeById(cloudRows, localRows) {
+  const merged = new Map();
+  [...localRows, ...cloudRows].forEach(row => {
+    if (!row || !row.id) return;
+    merged.set(row.id, { ...(merged.get(row.id) || {}), ...row });
+  });
+  return [...merged.values()];
+}
+
+async function syncLocalOnlyRows(cloudPeople, cloudInteractions) {
+  const cloudPersonIds = new Set((cloudPeople || []).map(r => r.id));
+  const cloudInteractionIds = new Set((cloudInteractions || []).map(r => r.id));
+  const localOnlyPeople = people.filter(p => p.id && !cloudPersonIds.has(p.id));
+  const localOnlyInteractions = interactions.filter(i => i.id && !cloudInteractionIds.has(i.id));
+  try {
+    for (const p of localOnlyPeople) {
+      await sbFetch('rel_people?on_conflict=id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: JSON.stringify({ ...p, user_id: getSbUserId() }) });
+    }
+    for (const i of localOnlyInteractions) {
+      await sbFetch('rel_interactions?on_conflict=id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: JSON.stringify({ ...i, user_id: getSbUserId() }) });
+    }
+  } catch(e) {
+    console.warn('Relationship local recovery sync skipped:', e.message);
+  }
 }
 
 /* ===================== PERSON CRUD ===================== */
@@ -643,11 +709,16 @@ function openAddPerson(id = null) {
     document.getElementById('pm-strength-label').textContent = p.strength || 3;
     document.getElementById('pm-cadence').value = p.cadence || '';
     document.getElementById('pm-location').value = p.location || '';
+    document.getElementById('pm-phone').value = p.phone || '';
+    document.getElementById('pm-email').value = p.email || '';
+    document.getElementById('pm-birthday').value = p.birthday || '';
+    document.getElementById('pm-preferred-contact').value = p.preferred_contact || '';
+    document.getElementById('pm-social').value = p.social || '';
     document.getElementById('pm-tags').value = (p.tags || []).join(', ');
     document.getElementById('pm-notes').value = p.notes || '';
     document.getElementById('pm-last-contact').value = p.last_contact_date || '';
   } else {
-    ['pm-name','pm-how','pm-cadence','pm-location','pm-tags','pm-notes','pm-last-contact'].forEach(id => document.getElementById(id).value = '');
+    ['pm-name','pm-how','pm-cadence','pm-location','pm-phone','pm-email','pm-birthday','pm-preferred-contact','pm-social','pm-tags','pm-notes','pm-last-contact'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('pm-circle').value = 'Close';
     document.getElementById('pm-strength').value = 3;
     document.getElementById('pm-strength-label').textContent = 3;
@@ -671,6 +742,11 @@ async function savePerson() {
     strength: parseInt(document.getElementById('pm-strength').value),
     cadence: parseInt(document.getElementById('pm-cadence').value) || null,
     location: document.getElementById('pm-location').value.trim(),
+    phone: document.getElementById('pm-phone').value.trim(),
+    email: document.getElementById('pm-email').value.trim(),
+    birthday: document.getElementById('pm-birthday').value || null,
+    preferred_contact: document.getElementById('pm-preferred-contact').value || null,
+    social: document.getElementById('pm-social').value.trim(),
     tags: document.getElementById('pm-tags').value.split(',').map(t => t.trim()).filter(Boolean),
     notes: document.getElementById('pm-notes').value.trim(),
     last_contact_date: document.getElementById('pm-last-contact').value || null,
@@ -679,7 +755,7 @@ async function savePerson() {
 
   try {
     if (id) {
-      const updated = await sbFetch(`rel_people?id=eq.${id}&user_id=eq.${encodeURIComponent(getSbUserId())}`, {
+      await sbFetch(`rel_people?id=eq.${id}&user_id=eq.${encodeURIComponent(getSbUserId())}`, {
         method: 'PATCH', prefer: 'return=representation', body: JSON.stringify(obj)
       });
       const idx = people.findIndex(p => p.id === id);
@@ -753,14 +829,16 @@ async function saveInteraction() {
     });
     if (created && created[0]) interactions.unshift(created[0]);
     else interactions.unshift({ id: crypto.randomUUID(), ...obj });
-    // Update last_contact_date on person
+  } catch {
+    interactions.unshift({ id: crypto.randomUUID(), ...obj });
+  }
+
+  try {
     await sbFetch(`rel_people?id=eq.${personId}&user_id=eq.${encodeURIComponent(getSbUserId())}`, {
       method: 'PATCH', prefer: 'return=representation',
       body: JSON.stringify({ last_contact_date: obj.date })
     });
-  } catch {
-    interactions.unshift({ id: crypto.randomUUID(), ...obj });
-  }
+  } catch {}
 
   // Always update last_contact_date locally
   const p = people.find(x => x.id === personId);
@@ -823,6 +901,11 @@ function renderPeople() {
 
     const tags = (p.tags || []).slice(0, 4);
     const circleBadge = circleBadgeClass(p.circle);
+    const contactBits = [
+      p.phone ? `<span class="person-tag"><span class="icon" style="font-size:11px">call</span>${esc(p.phone)}</span>` : '',
+      p.email ? `<span class="person-tag"><span class="icon" style="font-size:11px">email</span>${esc(p.email)}</span>` : '',
+      p.preferred_contact ? `<span class="person-tag"><span class="icon" style="font-size:11px">favorite</span>${esc(p.preferred_contact)}</span>` : ''
+    ].filter(Boolean).join('');
 
     return `<div class="person-row" onclick="openAddPerson('${p.id}')">
       <div class="avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
@@ -834,6 +917,7 @@ function renderPeople() {
           ${tags.map(t => `<span class="person-tag">${esc(t)}</span>`).join('')}
           ${overdue ? `<span class="overdue-pill"><span class="icon fill" style="font-size:11px">schedule</span>Overdue</span>` : ''}
         </div>
+        ${contactBits ? `<div class="person-tags" style="margin-top:5px">${contactBits}</div>` : ''}
         <div class="strength-bar" style="margin-top:6px">
           ${[1,2,3,4,5].map(i => `<div class="strength-pip ${i <= (p.strength||0) ? 'on' : ''}"></div>`).join('')}
         </div>
@@ -998,10 +1082,10 @@ function saveIntention() {
     done: false
   };
   intentions.push(obj);
-  const all = JSON.parse(localStorage.getItem('rel_intentions') || '[]');
+  const all = JSON.parse(localStorage.getItem(REL_INTENTIONS_KEY) || '[]');
   const filtered = all.filter(i => i.week_id === getWeekId());
   filtered.push(obj);
-  localStorage.setItem('rel_intentions', JSON.stringify(all.filter(i => i.week_id !== getWeekId()).concat(filtered)));
+  localStorage.setItem(REL_INTENTIONS_KEY, JSON.stringify(all.filter(i => i.week_id !== getWeekId()).concat(filtered)));
   document.getElementById('intention-modal').style.display = 'none';
   renderIntentions();
   showToast('Intention added');
@@ -1011,17 +1095,17 @@ function toggleIntention(id) {
   const obj = intentions.find(i => i.id === id);
   if (!obj) return;
   obj.done = !obj.done;
-  const all = JSON.parse(localStorage.getItem('rel_intentions') || '[]');
+  const all = JSON.parse(localStorage.getItem(REL_INTENTIONS_KEY) || '[]');
   const idx = all.findIndex(i => i.id === id);
   if (idx >= 0) all[idx].done = obj.done;
-  localStorage.setItem('rel_intentions', JSON.stringify(all));
+  localStorage.setItem(REL_INTENTIONS_KEY, JSON.stringify(all));
   renderIntentions();
 }
 
 function removeIntention(id) {
   intentions = intentions.filter(i => i.id !== id);
-  const all = JSON.parse(localStorage.getItem('rel_intentions') || '[]');
-  localStorage.setItem('rel_intentions', JSON.stringify(all.filter(i => i.id !== id)));
+  const all = JSON.parse(localStorage.getItem(REL_INTENTIONS_KEY) || '[]');
+  localStorage.setItem(REL_INTENTIONS_KEY, JSON.stringify(all.filter(i => i.id !== id)));
   renderIntentions();
 }
 
@@ -1065,7 +1149,7 @@ function populatePersonSelects() {
 
 /* ===================== SETTINGS ===================== */
 function loadSettings() {
-  const saved = JSON.parse(localStorage.getItem('rel_cadences') || '{}');
+  const saved = JSON.parse(localStorage.getItem(REL_CADENCES_KEY) || '{}');
   document.getElementById('cadence-inner').value = saved.Inner || DEFAULT_CADENCES.Inner;
   document.getElementById('cadence-close').value = saved.Close || DEFAULT_CADENCES.Close;
   document.getElementById('cadence-extended').value = saved.Extended || DEFAULT_CADENCES.Extended;
@@ -1081,7 +1165,7 @@ function saveSettings() {
     Professional: parseInt(document.getElementById('cadence-professional').value) || 45,
     Acquaintance: parseInt(document.getElementById('cadence-acquaintance').value) || 90
   };
-  localStorage.setItem('rel_cadences', JSON.stringify(cadences));
+  localStorage.setItem(REL_CADENCES_KEY, JSON.stringify(cadences));
   Object.assign(DEFAULT_CADENCES, cadences);
   showToast('Settings saved');
 }
