@@ -351,6 +351,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <button class="btn btn-secondary" onclick="nav('journal')"><span class="icon" style="font-size:17px">auto_stories</span>View Saved Writing</button>
         <button class="btn btn-danger" onclick="deleteCheckin()"><span class="icon" style="font-size:17px">delete</span>Delete This Date</button>
       </div>
+      <div class="form-section">
+        <div class="form-section-label">Fix Date</div>
+        <div class="grid-2">
+          <div class="field"><label>Move this check-in to</label><input id="move-date" type="date"/></div>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="moveCheckinToDate()"><span class="icon" style="font-size:17px">drive_file_move</span>Move to Date</button>
+            <button class="btn btn-secondary" onclick="moveCheckinToPreviousDay()"><span class="icon" style="font-size:17px">undo</span>Move to Previous Day</button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -499,6 +509,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="exportData()"><span class="icon" style="font-size:17px">download</span>Export</button>
           <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()"><span class="icon" style="font-size:17px">upload</span>Import</button>
+          <button class="btn btn-secondary" onclick="syncWellnessNow()"><span class="icon" style="font-size:17px">sync</span>Sync Now</button>
           <input class="hidden-file" type="file" id="import-file" accept=".json" onchange="importData(this)"/>
         </div>
       </div>
@@ -541,9 +552,16 @@ const STORAGE_KEY = 'edgex_wellness_v1';
 const SUMMARY_KEY = 'edgex_wellness_summary';
 const SB_URL  = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SB_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
-const SB_USER_ID = 'jack_traction_hub_v1';
+const SB_LEGACY_USER_ID = 'jack_traction_hub_v1';
 function getSbUserId() {
-  return SB_USER_ID;
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s?.user?.id || SB_LEGACY_USER_ID;
+  } catch(e) { return SB_LEGACY_USER_ID; }
+}
+function getSyncUserIds() {
+  const ids = [getSbUserId(), SB_LEGACY_USER_ID].filter(Boolean);
+  return [...new Set(ids)];
 }
 function getSbToken() {
   try {
@@ -618,19 +636,15 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
 }
 async function deleteKeyFromSupabase(key) {
   if (NO_SYNC_KEYS.has(key)) return;
-  const userId = getSbUserId();
-  if (!userId) return;
-  try {
-    await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(userId)}&key=eq.${encodeURIComponent(key)}`, {
+  await Promise.allSettled(getSyncUserIds().map(userId =>
+    fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(userId)}&key=eq.${encodeURIComponent(key)}`, {
       method: 'DELETE',
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}` }
-    });
-  } catch(e) { console.warn('[Wellness] delete key failed', key, e); }
+    }).catch(e => console.warn('[Wellness] delete key failed', key, userId, e))
+  ));
 }
 async function pushAllToSupabase() {
-  const userId = getSbUserId();
-  if (!userId) return;
-  const rows = [];
+  const baseRows = [];
   const timestamps = _getLsTimestamps();
   const dirtyKeys = new Set(_dirtySyncKeys);
   if (!dirtyKeys.size) return;
@@ -642,17 +656,19 @@ async function pushAllToSupabase() {
     let parsed; try { parsed = JSON.parse(localStorage.getItem(key)); } catch(e) { parsed = localStorage.getItem(key); }
     const updatedAtMs = timestamps[key];
     const updatedAt = Number.isFinite(updatedAtMs) ? new Date(updatedAtMs).toISOString() : '1970-01-01T00:00:00.000Z';
-    rows.push({ user_id: userId, key, value: parsed, updated_at: updatedAt });
+    baseRows.push({ key, value: parsed, updated_at: updatedAt });
   }
-  if (!rows.length) return;
-  try {
-    const res = await fetchWithTimeout(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
+  if (!baseRows.length) return;
+  const results = await Promise.allSettled(getSyncUserIds().map(userId => {
+    const rows = baseRows.map(row => ({ user_id: userId, ...row }));
+    return fetchWithTimeout(`${SB_URL}/rest/v1/rpc/upsert_traction_data`, {
       method: 'POST',
       headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows })
     });
-    if (res.ok) rows.forEach(row => _dirtySyncKeys.delete(row.key));
-  } catch(e) { console.warn('[Wellness] push failed', e); }
+  }));
+  if (results.some(r => r.status === 'fulfilled' && r.value.ok)) baseRows.forEach(row => _dirtySyncKeys.delete(row.key));
+  results.forEach(r => { if (r.status === 'rejected') console.warn('[Wellness] push failed', r.reason); });
 }
 const _sbPushThrottled = (() => {
   let busy = false;
@@ -674,16 +690,19 @@ localStorage.removeItem = function(key) {
 };
 async function syncFromSupabase() {
   try {
-    const userId = getSbUserId();
-    if (!userId) return;
     const keyFilter = [STORAGE_KEY, SUMMARY_KEY].join(',');
-    const res = await fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(userId)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' }
-    });
-    if (!res.ok) return;
+    const responses = await Promise.allSettled(getSyncUserIds().map(userId =>
+      fetchWithTimeout(`${SB_URL}/rest/v1/traction_data?user_id=eq.${encodeURIComponent(userId)}&key=in.(${encodeURIComponent(keyFilter)})&select=key,value,updated_at`, {
+        headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' }
+      })
+    ));
     const keys = new Set([STORAGE_KEY, SUMMARY_KEY]);
     const timestamps = _getLsTimestamps();
-    const rows = await res.json();
+    const rows = [];
+    for (const result of responses) {
+      if (result.status !== 'fulfilled' || !result.value.ok) continue;
+      rows.push(...await result.value.json());
+    }
     rows.forEach(({ key, value, updated_at }) => {
       if (!keys.has(key)) return;
       const remoteTs = new Date(updated_at).getTime();
@@ -776,6 +795,14 @@ let currentBreathPreset = BREATH_PRESETS[0];
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
 function todayStr(){
   const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+function shiftDateStr(dateStr, days){
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + days);
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -1063,6 +1090,8 @@ document.addEventListener('change',e=>{ if(e.target?.id==='log-date') loadTodayI
 function loadTodayIntoForm(){
   const date=document.getElementById('log-date').value || todayStr();
   setVal('log-date',date);
+  const moveDate=document.getElementById('move-date');
+  if(moveDate) moveDate.value=shiftDateStr(date,-1);
   const c=getCheckin(date)||{};
   ['mood','state','sleep-impact','stress','clarity','grounded','present','lighter','loop','reframe'].forEach(id=>setVal(id,c[camel(id)] || (['stress','clarity','grounded'].includes(id)?3:'')));
   ['stress','clarity','grounded'].forEach(syncRangeLabel);
@@ -1086,6 +1115,27 @@ function deleteCheckin(){
   renderToday();
   if(currentView==='journal') renderJournal();
   toast('Check-in deleted');
+}
+function moveCheckinToDate(targetDate){
+  const fromDate=val('log-date') || todayStr();
+  const toDate=targetDate || val('move-date');
+  if(!toDate){ toast('Choose a destination date'); return; }
+  if(fromDate===toDate){ toast('Already on that date'); return; }
+  const current=db.checkins[fromDate];
+  if(!current){ toast('No check-in for this date'); return; }
+  if(db.checkins[toDate] && !confirm('Replace the existing check-in for '+toDate+'?')) return;
+  db.checkins[toDate]={ ...current, movedFrom:fromDate, savedAt:new Date().toISOString() };
+  delete db.checkins[fromDate];
+  saveData();
+  setVal('log-date',toDate);
+  loadTodayIntoForm();
+  renderToday();
+  if(currentView==='journal') renderJournal();
+  toast('Check-in moved to '+toDate);
+}
+function moveCheckinToPreviousDay(){
+  const fromDate=val('log-date') || todayStr();
+  moveCheckinToDate(shiftDateStr(fromDate,-1));
 }
 function sendLoopToInbox(){
   const text=val('loop').trim();
@@ -1550,6 +1600,18 @@ function importData(input){
   reader.readAsText(file); input.value='';
 }
 function resetData(){ if(!confirm('Clear all Wellness module data from this browser?')) return; db=clone(DEFAULTS); saveData(); renderToday(); toast('Wellness data reset'); }
+async function syncWellnessNow(){
+  await _sbPullThrottled();
+  db=loadData();
+  writeSummary();
+  renderToday();
+  if(currentView==='journal') renderJournal();
+  if(currentView==='checkin') loadTodayIntoForm();
+  toast('Wellness synced');
+  _dirtySyncKeys.add(STORAGE_KEY);
+  _dirtySyncKeys.add(SUMMARY_KEY);
+  _sbPushThrottled();
+}
 function applyInitialRoute(){
   const params=new URLSearchParams(window.location.search);
   const view=params.get('view');
