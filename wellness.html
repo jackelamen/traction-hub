@@ -739,6 +739,7 @@ let breath = null;
 let introTimer = null;
 let audioFadeTimer = null;
 let audioFadeStarted = false;
+let completingAfterExhale = false;
 let breathStartedAt = 0;
 const MEDITATION_FADE_SECONDS = 10;
 const BREATH_PRESETS = [
@@ -1108,6 +1109,7 @@ function setDuration(min){
   if(timer || introTimer){ clearMeditationTimers(); pauseMeditationAudio(); setTimerButtonHTML('<span class="icon" style="font-size:17px">play_arrow</span>Start'); }
   duration=min*60;
   remaining=duration;
+  completingAfterExhale=false;
   breathStartedAt=0;
   stopBreathGuide(true);
   renderTimer();
@@ -1117,6 +1119,7 @@ function clearMeditationTimers(){
   clearInterval(breath);
   clearInterval(introTimer);
   clearAudioFade(true);
+  completingAfterExhale=false;
   timer=null;
   breath=null;
   introTimer=null;
@@ -1137,6 +1140,7 @@ function selectBreathPreset(id){
   if(timer || introTimer){ clearMeditationTimers(); pauseMeditationAudio(); setTimerButtonHTML('<span class="icon" style="font-size:17px">play_arrow</span>Start'); }
   duration=preset.minutes*60;
   remaining=duration;
+  completingAfterExhale=false;
   syncPracticeTypeToPreset();
   breathStartedAt=0;
   stopBreathGuide(true);
@@ -1202,21 +1206,40 @@ function applyIntroVisual(text, sub='settle in'){
     if(subEl) subEl.textContent=sub;
   });
 }
+function getBreathPhaseState(elapsed=(Date.now()-breathStartedAt)/1000){
+  const cycle=currentBreathPreset.phases.reduce((sum,p)=>sum+p.seconds,0);
+  let t=elapsed%cycle;
+  let phase=currentBreathPreset.phases[0];
+  let index=0;
+  for(let i=0;i<currentBreathPreset.phases.length;i++){
+    const p=currentBreathPreset.phases[i];
+    index=i;
+    if(t < p.seconds){ phase=p; break; }
+    t-=p.seconds;
+  }
+  const progress=Math.max(0,Math.min(1,t/phase.seconds));
+  return { phase, index, progress, elapsedInPhase:t, remainingInPhase:Math.max(0,phase.seconds-t) };
+}
 function updateBreathGuide(){
   if(!breathStartedAt) {
     applyBreathVisual(currentBreathPreset.phases[0], 0);
     return;
   }
-  const elapsed=(Date.now()-breathStartedAt)/1000;
-  const cycle=currentBreathPreset.phases.reduce((sum,p)=>sum+p.seconds,0);
-  let t=elapsed%cycle;
-  let phase=currentBreathPreset.phases[0];
-  for(const p of currentBreathPreset.phases){
-    if(t < p.seconds){ phase=p; break; }
-    t-=p.seconds;
-  }
-  const progress=Math.max(0,Math.min(1,t/phase.seconds));
+  const { phase, progress } = getBreathPhaseState();
   applyBreathVisual(phase,progress);
+}
+function secondsUntilExhaleComplete(){
+  if(!breathStartedAt) return 0;
+  const state=getBreathPhaseState();
+  const phases=currentBreathPreset.phases;
+  if(state.phase.key==='out') return Math.ceil(state.remainingInPhase);
+  let seconds=state.remainingInPhase;
+  for(let offset=1; offset<=phases.length; offset++){
+    const phase=phases[(state.index+offset)%phases.length];
+    seconds+=phase.seconds;
+    if(phase.key==='out') return Math.ceil(seconds);
+  }
+  return 0;
 }
 function startBreathGuide(){
   breathStartedAt=Date.now();
@@ -1226,8 +1249,16 @@ function startBreathGuide(){
 }
 function startSessionTimer(){
   startBreathGuide();
+  completingAfterExhale=false;
   timer=setInterval(()=>{
     remaining--;
+    if(remaining<=0 && !completingAfterExhale){
+      const finishSeconds=secondsUntilExhaleComplete();
+      if(finishSeconds>0){
+        completingAfterExhale=true;
+        remaining=finishSeconds;
+      }
+    }
     renderTimer();
     updateMeditationFade();
     if(remaining<=0) completeMeditationSession();
@@ -1240,6 +1271,7 @@ function completeMeditationSession(){
   timer=null;
   breath=null;
   introTimer=null;
+  completingAfterExhale=false;
   fadeOutMeditationAudio();
   setTimerButtonHTML('<span class="icon" style="font-size:17px">play_arrow</span>Start');
   setTimerPhase('Complete');
