@@ -324,6 +324,15 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <div class="field"><label>Sleep Impact</label><select id="sleep-impact"><option value="">Unknown</option><option value="helped">Helped</option><option value="neutral">Neutral</option><option value="hurt">Hurt</option></select></div>
       </div>
       <div class="form-section">
+        <div class="form-section-label">Entry</div>
+        <div class="grid-2">
+          <div class="field"><label>Saved check-ins for this date</label><select id="checkin-entry-select" onchange="loadSelectedCheckinEntry()"></select></div>
+          <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="newCheckinEntry()"><span class="icon" style="font-size:17px">add</span>New Check-In</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
       <div class="form-section-label">Scores</div>
       <div class="grid-3">
         <div class="field"><label>Stress</label><div class="range-row"><input id="stress" type="range" min="1" max="5" value="3" oninput="syncRangeLabel('stress')"/><div class="score-pill" id="stress-label">3</div></div></div>
@@ -346,10 +355,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
-        <button class="btn btn-primary" onclick="saveCheckin()"><span class="icon" style="font-size:17px">save</span>Save Check-In</button>
+        <button class="btn btn-primary" onclick="saveCheckin()" id="save-checkin-btn"><span class="icon" style="font-size:17px">save</span><span id="save-checkin-label">Save Check-In</span></button>
         <button class="btn btn-secondary" onclick="sendLoopToInbox()"><span class="icon" style="font-size:17px">move_to_inbox</span>Send Loop to Inbox</button>
         <button class="btn btn-secondary" onclick="nav('journal')"><span class="icon" style="font-size:17px">auto_stories</span>View Saved Writing</button>
-        <button class="btn btn-danger" onclick="deleteCheckin()"><span class="icon" style="font-size:17px">delete</span>Delete This Date</button>
+        <button class="btn btn-danger" onclick="deleteCheckin()"><span class="icon" style="font-size:17px">delete</span>Delete This Entry</button>
       </div>
       <div class="form-section">
         <div class="form-section-label">Fix Date</div>
@@ -751,6 +760,7 @@ const DEFAULTS = { checkins:{}, thoughts:[], practices:[] };
 let db = loadData();
 let currentView = 'today';
 let trendMetric = 'clarityScore';
+let currentCheckinId = null;
 let duration = 2 * 60;
 let remaining = duration;
 let timer = null;
@@ -822,15 +832,25 @@ function mergeById(localRows = [], remoteRows = []) {
   });
   return [...merged.values()];
 }
+function normalizeCheckinEntry(row = {}, date = todayStr()) {
+  const savedAt = row.savedAt || row.createdAt || new Date().toISOString();
+  return { ...row, id: row.id || uid('c'), date: row.date || date, savedAt };
+}
+function normalizeCheckinList(value, date) {
+  if (Array.isArray(value)) return value.map(row => normalizeCheckinEntry(row, date)).sort((a,b)=>new Date(a.savedAt||0)-new Date(b.savedAt||0));
+  if (value && typeof value === 'object') return [normalizeCheckinEntry(value, date)];
+  return [];
+}
 function mergeCheckins(localMap = {}, remoteMap = {}) {
-  const merged = { ...localMap, ...remoteMap };
-  Object.keys(localMap || {}).forEach(date => {
-    const localRow = localMap[date];
-    const remoteRow = remoteMap?.[date];
-    const localMs = new Date(localRow?.savedAt || 0).getTime();
-    const remoteMs = new Date(remoteRow?.savedAt || 0).getTime();
-    if (!remoteRow || localMs > remoteMs) merged[date] = localRow;
-    else if (date === todayStr() && (!Number.isFinite(localMs) || localMs <= 0)) merged[date] = mergeNonEmpty(remoteRow, localRow);
+  const merged = {};
+  const dates = new Set([...Object.keys(localMap || {}), ...Object.keys(remoteMap || {})]);
+  dates.forEach(date => {
+    const byId = new Map();
+    [...normalizeCheckinList(remoteMap?.[date], date), ...normalizeCheckinList(localMap?.[date], date)].forEach(row => {
+      const existing = byId.get(row.id);
+      if (!existing || new Date(row.savedAt || 0) >= new Date(existing.savedAt || 0)) byId.set(row.id, { ...(existing || {}), ...row });
+    });
+    merged[date] = [...byId.values()].sort((a,b)=>new Date(a.savedAt||0)-new Date(b.savedAt||0));
   });
   return merged;
 }
@@ -870,7 +890,23 @@ function nav(view){
   if(view==='journal') renderJournal();
   if(view==='trends') renderTrends();
 }
-function getCheckin(date=todayStr()){ return db.checkins[date] || null; }
+function getCheckins(date=todayStr()){
+  const list = normalizeCheckinList(db.checkins[date], date);
+  if (Array.isArray(db.checkins[date])) return list;
+  if (db.checkins[date] && list.length) db.checkins[date] = list;
+  return list;
+}
+function setCheckins(date, entries){
+  if(entries.length) db.checkins[date]=entries.map(row=>normalizeCheckinEntry(row,date)).sort((a,b)=>new Date(a.savedAt||0)-new Date(b.savedAt||0));
+  else delete db.checkins[date];
+}
+function getCheckin(date=todayStr()){
+  const entries=getCheckins(date);
+  return entries.length ? entries[entries.length-1] : null;
+}
+function getCheckinById(date, id){
+  return getCheckins(date).find(c=>c.id===id) || null;
+}
 function clarityScore(c){
   if(!c) return null;
   return clarityDetails(c).score;
@@ -1035,15 +1071,18 @@ function renderSuggestedReset(score,c){
   </div>`;
 }
 function renderRecent(){
-  const entries=Object.entries(db.checkins).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
+  const entries=Object.keys(db.checkins)
+    .flatMap(date=>getCheckins(date).map(c=>({date,c})))
+    .sort((a,b)=>new Date(b.c.savedAt||0)-new Date(a.c.savedAt||0))
+    .slice(0,7);
   const el=document.getElementById('recent-checkins');
   if(!entries.length){ el.innerHTML='<div class="empty"><div class="empty-icon"><span class="icon">self_improvement</span></div><strong>No check-ins yet</strong><span>Hit Check In to record your first entry.</span></div>'; return; }
-  el.innerHTML=entries.map(([date,c])=>{
+  el.innerHTML=entries.map(({date,c})=>{
     const score=clarityScore(c);
     const text=[c.present,c.lighter,c.loop,c.reframe].filter(Boolean).join(' ');
-    return `<div class="mini-item" style="align-items:flex-start;cursor:pointer" onclick="openCheckin('${date}')">
+    return `<div class="mini-item" style="align-items:flex-start;cursor:pointer" onclick="openCheckin('${date}','${c.id}')">
       <div>
-        <strong>${fmtDate(date)}</strong>
+        <strong>${fmtDate(date)} · ${checkinTime(c)}</strong>
         <small>${escapeHTML(c.state||'Unlabeled')} · stress ${c.stress||'--'} · clarity ${c.clarity||'--'}</small>
         ${text ? `<small style="color:var(--text);font-weight:600;margin-top:7px">${escapeHTML(excerpt(text,130))}</small>` : ''}
       </div>
@@ -1078,38 +1117,96 @@ function excerpt(text,len=160){
   const clean=String(text||'').replace(/\s+/g,' ').trim();
   return clean.length>len ? clean.slice(0,len-1).trim()+'...' : clean;
 }
-function openCheckin(date){
+function checkinTime(c){
+  const savedAt = c?.savedAt || c?.createdAt;
+  if(!savedAt) return 'unsaved time';
+  return new Date(savedAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+function openCheckin(date,id=null){
   nav('checkin');
   setVal('log-date',date);
-  loadTodayIntoForm();
+  loadTodayIntoForm(id);
 }
 function setVal(id,v){ document.getElementById(id).value=v; }
 function val(id){ return document.getElementById(id).value; }
 function syncRangeLabel(id){ document.getElementById(id+'-label').textContent=document.getElementById(id).value; }
 document.addEventListener('change',e=>{ if(e.target?.id==='log-date') loadTodayIntoForm(); });
-function loadTodayIntoForm(){
+function renderCheckinEntrySelector(date, selectedId=null){
+  const sel=document.getElementById('checkin-entry-select');
+  if(!sel) return;
+  const entries=getCheckins(date);
+  if(!entries.length){
+    sel.innerHTML='<option value="">New check-in</option>';
+    sel.value='';
+    return;
+  }
+  sel.innerHTML=entries.map((c,i)=>`<option value="${c.id}">${i+1}. ${checkinTime(c)} · ${escapeHTML(c.state||'Unlabeled')}</option>`).join('')+'<option value="">+ New check-in</option>';
+  sel.value=selectedId || entries[entries.length-1].id;
+}
+function loadSelectedCheckinEntry(){
+  const date=val('log-date') || todayStr();
+  const selected=document.getElementById('checkin-entry-select')?.value || null;
+  if(!selected){ newCheckinEntry(false); return; }
+  loadTodayIntoForm(selected);
+}
+function setSaveModeLabel(){
+  const label=document.getElementById('save-checkin-label');
+  if(label) label.textContent=currentCheckinId ? 'Update Check-In' : 'Save New Check-In';
+}
+function clearCheckinForm(){
+  currentCheckinId=null;
+  ['mood','state','sleep-impact','present','lighter','loop','reframe'].forEach(id=>setVal(id,''));
+  ['stress','clarity','grounded'].forEach(id=>setVal(id,3));
+  ['stress','clarity','grounded'].forEach(syncRangeLabel);
+  setSaveModeLabel();
+}
+function newCheckinEntry(updateSelector=true){
+  currentCheckinId=null;
+  clearCheckinForm();
+  if(updateSelector){
+    const sel=document.getElementById('checkin-entry-select');
+    if(sel) sel.value='';
+  }
+}
+function loadTodayIntoForm(entryId=null){
   const date=document.getElementById('log-date').value || todayStr();
   setVal('log-date',date);
   const moveDate=document.getElementById('move-date');
   if(moveDate) moveDate.value=shiftDateStr(date,-1);
-  const c=getCheckin(date)||{};
+  const entries=getCheckins(date);
+  const selectedId=entryId || currentCheckinId || (entries.length ? entries[entries.length-1].id : null);
+  renderCheckinEntrySelector(date, selectedId);
+  const c=(selectedId && getCheckinById(date,selectedId)) || {};
+  currentCheckinId=c.id || null;
   ['mood','state','sleep-impact','stress','clarity','grounded','present','lighter','loop','reframe'].forEach(id=>setVal(id,c[camel(id)] || (['stress','clarity','grounded'].includes(id)?3:'')));
   ['stress','clarity','grounded'].forEach(syncRangeLabel);
+  setSaveModeLabel();
 }
 function camel(id){ return id.replace(/-([a-z])/g,(_,c)=>c.toUpperCase()); }
 function saveCheckin(){
   const date=val('log-date') || todayStr();
-  db.checkins[date]={ mood:val('mood'), state:val('state'), sleepImpact:val('sleep-impact'), stress:val('stress'), clarity:val('clarity'), grounded:val('grounded'), present:val('present'), lighter:val('lighter'), loop:val('loop'), reframe:val('reframe'), savedAt:new Date().toISOString() };
+  const entries=getCheckins(date);
+  const existingIndex=currentCheckinId ? entries.findIndex(c=>c.id===currentCheckinId) : -1;
+  const existing=existingIndex>=0 ? entries[existingIndex] : {};
+  const entry={ ...existing, id:existing.id || uid('c'), date, mood:val('mood'), state:val('state'), sleepImpact:val('sleep-impact'), stress:val('stress'), clarity:val('clarity'), grounded:val('grounded'), present:val('present'), lighter:val('lighter'), loop:val('loop'), reframe:val('reframe'), savedAt:new Date().toISOString() };
+  if(existingIndex>=0) entries[existingIndex]=entry;
+  else entries.push(entry);
+  setCheckins(date,entries);
+  currentCheckinId=entry.id;
   saveData();
-  toast('Wellness check-in saved');
+  renderCheckinEntrySelector(date,currentCheckinId);
+  toast(existingIndex>=0 ? 'Wellness check-in updated' : 'Wellness check-in saved');
   renderToday();
   if(currentView==='journal') renderJournal();
 }
 function deleteCheckin(){
   const date=val('log-date') || todayStr();
-  if(!db.checkins[date]){ toast('No check-in for this date'); return; }
-  if(!confirm('Delete the wellness check-in for '+date+'?')) return;
-  delete db.checkins[date];
+  const entries=getCheckins(date);
+  if(!entries.length){ toast('No check-in for this date'); return; }
+  const targetId=currentCheckinId || entries[entries.length-1].id;
+  if(!confirm('Delete this wellness check-in for '+date+'?')) return;
+  setCheckins(date, entries.filter(c=>c.id!==targetId));
+  currentCheckinId=null;
   saveData();
   loadTodayIntoForm();
   renderToday();
@@ -1121,14 +1218,20 @@ function moveCheckinToDate(targetDate){
   const toDate=targetDate || val('move-date');
   if(!toDate){ toast('Choose a destination date'); return; }
   if(fromDate===toDate){ toast('Already on that date'); return; }
-  const current=db.checkins[fromDate];
-  if(!current){ toast('No check-in for this date'); return; }
-  if(db.checkins[toDate] && !confirm('Replace the existing check-in for '+toDate+'?')) return;
-  db.checkins[toDate]={ ...current, movedFrom:fromDate, savedAt:new Date().toISOString() };
-  delete db.checkins[fromDate];
+  const fromEntries=getCheckins(fromDate);
+  if(!fromEntries.length){ toast('No check-in for this date'); return; }
+  const targetId=currentCheckinId || fromEntries[fromEntries.length-1].id;
+  const current=fromEntries.find(c=>c.id===targetId);
+  if(!current){ toast('Choose a check-in to move'); return; }
+  const toEntries=getCheckins(toDate);
+  const moved={ ...current, date:toDate, movedFrom:fromDate, savedAt:new Date().toISOString() };
+  setCheckins(fromDate, fromEntries.filter(c=>c.id!==targetId));
+  toEntries.push(moved);
+  setCheckins(toDate, toEntries);
   saveData();
+  currentCheckinId=moved.id;
   setVal('log-date',toDate);
-  loadTodayIntoForm();
+  loadTodayIntoForm(moved.id);
   renderToday();
   if(currentView==='journal') renderJournal();
   toast('Check-in moved to '+toDate);
@@ -1449,23 +1552,25 @@ function renderThoughts(){
 function toggleThought(id){ const t=db.thoughts.find(x=>x.id===id); if(t) t.done=!t.done; saveData(); renderThoughts(); if(currentView==='journal') renderJournal(); }
 function deleteThought(id){ db.thoughts=db.thoughts.filter(t=>t.id!==id); saveData(); renderThoughts(); if(currentView==='journal') renderJournal(); }
 function collectJournalEntries(){
-  const checkins=Object.entries(db.checkins).map(([date,c])=>({
+  const checkins=Object.keys(db.checkins).flatMap(date=>getCheckins(date).map(c=>({
     kind:'checkin',
     date,
+    savedAt:c.savedAt,
     title:'Check-in',
-    meta:`${c.state || 'Unlabeled'} · mood ${c.mood || '--'} · stress ${c.stress || '--'} · clarity ${c.clarity || '--'}`,
+    meta:`${checkinTime(c)} · ${c.state || 'Unlabeled'} · mood ${c.mood || '--'} · stress ${c.stress || '--'} · clarity ${c.clarity || '--'}`,
     fields:[
       ['What is present?',c.present],
       ['What would make today lighter?',c.lighter],
       ['Looping thought',c.loop],
       ['Reframe',c.reframe]
     ].filter(([,v])=>String(v||'').trim()),
-    action:`<button class="btn btn-secondary btn-sm" onclick="openCheckin('${date}')"><span class="icon" style="font-size:15px">edit_note</span>Edit check-in</button>`,
+    action:`<button class="btn btn-secondary btn-sm" onclick="openCheckin('${date}','${c.id}')"><span class="icon" style="font-size:15px">edit_note</span>Edit check-in</button>`,
     search:[date,c.state,c.present,c.lighter,c.loop,c.reframe].join(' ')
-  }));
+  })));
   const practices=db.practices.map(p=>({
     kind:'practice',
     date:p.date || (p.savedAt || '').slice(0,10) || todayStr(),
+    savedAt:p.savedAt,
     title:'Practice note',
     meta:`${p.type || 'Practice'} · ${p.minutes || 0} min${p.after ? ' · '+p.after : ''}`,
     fields:[['Note',p.note]].filter(([,v])=>String(v||'').trim()),
@@ -1475,6 +1580,7 @@ function collectJournalEntries(){
   const thoughts=db.thoughts.map(t=>({
     kind:'thought',
     date:(t.createdAt || '').slice(0,10) || todayStr(),
+    savedAt:t.createdAt,
     title:t.done ? 'Resolved loop' : 'Open loop',
     meta:`${t.type || 'Hold'} · ${t.done ? 'resolved' : 'active'}`,
     fields:[['Thought / worry / decision',t.text]].filter(([,v])=>String(v||'').trim()),
@@ -1492,7 +1598,11 @@ function renderJournal(){
   let entries=collectJournalEntries();
   if(type!=='all') entries=entries.filter(e=>e.kind===type);
   if(q) entries=entries.filter(e=>e.search.toLowerCase().includes(q));
-  entries.sort((a,b)=>sort==='oldest' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
+  entries.sort((a,b)=>{
+    const ad = a.savedAt || a.date;
+    const bd = b.savedAt || b.date;
+    return sort==='oldest' ? ad.localeCompare(bd) : bd.localeCompare(ad);
+  });
   if(!entries.length){
     el.innerHTML='<div class="empty"><div class="empty-icon"><span class="icon">search</span></div><strong>No saved writing found</strong><span>Try a different search, or add a check-in, practice note, or mental-load item.</span></div>';
     return;
@@ -1526,8 +1636,8 @@ function renderTrends(){
     grounded:['Grounded',c=>parseInt(c.grounded)||0,5,5]
   };
   const meta=metaMap[trendMetric];
-  const entries=Object.entries(db.checkins).sort((a,b)=>a[0].localeCompare(b[0])).slice(-14);
-  const vals=entries.map(([date,c])=>({date,val:meta[1](c)||0}));
+  const entries=Object.keys(db.checkins).sort((a,b)=>a.localeCompare(b)).slice(-14);
+  const vals=entries.map(date=>({date,val:meta[1](getCheckin(date))||0}));
   const maxVal=meta[2];
   const tickCount=meta[3];
   const avg=vals.length?vals.reduce((s,x)=>s+x.val,0)/vals.length:0;
