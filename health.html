@@ -1854,8 +1854,11 @@ function renderTrends(){
   const rangeEntries = rangeDates.map(date => [date, getLog(date)]).filter(([, log]) => log);
   const metricMeta = getMetricMeta(trendMetric);
   document.getElementById('trend-title').textContent = metricMeta.label;
+  const rangeStepTotal = trendMetric === 'steps'
+    ? rangeEntries.reduce((sum, [, log]) => sum + (intOrNull(log.steps) || 0), 0)
+    : null;
   document.getElementById('trend-sub').textContent = rangeEntries.length
-    ? `${fmtDate(rangeEntries[0][0])} to ${fmtDate(rangeEntries[rangeEntries.length - 1][0])} · ${rangeEntries.length} days with data`
+    ? `${fmtDate(rangeEntries[0][0])} to ${fmtDate(rangeEntries[rangeEntries.length - 1][0])} · ${rangeEntries.length} days with data${rangeStepTotal == null ? '' : ' · ' + rangeStepTotal.toLocaleString() + ' total steps'}`
     : 'No data in selected range.';
   const vals = rangeEntries.map(([date,log]) => ({ date, val: metricMeta.value(log) })).filter(x => x.val != null);
   const max = Math.max(...vals.map(x=>x.val), metricMeta.max, 1);
@@ -1889,12 +1892,18 @@ function renderTrendInsights(entries, vals, meta){
   const hitRate = vals.length ? Math.round((hitCount / vals.length) * 100) : 0;
   const best = vals.length ? [...vals].sort((a,b)=> meta.lowerIsBetter ? a.val-b.val : b.val-a.val)[0] : null;
   const latest = vals[vals.length - 1];
-  document.getElementById('trend-insights').innerHTML = [
+  const cards = trendMetric === 'steps' ? [
+    trendInsight('Total steps', vals.reduce((sum, x) => sum + x.val, 0).toLocaleString(), vals.length ? 'Across selected range' : 'No logged values yet'),
+    trendInsight('Daily average', vals.length ? formatTrend(avgOf(vals.map(x=>x.val)), trendMetric) : '--', delta == null ? 'Need another week to compare' : trendDeltaText(delta, trendMetric, meta)),
+    trendInsight('Target days', vals.length ? hitRate + '%' : '--', vals.length ? hitCount + ' of ' + vals.length + ' days hit' : 'No logged values yet'),
+    trendInsight('Latest', latest ? formatTrend(latest.val, trendMetric) : '--', latest ? fmtDate(latest.date) : 'No current value')
+  ] : [
     trendInsight('7-day average', lastAvg == null ? '--' : formatTrend(lastAvg, trendMetric), delta == null ? 'Need another week to compare' : trendDeltaText(delta, trendMetric, meta)),
     trendInsight('Target days', vals.length ? hitRate + '%' : '--', vals.length ? hitCount + ' of ' + vals.length + ' days hit' : 'No logged values yet'),
     trendInsight('Latest', latest ? formatTrend(latest.val, trendMetric) : '--', latest ? fmtDate(latest.date) : 'No current value'),
     trendInsight('Best day', best ? formatTrend(best.val, trendMetric) : '--', best ? fmtDate(best.date) : 'No best day yet')
-  ].join('');
+  ];
+  document.getElementById('trend-insights').innerHTML = cards.join('');
 }
 function trendInsight(label, value, sub){
   return `<div class="insight-card"><span>${label}</span><strong>${value}</strong><small>${sub}</small></div>`;
