@@ -415,7 +415,7 @@
     <button onclick="showPage('weekly')" id="nav-weekly"
       class="nav-page-btn nav-item">
       <span class="material-symbols-outlined nav-icon">auto_awesome</span>
-      <span class="flex-1">Weekly Hub</span>
+      <span class="flex-1">Weekly Review</span>
     </button>
     <button onclick="showPage('history')" id="nav-history"
       class="nav-page-btn nav-item">
@@ -2286,6 +2286,44 @@
         </div>
       </section>
 
+      <!-- ── Weekly Review Reminder ── -->
+      <section>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="material-symbols-outlined text-base text-teal-500">calendar_view_week</span>
+          <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Weekly Review Reminder</h3>
+        </div>
+        <div class="rounded-xl overflow-hidden border border-outline-variant/30">
+          <div class="p-4 bg-surface-container space-y-4">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input id="settings-review-reminder-enabled" type="checkbox" class="w-4 h-4 rounded text-teal-500 focus:ring-teal-500/20"/>
+              <span class="text-sm font-semibold text-on-surface">Show weekly review popup</span>
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant mb-2">Day</label>
+                <select id="settings-review-reminder-day" class="w-full bg-surface-container-lowest rounded-xl px-3 py-2.5 text-sm text-on-surface border border-outline-variant/20 focus:ring-2 focus:ring-accent/30">
+                  <option value="0">Sunday</option>
+                  <option value="1">Monday</option>
+                  <option value="2">Tuesday</option>
+                  <option value="3">Wednesday</option>
+                  <option value="4">Thursday</option>
+                  <option value="5">Friday</option>
+                  <option value="6">Saturday</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-on-surface-variant mb-2">Time</label>
+                <input id="settings-review-reminder-time" type="time" class="w-full bg-surface-container-lowest rounded-xl px-3 py-2.5 text-sm text-on-surface border border-outline-variant/20 focus:ring-2 focus:ring-accent/30"/>
+              </div>
+            </div>
+            <button onclick="saveWeeklyReviewReminderSettings()" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90" style="background:#14b8a6">
+              <span class="material-symbols-outlined text-base">save</span>Save Reminder
+            </button>
+            <p id="settings-review-reminder-status" class="text-[11px] text-on-surface-variant/60"></p>
+          </div>
+        </div>
+      </section>
+
       <!-- ── Timer Sound ── -->
       <section>
         <div class="flex items-center gap-2 mb-3">
@@ -2366,7 +2404,7 @@
     </button>
     <button id="mbnav-weekly" onclick="mobileNavTo('weekly')" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors text-on-surface-variant">
       <span class="material-symbols-outlined" style="font-size:22px">auto_awesome</span>
-      <span class="text-[10px] font-bold">Weekly</span>
+      <span class="text-[10px] font-bold">Review</span>
     </button>
     <button onclick="toggleMobileMore()" id="mbnav-more" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors text-on-surface-variant">
       <span class="material-symbols-outlined" style="font-size:22px">more_horiz</span>
@@ -2500,6 +2538,45 @@
       <span id="reminder-countdown" class="text-xs font-black text-on-surface-variant w-4 flex-shrink-0">3</span>
     </div>
     <p class="text-xs text-on-surface-variant/60">Opening tab in <span id="reminder-secs">3</span>s, or <button onclick="openTabNow()" class="font-bold text-on-surface-variant underline">open now</button></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════ WEEKLY REVIEW REMINDER ═══════════════════════ -->
+<div id="weekly-review-reminder-backdrop" class="eod-backdrop fixed inset-0 z-[92] flex items-center justify-center p-4">
+  <div class="eod-modal bg-surface-container-lowest rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+    <div class="px-6 py-5" style="background:linear-gradient(135deg,#0f766e,#14b8a6);border-bottom:1px solid rgba(255,255,255,0.08)">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,0.18)">
+            <span class="material-symbols-outlined text-white text-lg">calendar_view_week</span>
+          </div>
+          <div>
+            <h2 class="font-bold text-white text-base">Weekly Review Time</h2>
+            <p id="weekly-review-reminder-week" class="text-[11px] text-white/55"></p>
+          </div>
+        </div>
+        <button onclick="dismissWeeklyReviewReminder()" class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.12)">
+          <span class="material-symbols-outlined text-sm text-white/70">close</span>
+        </button>
+      </div>
+    </div>
+    <div class="p-6 space-y-4">
+      <p class="text-sm text-on-surface-variant leading-relaxed">Close the loop on last week, capture wins, and set the next focus while the signal is still fresh.</p>
+      <button onclick="startWeeklyReviewFromReminder()" class="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2" style="background:#14b8a6">
+        <span class="material-symbols-outlined text-base">rate_review</span>Open Weekly Review
+      </button>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="snoozeWeeklyReviewReminderHours(3)" class="py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold text-on-surface-variant hover:bg-surface-container transition-colors">Snooze 3h</button>
+        <button onclick="snoozeWeeklyReviewReminderDays(1)" class="py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold text-on-surface-variant hover:bg-surface-container transition-colors">Tomorrow</button>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Snooze Until</label>
+        <div class="flex gap-2">
+          <input id="weekly-review-snooze-until" type="datetime-local" class="flex-1 bg-surface-container rounded-xl border border-outline-variant/20 px-3 py-2.5 text-sm"/>
+          <button onclick="snoozeWeeklyReviewReminderCustom()" class="px-4 py-2.5 rounded-xl text-sm font-bold text-white" style="background:#4f46e5">Set</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -6300,6 +6377,7 @@ function openSettings() {
   }
   document.getElementById('settings-backdrop').classList.add('open');
   loadChimePrefsUI();
+  loadWeeklyReviewReminderSettingsUI();
 }
 
 function closeSettings() {
@@ -6313,6 +6391,142 @@ function saveAsanaPAT() {
   document.getElementById('settings-asana-pat-input').value = '';
   document.getElementById('asana-pat-status').textContent = '✓ Token saved';
   showToast('Asana token saved ✓');
+}
+
+const WEEKLY_REVIEW_REMINDER_KEY = 'edgex_weekly_review_reminder_v1';
+const WEEKLY_REVIEW_COMPLETED_KEY = 'edgex_weekly_review_completed_weeks';
+const WEEKLY_REVIEW_LOCAL_KEY = 'edgex_reviews_local';
+let _weeklyReviewReminderTargetWeek = null;
+
+function getWeeklyReviewReminderSettings() {
+  try {
+    return { enabled: true, day: 1, time: '09:00', snoozedUntil: null, dismissedWeek: null, ...JSON.parse(localStorage.getItem(WEEKLY_REVIEW_REMINDER_KEY) || '{}') };
+  } catch(e) {
+    return { enabled: true, day: 1, time: '09:00', snoozedUntil: null, dismissedWeek: null };
+  }
+}
+
+function saveWeeklyReviewReminderSettings() {
+  const current = getWeeklyReviewReminderSettings();
+  const next = {
+    ...current,
+    enabled: !!document.getElementById('settings-review-reminder-enabled')?.checked,
+    day: parseInt(document.getElementById('settings-review-reminder-day')?.value || '1', 10),
+    time: document.getElementById('settings-review-reminder-time')?.value || '09:00',
+  };
+  localStorage.setItem(WEEKLY_REVIEW_REMINDER_KEY, JSON.stringify(next));
+  loadWeeklyReviewReminderSettingsUI();
+  showToast('Weekly review reminder saved ✓');
+}
+
+function loadWeeklyReviewReminderSettingsUI() {
+  const s = getWeeklyReviewReminderSettings();
+  const enabled = document.getElementById('settings-review-reminder-enabled');
+  const day = document.getElementById('settings-review-reminder-day');
+  const time = document.getElementById('settings-review-reminder-time');
+  const status = document.getElementById('settings-review-reminder-status');
+  if (enabled) enabled.checked = !!s.enabled;
+  if (day) day.value = String(s.day ?? 1);
+  if (time) time.value = s.time || '09:00';
+  if (status) status.textContent = s.snoozedUntil ? `Snoozed until ${new Date(s.snoozedUntil).toLocaleString()}` : 'The popup opens when the selected review time arrives.';
+}
+
+function getReviewWeekStart(date, resetDay = parseInt(localStorage.getItem('edgex_review_reset_day') || '1', 10)) {
+  const d = new Date(date);
+  const diff = (d.getDay() - resetDay + 7) % 7;
+  d.setDate(d.getDate() - diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function toReviewDateValue(date) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getMostRecentReviewSchedule(now = new Date()) {
+  const s = getWeeklyReviewReminderSettings();
+  const scheduled = new Date(now);
+  scheduled.setDate(now.getDate() - ((now.getDay() - Number(s.day || 1) + 7) % 7));
+  const [h, m] = String(s.time || '09:00').split(':').map(Number);
+  scheduled.setHours(h || 0, m || 0, 0, 0);
+  if (scheduled > now) scheduled.setDate(scheduled.getDate() - 7);
+  return scheduled;
+}
+
+function getReminderTargetWeekId(now = new Date()) {
+  const scheduled = getMostRecentReviewSchedule(now);
+  const targetRef = new Date(scheduled);
+  targetRef.setDate(targetRef.getDate() - 1);
+  return toReviewDateValue(getReviewWeekStart(targetRef));
+}
+
+function hasCompletedWeeklyReview(weekId) {
+  try {
+    const completed = JSON.parse(localStorage.getItem(WEEKLY_REVIEW_COMPLETED_KEY) || '{}');
+    if (completed?.[weekId]) return true;
+  } catch(e) {}
+  try {
+    const reviews = JSON.parse(localStorage.getItem(WEEKLY_REVIEW_LOCAL_KEY) || '[]');
+    if (Array.isArray(reviews) && reviews.some(r => r?.week_id === weekId)) return true;
+  } catch(e) {}
+  try {
+    const hubReviews = JSON.parse(localStorage.getItem('edgex-weekly-reviews-v1') || '{}');
+    if (hubReviews?.[weekId]) return true;
+  } catch(e) {}
+  return false;
+}
+
+function maybeShowWeeklyReviewReminder() {
+  const s = getWeeklyReviewReminderSettings();
+  if (!s.enabled) return;
+  const now = new Date();
+  const scheduled = getMostRecentReviewSchedule(now);
+  if (now < scheduled) return;
+  if (s.snoozedUntil && new Date(s.snoozedUntil) > now) return;
+  const weekId = getReminderTargetWeekId(now);
+  if (s.dismissedWeek === weekId || sessionStorage.getItem('weekly-review-reminder-shown') === weekId) return;
+  if (hasCompletedWeeklyReview(weekId)) return;
+  _weeklyReviewReminderTargetWeek = weekId;
+  const weekLabel = document.getElementById('weekly-review-reminder-week');
+  if (weekLabel) weekLabel.textContent = `Review week starting ${new Date(weekId + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}`;
+  sessionStorage.setItem('weekly-review-reminder-shown', weekId);
+  document.getElementById('weekly-review-reminder-backdrop')?.classList.add('open');
+}
+
+function dismissWeeklyReviewReminder() {
+  const s = getWeeklyReviewReminderSettings();
+  localStorage.setItem(WEEKLY_REVIEW_REMINDER_KEY, JSON.stringify({ ...s, dismissedWeek: _weeklyReviewReminderTargetWeek || getReminderTargetWeekId() }));
+  document.getElementById('weekly-review-reminder-backdrop')?.classList.remove('open');
+}
+
+function setWeeklyReviewSnooze(date) {
+  const s = getWeeklyReviewReminderSettings();
+  localStorage.setItem(WEEKLY_REVIEW_REMINDER_KEY, JSON.stringify({ ...s, snoozedUntil: date.toISOString(), dismissedWeek: null }));
+  document.getElementById('weekly-review-reminder-backdrop')?.classList.remove('open');
+  loadWeeklyReviewReminderSettingsUI();
+  showToast('Weekly review snoozed');
+}
+
+function snoozeWeeklyReviewReminderHours(hours) {
+  setWeeklyReviewSnooze(new Date(Date.now() + hours * 60 * 60 * 1000));
+}
+
+function snoozeWeeklyReviewReminderDays(days) {
+  setWeeklyReviewSnooze(new Date(Date.now() + days * 24 * 60 * 60 * 1000));
+}
+
+function snoozeWeeklyReviewReminderCustom() {
+  const value = document.getElementById('weekly-review-snooze-until')?.value;
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) { showToast('Choose a snooze date and time'); return; }
+  setWeeklyReviewSnooze(date);
+}
+
+function startWeeklyReviewFromReminder() {
+  const week = _weeklyReviewReminderTargetWeek || getReminderTargetWeekId();
+  document.getElementById('weekly-review-reminder-backdrop')?.classList.remove('open');
+  window.location.href = `weekly-review.html?week=${encodeURIComponent(week)}`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -8564,6 +8778,10 @@ let _currentPage = 'dashboard';
 const PAGES = ['dashboard', 'timeblocks', 'weekly', 'history', 'goals'];
 
 function showPage(page) {
+  if (page === 'weekly') {
+    window.location.href = 'weekly-review.html';
+    return;
+  }
   _currentPage = page;
   PAGES.forEach(p => {
     const el = document.getElementById('page-' + p);
@@ -10489,6 +10707,7 @@ function bootApp() {
   renderCarryoverBanner();
   renderWeeklyIntentionHero();
   checkAutoMorningSetup();
+  setTimeout(maybeShowWeeklyReviewReminder, 900);
 }
 
 // Pull fresh data from Supabase and re-render everything (used for live cross-device sync)

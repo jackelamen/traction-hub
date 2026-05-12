@@ -181,6 +181,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <div class="nav-section-label">Review</div>
     <button class="nav-item active" id="nav-reflect" onclick="nav('reflect')"><span class="icon">edit_note</span>This Week</button>
     <button class="nav-item" id="nav-modules" onclick="nav('modules')"><span class="icon">grid_view</span>Module Snapshot</button>
+    <button class="nav-item" id="nav-wins" onclick="nav('wins')"><span class="icon">emoji_events</span>Win Wall</button>
     <button class="nav-item" id="nav-intentions" onclick="nav('intentions')"><span class="icon">flag</span>Next Week</button>
     <button class="nav-item" id="nav-history" onclick="nav('history')"><span class="icon">history</span>History</button>
     <button class="nav-item" id="nav-settings" onclick="nav('settings')"><span class="icon">tune</span>Settings</button>
@@ -242,6 +243,20 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       </div>
     </div>
 
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <h2 style="font-size:15px;font-weight:800;margin-bottom:4px">This Week's Focus</h2>
+          <p style="font-size:12px;color:var(--text-2);margin-bottom:12px">Pulled from the Work module weekly hub and saved back to the same shared focus.</p>
+          <textarea id="weekly-focus-input" placeholder="What was this week supposed to be about?" style="min-height:76px"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:26px">
+          <button class="btn btn-secondary btn-sm" onclick="loadWeeklyFocus()">Reset</button>
+          <button class="btn btn-primary btn-sm" onclick="saveWeeklyFocus()"><span class="icon" style="font-size:15px">save</span>Save Focus</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Reflection prompts -->
     <div class="card card-pad" style="margin-bottom:16px">
       <h2 style="font-size:15px;font-weight:800;margin-bottom:4px">Reflection Prompts</h2>
@@ -275,6 +290,54 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       <div class="prompt-block" style="margin-bottom:0">
         <div class="prompt-q"><span class="icon">edit</span>Anything else worth capturing?</div>
         <textarea class="prompt-a" id="q-other" placeholder="Free space — gut feelings, loose thoughts, random observations..."></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- WIN WALL VIEW -->
+  <section id="view-wins" class="view">
+    <div class="page-header">
+      <div class="page-date" id="wins-week-label">Week of —</div>
+      <h1 class="page-title">Win Wall</h1>
+      <p class="page-sub">The Work module win wall, woven into your weekly review.</p>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:16px">
+      <h2 style="font-size:15px;font-weight:800;margin-bottom:4px">Log a Win</h2>
+      <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Capture wins while reviewing so momentum has a place to land.</p>
+      <div class="grid-2" style="margin-bottom:10px">
+        <div class="field">
+          <label>The Win</label>
+          <input id="win-title-input" type="text" placeholder="What did you accomplish?"/>
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <select id="win-category-input">
+            <option value="">Uncategorized</option>
+            <option value="Work">Work</option>
+            <option value="Health">Health</option>
+            <option value="Relationships">Relationships</option>
+            <option value="Personal">Personal</option>
+            <option value="Mindset">Mindset</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:12px">
+        <label>Why it matters</label>
+        <textarea id="win-note-input" placeholder="Optional context, lesson, or why this mattered..." style="min-height:72px"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="saveWin()"><span class="icon" style="font-size:17px">add</span>Log Win</button>
+    </div>
+
+    <div class="card card-pad">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px">
+        <h2 style="font-size:15px;font-weight:800">Wins for Selected Week</h2>
+        <span class="badge badge-amber" id="win-wall-count">0 wins</span>
+      </div>
+      <div id="win-wall-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"></div>
+      <div id="win-wall-empty" style="display:none;text-align:center;padding:34px 12px;color:var(--text-3)">
+        <span class="icon" style="font-size:34px;display:block;margin-bottom:8px">emoji_events</span>
+        <p style="font-size:14px;font-weight:700;color:var(--text-2)">No wins logged for this week yet.</p>
       </div>
     </div>
   </section>
@@ -459,8 +522,12 @@ const SUPABASE_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const TABLE = 'weekly_reviews';
 const REVIEW_TRACTION_KEY = 'dt_edgex_weekly_reviews_v1';
 const REVIEW_LOCAL_KEY = 'dt_edgex_reviews_local';
+const REVIEW_COMPLETED_KEY = 'edgex_weekly_review_completed_weeks';
 const REVIEW_GEMINI_KEY = 'dt_edgex_gemini_key';
 const REVIEW_RESET_DAY_KEY = 'dt_edgex_review_reset_day';
+const WEEKLY_FOCUS_KEY = 'edgex-weekly-intentions-v1';
+const WEEKLY_FOCUS_LEGACY_KEYS = ['dt_edgex-weekly-intentions-v1'];
+const WIN_WALL_KEY = 'edgex-win-wall-v1';
 let editingReviewOriginalWeekId = null;
 
 /* ===================== SUPABASE HELPERS ===================== */
@@ -625,6 +692,7 @@ function updateReviewWeekLabels() {
   const label = formatWeekLabel(weekStart);
   document.getElementById('reflect-week-label').textContent = 'Week of ' + label;
   document.getElementById('modules-week-label').textContent = 'Week of ' + label;
+  document.getElementById('wins-week-label').textContent = 'Week of ' + label;
   const nextStart = new Date(weekStart);
   nextStart.setDate(nextStart.getDate() + 7);
   document.getElementById('intentions-week-label').textContent = 'Week of ' + formatWeekLabel(nextStart);
@@ -637,6 +705,8 @@ function setReviewWeek(offsetWeeks) {
   if (offsetWeeks !== 0) base.setDate(base.getDate() + offsetWeeks * 7);
   input.value = toDateInputValue(getWeekStart(base, getResetDay()));
   updateReviewWeekLabels();
+  loadWeeklyFocus();
+  renderWinWall();
   if (document.getElementById('view-modules')?.classList.contains('active')) buildModuleCards();
   if (!editingReviewOriginalWeekId) loadCurrentReview();
 }
@@ -645,15 +715,186 @@ function handleReviewWeekChange() {
   const input = document.getElementById('review-week-start');
   if (input) input.value = getSelectedWeekId();
   updateReviewWeekLabels();
+  loadWeeklyFocus();
+  renderWinWall();
   if (document.getElementById('view-modules')?.classList.contains('active')) buildModuleCards();
   if (!editingReviewOriginalWeekId) loadCurrentReview();
 }
 
 function initDateLabels() {
+  const weekParam = new URLSearchParams(window.location.search).get('week');
   const weekStart = getWeekStart(new Date(), getResetDay());
   const input = document.getElementById('review-week-start');
-  if (input && !input.value) input.value = toDateInputValue(weekStart);
+  const requested = parseDateInputValue(weekParam);
+  if (input && !input.value) input.value = toDateInputValue(requested ? getWeekStart(requested, getResetDay()) : weekStart);
   updateReviewWeekLabels();
+}
+
+/* ===================== WEEKLY FOCUS + WIN WALL ===================== */
+function getISOWeekKey(date) {
+  const d = date ? new Date(date) : new Date();
+  const jan4 = new Date(d.getFullYear(), 0, 4);
+  const startOfWeek1 = new Date(jan4);
+  startOfWeek1.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1);
+  const diff = d - startOfWeek1;
+  const weekNum = Math.floor(diff / (7 * 86400000)) + 1;
+  const year = d.getMonth() === 0 && weekNum > 50 ? d.getFullYear() - 1
+             : d.getMonth() === 11 && weekNum < 3 ? d.getFullYear() + 1
+             : d.getFullYear();
+  return `${year}-W${String(weekNum).padStart(2, '0')}`;
+}
+
+function getSelectedISOWeekKey() {
+  return getISOWeekKey(getSelectedWeekStart());
+}
+
+function readPlainJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch(e) {
+    return fallback;
+  }
+}
+
+function getWeeklyFocusStore() {
+  const canonical = readPlainJSON(WEEKLY_FOCUS_KEY, {});
+  const merged = { ...canonical };
+  WEEKLY_FOCUS_LEGACY_KEYS.forEach(key => {
+    const legacy = readPlainJSON(key, {});
+    Object.entries(legacy || {}).forEach(([week, value]) => {
+      if (!merged[week] || new Date(value?.setAt || 0) > new Date(merged[week]?.setAt || 0)) merged[week] = value;
+    });
+  });
+  if (JSON.stringify(merged) !== JSON.stringify(canonical)) localStorage.setItem(WEEKLY_FOCUS_KEY, JSON.stringify(merged));
+  return merged;
+}
+
+function loadWeeklyFocus() {
+  const input = document.getElementById('weekly-focus-input');
+  if (!input) return;
+  const focus = getWeeklyFocusStore()[getSelectedISOWeekKey()];
+  input.value = focus?.intention || '';
+}
+
+function saveWeeklyFocus() {
+  const input = document.getElementById('weekly-focus-input');
+  const text = (input?.value || '').trim();
+  if (!text) { showToast('Write a weekly focus first'); return; }
+  const week = getSelectedISOWeekKey();
+  const all = getWeeklyFocusStore();
+  all[week] = { week, intention: text, setAt: new Date().toISOString() };
+  localStorage.setItem(WEEKLY_FOCUS_KEY, JSON.stringify(all));
+  syncSharedWeeklyKey(WEEKLY_FOCUS_KEY, all);
+  showToast('Weekly focus saved');
+}
+
+function getWins() {
+  const wins = readPlainJSON(WIN_WALL_KEY, []);
+  return Array.isArray(wins) ? wins : [];
+}
+
+function saveWins(wins) {
+  localStorage.setItem(WIN_WALL_KEY, JSON.stringify(wins));
+  syncSharedWeeklyKey(WIN_WALL_KEY, wins);
+}
+
+function saveWin() {
+  const title = (document.getElementById('win-title-input')?.value || '').trim();
+  if (!title) { showToast('Describe the win first'); return; }
+  const wins = getWins();
+  wins.unshift({
+    id: `win-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    title,
+    note: (document.getElementById('win-note-input')?.value || '').trim(),
+    category: document.getElementById('win-category-input')?.value || '',
+    date: toDateInputValue(new Date())
+  });
+  saveWins(wins);
+  document.getElementById('win-title-input').value = '';
+  document.getElementById('win-note-input').value = '';
+  document.getElementById('win-category-input').value = '';
+  renderWinWall();
+  buildModuleCards();
+  showToast('Win logged');
+}
+
+function deleteWin(id) {
+  saveWins(getWins().filter(w => String(w.id) !== String(id)));
+  renderWinWall();
+  buildModuleCards();
+}
+
+const WIN_STYLE = {
+  Work: { bg:'#eff6ff', border:'#bfdbfe', text:'#1d4ed8', icon:'work' },
+  Health: { bg:'#f0fdf4', border:'#bbf7d0', text:'#15803d', icon:'fitness_center' },
+  Relationships: { bg:'#fdf4ff', border:'#e9d5ff', text:'#7e22ce', icon:'diversity_3' },
+  Personal: { bg:'#fffbeb', border:'#fde68a', text:'#b45309', icon:'star' },
+  Mindset: { bg:'#f0f9ff', border:'#bae6fd', text:'#0369a1', icon:'psychology' },
+};
+
+function renderWinWall() {
+  const grid = document.getElementById('win-wall-grid');
+  const empty = document.getElementById('win-wall-empty');
+  const count = document.getElementById('win-wall-count');
+  if (!grid || !empty || !count) return;
+  const week = getReviewWeekWindow();
+  const wins = getWins().filter(w => inWeek(w.date, week));
+  count.textContent = `${wins.length} win${wins.length === 1 ? '' : 's'}`;
+  empty.style.display = wins.length ? 'none' : 'block';
+  grid.innerHTML = wins.map(w => {
+    const c = WIN_STYLE[w.category] || { bg:'#f9fafb', border:'#e5e7eb', text:'#374151', icon:'emoji_events' };
+    const dateLabel = new Date(String(w.date).slice(0, 10) + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    return `
+      <div style="background:${c.bg};border:1.5px solid ${c.border};border-radius:12px;padding:14px;position:relative">
+        <button onclick='deleteWin(${JSON.stringify(String(w.id))})' title="Delete win" style="position:absolute;top:8px;right:8px;border:none;background:rgba(255,255,255,.75);border-radius:8px;width:26px;height:26px;cursor:pointer;color:var(--text-3)"><span class="icon" style="font-size:16px">close</span></button>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding-right:24px">
+          <span class="icon fill" style="font-size:22px;color:${c.text}">${c.icon}</span>
+          <div>
+            <h3 style="font-size:14px;font-weight:800;color:${c.text};line-height:1.25;margin-bottom:3px">${escapeHTML(w.title)}</h3>
+            <p style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:${c.text};opacity:.62;margin-bottom:7px">${escapeHTML(w.category || 'Win')} · ${dateLabel}</p>
+            ${w.note ? `<p style="font-size:12.5px;color:#374151;line-height:1.5">${escapeHTML(w.note)}</p>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function markReviewCompleted(weekId) {
+  const completed = readPlainJSON(REVIEW_COMPLETED_KEY, {});
+  completed[weekId] = new Date().toISOString();
+  localStorage.setItem(REVIEW_COMPLETED_KEY, JSON.stringify(completed));
+  syncSharedWeeklyKey(REVIEW_COMPLETED_KEY, completed);
+}
+
+async function syncSharedWeeklyKey(key, value) {
+  const userId = getSbUserId();
+  if (!userId) return;
+  try {
+    await sbFetch('rpc/upsert_traction_data', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: JSON.stringify({ rows: [{ user_id: userId, key, value, updated_at: new Date().toISOString() }] })
+    });
+  } catch(e) {
+    console.warn('Shared weekly key sync skipped:', key, e.message);
+  }
+}
+
+async function loadSharedWeeklyHubData() {
+  const userId = getSbUserId();
+  if (!userId) return;
+  try {
+    const keys = [WEEKLY_FOCUS_KEY, WIN_WALL_KEY, REVIEW_COMPLETED_KEY];
+    const batches = await Promise.all(keys.map(key =>
+      sbFetch(`traction_data?user_id=eq.${encodeURIComponent(userId)}&key=eq.${encodeURIComponent(key)}&select=key,value,updated_at&limit=1`).catch(() => [])
+    ));
+    batches.flat().forEach(row => {
+      if (row?.key) localStorage.setItem(row.key, JSON.stringify(row.value));
+    });
+  } catch(e) {
+    console.warn('Shared weekly hub data pull skipped:', e.message);
+  }
 }
 
 /* ===================== SCORE ===================== */
@@ -1076,6 +1317,8 @@ async function saveReview() {
   // Check if anything is filled
   const hasContent = review.wins || review.challenges || review.learning || review.theme_word;
   if (!hasContent) { showToast('Fill in at least one field before saving'); return; }
+  saveLocalReview(review);
+  markReviewCompleted(review.week_id);
 
   try {
     // Upsert by week_id
@@ -1351,6 +1594,7 @@ function nav(view) {
   if (btn) btn.classList.add('active');
 
   if (view === 'modules') buildModuleCards();
+  if (view === 'wins') renderWinWall();
   if (view === 'history') loadHistory();
 }
 
@@ -1425,7 +1669,12 @@ async function init() {
   loadSettings();
   initDateLabels();
   syncScore();
+  loadWeeklyFocus();
+  renderWinWall();
   checkSbConnection();
+  await loadSharedWeeklyHubData();
+  loadWeeklyFocus();
+  renderWinWall();
   await loadCurrentReview();
 }
 
