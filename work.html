@@ -8470,7 +8470,11 @@ async function syncToNotion(dateStr, _retryWithoutPageId = false) {
   try {
     const res = await fetch(NOTION_PROXY_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': `Bearer ${getSbToken()}`,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ dateStr, properties: props, pageMapId }),
     });
 
