@@ -5915,15 +5915,15 @@ async function doLogout() {
 
 // ── Cmd+K Module Switcher ─────────────────────────────────────────────────
 const CMD_MODULES = [
-  { label: 'Hub',              sub: 'The EDGEx home',                    href: 'index.html',             icon: '🏠', color: 'rgba(255,255,255,0.12)'  },
-  { label: 'Work & Traction',  sub: 'Deep work, timer, daily traction',  href: 'work.html',              icon: '⚡', color: 'rgba(251,146,60,0.18)'  },
-  { label: 'Goals',            sub: '12-week cycles, goal tracking',     href: 'goals.html',             icon: '🚩', color: 'rgba(52,211,153,0.18)'  },
-  { label: 'Finance',          sub: 'Spending, income, budget',          href: 'finance-dashboard.html', icon: '💸', color: 'rgba(108,138,255,0.18)' },
-  { label: 'Health',           sub: 'Routines, sleep, steps',            href: 'health.html',            icon: '🫀', color: 'rgba(14,165,233,0.18)'  },
-  { label: 'Wellness',         sub: 'Check-ins, meditation, clarity',    href: 'wellness.html',          icon: '🧘', color: 'rgba(124,58,237,0.18)'  },
-  { label: 'Weekly Review',    sub: 'Reflection, wins, next week',       href: 'weekly-review.html',     icon: '📅', color: 'rgba(20,184,166,0.18)'  },
-  { label: 'Relationships',    sub: 'People, rituals, connection',       href: 'relationships.html',     icon: '🤝', color: 'rgba(225,29,72,0.18)'   },
-  { label: 'Learning',         sub: 'Study, notes, growth',              href: 'learning.html',          icon: '🎓', color: 'rgba(217,119,6,0.18)'   },
+  { label: 'Hub', sub: 'The EDGEx home', icon: 'home', bg: '#374151', href: 'index.html' },
+  { label: 'Work & Traction', sub: 'Deep work, timer, daily traction', icon: 'bolt', bg: '#f97316', href: 'work.html' },
+  { label: 'Goals', sub: '12-week cycles, goal tracking', icon: 'flag', bg: '#10b981', href: 'goals.html' },
+  { label: 'Finance', sub: 'Spending, income, budget', icon: 'payments', bg: '#4f46e5', href: 'finance-dashboard.html' },
+  { label: 'Health', sub: 'Routines, sleep, steps', icon: 'monitor_heart', bg: '#0ea5e9', href: 'health.html' },
+  { label: 'Wellness', sub: 'Check-ins, meditation, clarity', icon: 'self_improvement', bg: '#7c3aed', href: 'wellness.html' },
+  { label: 'Weekly Review', sub: 'Reflection, wins, next week', icon: 'calendar_view_week', bg: '#14b8a6', href: 'weekly-review.html' },
+  { label: 'Relationships', sub: 'People, rituals, connection', icon: 'people', bg: '#e11d48', href: 'relationships.html' },
+  { label: 'Learning', sub: 'Study, notes, growth', icon: 'school', bg: '#d97706', href: 'learning.html' },
 ];
 let cmdSelected = 0;
 let cmdFiltered = [...CMD_MODULES];
@@ -5956,7 +5956,7 @@ function cmdRender() {
     <div class="cmd-item${i === cmdSelected ? ' selected' : ''}"
        onmouseenter="cmdSetSelected(${i})"
        onclick="cmdCloseForce();window.location.href='${m.href}'">
-      <div class="cmd-item-icon" style="background:${m.color}">${m.icon}</div>
+      <div class="cmd-item-icon" style="background:${m.bg}20"><span style="font-family:'Material Symbols Rounded';font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;color:${m.bg};font-size:18px;line-height:1">${m.icon}</span></div>
       <div><div class="cmd-item-label">${m.label}</div><div class="cmd-item-sub">${m.sub}</div></div>
     </div>`).join('');
 }
