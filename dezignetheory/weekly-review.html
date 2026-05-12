@@ -299,7 +299,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <div class="page-header">
       <div class="page-date" id="wins-week-label">Week of —</div>
       <h1 class="page-title">Win Wall</h1>
-      <p class="page-sub">The Work module win wall, woven into your weekly review.</p>
+      <p class="page-sub">A historical gallery of wins for motivation, gratitude, and remembering your own momentum.</p>
     </div>
 
     <div class="card card-pad" style="margin-bottom:16px">
@@ -331,13 +331,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 
     <div class="card card-pad">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px">
-        <h2 style="font-size:15px;font-weight:800">Wins for Selected Week</h2>
+        <div>
+          <h2 style="font-size:15px;font-weight:800">All-Time Win Gallery</h2>
+          <p style="font-size:12px;color:var(--text-2);margin-top:2px">Every win you have captured, newest first.</p>
+        </div>
         <span class="badge badge-amber" id="win-wall-count">0 wins</span>
       </div>
       <div id="win-wall-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"></div>
       <div id="win-wall-empty" style="display:none;text-align:center;padding:34px 12px;color:var(--text-3)">
         <span class="icon" style="font-size:34px;display:block;margin-bottom:8px">emoji_events</span>
-        <p style="font-size:14px;font-weight:700;color:var(--text-2)">No wins logged for this week yet.</p>
+        <p style="font-size:14px;font-weight:700;color:var(--text-2)">No wins logged yet.</p>
       </div>
     </div>
   </section>
@@ -838,8 +841,7 @@ function renderWinWall() {
   const empty = document.getElementById('win-wall-empty');
   const count = document.getElementById('win-wall-count');
   if (!grid || !empty || !count) return;
-  const week = getReviewWeekWindow();
-  const wins = getWins().filter(w => inWeek(w.date, week));
+  const wins = getWins().slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
   count.textContent = `${wins.length} win${wins.length === 1 ? '' : 's'}`;
   empty.style.display = wins.length ? 'none' : 'block';
   grid.innerHTML = wins.map(w => {
