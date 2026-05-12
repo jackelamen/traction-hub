@@ -201,6 +201,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <div class="page-date" id="reflect-week-label">Week of —</div>
         <h1 class="page-title">This Week</h1>
         <p class="page-sub">Honest reflection creates compound clarity over time.</p>
+        <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:14px">
+          <div class="field" style="max-width:190px">
+            <label>Review Week</label>
+            <input id="review-week-start" type="date" onchange="handleReviewWeekChange()"/>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="setReviewWeek(-1)" title="Previous week"><span class="icon" style="font-size:15px">chevron_left</span>Previous</button>
+          <button class="btn btn-secondary btn-sm" onclick="setReviewWeek(0)" title="Current week">Current</button>
+        </div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm" onclick="generateInsight()"><span class="icon" style="font-size:15px">auto_awesome</span>AI Insight</button>
@@ -584,17 +592,67 @@ function formatWeekLabel(date) {
 
 function getWeekId(date) {
   const d = getWeekStart(date, getResetDay());
-  return d.toISOString().slice(0, 10);
+  return toDateInputValue(d);
 }
 
-function initDateLabels() {
-  const weekStart = getWeekStart(new Date(), getResetDay());
+function toDateInputValue(date) {
+  const d = new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseDateInputValue(value) {
+  const [y, m, d] = String(value || '').split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+}
+
+function getSelectedWeekStart() {
+  const input = document.getElementById('review-week-start');
+  const parsed = parseDateInputValue(input?.value);
+  return getWeekStart(parsed || new Date(), getResetDay());
+}
+
+function getSelectedWeekId() {
+  return toDateInputValue(getSelectedWeekStart());
+}
+
+function updateReviewWeekLabels() {
+  const weekStart = getSelectedWeekStart();
   const label = formatWeekLabel(weekStart);
   document.getElementById('reflect-week-label').textContent = 'Week of ' + label;
   document.getElementById('modules-week-label').textContent = 'Week of ' + label;
   const nextStart = new Date(weekStart);
   nextStart.setDate(nextStart.getDate() + 7);
   document.getElementById('intentions-week-label').textContent = 'Week of ' + formatWeekLabel(nextStart);
+}
+
+function setReviewWeek(offsetWeeks) {
+  const input = document.getElementById('review-week-start');
+  if (!input) return;
+  const base = offsetWeeks === 0 ? getWeekStart(new Date(), getResetDay()) : getSelectedWeekStart();
+  if (offsetWeeks !== 0) base.setDate(base.getDate() + offsetWeeks * 7);
+  input.value = toDateInputValue(getWeekStart(base, getResetDay()));
+  updateReviewWeekLabels();
+  loadCurrentReview();
+  if (document.getElementById('view-modules')?.classList.contains('active')) buildModuleCards();
+}
+
+function handleReviewWeekChange() {
+  const input = document.getElementById('review-week-start');
+  if (input) input.value = getSelectedWeekId();
+  updateReviewWeekLabels();
+  loadCurrentReview();
+  if (document.getElementById('view-modules')?.classList.contains('active')) buildModuleCards();
+}
+
+function initDateLabels() {
+  const weekStart = getWeekStart(new Date(), getResetDay());
+  const input = document.getElementById('review-week-start');
+  if (input && !input.value) input.value = toDateInputValue(weekStart);
+  updateReviewWeekLabels();
 }
 
 /* ===================== SCORE ===================== */
@@ -606,22 +664,21 @@ function syncScore() {
 }
 
 /* ===================== MODULE SNAPSHOT ===================== */
+const MODULE_STORAGE_PREFIX = 'dt_';
 const MODULE_DEFS = [
-  { key: 'traction', label: 'Work & Traction', icon: 'bolt', color: '#f97316', bg: 'rgba(249,115,22,0.12)', ls: 'dt_edgex_traction_summary', file: 'work.html' },
-  { key: 'goals', label: 'Goals', icon: 'flag', color: '#10b981', bg: 'rgba(16,185,129,0.12)', ls: 'dt_edgex_goals_summary', file: 'goals.html' },
-  { key: 'finance', label: 'Finance', icon: 'payments', color: '#4f46e5', bg: 'rgba(79,70,229,0.12)', ls: 'dt_finance_tracker_data_v1', file: 'finance-dashboard.html' },
-  { key: 'health', label: 'Health', icon: 'monitor_heart', color: '#0ea5e9', bg: 'rgba(14,165,233,0.12)', ls: 'dt_edgex_health_summary', file: 'health.html' },
-  { key: 'wellness', label: 'Wellness', icon: 'self_improvement', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)', ls: 'dt_edgex_wellness_summary', file: 'wellness.html' },
+  { key: 'traction', label: 'Work & Traction', icon: 'bolt', color: '#f97316', bg: 'rgba(249,115,22,0.12)', file: 'work.html', prompt: 'What work pattern most affected the week: focus, distraction, planning, or follow-through?' },
+  { key: 'goals', label: 'Goals', icon: 'flag', color: '#10b981', bg: 'rgba(16,185,129,0.12)', file: 'goals.html', prompt: 'Which goal got real movement, and which goal is asking for a smaller next action?' },
+  { key: 'finance', label: 'Finance', icon: 'payments', color: '#4f46e5', bg: 'rgba(79,70,229,0.12)', file: 'finance-dashboard.html', prompt: 'Did spending support the week you meant to have, or quietly pull energy away from it?' },
+  { key: 'health', label: 'Health', icon: 'monitor_heart', color: '#0ea5e9', bg: 'rgba(14,165,233,0.12)', file: 'health.html', prompt: 'What did your body make easier or harder this week?' },
+  { key: 'wellness', label: 'Wellness', icon: 'self_improvement', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)', file: 'wellness.html', prompt: 'What emotion, loop, or practice deserves to be carried into the review?' },
 ];
 
 function buildModuleCards() {
   const grid = document.getElementById('module-cards-grid');
   grid.innerHTML = '';
+  const week = getReviewWeekWindow();
   MODULE_DEFS.forEach(m => {
-    const raw = localStorage.getItem(m.ls);
-    let summary = null;
-    try { summary = raw ? JSON.parse(raw) : null; } catch { summary = raw; }
-    const text = extractSummaryText(summary, m.key);
+    const summary = buildModuleSnapshot(m.key, week);
     const card = document.createElement('div');
     card.className = 'module-card';
     card.innerHTML = `
@@ -629,10 +686,21 @@ function buildModuleCards() {
         <span class="icon fill" style="color:${m.color}">${m.icon}</span>
       </div>
       <div class="module-card-text" style="flex:1">
-        <h4>${m.label}</h4>
-        ${text
-          ? `<p>${text}</p>`
-          : `<p class="empty">No cached summary found — open ${m.label} to populate data.</p>`}
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+          <h4 style="margin:0">${m.label}</h4>
+          <span class="badge" style="background:${m.bg};color:${m.color}">${summary.status}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:8px;margin-bottom:10px">
+          ${summary.metrics.map(metric => `
+            <div style="border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:#f9fafb">
+              <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3)">${escapeHTML(metric.label)}</div>
+              <div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.2;margin-top:2px">${escapeHTML(metric.value)}</div>
+            </div>`).join('')}
+        </div>
+        <p>${escapeHTML(summary.readout)}</p>
+        <div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:${m.bg};color:#374151;font-size:12.5px;line-height:1.5">
+          <strong style="color:${m.color}">Review cue:</strong> ${escapeHTML(m.prompt)}
+        </div>
       </div>
       <a href="${m.file}" style="color:var(--text-3);text-decoration:none;flex-shrink:0;align-self:center">
         <span class="icon" style="font-size:18px">open_in_new</span>
@@ -642,46 +710,177 @@ function buildModuleCards() {
   });
 }
 
-function extractSummaryText(data, key) {
-  if (!data) return null;
-  if (typeof data === 'string') return data.slice(0, 180);
-  // Finance: try to pull a useful snippet
-  if (key === 'finance') {
-    try {
-      const arr = Array.isArray(data) ? data : [];
-      if (!arr.length) return null;
-      const thisMonth = new Date().toISOString().slice(0,7);
-      const monthTx = arr.filter(t => (t.date||'').startsWith(thisMonth));
-      const spent = monthTx.filter(t => t.type === 'expense').reduce((s,t) => s + Math.abs(t.amount||0), 0);
-      return `${monthTx.length} transactions this month · ₩${spent.toLocaleString()} spent`;
-    } catch { return null; }
-  }
-  // Goals: check for active goal count
-  if (key === 'goals') {
-    try {
-      const goals = Array.isArray(data) ? data : (data.goals || []);
-      const active = goals.filter(g => g.status !== 'completed').length;
-      return `${active} active goal${active !== 1 ? 's' : ''} tracked`;
-    } catch { return null; }
-  }
-  // 30-day timer
-  if (key === 'traction') {
-    try {
-      const timer = localStorage.getItem('dt_30day-timer-v1');
-      const timerData = timer ? JSON.parse(timer) : null;
-      if (timerData && timerData.label) {
-        const started = new Date(timerData.startDate);
-        const elapsed = Math.floor((Date.now() - started) / 86400000);
-        return `"${timerData.label}" — Day ${elapsed} of 30`;
-      }
-      return null;
-    } catch { return null; }
-  }
-  if (typeof data === 'object') {
-    const str = JSON.stringify(data);
-    return str.length > 20 ? 'Data cached (' + str.length + ' chars)' : null;
-  }
-  return null;
+function storageKey(key) { return MODULE_STORAGE_PREFIX + key; }
+function readJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(storageKey(key));
+    return raw ? JSON.parse(raw) : fallback;
+  } catch(e) { return fallback; }
+}
+function escapeHTML(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function getReviewWeekWindow() {
+  const start = getSelectedWeekStart();
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start, end, dates: weekDateStrings(start) };
+}
+function weekDateStrings(start) {
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return toDateInputValue(d);
+  });
+}
+function avg(nums) {
+  const clean = nums.map(Number).filter(n => Number.isFinite(n));
+  return clean.length ? clean.reduce((s, n) => s + n, 0) / clean.length : null;
+}
+function sum(nums) { return nums.map(Number).filter(n => Number.isFinite(n)).reduce((s, n) => s + n, 0); }
+function fmtNumber(n) { return Number(n || 0).toLocaleString('en-US'); }
+function fmtMoney(n) { return '₩' + Math.round(n || 0).toLocaleString('ko-KR'); }
+function inWeek(dateStr, week) { return week.dates.includes(String(dateStr || '').slice(0, 10)); }
+
+function buildModuleSnapshot(key, week) {
+  if (key === 'traction') return buildWorkSnapshot(week);
+  if (key === 'goals') return buildGoalsSnapshot(week);
+  if (key === 'finance') return buildFinanceSnapshot(week);
+  if (key === 'health') return buildHealthSnapshot(week);
+  if (key === 'wellness') return buildWellnessSnapshot(week);
+  return emptySnapshot();
+}
+
+function emptySnapshot() {
+  return {
+    status: 'No data',
+    metrics: [{ label: 'Week', value: 'No signal' }, { label: 'Trend', value: '--' }, { label: 'Cue', value: 'Reflect' }],
+    readout: 'No usable data was found for this week yet.'
+  };
+}
+
+function buildWorkSnapshot(week) {
+  const logs = readJSON('30day-traction-v2', {});
+  const sessions = readJSON('30day-sessions-v1', {});
+  const wins = readJSON('edgex-win-wall-v1', []);
+  const weekLogs = week.dates.map(d => logs[d]).filter(Boolean);
+  const focusScores = weekLogs.map(l => l.focusScore || l.score).filter(Boolean);
+  const sessionCount = week.dates.reduce((s, d) => s + ((sessions[d] || []).length || 0), 0);
+  const deepMins = week.dates.reduce((s, d) => s + (sessions[d] || []).reduce((n, row) => n + (parseInt(row.dur) || 0), 0), 0);
+  const pillarDays = weekLogs.filter(l => l.pillar1 || l.pillar2).length;
+  const weekWins = wins.filter(w => inWeek(w.date, week));
+  const avgFocus = avg(focusScores);
+  const readout = weekLogs.length
+    ? `${weekLogs.length} logged day${weekLogs.length !== 1 ? 's' : ''}, ${sessionCount} deep-work session${sessionCount !== 1 ? 's' : ''}, and ${weekWins.length} captured win${weekWins.length !== 1 ? 's' : ''}. ${avgFocus ? `Average focus was ${Math.round(avgFocus)}/100.` : 'Use the notes and wins to name what actually moved work forward.'}`
+    : 'No Work logs found for this selected week. Add daily logs or wins to see what created traction.';
+  return {
+    status: weekLogs.length ? 'Weekly signal' : 'No week logs',
+    metrics: [
+      { label: 'Logged days', value: `${weekLogs.length}/7` },
+      { label: 'Deep work', value: deepMins ? `${deepMins}m` : `${sessionCount} sessions` },
+      { label: 'Pillar days', value: String(pillarDays) },
+      { label: 'Wins', value: String(weekWins.length) }
+    ],
+    readout
+  };
+}
+
+function buildGoalsSnapshot() {
+  const db = readJSON('gs2_db', { goals: [], sprints: [] });
+  const summary = readJSON('edgex_goals_summary', null);
+  const goals = db.goals || [];
+  const sprints = db.sprints || [];
+  const activeGoals = goals.filter(g => g.status !== 'completed' && g.status !== 'done');
+  const activeCycles = sprints.filter(s => !s.status || s.status === 'active');
+  const done = summary?.done ?? 0;
+  const total = summary?.total ?? 0;
+  return {
+    status: activeGoals.length ? 'Active direction' : 'No active goals',
+    metrics: [
+      { label: 'Active goals', value: String(activeGoals.length) },
+      { label: 'Active cycles', value: String(summary?.activeCycles ?? activeCycles.length) },
+      { label: 'Today scorecard', value: total ? `${done}/${total}` : '--' },
+      { label: 'Goal areas', value: String(new Set(activeGoals.map(g => g.areaId || g.area)).size || 0) }
+    ],
+    readout: activeGoals.length
+      ? `${activeGoals.length} active goal${activeGoals.length !== 1 ? 's' : ''} are in the system. Use this review to separate true progress from goals that are simply being carried forward.`
+      : 'No active goals were found. This is a good week to choose one outcome worth making visible.'
+  };
+}
+
+function buildFinanceSnapshot(week) {
+  const finance = readJSON('finance_tracker_data_v1', { transactions: [], budgets: {}, recurring: [], savingsGoals: [] });
+  const transactions = Array.isArray(finance) ? finance : (finance.transactions || []);
+  const weekTx = transactions.filter(t => inWeek(t.date, week));
+  const expenses = weekTx.filter(t => t.type === 'expense');
+  const income = weekTx.filter(t => t.type === 'income');
+  const spent = sum(expenses.map(t => Math.abs(t.amount || 0)));
+  const earned = sum(income.map(t => Math.abs(t.amount || 0)));
+  const byCat = {};
+  expenses.forEach(t => { byCat[t.category || 'Other'] = (byCat[t.category || 'Other'] || 0) + Math.abs(t.amount || 0); });
+  const topCat = Object.entries(byCat).sort((a, b) => b[1] - a[1])[0];
+  const savingsGoals = finance.savingsGoals || [];
+  return {
+    status: weekTx.length ? 'Cashflow visible' : 'No week transactions',
+    metrics: [
+      { label: 'Transactions', value: String(weekTx.length) },
+      { label: 'Spent', value: fmtMoney(spent) },
+      { label: 'Income', value: fmtMoney(earned) },
+      { label: 'Top spend', value: topCat ? topCat[0] : '--' }
+    ],
+    readout: weekTx.length
+      ? `${fmtMoney(spent)} went out across ${expenses.length} expense${expenses.length !== 1 ? 's' : ''}${topCat ? `, led by ${topCat[0]} at ${fmtMoney(topCat[1])}` : ''}. ${savingsGoals.length ? `${savingsGoals.length} savings goal${savingsGoals.length !== 1 ? 's' : ''} are being tracked.` : 'No savings goals are currently visible.'}`
+      : 'No Finance transactions were found for this week. If the week felt expensive, import or add transactions before reviewing the pattern.'
+  };
+}
+
+function buildHealthSnapshot(week) {
+  const health = readJSON('edgex_health_v1', { logs: {}, checks: {}, routines: [], settings: {} });
+  const signals = readJSON('edgex_daily_signals_v2', {});
+  const logs = week.dates.map(date => ({ ...(signals[date] || {}), ...(health.logs?.[date] || {}) }));
+  const meaningful = logs.filter(l => Object.keys(l).length);
+  const sleepAvg = avg(meaningful.map(l => l.sleepHours));
+  const stepsAvg = avg(meaningful.map(l => l.steps));
+  const exerciseMins = sum(meaningful.map(l => l.exerciseMins));
+  const routineDone = week.dates.reduce((s, d) => s + Object.values(health.checks?.[d] || {}).filter(Boolean).length, 0);
+  return {
+    status: meaningful.length ? 'Body signal' : 'No health logs',
+    metrics: [
+      { label: 'Logged days', value: `${meaningful.length}/7` },
+      { label: 'Avg sleep', value: sleepAvg ? `${sleepAvg.toFixed(1)}h` : '--' },
+      { label: 'Avg steps', value: stepsAvg ? fmtNumber(Math.round(stepsAvg)) : '--' },
+      { label: 'Exercise', value: exerciseMins ? `${exerciseMins}m` : '--' }
+    ],
+    readout: meaningful.length
+      ? `Health has ${meaningful.length} day${meaningful.length !== 1 ? 's' : ''} of signal this week. ${routineDone ? `${routineDone} routine check${routineDone !== 1 ? 's' : ''} were completed.` : 'Routine follow-through was not visible.'} Look for whether sleep, steps, or exercise explain the week’s energy.`
+      : 'No Health logs were found for this week. A review will be more useful after sleep, steps, exercise, or routine data is logged.'
+  };
+}
+
+function buildWellnessSnapshot(week) {
+  const wellness = readJSON('edgex_wellness_v1', { checkins: {}, practices: [], thoughts: [] });
+  const checkins = week.dates.flatMap(date => {
+    const raw = wellness.checkins?.[date];
+    if (Array.isArray(raw)) return raw;
+    return raw ? [raw] : [];
+  });
+  const practices = (wellness.practices || []).filter(p => inWeek(p.date, week));
+  const practiceMins = sum(practices.map(p => p.minutes));
+  const loopsOpened = (wellness.thoughts || []).filter(t => inWeek(t.createdAt, week));
+  const openLoops = (wellness.thoughts || []).filter(t => !t.done).length;
+  const clarityAvg = avg(checkins.map(c => c.clarity));
+  return {
+    status: checkins.length || practices.length ? 'Inner signal' : 'No wellness logs',
+    metrics: [
+      { label: 'Check-ins', value: String(checkins.length) },
+      { label: 'Practice', value: practiceMins ? `${practiceMins}m` : '--' },
+      { label: 'Avg clarity', value: clarityAvg ? `${clarityAvg.toFixed(1)}/5` : '--' },
+      { label: 'Open loops', value: String(openLoops) }
+    ],
+    readout: checkins.length || practices.length || loopsOpened.length
+      ? `${checkins.length} check-in${checkins.length !== 1 ? 's' : ''}, ${practiceMins || 0} practice minute${practiceMins !== 1 ? 's' : ''}, and ${loopsOpened.length} new thought loop${loopsOpened.length !== 1 ? 's' : ''} showed up this week. Use this to name the emotional weather, not just the output.`
+      : 'No Wellness check-ins or practices were found for this week. If the week had an emotional theme, capture it manually in the notes below.'
+  };
 }
 
 /* ===================== GEMINI AI INSIGHT ===================== */
@@ -771,7 +970,7 @@ function buildLocalInsight(r) {
 /* ===================== SAVE / LOAD REVIEW ===================== */
 function collectReview() {
   return {
-    week_id: getWeekId(new Date()),
+    week_id: getSelectedWeekId(),
     score: parseInt(document.getElementById('overall-score').value),
     wins: document.getElementById('q-wins').value.trim(),
     challenges: document.getElementById('q-challenges').value.trim(),
@@ -866,7 +1065,7 @@ async function saveReview() {
 }
 
 async function loadCurrentReview() {
-  const weekId = getWeekId(new Date());
+  const weekId = getSelectedWeekId();
   const stored = getLocalReviews();
   const localRow = stored.find(r => r.week_id === weekId);
   try {
@@ -875,6 +1074,8 @@ async function loadCurrentReview() {
     else if (localRow) {
       populateForm(localRow);
       syncLocalReviews();
+    } else {
+      resetReviewForm();
     }
   } catch {
     try {
@@ -884,33 +1085,53 @@ async function loadCurrentReview() {
       else if (localRow) {
         populateForm(localRow);
         syncLocalReviews(cloudRows);
+      } else {
+        resetReviewForm();
       }
     } catch {
       if (localRow) populateForm(localRow);
+      else resetReviewForm();
     }
   }
 }
 
 function populateForm(r) {
+  resetReviewForm();
   if (r.score) { document.getElementById('overall-score').value = r.score; syncScore(); }
-  if (r.wins) document.getElementById('q-wins').value = r.wins;
-  if (r.challenges) document.getElementById('q-challenges').value = r.challenges;
-  if (r.learning) document.getElementById('q-learning').value = r.learning;
-  if (r.gratitude) document.getElementById('q-gratitude').value = r.gratitude;
-  if (r.energy) document.getElementById('q-energy').value = r.energy;
-  if (r.other) document.getElementById('q-other').value = r.other;
-  if (r.module_notes) document.getElementById('module-notes').value = r.module_notes;
-  if (r.theme_word) document.getElementById('theme-word').value = r.theme_word;
-  if (r.priority_1) document.getElementById('p1').value = r.priority_1;
-  if (r.priority_2) document.getElementById('p2').value = r.priority_2;
-  if (r.priority_3) document.getElementById('p3').value = r.priority_3;
-  if (r.protect) document.getElementById('protect-text').value = r.protect;
-  if (r.let_go) document.getElementById('letgo-text').value = r.let_go;
+  document.getElementById('q-wins').value = r.wins || '';
+  document.getElementById('q-challenges').value = r.challenges || '';
+  document.getElementById('q-learning').value = r.learning || '';
+  document.getElementById('q-gratitude').value = r.gratitude || '';
+  document.getElementById('q-energy').value = r.energy || '';
+  document.getElementById('q-other').value = r.other || '';
+  document.getElementById('module-notes').value = r.module_notes || '';
+  document.getElementById('theme-word').value = r.theme_word || '';
+  document.getElementById('p1').value = r.priority_1 || '';
+  document.getElementById('p2').value = r.priority_2 || '';
+  document.getElementById('p3').value = r.priority_3 || '';
+  document.getElementById('protect-text').value = r.protect || '';
+  document.getElementById('letgo-text').value = r.let_go || '';
   if (r.ai_insight && r.ai_insight.length > 20) {
     const aiText = document.getElementById('ai-text');
     aiText.textContent = r.ai_insight;
     aiText.style.color = 'rgba(255,255,255,.88)';
     aiText.style.fontStyle = 'normal';
+  }
+}
+
+function resetReviewForm() {
+  ['q-wins','q-challenges','q-learning','q-gratitude','q-energy','q-other','module-notes','theme-word','p1','p2','p3','protect-text','letgo-text'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const score = document.getElementById('overall-score');
+  if (score) score.value = '7';
+  syncScore();
+  const aiText = document.getElementById('ai-text');
+  if (aiText) {
+    aiText.style.color = 'rgba(255,255,255,.5)';
+    aiText.style.fontStyle = 'italic';
+    aiText.innerHTML = 'Fill in your reflections below, then click <strong style="color:#5eead4">AI Insight</strong> to generate a personalised narrative for this week.';
   }
 }
 
