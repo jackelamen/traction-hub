@@ -8463,6 +8463,14 @@ function clearNotionPageId(dateStr) {
 async function syncToNotion(dateStr, _retryWithoutPageId = false) {
   updateNotionSyncBadge('syncing');
 
+  const notionToken = getNotionToken().trim();
+  if (!notionToken) {
+    const msg = 'Add Notion token in Settings';
+    updateNotionSyncBadge('error', msg);
+    showToast(msg);
+    return { ok: false, error: msg };
+  }
+
   const props = buildNotionProps(dateStr);
   const pageMap = getNotionPageMap();
   const pageMapId = _retryWithoutPageId ? null : (pageMap[dateStr] || null);
@@ -8475,7 +8483,13 @@ async function syncToNotion(dateStr, _retryWithoutPageId = false) {
         'Authorization': `Bearer ${getSbToken()}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ dateStr, properties: props, pageMapId }),
+      body: JSON.stringify({
+        dateStr,
+        properties: props,
+        pageMapId,
+        databaseId: NOTION_DB_ID,
+        notionToken,
+      }),
     });
 
     if (!res.ok) {
@@ -8513,7 +8527,9 @@ async function syncToNotion(dateStr, _retryWithoutPageId = false) {
 
   } catch (err) {
     console.error('Notion sync error:', err);
-    const msg = err.message.slice(0, 60);
+    const msg = (err.message === 'Failed to fetch'
+      ? 'Could not reach Notion sync function'
+      : err.message).slice(0, 60);
     updateNotionSyncBadge('error', msg);
     showToast(`Notion sync failed: ${msg}`);
     return { ok: false, error: err.message };
