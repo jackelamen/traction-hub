@@ -461,6 +461,7 @@ const REVIEW_TRACTION_KEY = 'edgex_weekly_reviews_v1';
 const REVIEW_LOCAL_KEY = 'edgex_reviews_local';
 const REVIEW_GEMINI_KEY = 'edgex_gemini_key';
 const REVIEW_RESET_DAY_KEY = 'edgex_review_reset_day';
+let editingReviewOriginalWeekId = null;
 
 /* ===================== SUPABASE HELPERS ===================== */
 function readStoredSession() {
@@ -626,16 +627,16 @@ function setReviewWeek(offsetWeeks) {
   if (offsetWeeks !== 0) base.setDate(base.getDate() + offsetWeeks * 7);
   input.value = toDateInputValue(getWeekStart(base, getResetDay()));
   updateReviewWeekLabels();
-  loadCurrentReview();
   if (document.getElementById('view-modules')?.classList.contains('active')) buildModuleCards();
+  if (!editingReviewOriginalWeekId) loadCurrentReview();
 }
 
 function handleReviewWeekChange() {
   const input = document.getElementById('review-week-start');
   if (input) input.value = getSelectedWeekId();
   updateReviewWeekLabels();
-  loadCurrentReview();
   if (document.getElementById('view-modules')?.classList.contains('active')) buildModuleCards();
+  if (!editingReviewOriginalWeekId) loadCurrentReview();
 }
 
 function initDateLabels() {
@@ -993,6 +994,12 @@ function saveLocalReview(review) {
   localStorage.setItem(REVIEW_LOCAL_KEY, JSON.stringify(stored));
 }
 
+function deleteLocalReviewWeek(weekId) {
+  if (!weekId) return;
+  const stored = getLocalReviews().filter(r => r.week_id !== weekId);
+  localStorage.setItem(REVIEW_LOCAL_KEY, JSON.stringify(stored));
+}
+
 async function loadReviewsFromTraction() {
   const userId = getSbUserId();
   if (!userId) throw new Error('No Supabase user');
@@ -1023,8 +1030,39 @@ async function upsertReviewToTraction(review) {
   await saveReviewsToTraction(reviews);
 }
 
+async function deleteReviewWeekFromSupabaseTable(weekId) {
+  if (!weekId || !getSbUserId()) return;
+  await sbFetch(`${TABLE}?user_id=eq.${encodeURIComponent(getSbUserId())}&week_id=eq.${weekId}`, {
+    method: 'DELETE',
+    prefer: 'return=minimal'
+  });
+}
+
+async function deleteReviewWeekFromTraction(weekId) {
+  if (!weekId) return;
+  const reviews = (await loadReviewsFromTraction()).filter(r => r.week_id !== weekId);
+  await saveReviewsToTraction(reviews);
+}
+
+async function deleteReviewWeekEverywhere(weekId) {
+  if (!weekId) return;
+  deleteLocalReviewWeek(weekId);
+  try { await deleteReviewWeekFromSupabaseTable(weekId); } catch(e) {}
+  try { await deleteReviewWeekFromTraction(weekId); } catch(e) {}
+}
+
+async function cleanupMovedReview(newWeekId, originalWeekId = editingReviewOriginalWeekId) {
+  const oldWeekId = originalWeekId;
+  editingReviewOriginalWeekId = null;
+  if (oldWeekId && oldWeekId !== newWeekId) {
+    await deleteReviewWeekEverywhere(oldWeekId);
+    showToast('Review moved to selected week');
+  }
+}
+
 async function saveReview() {
   const review = collectReview();
+  const originalWeekId = editingReviewOriginalWeekId;
   // Check if anything is filled
   const hasContent = review.wins || review.challenges || review.learning || review.theme_word;
   if (!hasContent) { showToast('Fill in at least one field before saving'); return; }
@@ -1038,16 +1076,19 @@ async function saveReview() {
       body: JSON.stringify(review)
     });
     showToast('Review saved to Supabase');
+    await cleanupMovedReview(review.week_id, originalWeekId);
     loadHistory();
   } catch (err) {
     console.warn('weekly_reviews save unavailable, trying shared Supabase store:', err);
     try {
       await upsertReviewToTraction(review);
       showToast('Review saved to Supabase');
+      await cleanupMovedReview(review.week_id, originalWeekId);
       loadHistory();
     } catch (fallbackErr) {
       console.error('Save error:', fallbackErr);
       saveLocalReview(review);
+      await cleanupMovedReview(review.week_id, originalWeekId);
       showToast('Saved locally (Supabase unavailable)');
       loadHistory();
     }
@@ -1087,6 +1128,11 @@ async function loadCurrentReview() {
 
 function populateForm(r) {
   resetReviewForm();
+  if (r.week_id) {
+    const input = document.getElementById('review-week-start');
+    if (input) input.value = r.week_id;
+    updateReviewWeekLabels();
+  }
   if (r.score) { document.getElementById('overall-score').value = r.score; syncScore(); }
   document.getElementById('q-wins').value = r.wins || '';
   document.getElementById('q-challenges').value = r.challenges || '';
@@ -1110,6 +1156,7 @@ function populateForm(r) {
 }
 
 function resetReviewForm() {
+  editingReviewOriginalWeekId = null;
   ['q-wins','q-challenges','q-learning','q-gratitude','q-energy','q-other','module-notes','theme-word','p1','p2','p3','protect-text','letgo-text'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -1252,8 +1299,22 @@ function openHistoryDetail(idx) {
       ${[r.priority_1,r.priority_2,r.priority_3].filter(Boolean).map((p,i)=>`<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px"><div style="min-width:22px;height:22px;border-radius:7px;background:var(--accent-light);color:var(--accent-dark);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">${i+1}</div><p style="font-size:14px;line-height:1.5">${p}</p></div>`).join('')}</div>` : ''}
     ${section('What to Protect', r.protect)}
     ${section('What to Let Go', r.let_go)}
+    <div style="display:flex;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <button class="btn btn-primary btn-sm" onclick="editHistoryReview(${idx})"><span class="icon" style="font-size:15px">edit</span>Edit this review</button>
+    </div>
   `;
   document.getElementById('review-modal').style.display = 'flex';
+}
+
+function editHistoryReview(idx) {
+  const r = window._historyRows?.[idx];
+  if (!r) return;
+  closeModal();
+  editingReviewOriginalWeekId = r.week_id;
+  populateForm(r);
+  editingReviewOriginalWeekId = r.week_id;
+  nav('reflect');
+  showToast('Review loaded for editing');
 }
 
 function closeModal(e) {

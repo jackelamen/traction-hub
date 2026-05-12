@@ -1955,6 +1955,11 @@
         <p class="text-sm text-on-surface-variant mb-4">Start with gratitude. What's one thing you're thankful for this morning?</p>
         <textarea id="ms-gratitude" rows="3" placeholder="I'm grateful for…"
           class="w-full bg-surface-container border-none rounded-xl p-4 text-sm text-on-surface resize-none focus:ring-2 focus:ring-primary/20 transition-all"></textarea>
+        <div class="mt-4">
+          <label for="ms-intention" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Today's Intention</label>
+          <input id="ms-intention" type="text" placeholder="Today I will…"
+            class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-sm text-on-surface focus:ring-2 focus:ring-primary/20 transition-all"/>
+        </div>
       </div>
 
       <!-- Step 2: Energy -->
@@ -3405,7 +3410,7 @@ const NO_SYNC_KEYS = new Set([
 // Everything else gets synced — no allowlist needed
 function shouldSyncTractionKey(key) {
   if (NO_SYNC_KEYS.has(key)) return false;
-  return key.startsWith('dt_');
+  return key.startsWith('dt_') || key === 'edgex-weekly-intentions-v1';
 }
 
 // User ID derived from authenticated Supabase session
@@ -4989,6 +4994,35 @@ function renderStats() {
 }
 
 // ── Intention Banner ─────────────────────────────────────────────
+const TODAY_INTENTION_KEY = 'dt_30day-tomorrow-v1';
+
+function todayIntentionStorageDate() {
+  const today = todayStr();
+  return WEEKDAY_DATES[WEEKDAY_DATES.indexOf(today) - 1] || today;
+}
+
+function getTodayIntentionText() {
+  try {
+    const raw = localStorage.getItem(TODAY_INTENTION_KEY);
+    if (!raw) return '';
+    const t = JSON.parse(raw);
+    return t?.date === todayIntentionStorageDate() ? (t.text || '') : '';
+  } catch(e) {
+    return '';
+  }
+}
+
+function saveTodayIntentionText(val, showMessage = true) {
+  const text = (val || '').trim();
+  if (!text) return;
+  localStorage.setItem(TODAY_INTENTION_KEY, JSON.stringify({ date: todayIntentionStorageDate(), text }));
+  sessionStorage.removeItem('intention-dismissed');
+  const textEl = document.getElementById('intention-text');
+  if (textEl) textEl.textContent = text;
+  renderIntentionBanner();
+  if (showMessage) showToast('Intention updated');
+}
+
 function renderIntentionBanner() {
   // Now populates the unified hero card, not a separate banner
   const dismissed = sessionStorage.getItem('intention-dismissed');
@@ -4998,17 +5032,11 @@ function renderIntentionBanner() {
   if (!intentionDisplay) return;
 
   let hasIntention = false;
-  try {
-    const raw = localStorage.getItem('dt_30day-tomorrow-v1');
-    if (raw) {
-      const t = JSON.parse(raw);
-      const yesterday = WEEKDAY_DATES[WEEKDAY_DATES.indexOf(todayStr()) - 1];
-      if (t.date === yesterday && t.text && !dismissed) {
-        document.getElementById('intention-text').textContent = t.text;
-        hasIntention = true;
-      }
-    }
-  } catch(e) {}
+  const text = getTodayIntentionText();
+  if (text && !dismissed) {
+    document.getElementById('intention-text').textContent = text;
+    hasIntention = true;
+  }
 
   intentionDisplay.classList.toggle('hidden', !hasIntention);
   if (intentionEmpty) intentionEmpty.classList.toggle('hidden', hasIntention);
@@ -5040,13 +5068,9 @@ function startEditIntention() {
 function saveEditIntention() {
   const val = document.getElementById('intention-input').value.trim();
   if (!val) { cancelEditIntention(); return; }
-  // Save back to the same key so it persists for today
-  const today = todayStr();
-  localStorage.setItem('dt_30day-tomorrow-v1', JSON.stringify({ date: WEEKDAY_DATES[WEEKDAY_DATES.indexOf(today) - 1] || today, text: val }));
-  document.getElementById('intention-text').textContent = val;
   document.getElementById('intention-edit').classList.add('hidden');
   document.getElementById('intention-display').classList.remove('hidden');
-  showToast('Intention updated');
+  saveTodayIntentionText(val);
 }
 
 function cancelEditIntention() {
@@ -9892,7 +9916,7 @@ document.getElementById('tb-create-start').addEventListener('input', () => {
 // ═══════════════════════════════════════════════════════════════
 // MORNING SETUP
 // ═══════════════════════════════════════════════════════════════
-const MS_KEY = 'dt_morning-setup-v1'; // { date, gratitude, energy, priorities:[str,str,str] }
+const MS_KEY = 'dt_morning-setup-v1'; // { date, gratitude, intention, energy, priorities:[str,str,str] }
 
 let _msStep       = 1;
 let _msTotalSteps = 4;
@@ -9936,12 +9960,14 @@ function openMorningSetup() {
   const existing = getMorningSetup();
   if (existing && existing.date === todayStr()) {
     document.getElementById('ms-gratitude').value = existing.gratitude || '';
+    document.getElementById('ms-intention').value = existing.intention || getTodayIntentionText();
     _msEnergy = existing.energy || 0;
     document.getElementById('ms-p1').value = (existing.priorities || [])[0] || '';
     document.getElementById('ms-p2').value = (existing.priorities || [])[1] || '';
     document.getElementById('ms-p4').value = (existing.priorities || [])[2] || '';
   } else {
     document.getElementById('ms-gratitude').value = '';
+    document.getElementById('ms-intention').value = getTodayIntentionText();
     document.getElementById('ms-p1').value = '';
     document.getElementById('ms-p2').value = '';
     document.getElementById('ms-p4').value = '';
@@ -10055,6 +10081,7 @@ function _saveMorningSetup() {
   const data = {
     date:       todayStr(),
     gratitude:  document.getElementById('ms-gratitude').value.trim(),
+    intention:  document.getElementById('ms-intention').value.trim(),
     energy:     _msEnergy,
     priorities: [
       document.getElementById('ms-p1').value.trim(),
@@ -10063,6 +10090,7 @@ function _saveMorningSetup() {
     ].filter(Boolean),
   };
   saveMorningSetup(data);
+  if (data.intention) saveTodayIntentionText(data.intention, false);
 
   // Roll over selected tasks
   const checked = document.querySelectorAll('.ms-carryover-chk:checked');
@@ -10777,7 +10805,8 @@ function deleteGoal(id) {
 // ═══════════════════════════════════════════════════════════════
 // WEEKLY HUB — Intention, Review, Win Wall
 // ═══════════════════════════════════════════════════════════════
-const WI_KEY      = 'dt_edgex-weekly-intentions-v1';  // { 'YYYY-Www': { week, intention, setAt } }
+const WI_KEY      = 'edgex-weekly-intentions-v1';     // { 'YYYY-Www': { week, intention, setAt } }
+const WI_LEGACY_KEYS = ['dt_edgex-weekly-intentions-v1'];
 const WR_KEY      = 'dt_edgex-weekly-reviews-v1';     // { 'YYYY-Www': { week, worked, didnt, commit, rating, savedAt } }
 const WIN_KEY     = 'dt_edgex-win-wall-v1';            // [ { id, title, note, category, date } ]
 
@@ -10814,7 +10843,28 @@ function currentWeekKey() { return getISOWeekKey(); }
 
 // ── Data accessors ────────────────────────────────────────────────
 function getWeeklyIntentions() {
-  try { return JSON.parse(localStorage.getItem(WI_KEY) || '{}'); } catch { return {}; }
+  const readStore = key => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(key) || '{}');
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch {
+      return {};
+    }
+  };
+  const canonical = readStore(WI_KEY);
+  const merged = { ...canonical };
+  WI_LEGACY_KEYS.forEach(key => {
+    const legacy = readStore(key);
+    Object.entries(legacy).forEach(([week, value]) => {
+      if (!merged[week] || new Date(value?.setAt || 0) > new Date(merged[week]?.setAt || 0)) {
+        merged[week] = value;
+      }
+    });
+  });
+  if (JSON.stringify(merged) !== JSON.stringify(canonical)) {
+    localStorage.setItem(WI_KEY, JSON.stringify(merged));
+  }
+  return merged;
 }
 function getWeeklyReviews() {
   try { return JSON.parse(localStorage.getItem(WR_KEY) || '{}'); } catch { return {}; }
