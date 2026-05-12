@@ -391,7 +391,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 
     <div class="card card-pad" style="margin-bottom:16px">
       <h2 style="font-size:15px;font-weight:800;margin-bottom:4px">Gemini API Key</h2>
-      <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Required for AI-generated weekly insights. Stored only in your browser.</p>
+      <p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Optional. Add a Gemini key for richer AI-generated weekly insights; otherwise Weekly Review drafts a private local insight.</p>
       <div class="field" style="max-width:480px">
         <label>API Key</label>
         <input type="password" id="setting-gemini-key" placeholder="AIza..."/>
@@ -449,29 +449,66 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 const SUPABASE_URL = 'https://mdkyijbgvxedelcqcouu.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_K48G2cqwoLi46Y51TJHj-Q_00KgxXsC';
 const TABLE = 'weekly_reviews';
+const REVIEW_TRACTION_KEY = 'dt_edgex_weekly_reviews_v1';
 const REVIEW_LOCAL_KEY = 'dt_edgex_reviews_local';
 const REVIEW_GEMINI_KEY = 'dt_edgex_gemini_key';
 const REVIEW_RESET_DAY_KEY = 'dt_edgex_review_reset_day';
 
 /* ===================== SUPABASE HELPERS ===================== */
-function getSession() {
+function readStoredSession() {
   try {
-    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
-    if (s.access_token && s.expires_at > Math.floor(Date.now() / 1000)) return s;
+    return JSON.parse(localStorage.getItem('sb_session') || '{}');
   } catch(e) {}
   return null;
 }
 
-function getSbUserId() {
-  return getSession()?.user?.id || null;
+async function refreshSessionIfNeeded() {
+  const s = readStoredSession();
+  if (!s?.access_token) return null;
+  const now = Math.floor(Date.now() / 1000);
+  if ((s.expires_at || 0) > now + 300) return s;
+  if (!s.refresh_token) return null;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: s.refresh_token })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.access_token) return null;
+    const next = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || s.refresh_token,
+      expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+      user: data.user || s.user
+    };
+    localStorage.setItem('sb_session', JSON.stringify(next));
+    return next;
+  } catch(e) {
+    console.warn('Session refresh failed:', e);
+    return null;
+  }
 }
 
-(function authGate() {
-  if (!getSession()) window.location.href = 'login.html';
+async function ensureSession() { return refreshSessionIfNeeded(); }
+
+function getSession() {
+  const s = readStoredSession();
+  if (s?.access_token && (s.expires_at || 0) > Math.floor(Date.now() / 1000)) return s;
+  return null;
+}
+
+function getSbUserId() {
+  return readStoredSession()?.user?.id || null;
+}
+
+(async function authGate() {
+  if (!await ensureSession()) window.location.href = 'login.html';
 })();
 
 async function sbFetch(path, opts = {}) {
-  const session = getSession();
+  const session = await ensureSession();
   if (!session) throw new Error('No Supabase session');
   const headers = {
     'apikey': SUPABASE_ANON,
@@ -496,9 +533,15 @@ async function checkSbConnection() {
     document.getElementById('sb-status-dot').style.background = '#10b981';
     document.getElementById('sb-status-text').textContent = 'Connected to Supabase';
   } catch (e) {
-    document.getElementById('sb-status-dot').style.background = '#ef4444';
-    document.getElementById('sb-status-text').textContent = 'Could not connect — check console';
-    console.warn('Supabase error:', e.message);
+    try {
+      await loadReviewsFromTraction();
+      document.getElementById('sb-status-dot').style.background = '#f59e0b';
+      document.getElementById('sb-status-text').textContent = 'Connected via shared Supabase store';
+    } catch (fallbackErr) {
+      document.getElementById('sb-status-dot').style.background = '#ef4444';
+      document.getElementById('sb-status-text').textContent = 'Could not connect — check console';
+      console.warn('Supabase error:', e.message, fallbackErr.message);
+    }
   }
 }
 
@@ -644,37 +687,31 @@ function extractSummaryText(data, key) {
 /* ===================== GEMINI AI INSIGHT ===================== */
 async function generateInsight() {
   const apiKey = localStorage.getItem(REVIEW_GEMINI_KEY) || '';
-  if (!apiKey) {
-    showToast('Add your Gemini API key in Settings first');
-    nav('settings');
-    return;
-  }
+  const draft = collectReview();
 
-  const wins = document.getElementById('q-wins').value.trim();
-  const challenges = document.getElementById('q-challenges').value.trim();
-  const learning = document.getElementById('q-learning').value.trim();
-  const gratitude = document.getElementById('q-gratitude').value.trim();
-  const energy = document.getElementById('q-energy').value.trim();
-  const other = document.getElementById('q-other').value.trim();
-  const score = document.getElementById('overall-score').value;
-
-  if (!wins && !challenges && !learning) {
+  if (!draft.wins && !draft.challenges && !draft.learning) {
     showToast('Fill in at least a few prompts before generating');
     return;
   }
 
   const aiText = document.getElementById('ai-text');
+  if (!apiKey) {
+    setInsightText(buildLocalInsight(draft));
+    showToast('Local insight drafted');
+    return;
+  }
+
   aiText.innerHTML = '<span style="color:rgba(255,255,255,.5)">Generating your weekly insight…</span>';
 
   const prompt = `You are an insightful life coach helping someone review their week as part of a personal operating system called The EDGEx. Based on their reflections below, write a concise, honest, and motivating weekly insight narrative (3–4 sentences). Be direct, specific to what they shared, and end with one clear forward-looking observation or question. Do not use bullet points or headers — write in flowing prose.
 
-Overall week score (1–10): ${score}
-Biggest win: ${wins || '(not provided)'}
-What held them back: ${challenges || '(not provided)'}
-Key learning: ${learning || '(not provided)'}
-Gratitude: ${gratitude || '(not provided)'}
-Energy peaks: ${energy || '(not provided)'}
-Other notes: ${other || '(not provided)'}`;
+Overall week score (1–10): ${draft.score}
+Biggest win: ${draft.wins || '(not provided)'}
+What held them back: ${draft.challenges || '(not provided)'}
+Key learning: ${draft.learning || '(not provided)'}
+Gratitude: ${draft.gratitude || '(not provided)'}
+Energy peaks: ${draft.energy || '(not provided)'}
+Other notes: ${draft.other || '(not provided)'}`;
 
   try {
     const res = await fetch(
@@ -691,12 +728,44 @@ Other notes: ${other || '(not provided)'}`;
     const json = await res.json();
     const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     if (!text) throw new Error('No content returned');
-    aiText.style.color = 'rgba(255,255,255,.88)';
-    aiText.style.fontStyle = 'normal';
-    aiText.textContent = text;
+    setInsightText(text);
   } catch (err) {
-    aiText.innerHTML = `<span style="color:#fca5a5">Could not generate insight: ${err.message}</span>`;
+    setInsightText(buildLocalInsight(draft));
+    showToast('Gemini was unavailable, so a local insight was drafted');
   }
+}
+
+function setInsightText(text) {
+  const aiText = document.getElementById('ai-text');
+  aiText.style.color = 'rgba(255,255,255,.88)';
+  aiText.style.fontStyle = 'normal';
+  aiText.textContent = text;
+}
+
+function getAiInsightText() {
+  const text = (document.getElementById('ai-text')?.textContent || '').trim();
+  if (!text || text.includes('Fill in your reflections') || text.includes('Generating your weekly insight') || text.includes('Could not generate insight')) return '';
+  return text;
+}
+
+function firstSentence(text) {
+  return String(text || '').trim().replace(/\s+/g, ' ').split(/(?<=[.!?])\s+/)[0] || '';
+}
+
+function buildLocalInsight(r) {
+  const tone = r.score >= 8 ? 'strong' : r.score >= 6 ? 'mixed but workable' : 'demanding';
+  const win = firstSentence(r.wins);
+  const challenge = firstSentence(r.challenges);
+  const learning = firstSentence(r.learning);
+  const energy = firstSentence(r.energy);
+  const gratitude = firstSentence(r.gratitude);
+  const parts = [`This was a ${tone} week, scoring ${r.score}/10.`];
+  if (win) parts.push(`The clearest win was ${win.charAt(0).toLowerCase() + win.slice(1)}`);
+  if (challenge) parts.push(`The main friction was ${challenge.charAt(0).toLowerCase() + challenge.slice(1)}`);
+  if (learning) parts.push(`The useful lesson is ${learning.charAt(0).toLowerCase() + learning.slice(1)}`);
+  if (energy || gratitude) parts.push(`Next week, protect the conditions that created ${energy || gratitude}.`);
+  else parts.push('Next week, choose one simple constraint that makes the right action easier to repeat.');
+  return parts.join(' ');
 }
 
 /* ===================== SAVE / LOAD REVIEW ===================== */
@@ -717,10 +786,52 @@ function collectReview() {
     priority_3: document.getElementById('p3').value.trim(),
     protect: document.getElementById('protect-text').value.trim(),
     let_go: document.getElementById('letgo-text').value.trim(),
-    ai_insight: document.getElementById('ai-text').textContent.trim(),
+    ai_insight: getAiInsightText(),
     created_at: new Date().toISOString(),
     user_id: getSbUserId()
   };
+}
+
+function getLocalReviews() {
+  try { return JSON.parse(localStorage.getItem(REVIEW_LOCAL_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function saveLocalReview(review) {
+  const stored = getLocalReviews();
+  const idx = stored.findIndex(r => r.week_id === review.week_id);
+  if (idx >= 0) stored[idx] = { ...stored[idx], ...review };
+  else stored.unshift(review);
+  localStorage.setItem(REVIEW_LOCAL_KEY, JSON.stringify(stored));
+}
+
+async function loadReviewsFromTraction() {
+  const userId = getSbUserId();
+  if (!userId) throw new Error('No Supabase user');
+  const rows = await sbFetch(`traction_data?user_id=eq.${encodeURIComponent(userId)}&key=eq.${encodeURIComponent(REVIEW_TRACTION_KEY)}&select=value,updated_at&limit=1`);
+  const value = rows?.[0]?.value;
+  return Array.isArray(value?.reviews) ? value.reviews : [];
+}
+
+async function saveReviewsToTraction(reviews) {
+  const userId = getSbUserId();
+  if (!userId) throw new Error('No Supabase user');
+  await sbFetch('rpc/upsert_traction_data', {
+    method: 'POST',
+    prefer: 'return=minimal',
+    body: JSON.stringify({
+      rows: [{
+        user_id: userId,
+        key: REVIEW_TRACTION_KEY,
+        value: { reviews },
+        updated_at: new Date().toISOString()
+      }]
+    })
+  });
+}
+
+async function upsertReviewToTraction(review) {
+  const reviews = mergeReviews([review], await loadReviewsFromTraction());
+  await saveReviewsToTraction(reviews);
 }
 
 async function saveReview() {
@@ -740,20 +851,23 @@ async function saveReview() {
     showToast('Review saved to Supabase');
     loadHistory();
   } catch (err) {
-    console.error('Save error:', err);
-    // Fallback: save to localStorage
-    const stored = JSON.parse(localStorage.getItem(REVIEW_LOCAL_KEY) || '[]');
-    const idx = stored.findIndex(r => r.week_id === review.week_id);
-    if (idx >= 0) stored[idx] = review; else stored.unshift(review);
-    localStorage.setItem(REVIEW_LOCAL_KEY, JSON.stringify(stored));
-    showToast('Saved locally (Supabase unavailable)');
-    loadHistory();
+    console.warn('weekly_reviews save unavailable, trying shared Supabase store:', err);
+    try {
+      await upsertReviewToTraction(review);
+      showToast('Review saved to Supabase');
+      loadHistory();
+    } catch (fallbackErr) {
+      console.error('Save error:', fallbackErr);
+      saveLocalReview(review);
+      showToast('Saved locally (Supabase unavailable)');
+      loadHistory();
+    }
   }
 }
 
 async function loadCurrentReview() {
   const weekId = getWeekId(new Date());
-  const stored = JSON.parse(localStorage.getItem(REVIEW_LOCAL_KEY) || '[]');
+  const stored = getLocalReviews();
   const localRow = stored.find(r => r.week_id === weekId);
   try {
     const rows = await sbFetch(`${TABLE}?user_id=eq.${encodeURIComponent(getSbUserId())}&week_id=eq.${weekId}&select=*&limit=1`);
@@ -763,7 +877,17 @@ async function loadCurrentReview() {
       syncLocalReviews();
     }
   } catch {
-    if (localRow) populateForm(localRow);
+    try {
+      const cloudRows = await loadReviewsFromTraction();
+      const cloudRow = cloudRows.find(r => r.week_id === weekId);
+      if (cloudRow) populateForm(cloudRow);
+      else if (localRow) {
+        populateForm(localRow);
+        syncLocalReviews(cloudRows);
+      }
+    } catch {
+      if (localRow) populateForm(localRow);
+    }
   }
 }
 
@@ -794,13 +918,19 @@ function populateForm(r) {
 async function loadHistory() {
   try {
     const rows = await sbFetch(`${TABLE}?user_id=eq.${encodeURIComponent(getSbUserId())}&select=*&order=week_id.desc&limit=200`);
-    const localRows = JSON.parse(localStorage.getItem(REVIEW_LOCAL_KEY) || '[]');
+    const localRows = getLocalReviews();
     const merged = mergeReviews(rows || [], localRows);
     renderHistoryRows(merged);
     syncLocalReviews(rows || []);
   } catch {
-    const stored = JSON.parse(localStorage.getItem(REVIEW_LOCAL_KEY) || '[]');
-    renderHistoryRows(stored);
+    try {
+      const cloudRows = await loadReviewsFromTraction();
+      const merged = mergeReviews(cloudRows, getLocalReviews());
+      renderHistoryRows(merged);
+      syncLocalReviews(cloudRows);
+    } catch {
+      renderHistoryRows(getLocalReviews());
+    }
   }
 }
 
@@ -815,7 +945,7 @@ function mergeReviews(cloudRows, localRows) {
 
 async function syncLocalReviews(cloudRows = []) {
   const cloudWeeks = new Set((cloudRows || []).map(r => r.week_id));
-  const stored = JSON.parse(localStorage.getItem(REVIEW_LOCAL_KEY) || '[]');
+  const stored = getLocalReviews();
   try {
     for (const row of stored.filter(r => r.week_id && !cloudWeeks.has(r.week_id))) {
       await sbFetch(`${TABLE}?on_conflict=user_id,week_id`, {
@@ -825,7 +955,12 @@ async function syncLocalReviews(cloudRows = []) {
       });
     }
   } catch(e) {
-    console.warn('Weekly review local recovery sync skipped:', e.message);
+    try {
+      const merged = mergeReviews(stored, await loadReviewsFromTraction());
+      await saveReviewsToTraction(merged);
+    } catch(fallbackErr) {
+      console.warn('Weekly review local recovery sync skipped:', e.message, fallbackErr.message);
+    }
   }
 }
 
