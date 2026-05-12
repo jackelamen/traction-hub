@@ -38,8 +38,13 @@ Deno.serve(async (req) => {
       throw new PublicError("Missing Notion properties.", 400);
     }
 
-    const isUpdate = Boolean(pageMapId);
-    const notionRes = await fetch(`https://api.notion.com/v1/${isUpdate ? `pages/${encodeURIComponent(pageMapId)}` : "pages"}`, {
+    const existingPageId = pageMapId || await findExistingPageIdByDate({
+      databaseId,
+      dateStr: firstString(body.dateStr),
+      notionToken,
+    });
+    const isUpdate = Boolean(existingPageId);
+    const notionRes = await fetch(`https://api.notion.com/v1/${isUpdate ? `pages/${encodeURIComponent(existingPageId)}` : "pages"}`, {
       method: isUpdate ? "PATCH" : "POST",
       headers: {
         Authorization: `Bearer ${notionToken}`,
@@ -59,7 +64,7 @@ Deno.serve(async (req) => {
       }, notionRes.status);
     }
 
-    return json({ pageId: data.id || pageMapId || null }, 200);
+    return json({ pageId: data.id || existingPageId || null }, 200);
   } catch (error) {
     if (error instanceof PublicError) {
       return json({ error: error.message }, error.status);
@@ -68,6 +73,31 @@ Deno.serve(async (req) => {
     return json({ error: "Could not sync with Notion." }, 500);
   }
 });
+
+async function findExistingPageIdByDate(args: { databaseId: string; dateStr: string; notionToken: string }) {
+  if (!args.databaseId || !args.dateStr) return "";
+  const res = await fetch(`https://api.notion.com/v1/databases/${encodeURIComponent(args.databaseId)}/query`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${args.notionToken}`,
+      "Content-Type": "application/json",
+      "Notion-Version": NOTION_VERSION,
+    },
+    body: JSON.stringify({
+      filter: {
+        property: "Date",
+        date: { equals: args.dateStr },
+      },
+      page_size: 1,
+    }),
+  });
+
+  const data = await parseJson(res);
+  if (!res.ok) {
+    throw new PublicError(data.message || "Could not query Notion database.", res.status);
+  }
+  return firstString(data.results?.[0]?.id);
+}
 
 function firstString(...values: unknown[]) {
   for (const value of values) {

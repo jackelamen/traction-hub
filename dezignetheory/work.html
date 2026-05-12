@@ -2217,6 +2217,15 @@
             </button>
           </div>
           <div style="border-top:1px solid rgba(0,0,0,0.06)">
+            <button onclick="backfillMissingNotionLogs();closeSettings()" class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-container transition-colors text-left">
+              <span class="material-symbols-outlined text-indigo-400 text-base">cloud_upload</span>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-on-surface">Repair Missing Notion Logs</p>
+                <p class="text-[11px] text-on-surface-variant/60">Backfill saved work days that are not linked yet</p>
+              </div>
+            </button>
+          </div>
+          <div style="border-top:1px solid rgba(0,0,0,0.06)">
             <a href="https://www.notion.so/27f990778487423a94395d4167e276e0" target="_blank"
               class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-container transition-colors text-left">
               <span class="material-symbols-outlined text-on-surface-variant text-base">menu_book</span>
@@ -8435,6 +8444,64 @@ async function syncToNotion(dateStr, _retryWithoutPageId = false) {
     showToast(`Notion sync failed: ${msg}`);
     return { ok: false, error: err.message };
   }
+}
+
+function hasNotionSyncableWorkLog(dateStr) {
+  const log = logs[dateStr] || {};
+  const sessions = sessionLog[dateStr] || [];
+  const ledger = ledgerEntries[dateStr] || [];
+  return sessions.length > 0
+    || ledger.length > 0
+    || Object.values(log).some(value => {
+      if (Array.isArray(value)) return value.length > 0;
+      return value !== null && value !== undefined && value !== '' && value !== false && value !== 0;
+    });
+}
+
+function getNotionBackfillDates() {
+  const pageMap = getNotionPageMap();
+  const dateKeys = new Set([
+    ...Object.keys(logs || {}),
+    ...Object.keys(sessionLog || {}),
+    ...Object.keys(ledgerEntries || {}),
+  ]);
+  return [...dateKeys]
+    .filter(dateStr => /^\d{4}-\d{2}-\d{2}$/.test(dateStr))
+    .filter(dateStr => !pageMap[dateStr])
+    .filter(hasNotionSyncableWorkLog)
+    .sort();
+}
+
+async function backfillMissingNotionLogs() {
+  const dates = getNotionBackfillDates();
+  if (!dates.length) {
+    showToast('No missing Notion logs found.');
+    return { ok: true, synced: 0, failed: 0 };
+  }
+
+  showToast(`Repairing ${dates.length} missing Notion log${dates.length === 1 ? '' : 's'}...`);
+  let synced = 0;
+  let failed = 0;
+
+  for (const dateStr of dates) {
+    updateNotionSyncBadge('syncing', `${synced + 1}/${dates.length}`);
+    const result = await syncToNotion(dateStr, true);
+    if (result.ok) synced += 1;
+    else failed += 1;
+    await new Promise(resolve => setTimeout(resolve, 350));
+  }
+
+  if (failed) {
+    const msg = `${synced} synced, ${failed} failed`;
+    updateNotionSyncBadge('error', msg);
+    showToast(`Notion repair finished: ${msg}`);
+    return { ok: false, synced, failed };
+  }
+
+  updateNotionSyncBadge('success');
+  showToast(`Notion repair complete: ${synced} log${synced === 1 ? '' : 's'} synced.`);
+  setTimeout(() => updateNotionSyncBadge('idle'), 4000);
+  return { ok: true, synced, failed };
 }
 
 // ═══════════════════════════════════════════════════════════════
