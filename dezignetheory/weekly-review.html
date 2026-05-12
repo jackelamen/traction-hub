@@ -823,9 +823,14 @@ function saveWin() {
 }
 
 function deleteWin(id) {
-  saveWins(getWins().filter(w => String(w.id) !== String(id)));
+  const wins = getWins();
+  const win = wins.find(w => String(w.id) === String(id));
+  const label = win?.title ? `"${win.title}"` : 'this win';
+  if (!confirm(`Delete ${label} from the Win Wall?`)) return;
+  saveWins(wins.filter(w => String(w.id) !== String(id)));
   renderWinWall();
   buildModuleCards();
+  showToast('Win deleted');
 }
 
 const WIN_STYLE = {
