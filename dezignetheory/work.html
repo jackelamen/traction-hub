@@ -950,6 +950,11 @@
                 <span class="material-symbols-outlined text-base">pin</span>
                 Set Base
               </button>
+              <button onclick="resetStepBase()"
+                class="bg-surface-container hover:bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors border border-outline-variant/20">
+                <span class="material-symbols-outlined text-base">restart_alt</span>
+                Reset Base
+              </button>
               <button onclick="logWalk()"
                 class="btn-secondary px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
                 <span class="material-symbols-outlined text-base">directions_walk</span>
@@ -2618,6 +2623,11 @@
           class="flex-1 bg-emerald-500 hover:bg-[#16a34a] text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
           <span class="material-symbols-outlined text-base">save</span>
           Save Base
+        </button>
+        <button onclick="resetStepBase()"
+          class="bg-surface-container hover:bg-surface-container-high text-on-surface-variant px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
+          <span class="material-symbols-outlined text-base">restart_alt</span>
+          Reset
         </button>
         <button onclick="closeStepBaseModal()"
           class="bg-surface-container hover:bg-surface-container-high text-on-surface-variant px-5 py-3 rounded-xl font-bold text-sm transition-colors">
@@ -4489,10 +4499,39 @@ function saveStepBase() {
   baseSteps    = val;
   // Only update currentSteps if no walks logged yet (avoid going backwards)
   if (currentSteps === 0) currentSteps = val;
-  saveStepState();
-  updateStepUI();
+  persistStepBaseChange();
   closeStepBaseModal();
   showToast(`Base step count set to ${val.toLocaleString()}. Start walking!`);
+}
+
+function persistStepBaseChange() {
+  const today = todayStr();
+  const stepsForNet = currentSteps || getStepsForDate(today) || 0;
+  if (logs[today]) {
+    logs[today].stepBase = baseSteps;
+    logs[today].netSteps = Math.max(0, (logs[today].steps || stepsForNet) - baseSteps);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+  }
+  try {
+    const stepsOnlyKey = STORAGE_KEY.startsWith('dt_') ? 'dt_30day-steps-only-v1' : '30day-steps-only-v1';
+    const stepsOnly = JSON.parse(localStorage.getItem(stepsOnlyKey) || '{}');
+    if (stepsOnly[today]) {
+      stepsOnly[today].stepBase = baseSteps;
+      stepsOnly[today].netSteps = Math.max(0, (stepsOnly[today].steps || stepsForNet) - baseSteps);
+      localStorage.setItem(stepsOnlyKey, JSON.stringify(stepsOnly));
+    }
+  } catch {}
+  saveStepState();
+  updateStepUI();
+  renderAll();
+}
+
+function resetStepBase() {
+  if (baseSteps > 0 && !confirm("Reset today's base step count to 0?")) return;
+  baseSteps = 0;
+  persistStepBaseChange();
+  closeStepBaseModal();
+  showToast('Base step count reset to 0.');
 }
 
 // ── Walk Step Modal ──────────────────────────────────────────────
