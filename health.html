@@ -260,6 +260,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .wt-type-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;border-radius:12px;border:1.5px solid var(--border);background:#f9fafb;cursor:pointer;font-size:11px;font-weight:800;color:#374151;transition:all .15s}
 .wt-type-btn:hover,.wt-type-btn.selected{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
 .wt-type-btn .em{font-size:22px;line-height:1}
+.exercise-picker{display:grid;grid-template-columns:1fr 1.35fr auto;gap:8px;align-items:center;margin-bottom:10px}
+.exercise-picker select{font-size:13px;padding:8px 10px}
+.timer-edit{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px;font-weight:800;color:var(--text-3)}
+.timer-edit input{width:66px;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:6px 7px;font-size:13px;font-weight:800;text-align:center;color:var(--text);font-family:inherit}
 /* Log session view */
 .session-header{background:linear-gradient(135deg,#0f172a,#0c4a6e);border-radius:16px;padding:20px;color:#fff;margin-bottom:18px}
 .session-header h2{font-size:22px;font-weight:800;letter-spacing:-.02em}
@@ -321,6 +325,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
   .plan-slot .wt-name{font-size:10px}
   .plan-slot .add-hint{font-size:9px}
   .wt-type-grid{grid-template-columns:repeat(3,1fr)}
+  .exercise-picker{grid-template-columns:1fr}
   .sets-grid,.set-row{grid-template-columns:22px 1fr 1fr 1fr 32px}
   .session-header h2{font-size:18px}
   .wk-heatmap{grid-template-columns:repeat(13,1fr)}
@@ -788,6 +793,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
       <!-- Exercise template -->
       <div id="wk-template-section">
         <div class="form-section-label" style="margin-top:12px">Quick template</div>
+        <div class="exercise-picker">
+          <select id="wk-template-bodypart" onchange="wkRenderExercisePicker('template')"></select>
+          <select id="wk-template-exercise"></select>
+          <button class="btn btn-secondary btn-sm" onclick="wkAddExerciseFromDB('template')"><span class="icon" style="font-size:15px">library_add</span>Add</button>
+        </div>
         <div id="wk-template-exercises" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
         <button class="btn btn-secondary btn-sm" onclick="wkAddTemplateExercise()"><span class="icon" style="font-size:15px">add</span>Add Exercise</button>
       </div>
@@ -836,11 +846,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
         <div>
           <div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:2px">Elapsed</div>
           <div class="timer-display" id="wk-timer-display">0:00</div>
+          <label class="timer-edit">Length <input id="wk-duration-mins" type="number" min="0" step="1" value="0" oninput="wkSetDurationMinutes(this.value)"/> min</label>
         </div>
         <div class="timer-btns">
           <button class="timer-btn start" id="wk-timer-start" onclick="wkTimerToggle()">Start</button>
           <button class="timer-btn reset" onclick="wkTimerReset()">Reset</button>
         </div>
+      </div>
+
+      <div class="exercise-picker">
+        <select id="wk-session-bodypart" onchange="wkRenderExercisePicker('session')"></select>
+        <select id="wk-session-exercise"></select>
+        <button class="btn btn-secondary btn-sm" onclick="wkAddExerciseFromDB('session')"><span class="icon" style="font-size:15px">library_add</span>Add</button>
       </div>
 
       <!-- Exercise list -->
@@ -2374,6 +2391,19 @@ const WK_TEMPLATES = {
   Other:    ['Exercise 1', 'Exercise 2'],
 };
 
+const WK_EXERCISE_DB = {
+  Chest: ['Barbell Bench Press', 'Dumbbell Bench Press', 'Incline Dumbbell Press', 'Push-Up', 'Chest Fly', 'Cable Crossover', 'Dips'],
+  Back: ['Deadlift', 'Pull-Up', 'Lat Pulldown', 'Barbell Row', 'Seated Cable Row', 'Single-Arm Dumbbell Row', 'Face Pull'],
+  Shoulders: ['Overhead Press', 'Dumbbell Shoulder Press', 'Lateral Raise', 'Rear Delt Fly', 'Arnold Press', 'Upright Row', 'Farmer Carry'],
+  Legs: ['Back Squat', 'Front Squat', 'Leg Press', 'Walking Lunge', 'Romanian Deadlift', 'Leg Curl', 'Leg Extension', 'Calf Raise'],
+  Glutes: ['Hip Thrust', 'Glute Bridge', 'Bulgarian Split Squat', 'Cable Kickback', 'Step-Up', 'Kettlebell Swing'],
+  Arms: ['Barbell Curl', 'Dumbbell Curl', 'Hammer Curl', 'Triceps Pushdown', 'Skull Crusher', 'Close-Grip Bench Press', 'Overhead Triceps Extension'],
+  Core: ['Plank', 'Side Plank', 'Dead Bug', 'Hanging Knee Raise', 'Cable Crunch', 'Pallof Press', 'Russian Twist'],
+  Cardio: ['Run', 'Bike', 'Rowing Machine', 'Elliptical', 'Jump Rope', 'Stair Climber', 'Swimming'],
+  Mobility: ['Hip Flexor Stretch', 'Thoracic Rotation', 'Ankle Mobility', 'Cat-Cow', 'Worlds Greatest Stretch', 'Childs Pose', 'Hamstring Stretch'],
+  FullBody: ['Burpee', 'Turkish Get-Up', 'Clean and Press', 'Sled Push', 'Battle Ropes', 'Medicine Ball Slam', 'Bear Crawl']
+};
+
 const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const DAY_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
@@ -2567,6 +2597,7 @@ function wkOpenDayModal(dateStr) {
 
   // Exercises
   wkTemplateExercises = plan.exercises ? plan.exercises.map(e => ({...e})) : [];
+  wkRenderExercisePicker('template');
   wkRenderTemplateExercises();
   wkPopulateCopySource();
 
@@ -2594,6 +2625,45 @@ function wkSelectType(typeId) {
     wkTemplateExercises = (WK_TEMPLATES[typeId] || []).map(name => ({ name, sets: 3, reps: '8-12', weight: '' }));
   }
   wkRenderTemplateExercises();
+}
+
+function wkExerciseBodyparts() {
+  return Object.keys(WK_EXERCISE_DB);
+}
+
+function wkRenderExercisePicker(scope) {
+  const bodypartEl = document.getElementById(scope === 'session' ? 'wk-session-bodypart' : 'wk-template-bodypart');
+  const exerciseEl = document.getElementById(scope === 'session' ? 'wk-session-exercise' : 'wk-template-exercise');
+  if (!bodypartEl || !exerciseEl) return;
+  const bodyparts = wkExerciseBodyparts();
+  if (!bodypartEl.options.length) {
+    bodypartEl.innerHTML = bodyparts.map(part => `<option value="${escapeHTML(part)}">${escapeHTML(wkBodypartLabel(part))}</option>`).join('');
+  }
+  const selected = bodypartEl.value || bodyparts[0];
+  exerciseEl.innerHTML = (WK_EXERCISE_DB[selected] || []).map(name => `<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`).join('');
+}
+
+function wkBodypartLabel(part) {
+  return part === 'FullBody' ? 'Full Body' : part;
+}
+
+function wkAddExerciseFromDB(scope) {
+  const exerciseEl = document.getElementById(scope === 'session' ? 'wk-session-exercise' : 'wk-template-exercise');
+  const name = exerciseEl?.value;
+  if (!name) return;
+  if (scope === 'session') {
+    if (!wkActiveSession) return;
+    wkActiveSession.exercises.push({ name, sets: [{reps:'10',weight:'',done:false},{reps:'10',weight:'',done:false},{reps:'10',weight:'',done:false}] });
+    wkRenderSessionExercises();
+    setTimeout(() => {
+      const cards = document.querySelectorAll('.ex-card');
+      const last = cards[cards.length - 1];
+      if (last) { last.classList.add('open'); last.scrollIntoView({behavior:'smooth', block:'center'}); }
+    }, 100);
+  } else {
+    wkTemplateExercises.push({ name, sets: 3, reps: '8-12', weight: '' });
+    wkRenderTemplateExercises();
+  }
 }
 
 function wkRenderTemplateExercises() {
@@ -2694,6 +2764,7 @@ function wkStartSession(dateStr) {
   if (subEl) subEl.textContent = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
 
   wkRenderSessionExercises();
+  wkRenderExercisePicker('session');
   wkRenderSessionGoalLinks();
 
   document.getElementById('wk-session-modal').classList.add('open');
@@ -2835,9 +2906,18 @@ function wkTimerReset() {
 
 function wkUpdateTimerDisplay() {
   const el = document.getElementById('wk-timer-display');
-  if (!el) return;
+  const input = document.getElementById('wk-duration-mins');
   const m = Math.floor(wkTimerSec / 60), s = wkTimerSec % 60;
-  el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  if (el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  if (input && document.activeElement !== input) input.value = String(Math.round(wkTimerSec / 60));
+}
+
+function wkSetDurationMinutes(value) {
+  const mins = Math.max(0, parseInt(value, 10) || 0);
+  wkTimerSec = mins * 60;
+  if (wkActiveSession) wkActiveSession.durationSec = wkTimerSec;
+  const el = document.getElementById('wk-timer-display');
+  if (el) el.textContent = `${mins}:00`;
 }
 
 // ── Finish session ───────────────────────────────────────────────
@@ -2850,19 +2930,23 @@ function wkFinishSession() {
   wkActiveSession.exercises = wkActiveSession.exercises.filter(e => e.name.trim());
 
   // Remove any prior session on same date with same id (replace)
+  const priorSession = wkSessions.find(s => s.id === wkActiveSession.id);
   wkSessions = wkSessions.filter(s => s.id !== wkActiveSession.id);
   wkSessions.unshift(wkActiveSession);
   wkSave();
 
-  // Also write exercise minutes to the health log if we have duration
-  if (wkTimerSec > 0) {
+  // Keep daily exercise minutes in sync when a session is created or edited.
+  const previousMins = priorSession?.durationSec ? Math.round(priorSession.durationSec / 60) : 0;
+  const currentMinsForSession = wkTimerSec ? Math.round(wkTimerSec / 60) : 0;
+  const minutesDelta = currentMinsForSession - previousMins;
+  if (minutesDelta !== 0) {
     const existingLog = db.logs[wkActiveSession.date] || {};
-    const addedMins = Math.round(wkTimerSec / 60);
     const currentMins = parseInt(existingLog.exerciseMins || 0);
+    const exerciseTypes = normalizeExerciseTypes(existingLog.exerciseTypes || existingLog.exerciseType);
     db.logs[wkActiveSession.date] = {
       ...existingLog,
-      exerciseMins: currentMins + addedMins,
-      exerciseTypes: [...new Set([...(existingLog.exerciseTypes || []), wkActiveSession.type])]
+      exerciseMins: Math.max(0, currentMins + minutesDelta),
+      exerciseTypes: [...new Set([...exerciseTypes, wkActiveSession.type])]
     };
     saveData();
   }
@@ -3031,6 +3115,7 @@ function wkEditSession(sessionId) {
   if (notesEl) notesEl.value = s.notes || '';
 
   wkRenderSessionExercises();
+  wkRenderExercisePicker('session');
   wkRenderSessionGoalLinks();
   document.getElementById('wk-session-modal').classList.add('open');
 }
