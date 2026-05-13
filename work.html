@@ -8701,6 +8701,20 @@ function openDayDetail(dateStr) {
       </button>` : ''}
     </div>
 
+    <!-- Date Correction -->
+    <div class="flex flex-wrap items-end gap-2 rounded-xl bg-surface-container px-3 py-3 border border-outline-variant/20">
+      <label class="flex-1 min-w-[180px]">
+        <span class="block text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Applies To</span>
+        <input id="day-detail-date-input" type="date" value="${dateStr}"
+          class="w-full bg-surface-container-lowest rounded-lg border border-outline-variant/20 px-3 py-2 text-sm text-on-surface focus:ring-2 focus:ring-accent/30 focus:border-accent/40 transition-all"/>
+      </label>
+      <button onclick="moveDetailLogDate()"
+        class="px-3 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-bold flex items-center gap-1.5 transition-colors">
+        <span class="material-symbols-outlined text-sm">event_repeat</span>
+        Move Log
+      </button>
+    </div>
+
     <!-- Pillars -->
     <div class="grid grid-cols-2 gap-3">
       <div class="bg-surface-container rounded-xl p-3 space-y-2">
@@ -8801,6 +8815,105 @@ function openDayDetail(dateStr) {
 function closeDayDetail() {
   document.getElementById('day-detail-backdrop').classList.remove('open');
   detailDate = null;
+}
+
+function mergeDatedArrayStore(store, fromDate, toDate) {
+  const source = Array.isArray(store[fromDate]) ? store[fromDate] : [];
+  if (!source.length) return false;
+  const target = Array.isArray(store[toDate]) ? store[toDate] : [];
+  store[toDate] = [...target, ...source];
+  delete store[fromDate];
+  return true;
+}
+
+function mergeDatedObjectStore(store, fromDate, toDate) {
+  const source = store[fromDate];
+  if (!source || typeof source !== 'object' || Array.isArray(source)) return false;
+  const target = (store[toDate] && typeof store[toDate] === 'object' && !Array.isArray(store[toDate])) ? store[toDate] : {};
+  store[toDate] = { ...target, ...source };
+  delete store[fromDate];
+  return true;
+}
+
+function moveWorkLogDate(fromDate, toDate) {
+  if (!fromDate || !toDate || fromDate === toDate) return { moved: false };
+  const targetHasData = hasNotionSyncableWorkLog(toDate)
+    || (distractLog[toDate] || []).length
+    || !!dayTypes[toDate]
+    || !!getDailySignals()[toDate]
+    || !!tbGetDay(toDate);
+  if (targetHasData && !confirm(`${fmtShort(toDate)} already has saved work data. Merge ${fmtShort(fromDate)} into it?`)) {
+    return { moved: false };
+  }
+
+  let changed = false;
+  changed = mergeDatedObjectStore(logs, fromDate, toDate) || changed;
+  changed = mergeDatedArrayStore(sessionLog, fromDate, toDate) || changed;
+  changed = mergeDatedArrayStore(ledgerEntries, fromDate, toDate) || changed;
+  changed = mergeDatedArrayStore(distractLog, fromDate, toDate) || changed;
+
+  if (dayTypes[fromDate]) {
+    dayTypes[toDate] = dayTypes[toDate] || dayTypes[fromDate];
+    delete dayTypes[fromDate];
+    changed = true;
+  }
+
+  const signals = getDailySignals();
+  if (signals[fromDate]) {
+    signals[toDate] = { ...(signals[toDate] || {}), ...signals[fromDate], updatedAt: new Date().toISOString() };
+    delete signals[fromDate];
+    localStorage.setItem(DAILY_SIGNALS_KEY, JSON.stringify(signals));
+    changed = true;
+  }
+
+  if (tbGetDay(fromDate)) {
+    const fromBlocks = tbGetDay(fromDate) || [];
+    const toBlocks = tbGetDay(toDate) || [];
+    tbBlocks[toDate] = [...toBlocks, ...fromBlocks];
+    delete tbBlocks[fromDate];
+    localStorage.setItem(TB_KEY, JSON.stringify(tbBlocks));
+    changed = true;
+  }
+
+  const notionMap = getNotionPageMap();
+  if (notionMap[fromDate]) {
+    if (!notionMap[toDate]) notionMap[toDate] = notionMap[fromDate];
+    delete notionMap[fromDate];
+    localStorage.setItem(NOTION_PAGE_MAP_KEY, JSON.stringify(notionMap));
+    changed = true;
+  }
+
+  if (!changed) return { moved: false };
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionLog));
+  localStorage.setItem(LEDGER_KEY, JSON.stringify(ledgerEntries));
+  localStorage.setItem(DISTRACT_KEY, JSON.stringify(distractLog));
+  saveDayTypes();
+  pushAllToSupabase();
+  renderAll();
+  return { moved: true };
+}
+
+async function moveDetailLogDate() {
+  if (!detailDate) return;
+  const input = document.getElementById('day-detail-date-input');
+  const targetDate = input?.value;
+  if (!targetDate || !/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+    showToast('Choose a valid date.');
+    return;
+  }
+  const sourceDate = detailDate;
+  const result = moveWorkLogDate(sourceDate, targetDate);
+  if (!result.moved) {
+    showToast('No date change made.');
+    return;
+  }
+
+  showToast(`Moved work log to ${fmtShort(targetDate)}.`);
+  detailDate = targetDate;
+  openDayDetail(targetDate);
+  if (getNotionToken()) syncToNotion(targetDate);
 }
 
 async function syncDayDetail() {
