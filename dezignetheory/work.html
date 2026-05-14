@@ -3684,11 +3684,11 @@ async function syncFromSupabase() {
     const localTs = _getLsTimestamps();
     rows.forEach(({ key, value, updated_at }) => {
       if (NO_SYNC_KEYS.has(key)) return;
-      // Never overwrite a key that was written locally more recently than the cloud copy
+      // Never overwrite a key that was written locally at the same time or more recently than the cloud copy
       const cloudMs = updated_at ? new Date(updated_at).getTime() : 0;
       const localMs = localTs[key] || 0;
-      if (localMs > cloudMs) {
-        console.log(`[Supabase] keeping local ${key} (local ${localMs} > cloud ${cloudMs})`);
+      if (localMs >= cloudMs) {
+        console.log(`[Supabase] keeping local ${key} (local ${localMs} >= cloud ${cloudMs})`);
         return;
       }
       _setSyncedLsValue(key, value, cloudMs); // bypass patched setItem to avoid re-uploading
