@@ -9063,6 +9063,7 @@ function showPage(page) {
 // ═══════════════════════════════════════════════════════════════
 const TB_KEY = '30day-blocks-v1';
 const PULSE_TB_KEY = 'edgex_pulse_timeblocks_v1';
+const PULSE_TB_SYNC_KEY = 'edgex_pulse_timeblock_schedule_sync_v1';
 let tbBlocks = [];      // [{ id, name, color, start, dur, tasks:[], collapsed }]
 let tbSectionOpen = true;
 let tbAsanaPaletteOpen = true;
@@ -9095,6 +9096,7 @@ function tbSaveDay(date, blocks) {
   if (!tbBlocks || Array.isArray(tbBlocks)) tbBlocks = {};
   tbBlocks[date] = blocks;
   localStorage.setItem(TB_KEY, JSON.stringify(tbBlocks));
+  tbSyncPulseScheduleChanges(date, blocks);
   pushAllToSupabase();
 }
 
@@ -9186,6 +9188,118 @@ function tbPulseDateBounds(dateStr) {
   const start = new Date(dateStr + 'T00:00:00');
   const end = new Date(dateStr + 'T23:59:59.999');
   return { startISO: start.toISOString(), endISO: end.toISOString() };
+}
+
+function tbMinutesFromTime(time) {
+  const [hours, minutes] = String(time || '09:00').split(':').map(Number);
+  return (Number.isFinite(hours) ? hours : 9) * 60 + (Number.isFinite(minutes) ? minutes : 0);
+}
+
+function tbIsoFromDateMinutes(dateStr, minutes) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setMinutes(minutes);
+  return d.toISOString();
+}
+
+function tbPulseScheduleMap(date, blocks) {
+  const map = new Map();
+  (blocks || []).forEach(block => {
+    let offset = 0;
+    (block.tasks || []).forEach(task => {
+      const pulseId = tbPulseIdFromTask(task);
+      const dur = Number(task.dur) > 0 ? Number(task.dur) : 30;
+      if (pulseId) {
+        map.set(pulseId, {
+          start_at: tbIsoFromDateMinutes(date, tbMinutesFromTime(block.start) + offset),
+          duration_minutes: dur,
+          all_day: false,
+        });
+      }
+      offset += dur;
+    });
+  });
+  return map;
+}
+
+function tbPulseScheduleChanged(a, b) {
+  if (!a || !b) return true;
+  return a.start_at !== b.start_at ||
+    Number(a.duration_minutes || 0) !== Number(b.duration_minutes || 0) ||
+    Boolean(a.all_day) !== Boolean(b.all_day);
+}
+
+function tbStoredPulseScheduleMap(date) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PULSE_TB_SYNC_KEY) || '{}');
+    return new Map(Object.entries(raw?.[date] || {}));
+  } catch {
+    return new Map();
+  }
+}
+
+function tbRememberPulseScheduleMap(date, map) {
+  let raw = {};
+  try {
+    raw = JSON.parse(localStorage.getItem(PULSE_TB_SYNC_KEY) || '{}') || {};
+  } catch {
+    raw = {};
+  }
+  raw[date] = Object.fromEntries(map.entries());
+  localStorage.setItem(PULSE_TB_SYNC_KEY, JSON.stringify(raw));
+}
+
+async function tbPatchPulseTask(pulseId, patch) {
+  const token = typeof getSbToken === 'function' ? getSbToken() : null;
+  if (!token) throw new Error('Pulse auth token missing.');
+  const res = await fetch(`${SB_URL}/rest/v1/tasks?id=eq.${encodeURIComponent(pulseId)}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SB_ANON,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+function tbSyncPulseScheduleChanges(date, nextBlocks) {
+  const previous = tbStoredPulseScheduleMap(date);
+  const next = tbPulseScheduleMap(date, nextBlocks);
+  const updates = [];
+
+  next.forEach((patch, pulseId) => {
+    if (tbPulseScheduleChanged(previous.get(pulseId), patch)) {
+      updates.push({ pulseId, patch });
+    }
+  });
+
+  previous.forEach((_patch, pulseId) => {
+    if (!next.has(pulseId)) {
+      updates.push({
+        pulseId,
+        patch: { start_at: null, duration_minutes: null, all_day: false },
+      });
+    }
+  });
+
+  if (!updates.length) return;
+
+  Promise.allSettled(updates.map(({ pulseId, patch }) => tbPatchPulseTask(pulseId, patch)))
+    .then(results => {
+      const failed = results.filter(result => result.status === 'rejected');
+      _tbPulseTasksDate = null;
+      _tbPulseLastStatus = failed.length
+        ? { tone: 'error', text: `Pulse schedule sync failed · ${failed.length}/${updates.length}` }
+        : { tone: 'ok', text: `Pulse synced · ${updates.length} schedule update${updates.length === 1 ? '' : 's'}` };
+      if (!failed.length) tbRememberPulseScheduleMap(date, next);
+      renderTBPulseStatus();
+      if (failed.length) {
+        console.warn('[Pulse] schedule sync failed:', failed);
+        showToast('Some Pulse task schedules were not updated.');
+      }
+    });
 }
 
 async function tbRefreshPulseTasksForActiveDate() {
