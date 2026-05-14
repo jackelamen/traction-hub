@@ -9045,7 +9045,7 @@ function tbPulseTasksForActiveDate() {
     if (t && t.id && !byId.has(t.id)) byId.set(t.id, t);
   });
   return [...byId.values()]
-    .filter(t => t && t.id && t.title)
+    .filter(t => t && t.id && t.title && !t.completed_at)
     .map(t => ({
       gid: `pulse:${t.id}`,
       name: t.title,
@@ -9056,6 +9056,31 @@ function tbPulseTasksForActiveDate() {
       source: 'pulse',
       tags: Array.isArray(t.tags) ? t.tags : [],
     }));
+}
+
+function tbPulseIdFromTask(task) {
+  return task && typeof task.gid === 'string' && task.gid.startsWith('pulse:')
+    ? task.gid.slice(6)
+    : null;
+}
+
+function tbSyncExistingPulseTaskStates(date) {
+  if (_tbPulseTasksDate !== date || !_tbPulseTasksRemote.length) return;
+  const pulseDone = new Set(_tbPulseTasksRemote.filter(t => t.completed_at).map(t => t.id));
+  if (!pulseDone.size) return;
+
+  const blocks = tbGetDay(date) || [];
+  let changed = false;
+  blocks.forEach(block => {
+    (block.tasks || []).forEach(task => {
+      const pulseId = tbPulseIdFromTask(task);
+      if (pulseId && pulseDone.has(pulseId) && !task.done) {
+        task.done = true;
+        changed = true;
+      }
+    });
+  });
+  if (changed) tbSaveDay(date, blocks);
 }
 
 function tbPulseDateBounds(dateStr) {
@@ -9076,7 +9101,6 @@ async function tbRefreshPulseTasksForActiveDate() {
       select: 'id,title,start_at,duration_minutes,priority,tags,list_id,completed_at',
       deleted_at: 'is.null',
       parent_task_id: 'is.null',
-      completed_at: 'is.null',
       start_at: `gte.${startISO}`,
       or: '(status.is.null,status.neq.cancelled)',
       order: 'start_at.asc',
@@ -9088,11 +9112,13 @@ async function tbRefreshPulseTasksForActiveDate() {
     if (!res.ok) throw new Error(await res.text());
     _tbPulseTasksRemote = (await res.json()) || [];
     _tbPulseTasksDate = date;
+    tbSyncExistingPulseTaskStates(date);
+    const openPulseCount = _tbPulseTasksRemote.filter(t => !t.completed_at).length;
     const localCount = tbPulseBridgePayload()?.date === date ? (tbPulseBridgePayload()?.tasks || []).length : 0;
     _tbPulseLastStatus = {
-      tone: _tbPulseTasksRemote.length || localCount ? 'ok' : 'empty',
-      text: _tbPulseTasksRemote.length
-        ? `Pulse connected · ${_tbPulseTasksRemote.length} timed task${_tbPulseTasksRemote.length === 1 ? '' : 's'}`
+      tone: openPulseCount || localCount ? 'ok' : 'empty',
+      text: openPulseCount
+        ? `Pulse connected · ${openPulseCount} timed task${openPulseCount === 1 ? '' : 's'}`
         : localCount
           ? `Pulse local bridge · ${localCount} timed task${localCount === 1 ? '' : 's'}`
           : 'Pulse connected · no timed tasks found for this day'
@@ -9561,9 +9587,55 @@ function tbToggleTaskDone(blockId, taskId) {
   const block  = blocks.find(b => b.id === blockId);
   if (!block) return;
   const task = (block.tasks || []).find(t => t.id === taskId);
-  if (task) task.done = !task.done;
+  if (task) {
+    task.done = !task.done;
+    tbSyncPulseTaskDone(task, task.done, () => {
+      task.done = !task.done;
+      tbSaveDay(date, blocks);
+      renderTimeBlocks();
+    });
+  }
   tbSaveDay(date, blocks);
   renderTimeBlocks();
+}
+
+async function tbSyncPulseTaskDone(task, done, onFailure) {
+  const pulseId = tbPulseIdFromTask(task);
+  if (!pulseId) return;
+
+  const patch = done
+    ? { completed_at: new Date().toISOString(), status: 'done' }
+    : { completed_at: null, status: 'todo' };
+
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/tasks?id=eq.${encodeURIComponent(pulseId)}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SB_ANON,
+        'Authorization': `Bearer ${getSbToken()}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+      },
+      body: JSON.stringify(patch),
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    _tbPulseTasksDate = null;
+    _tbPulseLastStatus = {
+      tone: 'ok',
+      text: done ? 'Pulse synced · task completed' : 'Pulse synced · task reopened'
+    };
+    renderTBPulseStatus();
+  } catch(e) {
+    console.warn('[Pulse] completion sync failed:', e);
+    _tbPulseLastStatus = {
+      tone: 'error',
+      text: `Pulse sync failed · ${String(e.message || e).slice(0, 72)}`
+    };
+    renderTBPulseStatus();
+    if (typeof onFailure === 'function') onFailure();
+    showToast('Pulse sync failed. Task was not updated in Pulse.');
+  }
 }
 
 function tbToggleTaskPriority(blockId, taskId) {
