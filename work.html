@@ -1442,14 +1442,14 @@
       </div>
     </div>
 
-    <!-- Right panel: Asana tasks -->
+    <!-- Right panel: schedulable tasks -->
     <div class="w-72 flex-shrink-0 flex flex-col overflow-hidden" style="background:#fff;border-left:1px solid #f0f0f5">
       <div class="px-4 py-4 flex-shrink-0" style="border-bottom:1px solid #f0f0f5">
         <div class="flex items-center gap-2 mb-3">
           <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#fef2ee">
             <svg width="14" height="14" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="8" r="7" fill="#F06A4D"/><circle cx="7" cy="23" r="7" fill="#F06A4D"/><circle cx="25" cy="23" r="7" fill="#F06A4D"/></svg>
           </div>
-          <span class="text-sm font-bold text-on-surface">Asana Tasks</span>
+          <span class="text-sm font-bold text-on-surface">Tasks</span>
           <button onclick="refreshAsanaTasks()" id="tb-asana-refresh-btn" title="Refresh from Asana"
             class="ml-auto flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold transition-colors"
             style="background:#fef2ee;color:#F06A4D;border:1px solid #fcd9ce">
@@ -9059,6 +9059,7 @@ function showPage(page) {
 // TIME BLOCKING FULL PAGE
 // ═══════════════════════════════════════════════════════════════
 const TB_KEY = '30day-blocks-v1';
+const PULSE_TB_KEY = 'edgex_pulse_timeblocks_v1';
 let tbBlocks = [];      // [{ id, name, color, start, dur, tasks:[], collapsed }]
 let tbSectionOpen = true;
 let tbAsanaPaletteOpen = true;
@@ -9067,6 +9068,9 @@ let tbEditingBlockTaskBlockId = null;  // block receiving a new task
 let tbSelectedBTTask = null;    // { gid|null, name } chosen in task modal
 let tbDragTaskGid  = null;      // gid or '__custom__' being dragged from palette
 let tbDragTaskName = null;
+let _tbPulseTasksRemote = [];
+let _tbPulseTasksDate = null;
+let _tbPulseFetchInFlight = false;
 
 function tbLoad() {
   try {
@@ -9111,6 +9115,88 @@ function tbActiveDate() {
   const allowed = [todayStr(), tomorrowStr()];
   if (!allowed.includes(_tbSelectedDate)) _tbSelectedDate = todayStr();
   return _tbSelectedDate;
+}
+
+function tbPulseBridgePayload() {
+  try {
+    const payload = JSON.parse(localStorage.getItem(PULSE_TB_KEY) || 'null');
+    return payload && payload.version === 1 ? payload : null;
+  } catch {
+    return null;
+  }
+}
+
+function tbIsPulsePriority(value) {
+  if (typeof value === 'number') return value >= 2;
+  return ['high', 'urgent', 'p1'].includes(String(value || '').toLowerCase());
+}
+
+function tbPulseTasksForActiveDate() {
+  const payload = tbPulseBridgePayload();
+  const payloadTasks = payload && payload.date === tbActiveDate() ? (payload.tasks || []) : [];
+  const remoteTasks = _tbPulseTasksDate === tbActiveDate() ? _tbPulseTasksRemote : [];
+  const byId = new Map();
+  [...payloadTasks, ...remoteTasks].forEach(t => {
+    if (t && t.id && !byId.has(t.id)) byId.set(t.id, t);
+  });
+  return [...byId.values()]
+    .filter(t => t && t.id && t.title)
+    .map(t => ({
+      gid: `pulse:${t.id}`,
+      name: t.title,
+      project: 'Pulse',
+      due: t.start || '',
+      dur: Number(t.duration_minutes) > 0 ? Number(t.duration_minutes) : 30,
+      priority: tbIsPulsePriority(t.priority),
+      source: 'pulse',
+      tags: Array.isArray(t.tags) ? t.tags : [],
+    }));
+}
+
+function tbPulseDateBounds(dateStr) {
+  const start = new Date(dateStr + 'T00:00:00');
+  const end = new Date(dateStr + 'T23:59:59.999');
+  return { startISO: start.toISOString(), endISO: end.toISOString() };
+}
+
+async function tbRefreshPulseTasksForActiveDate() {
+  const date = tbActiveDate();
+  if (_tbPulseFetchInFlight || _tbPulseTasksDate === date) return;
+  _tbPulseFetchInFlight = true;
+  try {
+    const { startISO, endISO } = tbPulseDateBounds(date);
+    const params = new URLSearchParams({
+      select: 'id,title,start_at,duration_minutes,priority,tags,list_id,completed_at',
+      deleted_at: 'is.null',
+      parent_task_id: 'is.null',
+      completed_at: 'is.null',
+      status: 'neq.cancelled',
+      start_at: `gte.${startISO}`,
+      order: 'start_at.asc',
+    });
+    params.append('start_at', `lte.${endISO}`);
+    const res = await fetch(`${SB_URL}/rest/v1/tasks?${params.toString()}`, {
+      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${getSbToken()}`, 'Accept': 'application/json' },
+    });
+    if (!res.ok) throw new Error(await res.text());
+    _tbPulseTasksRemote = (await res.json()) || [];
+    _tbPulseTasksDate = date;
+    if (_currentPage === 'timeblocks') {
+      renderTBAsanaPanel(document.getElementById('tb-asana-search')?.value || '');
+    }
+  } catch(e) {
+    console.warn('[Pulse] timed task fetch failed:', e);
+    _tbPulseTasksDate = date;
+    _tbPulseTasksRemote = [];
+  } finally {
+    _tbPulseFetchInFlight = false;
+  }
+}
+
+function tbPaletteTasks() {
+  const pulse = tbPulseTasksForActiveDate();
+  const asana = ASANA_TASKS.map(t => ({ ...t, source: 'asana', dur: 30, priority: false, tags: [] }));
+  return [...pulse, ...asana];
 }
 
 function tbActiveBlocks() {
@@ -9325,11 +9411,15 @@ function tbDropOnBlock(event, blockId) {
     openAddBlockTaskModalFor(blockId);
     return;
   }
-  // Find Asana task details
-  const asanaTask = ASANA_TASKS.find(t => t.gid === tbDragTaskGid);
-  const name = asanaTask ? asanaTask.name : tbDragTaskName;
+  const sourceTask = tbPaletteTasks().find(t => t.gid === tbDragTaskGid);
+  const name = sourceTask ? sourceTask.name : tbDragTaskName;
   // Add directly with default 30 min
-  tbAddTaskToBlock(blockId, { gid: tbDragTaskGid, name, dur: 30, priority: false });
+  tbAddTaskToBlock(blockId, {
+    gid: tbDragTaskGid,
+    name,
+    dur: sourceTask?.dur || 30,
+    priority: !!sourceTask?.priority
+  });
 }
 
 // ── Block CRUD ────────────────────────────────────────────────
@@ -9600,9 +9690,20 @@ let _tbCreateDur     = 60;
 let _tbNowInterval   = null;
 let _tbDropGid       = null;
 let _tbDropName      = null;
+let _tbDropDur       = null;
+let _tbDropPriority  = false;
+let _tbDropSource    = null;
 let _tbInlineAsanaOpen = false;
 let _tbEditBlockId   = null; // null = new
 let _tbSelectedDate  = todayStr();
+
+function tbClearDropTask() {
+  _tbDropGid = null;
+  _tbDropName = null;
+  _tbDropDur = null;
+  _tbDropPriority = false;
+  _tbDropSource = null;
+}
 
 // ── Page render ───────────────────────────────────────────────
 function renderTBPage() {
@@ -9623,11 +9724,13 @@ function renderTBPage() {
   renderTBTimeline();
   renderTBPriorityCards();
   renderTBAsanaPanel('');
+  tbRefreshPulseTasksForActiveDate();
   updateTBNavBadge();
 }
 
 function tbSetDate(date) {
   _tbSelectedDate = date;
+  _tbPulseTasksDate = null;
   renderTBPage();
 }
 
@@ -9877,7 +9980,7 @@ function renderTBTimeline() {
       if (_tbDropGid !== null || _tbDropName) {
         const startStr = h.toString().padStart(2,'0') + ':00';
         tbCreateBlockWithTask(startStr, _tbDropGid, _tbDropName);
-        _tbDropGid = null; _tbDropName = null;
+        tbClearDropTask();
       }
     });
     hourRows.appendChild(line);
@@ -9944,8 +10047,13 @@ function tbBuildBlockEl(block) {
   el.addEventListener('drop', e => {
     e.preventDefault(); el.style.boxShadow = '';
     if (_tbDropGid !== null || _tbDropName) {
-      tbAddTaskToBlock(block.id, { gid: _tbDropGid, name: _tbDropName || 'Task', dur: 30, priority: false });
-      _tbDropGid = null; _tbDropName = null;
+      tbAddTaskToBlock(block.id, {
+        gid: _tbDropGid,
+        name: _tbDropName || 'Task',
+        dur: _tbDropDur || 30,
+        priority: !!_tbDropPriority
+      });
+      tbClearDropTask();
       renderTBPage();
     }
   });
@@ -10079,42 +10187,60 @@ function renderTBPriorityCards() {
     </div>`).join('');
 }
 
-// ── Asana panel ───────────────────────────────────────────────
+// ── Task source panel ─────────────────────────────────────────
 function renderTBAsanaPanel(query) {
   const panel = document.getElementById('tb-asana-panel');
   if (!panel) return;
   const q = (query || '').toLowerCase().trim();
   const usedGids = new Set(tbActiveBlocks().flatMap(b => (b.tasks||[]).filter(t=>t.gid).map(t=>t.gid)));
-  const tasks = ASANA_TASKS.filter(t => !usedGids.has(t.gid) && (!q || t.name.toLowerCase().includes(q)));
+  const tasks = tbPaletteTasks().filter(t => {
+    const text = [t.name, t.project, ...(t.tags || [])].join(' ').toLowerCase();
+    return !usedGids.has(t.gid) && (!q || text.includes(q));
+  });
 
   panel.innerHTML = '';
   if (!tasks.length) {
-    panel.innerHTML = `<p class="text-xs text-gray-400 italic text-center py-6">${q ? 'No tasks match.' : 'All tasks scheduled!'}</p>`;
+    panel.innerHTML = `<p class="text-xs text-gray-400 italic text-center py-6">${q ? 'No tasks match.' : 'All Pulse and Asana tasks are scheduled.'}</p>`;
     return;
   }
   tasks.forEach(t => {
     const chip = document.createElement('div');
     chip.draggable = true;
     chip.className = 'flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-outline-variant/15 bg-surface-container cursor-grab active:cursor-grabbing hover:border-primary/30 hover:bg-primary/5 transition-all select-none group/chip';
+    const isPulse = t.source === 'pulse';
     chip.innerHTML = `
       <span class="material-symbols-outlined text-on-surface-variant/30 text-base group-hover/chip:text-primary transition-colors">drag_indicator</span>
       <div class="flex-1 min-w-0">
         <p class="text-xs font-semibold text-on-surface leading-snug truncate">${t.name}</p>
-        ${t.project ? `<p class="text-[9px] text-gray-400 truncate">${t.project}${t.due ? ' · ' + t.due : ''}</p>` : ''}
+        <p class="text-[9px] text-gray-400 truncate">${isPulse ? 'Pulse' : (t.project || 'Asana')}${t.due ? ' · ' + t.due : ''}${t.dur ? ' · ' + t.dur + 'm' : ''}</p>
       </div>`;
     chip.addEventListener('dragstart', e => {
       _tbDropGid  = t.gid;
       _tbDropName = t.name;
+      _tbDropDur = t.dur || 30;
+      _tbDropPriority = !!t.priority;
+      _tbDropSource = t.source || null;
       e.dataTransfer.effectAllowed = 'copy';
       chip.style.opacity = '0.5';
     });
     chip.addEventListener('dragend', () => {
       chip.style.opacity = '';
-      _tbDropGid = null; _tbDropName = null;
+      tbClearDropTask();
     });
     panel.appendChild(chip);
   });
 }
+
+window.addEventListener('storage', event => {
+  if (event.key === PULSE_TB_KEY && _currentPage === 'timeblocks') {
+    renderTBAsanaPanel(document.getElementById('tb-asana-search')?.value || '');
+  }
+});
+window.addEventListener('edgex:pulse-timeblocks-updated', () => {
+  if (_currentPage === 'timeblocks') {
+    renderTBAsanaPanel(document.getElementById('tb-asana-search')?.value || '');
+  }
+});
 
 // ── Now line ──────────────────────────────────────────────────
 function positionTBNowLine() {
@@ -10166,12 +10292,21 @@ function tbCreateBlockWithTask(startStr, gid, name) {
   const date = tbActiveDate();
   const blocks = tbActiveBlocks();
   const cat = TB_CATEGORIES[0];
+  const taskDur = _tbDropDur || 30;
   const newBlock = {
     id: tbMakeId(), name: name || 'New Block',
-    color: cat.color, start: startStr, dur: 60, tasks: []
+    color: cat.color, start: startStr, dur: Math.max(30, taskDur), tasks: []
   };
   if (gid !== null || name) {
-    newBlock.tasks.push({ id: tbMakeId(), gid: gid || null, name: name || 'Task', dur: 30, priority: false, done: false, blockColor: cat.color });
+    newBlock.tasks.push({
+      id: tbMakeId(),
+      gid: gid || null,
+      name: name || 'Task',
+      dur: taskDur,
+      priority: !!_tbDropPriority,
+      done: false,
+      blockColor: cat.color
+    });
   }
   blocks.push(newBlock);
   tbSaveDay(date, blocks);

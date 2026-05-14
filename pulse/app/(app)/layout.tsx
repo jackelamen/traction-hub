@@ -9,6 +9,7 @@ import { CommandPalette } from "@/components/app-shell/command-palette";
 import { TaskDetail } from "@/components/tasks/task-detail";
 import { PwaRuntime } from "@/components/app-shell/pwa-runtime";
 import { SettingsRuntime } from "@/components/app-shell/settings-runtime";
+import { PulseWorkBridge } from "@/components/app-shell/pulse-work-bridge";
 import { displayNameForUser } from "@/lib/profile/display";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <TaskDetail />
       <PwaRuntime />
       <SettingsRuntime />
+      <PulseWorkBridge />
     </div>
   );
 }
