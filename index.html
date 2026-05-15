@@ -168,7 +168,7 @@ body::after {
 /* ── Module cards ── */
 .modules {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 16px;
   width: 100%;
 }
@@ -309,6 +309,71 @@ body::after {
   color: #6c8aff;
 }
 .module-card.finance:hover .card-btn { background: rgba(108,138,255,0.18); }
+
+/* Pulse card — navy/orange */
+.module-card.pulse {
+  background: linear-gradient(160deg, rgba(21,31,73,0.98) 0%, rgba(10,16,38,0.98) 58%, rgba(73,31,21,0.9) 100%);
+  border-color: rgba(249,115,22,0.24);
+  box-shadow: 0 0 40px rgba(249,115,22,0.07), inset 0 1px 0 rgba(255,255,255,0.07);
+  align-items: stretch;
+}
+.module-card.pulse:hover {
+  box-shadow: 0 8px 48px rgba(249,115,22,0.16), inset 0 1px 0 rgba(255,255,255,0.09);
+  border-color: rgba(249,115,22,0.42);
+}
+.pulse .corner-icon {
+  background: linear-gradient(135deg, rgba(249,115,22,0.24), rgba(59,130,246,0.18));
+  color: #fb923c;
+}
+.pulse .card-title,
+.pulse .card-desc { text-align: left; }
+.pulse .card-desc { flex: 0; margin-bottom: 12px; }
+.pulse .card-status {
+  justify-content: flex-start;
+  margin-bottom: 12px;
+  color: rgba(255,255,255,0.7);
+}
+.pulse .card-btn {
+  background: rgba(249,115,22,0.11);
+  border-color: rgba(249,115,22,0.35);
+  color: #fb923c;
+}
+.module-card.pulse:hover .card-btn { background: rgba(249,115,22,0.2); }
+
+.pulse-signal-list {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  margin: 2px 0 14px;
+}
+
+.pulse-signal {
+  min-height: 30px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.78);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.pulse-signal .material-symbols-rounded {
+  color: #fb923c;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.pulse-signal span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ── Ring widget ── */
 .ring-wrap {
@@ -630,6 +695,42 @@ body::after {
       <div class="card-btn">Open Work →</div>
     </a>
 
+    <!-- Pulse -->
+    <a class="module-card pulse" href="pulse/" aria-label="Open Pulse Tasks">
+      <div class="card-corner-icons">
+        <div class="corner-icon"><span class="material-symbols-rounded">ecg_heart</span></div>
+      </div>
+
+      <div class="card-title">
+        <span class="module-word">Pulse</span>
+      </div>
+      <div class="card-desc">Tasks, habits, and today’s next useful move.</div>
+      <div class="card-status" id="pulse-status">Open Pulse to sync</div>
+      <div class="pulse-signal-list" aria-label="Pulse today summary">
+        <div class="pulse-signal">
+          <span class="material-symbols-rounded">filter_3</span>
+          <span id="pulse-top3">Top 3 not synced</span>
+        </div>
+        <div class="pulse-signal">
+          <span class="material-symbols-rounded">history</span>
+          <span id="pulse-overdue">Overdue tasks —</span>
+        </div>
+        <div class="pulse-signal">
+          <span class="material-symbols-rounded">event_upcoming</span>
+          <span id="pulse-next-timed">Next timed task —</span>
+        </div>
+        <div class="pulse-signal">
+          <span class="material-symbols-rounded">repeat</span>
+          <span id="pulse-habits">Habits remaining —</span>
+        </div>
+        <div class="pulse-signal">
+          <span class="material-symbols-rounded">timer</span>
+          <span id="pulse-focus">Focus minutes —</span>
+        </div>
+      </div>
+      <div class="card-btn">Open Pulse →</div>
+    </a>
+
     <!-- Goals -->
     <a class="module-card goals" href="goals.html" aria-label="Open Goals Room">
       <div class="card-corner-icons">
@@ -873,7 +974,7 @@ function isUpdatedToday(row) {
 
 // ── System status tracker ─────────────────────────────────────────
 // Each module reports: 'fresh' (data exists for today), 'stale' (data but old), or 'empty' (no data)
-const moduleStatus = { work: 'ready', goals: null, finance: null, health: null, wellness: null };
+const moduleStatus = { work: 'ready', pulse: null, goals: null, finance: null, health: null, wellness: null };
 
 function reportModuleStatus(module, state) {
   moduleStatus[module] = state; // 'fresh' | 'stale' | 'empty'
@@ -882,7 +983,7 @@ function reportModuleStatus(module, state) {
 
 function updateSystemStatus() {
   const states = Object.values(moduleStatus).filter(v => v !== null && v !== 'ready');
-  const total = 4; // goals, finance, health, wellness (work is always 'ready')
+  const total = 5; // pulse, goals, finance, health, wellness (work is always 'ready')
   if (states.length < total) return; // not all modules reported yet
 
   const fresh  = states.filter(s => s === 'fresh').length;
@@ -898,7 +999,7 @@ function updateSystemStatus() {
   } else if (fresh >= 1 || stale >= 1) {
     dot.style.background  = '#fbbf24';
     dot.style.boxShadow   = '0 0 10px rgba(251,191,36,0.6)';
-    pill.textContent       = fresh + ' of 4 synced today';
+    pill.textContent       = fresh + ' of 5 synced today';
   } else {
     dot.style.background  = '#6b7280';
     dot.style.boxShadow   = 'none';
@@ -965,6 +1066,44 @@ if (todayLabel) {
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
+}
+
+function readPulseDashboardSummary() {
+  try {
+    return JSON.parse(localStorage.getItem('edgex_pulse_dashboard_v1') || 'null');
+  } catch(e) {
+    return null;
+  }
+}
+
+function renderPulseDashboardSummary() {
+  const data = readPulseDashboardSummary();
+  const isFresh = data?.date === localDateStr();
+
+  if (!data || !isFresh) {
+    setText('pulse-status', 'Open Pulse to sync today');
+    setText('pulse-top3', 'Top 3 not synced');
+    setText('pulse-overdue', 'Overdue tasks —');
+    setText('pulse-next-timed', 'Next timed task —');
+    setText('pulse-habits', 'Habits remaining —');
+    setText('pulse-focus', 'Focus minutes —');
+    reportModuleStatus('pulse', data ? 'stale' : 'empty');
+    return;
+  }
+
+  const top = Array.isArray(data.topTasks) ? data.topTasks.slice(0, 3) : [];
+  setText('pulse-top3', top.length ? 'Top 3: ' + top.map(t => t.title).join(' · ') : 'Top 3: clear');
+  setText('pulse-overdue', `${data.overdueCount || 0} overdue task${data.overdueCount === 1 ? '' : 's'}`);
+  setText(
+    'pulse-next-timed',
+    data.nextTimedTask
+      ? `Next: ${data.nextTimedTask.start || ''} ${data.nextTimedTask.title}`.trim()
+      : 'No timed tasks today'
+  );
+  setText('pulse-habits', `${data.habitsRemaining || 0} habit${data.habitsRemaining === 1 ? '' : 's'} remaining`);
+  setText('pulse-focus', `${data.focusMinutesToday || 0} focus min today`);
+  setText('pulse-status', `${top.length} top · ${data.completedToday || 0} done`);
+  reportModuleStatus('pulse', 'fresh');
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
@@ -1111,6 +1250,7 @@ function animateRing(selector, pct, delay = 300) {
 // Work ring: show 100% (full timer, hasn't started)
 animateRing('.work-ring', 100, 400);
 setText('work-status', 'Ready for a 50 minute focus block');
+renderPulseDashboardSummary();
 
 // Goals ring: pull from Supabase if available, else use demo 25%
 (async () => {
@@ -1208,10 +1348,13 @@ setText('work-status', 'Ready for a 50 minute focus block');
 // without needing a full page reload.
 async function refreshAllRings() {
   // Reset system status state so it re-aggregates cleanly
+  moduleStatus.pulse    = null;
   moduleStatus.goals    = null;
   moduleStatus.finance  = null;
   moduleStatus.health   = null;
   moduleStatus.wellness = null;
+
+  renderPulseDashboardSummary();
 
   // Goals
   (async () => {
@@ -1285,11 +1428,16 @@ async function refreshAllRings() {
 let _lastVisible = Date.now();
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
+  renderPulseDashboardSummary();
   // Only re-fetch if the tab was hidden for more than 30 seconds
   if (Date.now() - _lastVisible > 30000) {
     authReady.then(s => { if (s) refreshAllRings(); });
   }
   _lastVisible = Date.now();
+});
+
+window.addEventListener('storage', (event) => {
+  if (event.key === 'edgex_pulse_dashboard_v1') renderPulseDashboardSummary();
 });
 
 // ── Periodic token refresh (every 15 minutes, only when visible) ──────────
