@@ -696,7 +696,7 @@ body::after {
     </a>
 
     <!-- Pulse -->
-    <a class="module-card pulse" href="pulse/" aria-label="Open Pulse Tasks">
+    <a class="module-card pulse" id="pulse-card-link" href="pulse/" aria-label="Open Pulse Tasks">
       <div class="card-corner-icons">
         <div class="corner-icon"><span class="material-symbols-rounded">ecg_heart</span></div>
       </div>
@@ -1068,6 +1068,16 @@ function setText(id, value) {
   if (el) el.textContent = value;
 }
 
+function initPulseLink() {
+  const link = document.getElementById('pulse-card-link');
+  if (!link) return;
+  const host = window.location.hostname;
+  const isLocal = !host || host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  if (isLocal || window.location.protocol === 'file:') {
+    link.href = 'http://localhost:3000/today';
+  }
+}
+
 function readPulseDashboardSummary() {
   try {
     return JSON.parse(localStorage.getItem('edgex_pulse_dashboard_v1') || 'null');
@@ -1250,6 +1260,7 @@ function animateRing(selector, pct, delay = 300) {
 // Work ring: show 100% (full timer, hasn't started)
 animateRing('.work-ring', 100, 400);
 setText('work-status', 'Ready for a 50 minute focus block');
+initPulseLink();
 renderPulseDashboardSummary();
 
 // Goals ring: pull from Supabase if available, else use demo 25%
