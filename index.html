@@ -696,7 +696,7 @@ body::after {
     </a>
 
     <!-- Pulse -->
-    <a class="module-card pulse" id="pulse-card-link" href="pulse/" aria-label="Open Pulse Tasks">
+    <a class="module-card pulse" id="pulse-card-link" href="https://lightskyblue-wolverine-166414.hostingersite.com/login" aria-label="Open Pulse Tasks">
       <div class="card-corner-icons">
         <div class="corner-icon"><span class="material-symbols-rounded">ecg_heart</span></div>
       </div>
@@ -1071,11 +1071,7 @@ function setText(id, value) {
 function initPulseLink() {
   const link = document.getElementById('pulse-card-link');
   if (!link) return;
-  const host = window.location.hostname;
-  const isLocal = !host || host === 'localhost' || host === '127.0.0.1' || host === '::1';
-  if (isLocal || window.location.protocol === 'file:') {
-    link.href = 'http://localhost:3000/today';
-  }
+  link.href = 'https://lightskyblue-wolverine-166414.hostingersite.com/login';
 }
 
 function readPulseDashboardSummary() {
