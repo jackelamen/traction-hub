@@ -1171,7 +1171,7 @@ async function fetchPulseDashboardSummary() {
 
   const [todayTasks, completedTasks, leftoverTasks, habits, habitLogs, focusSessions] = await Promise.all([
     fetchPulseRows('tasks', {
-      select: 'id,title,priority,start_at,due_at,created_at,duration_minutes,tags',
+      select: 'id,title,priority,start_at,due_at,created_at,duration_minutes,tags,all_day',
       user_id: `eq.${userId}`,
       deleted_at: 'is.null',
       parent_task_id: 'is.null',
@@ -1229,7 +1229,26 @@ async function fetchPulseDashboardSummary() {
   const timedTasks = todayTasks
     .filter(task => task.start_at)
     .sort((a, b) => String(a.start_at).localeCompare(String(b.start_at)));
-  const nextTimed = timedTasks.find(task => new Date(task.start_at).getTime() >= now.getTime()) || timedTasks[0] || null;
+  const taskEffectiveDueValue = task => {
+    if (task.start_at) {
+      return new Date(task.start_at).getTime() + (task.duration_minutes || 0) * 60000;
+    }
+    if (task.due_at) {
+      const due = new Date(task.due_at);
+      if (task.all_day) due.setHours(23, 59, 59, 999);
+      return due.getTime();
+    }
+    return null;
+  };
+  const overdueIds = new Set(leftoverTasks.map(task => task.id));
+  todayTasks.forEach(task => {
+    const effectiveDue = taskEffectiveDueValue(task);
+    if (effectiveDue !== null && effectiveDue < now.getTime()) overdueIds.add(task.id);
+  });
+  const nextTimed = timedTasks.find(task => {
+    const effectiveDue = taskEffectiveDueValue(task);
+    return effectiveDue !== null && effectiveDue >= now.getTime();
+  }) || null;
   const loggedHabitIds = new Set(habitLogs.map(log => log.habit_id));
   const dueHabits = habits.filter(habit => isPulseHabitDueOn(habit, now));
   const focusMinutesToday = focusSessions.reduce(
@@ -1243,7 +1262,7 @@ async function fetchPulseDashboardSummary() {
     date: todayKey,
     updatedAt: new Date().toISOString(),
     topTasks,
-    overdueCount: leftoverTasks.length,
+    overdueCount: overdueIds.size,
     nextTimedTask: nextTimed ? {
       id: nextTimed.id,
       title: nextTimed.title,

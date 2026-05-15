@@ -5233,9 +5233,14 @@ function todayIntentionStorageDate() {
 function getTodayIntentionText() {
   try {
     const raw = localStorage.getItem(TODAY_INTENTION_KEY);
-    if (!raw) return '';
-    const t = JSON.parse(raw);
-    return t?.date === todayIntentionStorageDate() ? (t.text || '') : '';
+    if (raw) {
+      const t = JSON.parse(raw);
+      const validDates = new Set([todayIntentionStorageDate(), todayStr()]);
+      if (t?.text && validDates.has(t.date)) return t.text || '';
+    }
+    const morning = getMorningSetup();
+    if (morning?.date === todayStr() && morning.intention) return morning.intention;
+    return '';
   } catch(e) {
     return '';
   }
