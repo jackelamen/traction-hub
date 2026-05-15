@@ -1078,6 +1078,8 @@ function readPulseDashboardSummary() {
   }
 }
 
+let pulseSummaryFetchInFlight = false;
+
 function renderPulseDashboardSummary() {
   const data = readPulseDashboardSummary();
   const isFresh = data?.date === localDateStr();
@@ -1090,9 +1092,15 @@ function renderPulseDashboardSummary() {
     setText('pulse-habits', 'Habits remaining —');
     setText('pulse-focus', 'Focus minutes —');
     reportModuleStatus('pulse', data ? 'stale' : 'empty');
+    fetchAndRenderPulseDashboardSummary();
     return;
   }
 
+  renderPulseDashboardData(data);
+  fetchAndRenderPulseDashboardSummary();
+}
+
+function renderPulseDashboardData(data) {
   const top = Array.isArray(data.topTasks) ? data.topTasks.slice(0, 3) : [];
   setText('pulse-top3', top.length ? 'Top 3: ' + top.map(t => t.title).join(' · ') : 'Top 3: clear');
   setText('pulse-overdue', `${data.overdueCount || 0} overdue task${data.overdueCount === 1 ? '' : 's'}`);
@@ -1106,6 +1114,154 @@ function renderPulseDashboardSummary() {
   setText('pulse-focus', `${data.focusMinutesToday || 0} focus min today`);
   setText('pulse-status', `${top.length} top · ${data.completedToday || 0} done`);
   reportModuleStatus('pulse', 'fresh');
+}
+
+async function fetchAndRenderPulseDashboardSummary() {
+  if (pulseSummaryFetchInFlight) return;
+  pulseSummaryFetchInFlight = true;
+  try {
+    const data = await fetchPulseDashboardSummary();
+    if (!data) return;
+    localStorage.setItem('edgex_pulse_dashboard_v1', JSON.stringify(data));
+    renderPulseDashboardData(data);
+  } catch(e) {
+    console.warn('Pulse dashboard summary unavailable', e);
+  } finally {
+    pulseSummaryFetchInFlight = false;
+  }
+}
+
+async function fetchPulseDashboardSummary() {
+  const session = await authReady;
+  const userId = session?.user?.id;
+  const token = session?.access_token || getSbToken();
+  if (!userId || !token) return null;
+
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(now);
+  end.setHours(23, 59, 59, 999);
+  const startISO = start.toISOString();
+  const endISO = end.toISOString();
+  const todayKey = localDateStr(now);
+
+  const [todayTasks, completedTasks, leftoverTasks, habits, habitLogs, focusSessions] = await Promise.all([
+    fetchPulseRows('tasks', {
+      select: 'id,title,priority,start_at,due_at,created_at,duration_minutes,tags',
+      user_id: `eq.${userId}`,
+      deleted_at: 'is.null',
+      parent_task_id: 'is.null',
+      completed_at: 'is.null',
+      status: 'neq.cancelled',
+      or: `(and(due_at.gte.${startISO},due_at.lte.${endISO}),and(start_at.gte.${startISO},start_at.lte.${endISO}))`,
+    }, token),
+    fetchPulseRows('tasks', {
+      select: 'id',
+      user_id: `eq.${userId}`,
+      deleted_at: 'is.null',
+      parent_task_id: 'is.null',
+      completed_at: `gte.${startISO}`,
+      and: `(completed_at.lte.${endISO})`,
+    }, token),
+    fetchPulseRows('tasks', {
+      select: 'id',
+      user_id: `eq.${userId}`,
+      deleted_at: 'is.null',
+      parent_task_id: 'is.null',
+      completed_at: 'is.null',
+      or: `(due_at.lt.${startISO},start_at.lt.${startISO})`,
+    }, token),
+    fetchPulseRows('habits', {
+      select: 'id,cadence,cadence_config,archived_at,deleted_at',
+      user_id: `eq.${userId}`,
+      deleted_at: 'is.null',
+      archived_at: 'is.null',
+    }, token),
+    fetchPulseRows('habit_logs', {
+      select: 'habit_id,count',
+      user_id: `eq.${userId}`,
+      deleted_at: 'is.null',
+      logged_on: `eq.${todayKey}`,
+    }, token),
+    fetchPulseRows('focus_sessions', {
+      select: 'started_at,planned_minutes,actual_minutes',
+      user_id: `eq.${userId}`,
+      deleted_at: 'is.null',
+      started_at: `gte.${startISO}`,
+      and: `(started_at.lte.${endISO})`,
+    }, token),
+  ]);
+
+  const taskTimeValue = task => new Date(task.start_at || task.due_at || task.created_at || now).getTime();
+  const topTasks = [...todayTasks]
+    .sort((a, b) => (b.priority || 0) - (a.priority || 0) || taskTimeValue(a) - taskTimeValue(b))
+    .slice(0, 3)
+    .map(task => ({
+      id: task.id,
+      title: task.title,
+      priority: task.priority || 0,
+      start: task.start_at ? readablePulseTime(task.start_at) : null,
+    }));
+  const timedTasks = todayTasks
+    .filter(task => task.start_at)
+    .sort((a, b) => String(a.start_at).localeCompare(String(b.start_at)));
+  const nextTimed = timedTasks.find(task => new Date(task.start_at).getTime() >= now.getTime()) || timedTasks[0] || null;
+  const loggedHabitIds = new Set(habitLogs.map(log => log.habit_id));
+  const dueHabits = habits.filter(habit => isPulseHabitDueOn(habit, now));
+  const focusMinutesToday = focusSessions.reduce(
+    (sum, session) => sum + (session.actual_minutes ?? session.planned_minutes ?? 0),
+    0
+  );
+
+  return {
+    version: 1,
+    source: 'pulse',
+    date: todayKey,
+    updatedAt: new Date().toISOString(),
+    topTasks,
+    overdueCount: leftoverTasks.length,
+    nextTimedTask: nextTimed ? {
+      id: nextTimed.id,
+      title: nextTimed.title,
+      start: nextTimed.start_at ? readablePulseTime(nextTimed.start_at) : null,
+      duration_minutes: nextTimed.duration_minutes,
+    } : null,
+    habitsRemaining: dueHabits.filter(habit => !loggedHabitIds.has(habit.id)).length,
+    focusMinutesToday,
+    completedToday: completedTasks.length,
+  };
+}
+
+async function fetchPulseRows(table, params, token) {
+  const url = new URL(`${SB_URL}/rest/v1/${table}`);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) url.searchParams.set(key, value);
+  });
+  const res = await fetchWithTimeout(url.toString(), {
+    headers: {
+      'apikey': SB_ANON,
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    },
+  });
+  if (!res.ok) throw new Error(`Pulse ${table} query failed (${res.status})`);
+  return await res.json();
+}
+
+function readablePulseTime(iso) {
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+function isPulseHabitDueOn(habit, date) {
+  const day = date.getDay();
+  if (habit.cadence === 'daily') return true;
+  if (habit.cadence === 'weekdays') return day >= 1 && day <= 5;
+  if (habit.cadence === 'weekly' || habit.cadence === 'custom') {
+    const days = Array.isArray(habit.cadence_config?.days) ? habit.cadence_config.days : [];
+    return days.length ? days.includes(day) : habit.cadence !== 'weekly' || day === 1;
+  }
+  return true;
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
