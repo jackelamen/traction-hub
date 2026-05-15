@@ -289,35 +289,53 @@ body::after {
 }
 .module-card.finance:hover .card-btn { background: rgba(108,138,255,0.18); }
 
-/* Pulse card — gold/red */
+/* Pulse card — crimson/gold */
 .module-card.pulse {
-  background: linear-gradient(160deg, rgba(54,17,36,0.98) 0%, rgba(18,14,38,0.98) 48%, rgba(58,42,12,0.92) 100%);
-  border-color: rgba(250,204,21,0.28);
-  box-shadow: 0 0 40px rgba(244,63,94,0.08), inset 0 1px 0 rgba(255,255,255,0.07);
-  align-items: stretch;
-  order: -1;
+  background: linear-gradient(160deg, rgba(56,18,34,0.98) 0%, rgba(22,14,37,0.98) 54%, rgba(18,13,28,0.98) 100%);
+  border-color: rgba(244,63,94,0.3);
+  box-shadow: 0 0 40px rgba(244,63,94,0.09), inset 0 1px 0 rgba(255,255,255,0.07);
+  align-items: center;
 }
 .module-card.pulse:hover {
-  box-shadow: 0 8px 48px rgba(250,204,21,0.14), inset 0 1px 0 rgba(255,255,255,0.09);
-  border-color: rgba(250,204,21,0.48);
+  box-shadow: 0 8px 48px rgba(244,63,94,0.17), inset 0 1px 0 rgba(255,255,255,0.09);
+  border-color: rgba(244,63,94,0.48);
 }
 .pulse .corner-icon {
-  background: linear-gradient(135deg, rgba(250,204,21,0.22), rgba(244,63,94,0.22));
-  color: #fde047;
+  background: linear-gradient(135deg, rgba(244,63,94,0.24), rgba(250,204,21,0.16));
+  color: #fda4af;
 }
-.pulse .card-title,
-.pulse .card-desc { text-align: left; }
+.pulse .card-title { text-align: center; }
 .pulse .card-status {
-  justify-content: flex-start;
-  margin-bottom: 12px;
-  color: rgba(255,255,255,0.7);
+  margin-bottom: 10px;
+  color: rgba(255,255,255,0.72);
 }
 .pulse .card-btn {
-  background: rgba(250,204,21,0.10);
-  border-color: rgba(250,204,21,0.35);
-  color: #fde047;
+  background: rgba(244,63,94,0.12);
+  border-color: rgba(244,63,94,0.36);
+  color: #fda4af;
 }
-.module-card.pulse:hover .card-btn { background: rgba(250,204,21,0.18); }
+.module-card.pulse:hover .card-btn { background: rgba(244,63,94,0.2); }
+
+.pulse-orb {
+  width: 46px;
+  height: 46px;
+  margin: 8px 0 8px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(250,204,21,0.15), transparent 58%),
+    linear-gradient(145deg, rgba(244,63,94,0.26), rgba(250,204,21,0.1));
+  border: 1px solid rgba(244,63,94,0.36);
+  box-shadow: 0 0 24px rgba(244,63,94,0.18);
+}
+
+.pulse-orb .material-symbols-rounded {
+  color: #fda4af;
+  font-size: 26px;
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 32;
+}
 
 .pulse-signal-list {
   display: grid;
@@ -328,7 +346,7 @@ body::after {
 }
 
 .pulse-signal {
-  min-height: 27px;
+  min-height: 24px;
   display: grid;
   grid-template-columns: 15px minmax(0, 1fr);
   align-items: start;
@@ -348,7 +366,7 @@ body::after {
 }
 
 .pulse-signal .material-symbols-rounded {
-  color: #fde047;
+  color: #fda4af;
   font-size: 14px;
   line-height: 1;
   margin-top: 1px;
@@ -678,6 +696,38 @@ body::after {
   <!-- Module cards -->
   <div class="modules">
 
+    <!-- Pulse -->
+    <a class="module-card pulse" id="pulse-card-link" href="https://lightskyblue-wolverine-166414.hostingersite.com/login" aria-label="Open Pulse Tasks">
+      <div class="card-corner-icons">
+        <div class="corner-icon"><span class="material-symbols-rounded">ecg_heart</span></div>
+      </div>
+
+      <div class="pulse-orb" aria-hidden="true">
+        <span class="material-symbols-rounded">ecg_heart</span>
+      </div>
+
+      <div class="card-title">
+        <span class="module-word">Pulse</span>
+      </div>
+      <div class="card-desc">Tasks, habits, and today’s next useful move.</div>
+      <div class="card-status" id="pulse-status">Open Pulse to sync</div>
+      <div class="pulse-signal-list" aria-label="Pulse today summary">
+        <div class="pulse-signal">
+          <span class="material-symbols-rounded">filter_3</span>
+          <span id="pulse-top3">Top 3 not synced</span>
+        </div>
+        <div class="pulse-signal">
+          <span class="material-symbols-rounded">event_upcoming</span>
+          <span id="pulse-next-timed">Next timed task —</span>
+        </div>
+        <div class="pulse-signal">
+          <span class="material-symbols-rounded">repeat</span>
+          <span id="pulse-habits">Habits and focus —</span>
+        </div>
+      </div>
+      <div class="card-btn">Open Pulse →</div>
+    </a>
+
     <!-- Work -->
     <a class="module-card work" href="work.html" aria-label="Open Work Room">
       <div class="card-corner-icons">
@@ -702,42 +752,6 @@ body::after {
       <div class="card-desc">Deep work, daily traction, and your 30-day map.</div>
       <div class="card-status" id="work-status">Focus timer ready</div>
       <div class="card-btn">Open Work →</div>
-    </a>
-
-    <!-- Pulse -->
-    <a class="module-card pulse" id="pulse-card-link" href="https://lightskyblue-wolverine-166414.hostingersite.com/login" aria-label="Open Pulse Tasks">
-      <div class="card-corner-icons">
-        <div class="corner-icon"><span class="material-symbols-rounded">ecg_heart</span></div>
-      </div>
-
-      <div class="card-title">
-        <span class="module-word">Pulse</span>
-      </div>
-      <div class="card-desc">Tasks, habits, and today’s next useful move.</div>
-      <div class="card-status" id="pulse-status">Open Pulse to sync</div>
-      <div class="pulse-signal-list" aria-label="Pulse today summary">
-        <div class="pulse-signal">
-          <span class="material-symbols-rounded">filter_3</span>
-          <span id="pulse-top3">Top 3 not synced</span>
-        </div>
-        <div class="pulse-signal">
-          <span class="material-symbols-rounded">history</span>
-          <span id="pulse-overdue">Overdue tasks —</span>
-        </div>
-        <div class="pulse-signal">
-          <span class="material-symbols-rounded">event_upcoming</span>
-          <span id="pulse-next-timed">Next timed task —</span>
-        </div>
-        <div class="pulse-signal">
-          <span class="material-symbols-rounded">repeat</span>
-          <span id="pulse-habits">Habits remaining —</span>
-        </div>
-        <div class="pulse-signal">
-          <span class="material-symbols-rounded">timer</span>
-          <span id="pulse-focus">Focus minutes —</span>
-        </div>
-      </div>
-      <div class="card-btn">Open Pulse →</div>
     </a>
 
     <!-- Goals -->
@@ -1100,10 +1114,8 @@ function renderPulseDashboardSummary() {
   if (!data || !isFresh) {
     setText('pulse-status', 'Open Pulse to sync today');
     setText('pulse-top3', 'Top 3 not synced');
-    setText('pulse-overdue', 'Overdue tasks —');
     setText('pulse-next-timed', 'Next timed task —');
-    setText('pulse-habits', 'Habits remaining —');
-    setText('pulse-focus', 'Focus minutes —');
+    setText('pulse-habits', 'Habits and focus —');
     reportModuleStatus('pulse', data ? 'stale' : 'empty');
     fetchAndRenderPulseDashboardSummary();
     return;
@@ -1116,16 +1128,14 @@ function renderPulseDashboardSummary() {
 function renderPulseDashboardData(data) {
   const top = Array.isArray(data.topTasks) ? data.topTasks.slice(0, 3) : [];
   setText('pulse-top3', top.length ? 'Top 3: ' + top.map(t => t.title).join(' · ') : 'Top 3: clear');
-  setText('pulse-overdue', `${data.overdueCount || 0} overdue task${data.overdueCount === 1 ? '' : 's'}`);
   setText(
     'pulse-next-timed',
     data.nextTimedTask
       ? `Next: ${data.nextTimedTask.start || ''} ${data.nextTimedTask.title}`.trim()
       : 'No timed tasks today'
   );
-  setText('pulse-habits', `${data.habitsRemaining || 0} habit${data.habitsRemaining === 1 ? '' : 's'} remaining`);
-  setText('pulse-focus', `${data.focusMinutesToday || 0} focus min today`);
-  setText('pulse-status', `${top.length} top · ${data.completedToday || 0} done`);
+  setText('pulse-habits', `${data.habitsRemaining || 0} habit${data.habitsRemaining === 1 ? '' : 's'} · ${data.focusMinutesToday || 0} focus min`);
+  setText('pulse-status', `${top.length} top · ${data.overdueCount || 0} overdue`);
   reportModuleStatus('pulse', 'fresh');
 }
 
