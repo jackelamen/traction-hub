@@ -316,6 +316,7 @@ body::after {
   border-color: rgba(249,115,22,0.24);
   box-shadow: 0 0 40px rgba(249,115,22,0.07), inset 0 1px 0 rgba(255,255,255,0.07);
   align-items: stretch;
+  grid-column: span 2;
 }
 .module-card.pulse:hover {
   box-shadow: 0 8px 48px rgba(249,115,22,0.16), inset 0 1px 0 rgba(255,255,255,0.09);
@@ -342,37 +343,58 @@ body::after {
 
 .pulse-signal-list {
   display: grid;
-  gap: 7px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   width: 100%;
   margin: 2px 0 14px;
 }
 
 .pulse-signal {
-  min-height: 30px;
+  min-height: 42px;
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
-  align-items: center;
+  align-items: start;
   gap: 8px;
-  padding: 7px 9px;
+  padding: 9px 10px;
   border-radius: 8px;
   background: rgba(255,255,255,0.055);
   border: 1px solid rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.78);
   font-size: 11px;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.35;
+}
+
+.pulse-signal:first-child {
+  grid-column: 1 / -1;
 }
 
 .pulse-signal .material-symbols-rounded {
   color: #fb923c;
   font-size: 16px;
   line-height: 1;
+  margin-top: 1px;
 }
 
 .pulse-signal span:last-child {
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+}
+
+@media (max-width: 1100px) {
+  .module-card.pulse { grid-column: span 2; }
+}
+
+@media (max-width: 720px) {
+  .module-card.pulse { grid-column: span 2; }
+}
+
+@media (max-width: 480px) {
+  .module-card.pulse { grid-column: span 1; }
+  .pulse-signal-list { grid-template-columns: 1fr; }
 }
 
 /* ── Ring widget ── */
