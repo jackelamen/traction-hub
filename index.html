@@ -20,7 +20,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 28px 20px 32px;
+  padding: 22px 20px 24px;
   position: relative;
   overflow-x: hidden;
   overflow-y: auto;
@@ -55,7 +55,7 @@ body::after {
   width: min(1280px, 100%);
   position: relative;
   z-index: 1;
-  transform: translateY(-3vh);
+  transform: none;
 }
 
 .topbar {
@@ -63,7 +63,7 @@ body::after {
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .brand-block {
@@ -73,7 +73,7 @@ body::after {
 .brand-title {
   font-family: 'Inter', sans-serif;
   font-weight: 900;
-  font-size: clamp(36px, 6vw, 62px);
+  font-size: clamp(34px, 5.4vw, 58px);
   letter-spacing: 0;
   line-height: 1;
   color: #fff;
@@ -168,8 +168,8 @@ body::after {
 /* ── Module cards ── */
 .modules {
   display: grid;
-  grid-template-columns: minmax(420px, 1.25fr) repeat(2, minmax(220px, 0.78fr));
-  gap: 16px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
   width: 100%;
 }
 
@@ -180,7 +180,7 @@ body::after {
 
 .module-card {
   border-radius: 12px;
-  padding: 22px 18px 20px;
+  padding: 18px 16px 16px;
   cursor: pointer;
   text-decoration: none;
   display: flex;
@@ -191,7 +191,7 @@ body::after {
   position: relative;
   overflow: hidden;
   border: 1px solid;
-  min-height: 318px;
+  min-height: 246px;
   outline: none;
 }
 
@@ -250,7 +250,6 @@ body::after {
   background: linear-gradient(160deg, rgba(22,14,42,0.95) 0%, rgba(16,10,32,0.95) 100%);
   border-color: rgba(124,58,237,0.2);
   box-shadow: 0 0 40px rgba(124,58,237,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
-  grid-column: span 2;
 }
 .module-card.wellness:hover {
   box-shadow: 0 8px 48px rgba(124,58,237,0.14), inset 0 1px 0 rgba(255,255,255,0.08);
@@ -296,11 +295,6 @@ body::after {
   border-color: rgba(249,115,22,0.24);
   box-shadow: 0 0 40px rgba(249,115,22,0.07), inset 0 1px 0 rgba(255,255,255,0.07);
   align-items: stretch;
-  grid-column: 1;
-  grid-row: span 3;
-  min-height: 100%;
-  order: -1;
-  padding: 28px 24px 22px;
 }
 .module-card.pulse:hover {
   box-shadow: 0 8px 48px rgba(249,115,22,0.16), inset 0 1px 0 rgba(255,255,255,0.09);
@@ -326,35 +320,35 @@ body::after {
 
 .pulse-signal-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: 1fr;
+  gap: 5px;
   width: 100%;
-  margin: 2px 0 14px;
+  margin: 0 0 10px;
 }
 
 .pulse-signal {
-  min-height: 42px;
+  min-height: 27px;
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
+  grid-template-columns: 15px minmax(0, 1fr);
   align-items: start;
-  gap: 8px;
-  padding: 9px 10px;
+  gap: 6px;
+  padding: 5px 7px;
   border-radius: 8px;
   background: rgba(255,255,255,0.055);
   border: 1px solid rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.78);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.25;
 }
 
 .pulse-signal:first-child {
-  grid-column: 1 / -1;
+  grid-column: auto;
 }
 
 .pulse-signal .material-symbols-rounded {
   color: #fb923c;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
   margin-top: 1px;
 }
@@ -369,12 +363,6 @@ body::after {
 
 @media (max-width: 1100px) {
   .modules { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .module-card.pulse {
-    grid-column: 1 / -1;
-    grid-row: auto;
-    min-height: 318px;
-  }
-  .module-card.wellness { grid-column: span 1; }
 }
 
 @media (max-width: 720px) {
@@ -383,16 +371,11 @@ body::after {
   .topbar { align-items: flex-start; flex-direction: column; gap: 16px; }
   .dashboard-status { justify-content: flex-start; }
   .modules { grid-template-columns: 1fr 1fr; }
-  .module-card.pulse { grid-column: 1 / -1; }
-  .module-card.wellness { grid-column: span 1; }
 }
 
 @media (max-width: 480px) {
   body { padding: 20px 14px 28px; }
   .modules { grid-template-columns: 1fr; gap: 14px; }
-  .module-card.pulse,
-  .module-card.wellness { grid-column: span 1; }
-  .pulse-signal-list { grid-template-columns: 1fr; }
   .brand-title { font-size: 42px; }
   .brand-sub { letter-spacing: 0.18em; }
   .footer { align-items: flex-start; flex-direction: column; gap: 12px; }
@@ -401,16 +384,16 @@ body::after {
 
 /* ── Ring widget ── */
 .ring-wrap {
-  width: 100px;
-  height: 100px;
+  width: 86px;
+  height: 86px;
   position: relative;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   flex-shrink: 0;
 }
 
 .ring-wrap svg {
-  width: 100px;
-  height: 100px;
+  width: 86px;
+  height: 86px;
   transform: rotate(-90deg);
 }
 
@@ -443,7 +426,7 @@ body::after {
 .ring-value {
   font-family: 'Inter', sans-serif;
   font-weight: 800;
-  font-size: 22px;
+  font-size: 20px;
   letter-spacing: -1px;
   line-height: 1;
 }
@@ -492,7 +475,7 @@ body::after {
   font-size: 16px;
   letter-spacing: -0.3px;
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   line-height: 1.2;
 }
 .card-title .the-edge { color: #fff; }
@@ -517,9 +500,9 @@ body::after {
   justify-content: center;
   gap: 7px;
   width: 100%;
-  min-height: 30px;
-  margin-bottom: 14px;
-  padding: 7px 10px;
+  min-height: 28px;
+  margin-bottom: 10px;
+  padding: 6px 8px;
   border-radius: 8px;
   background: rgba(255,255,255,0.045);
   border: 1px solid rgba(255,255,255,0.08);
@@ -548,8 +531,8 @@ body::after {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  min-height: 40px;
-  padding: 10px 16px;
+  min-height: 34px;
+  padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid;
   font-size: 13px;
@@ -591,7 +574,7 @@ body::after {
   gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 16px;
+  margin-top: 14px;
   position: relative;
   z-index: 1;
 }
@@ -638,7 +621,7 @@ body::after {
 
 /* ── Footer ── */
 .footer {
-  margin-top: 22px;
+  margin-top: 18px;
   font-size: 11px;
   color: rgba(255,255,255,0.18);
   letter-spacing: 0.08em;
@@ -848,7 +831,7 @@ body::after {
         </svg>
         <div class="ring-label">
           <div class="ring-value" id="wellness-pct">—</div>
-          <div class="ring-meta" id="wellness-meta">clarity</div>
+          <div class="ring-meta" id="wellness-meta">signal</div>
         </div>
       </div>
 
@@ -856,7 +839,7 @@ body::after {
         <span class="module-word">Wellness</span>
       </div>
       <div class="card-desc">Check-ins, meditation, and clarity trends.</div>
-      <div class="card-status" id="wellness-status">Loading clarity</div>
+      <div class="card-status" id="wellness-status">Loading signal</div>
       <div class="card-btn">Open Wellness →</div>
     </a>
 
@@ -1435,12 +1418,80 @@ function animateRing(selector, pct, delay = 300) {
   }, delay);
 }
 
-function wellnessRingPct(score) {
-  const value = Number(score);
-  if (!Number.isFinite(value)) return 0;
-  if (value <= 5) return (Math.max(0, value) / 5) * 100;
-  if (value <= 10) return Math.max(0, value) * 10;
-  return Math.min(100, Math.max(0, value));
+function wellnessSignalPct(score) {
+  return Math.min(100, Math.max(0, Number(score) || 0));
+}
+
+function wellnessSignalFromCheckin(checkin) {
+  if (!checkin) return null;
+  const mood = parseInt(checkin.mood, 10) || 3;
+  const clarity = parseInt(checkin.clarity, 10) || 3;
+  const grounded = parseInt(checkin.grounded, 10) || 3;
+  const stress = parseInt(checkin.stress, 10) || 3;
+  const stressEase = 6 - stress;
+  return wellnessSignalPct(Math.round(
+    ((mood / 5) * 100 * 0.22) +
+    ((stressEase / 5) * 100 * 0.24) +
+    ((clarity / 5) * 100 * 0.28) +
+    ((grounded / 5) * 100 * 0.26)
+  ));
+}
+
+function latestWellnessCheckin(db) {
+  const today = localDateStr();
+  const raw = db?.checkins?.[today];
+  const entries = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  const sorted = entries
+    .filter(Boolean)
+    .sort((a, b) => new Date(a.savedAt || a.createdAt || 0) - new Date(b.savedAt || b.createdAt || 0));
+  return sorted[sorted.length - 1] || null;
+}
+
+function wellnessSummaryFromDb(db) {
+  const checkin = latestWellnessCheckin(db);
+  const score = wellnessSignalFromCheckin(checkin);
+  if (score == null) return null;
+  const thoughts = Array.isArray(db?.thoughts) ? db.thoughts : [];
+  const practices = Array.isArray(db?.practices) ? db.practices : [];
+  const today = localDateStr();
+  const minutes = practices
+    .filter(item => (item.date || '').slice(0, 10) === today)
+    .reduce((sum, item) => sum + (Number(item.minutes) || 0), 0);
+  return {
+    score,
+    openLoops: thoughts.filter(item => !item.done).length,
+    minutes,
+    date: today,
+    updatedAt: checkin.savedAt || checkin.createdAt || new Date().toISOString()
+  };
+}
+
+async function readWellnessSummary(summaryKey, dbKey) {
+  const summary = await readSummary(summaryKey);
+  const summaryScore = summary?.score ?? summary?.signal ?? summary?.clarityScore ?? null;
+  if (summaryScore != null && (summary?.date === localDateStr() || isUpdatedToday(summary))) {
+    return { ...summary, score: wellnessSignalPct(summaryScore) };
+  }
+  const dbSummary = wellnessSummaryFromDb(await readSummary(dbKey));
+  return dbSummary || (summaryScore != null ? { ...summary, score: wellnessSignalPct(summaryScore) } : null);
+}
+
+function renderWellnessSummary(data, delay = 1000) {
+  const score = data?.score ?? data?.signal ?? data?.clarityScore ?? null;
+  if (score == null) {
+    setText('wellness-status', 'No wellness signal yet');
+    document.getElementById('wellness-pct').textContent = '—';
+    document.getElementById('wellness-meta').textContent = 'signal';
+    animateRing('.wellness-ring', 0, delay);
+    reportModuleStatus('wellness', 'empty');
+    return;
+  }
+  const signal = wellnessSignalPct(score);
+  document.getElementById('wellness-pct').textContent = Math.round(signal);
+  document.getElementById('wellness-meta').textContent = 'signal';
+  setText('wellness-status', 'Wellness signal is ' + Math.round(signal) + ' today');
+  animateRing('.wellness-ring', signal, delay);
+  reportModuleStatus('wellness', data?.date === localDateStr() || isUpdatedToday(data) ? 'fresh' : 'stale');
 }
 
 // Work ring: show 100% (full timer, hasn't started)
@@ -1516,28 +1567,10 @@ renderPulseDashboardSummary();
   renderHealthSummary(await readHealthSummary('edgex_health_summary', 'edgex_health_v1'), 1000);
 })();
 
-// Wellness ring: read clarity score from edgex_wellness_summary
+// Wellness ring: read the all-in wellness signal from summary, then local check-ins.
 (async function() {
   await authReady;
-  const data = await readSummary('edgex_wellness_summary');
-  if (!data) {
-    setText('wellness-status', 'No wellness check-in yet');
-    animateRing('.wellness-ring', 0, 1200);
-    reportModuleStatus('wellness', 'empty');
-    return;
-  }
-  const score = data.score ?? null;
-  if (score == null) {
-    setText('wellness-status', 'Clarity not logged yet');
-    animateRing('.wellness-ring', 0, 1200);
-    reportModuleStatus('wellness', 'stale');
-    return;
-  }
-  document.getElementById('wellness-pct').textContent = score;
-  document.getElementById('wellness-meta').textContent = 'clarity';
-  setText('wellness-status', 'Clarity score is ' + score + ' today');
-  animateRing('.wellness-ring', wellnessRingPct(score), 1200);
-  reportModuleStatus('wellness', isUpdatedToday(data) ? 'fresh' : 'stale');
+  renderWellnessSummary(await readWellnessSummary('edgex_wellness_summary', 'edgex_wellness_v1'), 1200);
 })();
 
 // ── Re-fetch all ring data when tab becomes visible again ─────────────────
@@ -1610,15 +1643,7 @@ async function refreshAllRings() {
 
   // Wellness
   (async () => {
-    const data = await readSummary('edgex_wellness_summary');
-    if (!data) { animateRing('.wellness-ring', 0, 0); reportModuleStatus('wellness', 'empty'); return; }
-    const score = data.score ?? null;
-    if (score == null) { animateRing('.wellness-ring', 0, 0); reportModuleStatus('wellness', 'stale'); return; }
-    document.getElementById('wellness-pct').textContent  = score;
-    document.getElementById('wellness-meta').textContent = 'clarity';
-    setText('wellness-status', 'Clarity score is ' + score + ' today');
-    animateRing('.wellness-ring', wellnessRingPct(score), 0);
-    reportModuleStatus('wellness', isUpdatedToday(data) ? 'fresh' : 'stale');
+    renderWellnessSummary(await readWellnessSummary('edgex_wellness_summary', 'edgex_wellness_v1'), 0);
   })();
 }
 
@@ -1720,12 +1745,11 @@ setInterval(async () => {
   // Wellness: show from cached summary
   try {
     const d = JSON.parse(localStorage.getItem('edgex_wellness_summary') || 'null');
-    if (d && d.score != null) {
-      document.getElementById('wellness-pct').textContent  = d.score;
-      document.getElementById('wellness-meta').textContent = 'clarity';
-      setText('wellness-status', 'Clarity score is ' + d.score + ' today');
-      animateRing('.wellness-ring', wellnessRingPct(d.score), 600);
-    }
+    const db = JSON.parse(localStorage.getItem('edgex_wellness_v1') || 'null');
+    renderWellnessSummary(
+      (d && (d.date === todayStr || isUpdatedToday(d))) ? d : (wellnessSummaryFromDb(db) || d),
+      600
+    );
   } catch(e) {}
 
   // Finance: show from cached localStorage data
