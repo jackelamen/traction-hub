@@ -10410,8 +10410,8 @@ function tbBuildBlockEl(block) {
 
   const el = document.createElement('div');
   el.className = 'absolute left-1 right-1 rounded-lg border cursor-pointer transition-all hover:shadow-md group/blk flex flex-col overflow-hidden';
-  // height - 2px gap so touching blocks never share a border row — keeps the timeline readable
-  el.style.cssText = `top:${top}px;height:${height - 2}px;background:${col}15;border-color:${col}35;border-left:4px solid ${col};border-bottom:none;z-index:10`;
+  // 3px bottom margin so touching blocks have a clear gap; flat bottom corners to avoid radius clashes
+  el.style.cssText = `top:${top}px;height:${height - 3}px;background:${col}15;border-color:${col}35;border-left:4px solid ${col};border-bottom:none;border-bottom-left-radius:0;border-bottom-right-radius:0;z-index:10`;
   el.setAttribute('data-block-id', block.id);
 
   // Drop zone
