@@ -3590,6 +3590,112 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   }
 }
 
+function pulseTaskDateEndISO(dateStr) {
+  return new Date(dateStr + 'T23:59:59.999').toISOString();
+}
+
+function pulseTaskNotes(parts) {
+  return parts.filter(Boolean).join('\n\n');
+}
+
+async function createPulseTask(input) {
+  const token = typeof getSbToken === 'function' ? getSbToken() : null;
+  if (!token || token === SB_ANON) throw new Error('Pulse auth token missing.');
+  const clean = {};
+  Object.entries(input || {}).forEach(([key, value]) => {
+    if (value !== undefined) clean[key] = value;
+  });
+  const res = await fetchWithTimeout(`${SB_URL}/rest/v1/tasks`, {
+    method: 'POST',
+    headers: {
+      'apikey': SB_ANON,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    },
+    body: JSON.stringify(clean),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  return Array.isArray(data) ? data[0] : data;
+}
+
+function syncWorkSessionTasksToPulse(entry, date, sessionIndex) {
+  const tasks = (entry.tasks || []).filter(task => task && task.name && !task.gid && !task.pulseId);
+  if (!tasks.length) return;
+
+  const taskMinutes = Math.max(1, Math.round((entry.dur || 0) / tasks.length));
+  Promise.allSettled(tasks.map(async task => {
+    const done = task.status !== 'ongoing';
+    const created = await createPulseTask({
+      title: task.name,
+      notes: pulseTaskNotes([
+        'Imported from a Work session.',
+        entry.notes ? `Session note: ${entry.notes}` : '',
+        `Focus: ${entry.focus || 'Not set'} · Energy: ${entry.energyLabel || 'Not set'} · Session: ${entry.dur || 0} min`,
+      ]),
+      priority: 1,
+      status: done ? 'done' : 'in_progress',
+      due_at: pulseTaskDateEndISO(date),
+      duration_minutes: taskMinutes,
+      all_day: true,
+      completed_at: done ? new Date(entry.ts || Date.now()).toISOString() : null,
+      tags: ['work', 'edgex-work'],
+    });
+    task.pulseId = created?.id || null;
+    return created;
+  })).then(results => {
+    const saved = results.filter(result => result.status === 'fulfilled').length;
+    const failed = results.length - saved;
+    if (saved && sessionLog[date]?.[sessionIndex]) {
+      sessionLog[date][sessionIndex].tasks = entry.tasks;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(sessionLog));
+      pushAllToSupabase();
+      showToast(`✓ ${saved} Work task${saved === 1 ? '' : 's'} sent to Pulse.`);
+    }
+    if (failed) {
+      console.warn('[Pulse] Work session task sync failed:', results.filter(result => result.status === 'rejected'));
+      showToast(`${failed} Work task${failed === 1 ? '' : 's'} could not be sent to Pulse.`);
+    }
+  });
+}
+
+function syncTimeblockCustomTaskToPulse(block, task, date, offsetMinutes) {
+  if (!block || !task || task.gid || !task.name) return;
+  const startMinutes = tbMinutesFromTime(block.start) + (offsetMinutes || 0);
+  createPulseTask({
+    title: task.name,
+    notes: pulseTaskNotes([
+      'Created from Work time blocking.',
+      `Block: ${block.name || 'Work block'}`,
+    ]),
+    priority: task.priority ? 2 : 1,
+    status: 'todo',
+    start_at: tbIsoFromDateMinutes(date, startMinutes),
+    duration_minutes: task.dur || 30,
+    all_day: false,
+    tags: ['work', 'edgex-work'],
+  }).then(created => {
+    if (!created?.id) return;
+    task.gid = `pulse:${created.id}`;
+    task.source = 'pulse';
+    const blocks = tbMutationDate() === date ? tbMutationBlocks() : (tbGetDay(date) || []);
+    const savedBlock = blocks.find(b => b.id === block.id);
+    const savedTask = savedBlock?.tasks?.find(t => t.id === task.id);
+    if (savedTask) {
+      savedTask.gid = task.gid;
+      savedTask.source = 'pulse';
+      tbSaveDay(date, blocks);
+      if (_currentPage === 'timeblocks') renderTBPage();
+      else renderTimeBlocks();
+    }
+    showToast(`✓ "${task.name}" sent to Pulse.`);
+  }).catch(e => {
+    console.warn('[Pulse] time block task sync failed:', e);
+    showToast(`"${task.name}" was added here, but could not be sent to Pulse.`);
+  });
+}
+
 async function deleteKeyFromSupabase(key) {
   if (NO_SYNC_KEYS.has(key)) return;
   try {
@@ -4967,14 +5073,17 @@ function saveSession() {
   if (!sessionLog[today]) sessionLog[today] = [];
 
   const isEdit = editingSessionIdx !== null;
+  let savedSessionIndex = editingSessionIdx;
   if (isEdit) {
     entry.time = sessionLog[today][editingSessionIdx]?.time || entry.time; // preserve original time
     sessionLog[today][editingSessionIdx] = entry;
   } else {
     sessionLog[today].push(entry);
+    savedSessionIndex = sessionLog[today].length - 1;
   }
   localStorage.setItem(SESSION_KEY, JSON.stringify(sessionLog));
   pushAllToSupabase();
+  syncWorkSessionTasksToPulse(entry, today, savedSessionIndex);
 
   // Queue any newly-selected Asana tasks for completion
   selectedAsanaTasks.forEach(t => markAsanaTaskComplete(t.gid, t.name));
@@ -9686,7 +9795,8 @@ function tbAddTaskToBlock(blockId, taskData) {
   if (!block) return;
   if (!block.tasks) block.tasks = [];
   const blockColor = block.color || '#7C3AED';
-  block.tasks.push({
+  const offsetMinutes = block.tasks.reduce((sum, t) => sum + (Number(t.dur) > 0 ? Number(t.dur) : 30), 0);
+  const nextTask = {
     id: tbMakeId(),
     gid: taskData.gid || null,
     name: taskData.name,
@@ -9694,8 +9804,10 @@ function tbAddTaskToBlock(blockId, taskData) {
     priority: !!taskData.priority,
     done: false,
     blockColor,
-  });
+  };
+  block.tasks.push(nextTask);
   tbSaveDay(date, blocks);
+  if (!taskData.gid) syncTimeblockCustomTaskToPulse(block, nextTask, date, offsetMinutes);
   renderTimeBlocks();
   showToast(`"${taskData.name}" added.`);
 }
