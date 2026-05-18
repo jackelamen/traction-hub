@@ -10496,21 +10496,21 @@ function tbBuildBlockEl(block) {
   const endM      = (endMins % 60).toString().padStart(2,'0');
   const timeRange = `${block.start || '?'} – ${endH}:${endM}`;
 
-  // Rendering mode based on natural pixel height:
-  //   tiny    < 32px  → single pill row (name + time, no tasks visible)
-  //   compact 32–72px → header + one task line (no scroll)
+  // Rendering mode based on natural pixel height — mode drives content, NOT the box size.
+  // The block height always equals durPx so it never overflows into the next block.
+  //   tiny    < 32px  → single pill row (name + time, no tasks)
+  //   compact 32–72px → header + one task line
   //   full    > 72px  → header + scrollable task list
   const mode = durPx < 32 ? 'tiny' : durPx < 72 ? 'compact' : 'full';
 
-  // Always render at natural height — never clip the duration representation.
-  // But enforce a minimum so the block is at least tappable.
-  const minH = mode === 'tiny' ? 26 : mode === 'compact' ? 52 : 72;
+  // Height is always the true duration height — no inflation.
+  // Apply a minimum only for single blocks with nothing below them (tiny blocks otherwise become untappable).
+  const minH = 22; // absolute floor so even a 5-min block is tappable
   const height = Math.max(minH, durPx);
 
   const el = document.createElement('div');
   el.className = 'absolute left-1 right-1 rounded-lg border cursor-pointer transition-all hover:shadow-md group/blk flex flex-col overflow-hidden';
-  // 3px bottom margin so touching blocks have a clear gap; flat bottom corners to avoid radius clashes
-  el.style.cssText = `top:${top}px;height:${height - 3}px;background:${col}15;border-color:${col}35;border-left:4px solid ${col};border-bottom:none;border-bottom-left-radius:0;border-bottom-right-radius:0;z-index:10`;
+  el.style.cssText = `top:${top}px;height:${height}px;background:${col}15;border-color:${col}35;border-left:4px solid ${col};z-index:10`;
   el.setAttribute('data-block-id', block.id);
 
   // Drop zone
