@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarClock,
@@ -30,11 +30,17 @@ import { useLists } from "@/lib/lists/queries";
 import { isHabitDueOn } from "@/lib/habits/dates";
 import { isSameDay } from "@/lib/date";
 import { useUi } from "@/lib/ui/store";
+import { formatDateLong } from "@/lib/utils";
 import type { Task } from "@/lib/tasks/types";
 import type { Habit } from "@/lib/habits/types";
 import { useRouter } from "next/navigation";
 
-export function TodayClient() {
+type TodayHeaderState = {
+  dateLabel: string;
+  greeting: string;
+};
+
+export function TodayClient({ firstName }: { firstName: string | null }) {
   const today = useTodayTasks();
   const completedToday = useCompletedTodayTasks();
   const leftovers = useLeftoverTasks();
@@ -90,9 +96,10 @@ export function TodayClient() {
         />
       )}
 
-      <section className="grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <main className="space-y-7">
-          <DashboardSummary
+      <section className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <main className="space-y-5">
+          <DashboardHero
+            firstName={firstName}
             openCount={(today.data ?? []).length}
             scheduledCount={scheduled.length}
             priorityCount={priorityTasks.length}
@@ -164,7 +171,8 @@ export function TodayClient() {
   );
 }
 
-function DashboardSummary({
+function DashboardHero({
+  firstName,
   openCount,
   scheduledCount,
   priorityCount,
@@ -172,6 +180,7 @@ function DashboardSummary({
   doneCount,
   completionPercent,
 }: {
+  firstName: string | null;
   openCount: number;
   scheduledCount: number;
   priorityCount: number;
@@ -179,36 +188,79 @@ function DashboardSummary({
   doneCount: number;
   completionPercent: number;
 }) {
+  const [header, setHeader] = useState<TodayHeaderState>({
+    dateLabel: "",
+    greeting: "Today",
+  });
+
+  useEffect(() => {
+    const now = new Date();
+    setHeader({
+      dateLabel: formatDateLong(now),
+      greeting: greetingFor(now),
+    });
+  }, []);
+
+  const greeting = `${header.greeting}${
+    firstName && header.greeting !== "Today" ? `, ${firstName}` : ""
+  }`;
   const items = [
-    { label: "Open tasks", value: openCount, icon: CalendarClock, meta: `${scheduledCount} timed` },
-    { label: "Priorities", value: priorityCount, icon: Flag, meta: "Needs attention" },
-    { label: "Habits", value: habitCount, icon: Repeat, meta: `${completionPercent}% complete` },
-    { label: "Done", value: doneCount, icon: ListChecks, meta: "Closed loop" },
+    { label: "Open", value: openCount, icon: CalendarClock, meta: `${scheduledCount} timed` },
+    { label: "Priority", value: priorityCount, icon: Flag, meta: "focus" },
+    { label: "Habits", value: habitCount, icon: Repeat, meta: `${completionPercent}%` },
+    { label: "Done", value: doneCount, icon: ListChecks, meta: "today" },
   ];
 
   return (
-    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {items.map(({ label, value, icon: Icon, meta }) => (
-        <div
-          key={label}
-          className="pulse-pane min-h-[10rem] bg-card/95 px-6 py-5"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/10">
-              <Icon className="h-5 w-5" />
-            </div>
-            <div className="pt-1 text-right text-xs font-semibold text-muted-foreground">
-              {meta}
-            </div>
-          </div>
-          <div className="mt-6">
-            <div className="font-display text-5xl font-semibold leading-none text-foreground">{value}</div>
-            <div className="mt-2 text-base font-semibold text-muted-foreground">{label}</div>
-          </div>
+    <section
+      className="overflow-hidden rounded-2xl border border-white/10 px-4 py-3 text-white shadow-[0_16px_42px_rgba(3,10,25,0.16)] md:px-5 md:py-4"
+      style={{ background: "var(--pulse-sidebar-rail)" }}
+    >
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0 xl:max-w-[34rem]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">
+            {header.dateLabel}
+          </p>
+          <h1 className="mt-1 truncate font-display text-2xl font-semibold leading-none tracking-tight text-white md:text-3xl">
+            {greeting}
+          </h1>
+          <p className="mt-1.5 hidden max-w-2xl text-xs leading-5 text-white/62 sm:block">
+            Ready for the day? Here is your prioritized pulse.
+          </p>
         </div>
-      ))}
+
+        <div className="grid grid-cols-4 gap-1.5 sm:gap-2 xl:min-w-[34rem]">
+          {items.map(({ label, value, icon: Icon, meta }) => (
+            <div
+              key={label}
+              className="min-w-0 rounded-xl border border-white/10 bg-white/[0.07] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+            >
+              <div className="flex items-center gap-1.5">
+                <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/10 text-white ring-1 ring-white/10">
+                  <Icon className="h-3.5 w-3.5" />
+                </div>
+                <div className="min-w-0 truncate text-[10px] font-semibold leading-tight text-white/55">
+                  {meta}
+                </div>
+              </div>
+              <div className="mt-2 flex min-w-0 items-end gap-1.5">
+                <div className="font-display text-2xl font-semibold leading-none text-white md:text-3xl">{value}</div>
+                <div className="truncate pb-0.5 text-[11px] font-semibold leading-tight text-white/70 md:text-xs">{label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
+}
+
+function greetingFor(d: Date) {
+  const h = d.getHours();
+  if (h < 5) return "Still up";
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
 }
 
 function PriorityPanel({
@@ -311,10 +363,10 @@ function TodayRail({
 }) {
   return (
     <aside
-      className="overflow-hidden rounded-[1.75rem] text-white shadow-[0_28px_80px_rgba(3,10,25,0.28)] ring-1 ring-white/10 xl:sticky xl:top-6"
+      className="overflow-hidden rounded-[1.5rem] text-white shadow-[0_24px_64px_rgba(3,10,25,0.24)] ring-1 ring-white/10 xl:sticky xl:top-6"
       style={{ background: "var(--pulse-sidebar-rail)" }}
     >
-      <div className="space-y-8 p-6">
+      <div className="space-y-6 p-5">
         <DarkTimeline tasks={tasks} />
         <DarkHabitPanel habits={habits} loggedHabitIds={loggedHabitIds} />
         <ProjectProgressPanel projects={projectProgress} />
@@ -330,14 +382,14 @@ function DarkTimeline({ tasks }: { tasks: Task[] }) {
 
   return (
     <section>
-      <div className="mb-6 flex items-center gap-3">
+      <div className="mb-4 flex items-center gap-3">
         <DarkSectionHeader>Today timeline</DarkSectionHeader>
         <span className="ml-auto rounded-full bg-white/12 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/80">
           Live
         </span>
       </div>
       {tasks.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-6 text-sm font-medium text-white/75">
+        <div className="rounded-xl border border-white/10 bg-white/[0.06] px-4 py-4 text-sm font-medium text-white/75">
           No timed tasks yet.
         </div>
       ) : (
@@ -393,37 +445,37 @@ function DarkHabitPanel({
   const router = useRouter();
 
   return (
-    <section className="border-t border-white/10 pt-7">
-      <div className="mb-4 flex items-center gap-3">
+    <section className="border-t border-white/10 pt-5">
+      <div className="mb-3 flex items-center gap-3">
         <DarkSectionHeader>Habits due today</DarkSectionHeader>
         <Repeat className="ml-auto h-4 w-4 text-white/55" />
       </div>
       {habits.length === 0 ? (
-        <p className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-5 text-sm text-white/75">
+        <p className="rounded-xl border border-white/10 bg-white/[0.06] px-4 py-4 text-sm text-white/75">
           No habits due today.
         </p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {habits.map((habit) => {
             const done = loggedHabitIds.has(habit.id);
             const color = habit.color || "#34d399";
             return (
               <div
                 key={habit.id}
-                className="flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-4 text-left transition-colors hover:bg-white/[0.09]"
+                className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-3 text-left transition-colors hover:bg-white/[0.09]"
               >
                 <button
                   type="button"
                   onClick={() => toggle.mutate({ habitId: habit.id })}
                   disabled={toggle.isPending}
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2"
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-2"
                   style={{
                     borderColor: color,
                     backgroundColor: done ? color : "transparent",
                   }}
                   aria-label={done ? `Unlog ${habit.name}` : `Log ${habit.name}`}
                 >
-                  {done && <Check className="h-4 w-4 text-white" />}
+                  {done && <Check className="h-3.5 w-3.5 text-white" />}
                 </button>
                 <button
                   type="button"

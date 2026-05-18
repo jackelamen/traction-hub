@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { displayNameForUser } from "@/lib/profile/display";
 import { TodayClient } from "./today-client";
-import { TodayHeader } from "./today-header";
 
 export const metadata = {
   title: "Today",
@@ -17,9 +16,8 @@ export default async function TodayPage() {
   const firstName = displayName?.split(/\s+/)[0] ?? null;
 
   return (
-    <div className="mx-auto w-full max-w-[1480px] px-5 py-7 md:px-7 md:py-10">
-      <TodayHeader firstName={firstName} />
-      <TodayClient />
+    <div className="mx-auto w-full max-w-[1480px] px-3 py-4 md:px-7 md:py-8">
+      <TodayClient firstName={firstName} />
     </div>
   );
 }
