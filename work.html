@@ -3712,6 +3712,17 @@ function syncTimeblockTaskToPulse(block, task, date, offsetMinutes) {
   });
 }
 
+function syncBlockTasksToPulse(block, date) {
+  if (!block || !Array.isArray(block.tasks)) return;
+  let offsetMinutes = 0;
+  block.tasks.forEach(task => {
+    if (task.source !== 'pulse' && !tbPulseIdFromTask(task)) {
+      syncTimeblockTaskToPulse(block, task, date, offsetMinutes);
+    }
+    offsetMinutes += Number(task.dur) > 0 ? Number(task.dur) : 30;
+  });
+}
+
 function syncActiveTimeblockTasksToPulse() {
   const date = tbActiveDate();
   (tbGetDay(date) || []).forEach(block => {
@@ -10675,6 +10686,7 @@ function tbCreateBlockWithTask(startStr, gid, name) {
   const blocks = tbActiveBlocks();
   const cat = TB_CATEGORIES[0];
   const taskDur = _tbDropDur || 30;
+  const source = _tbDropSource || (gid && tbPulseIdFromTask({ gid }) ? 'pulse' : gid ? 'asana' : 'work');
   const newBlock = {
     id: tbMakeId(), name: name || 'New Block',
     color: cat.color, start: startStr, dur: Math.max(30, taskDur), tasks: []
@@ -10686,12 +10698,14 @@ function tbCreateBlockWithTask(startStr, gid, name) {
       name: name || 'Task',
       dur: taskDur,
       priority: !!_tbDropPriority,
+      source,
       done: false,
       blockColor: cat.color
     });
   }
   blocks.push(newBlock);
   tbSaveDay(date, blocks);
+  syncBlockTasksToPulse(newBlock, date);
   renderTBPage();
   showToast(`Block created at ${startStr}.`);
 }
@@ -10812,7 +10826,7 @@ function renderTBInlineAsana(q) {
     btn.className = 'w-full text-left px-3 py-2 text-sm hover:bg-primary/5 transition-colors flex items-center gap-2';
     btn.innerHTML = `<span class="material-symbols-outlined text-primary/40 text-sm">task_alt</span><span class="flex-1 truncate font-medium">${t.name}</span>${t.due ? `<span class="text-[9px] text-gray-400 flex-shrink-0">${t.due}</span>` : ''}`;
     btn.onclick = () => {
-      _tbCreateTasks.push({ id: tbMakeId(), gid: t.gid, name: t.name, dur: 30, priority: false, done: false });
+      _tbCreateTasks.push({ id: tbMakeId(), gid: t.gid, name: t.name, dur: 30, priority: false, source: 'asana', done: false });
       renderTBCreateTaskList();
       tbUpdatePreview();
       document.getElementById('tb-inline-asana').classList.add('hidden');
@@ -10826,7 +10840,7 @@ function renderTBInlineAsana(q) {
 function tbAddCustomTaskInline() {
   const name = prompt('Task name:');
   if (!name || !name.trim()) return;
-  _tbCreateTasks.push({ id: tbMakeId(), gid: null, name: name.trim(), dur: 30, priority: false, done: false });
+  _tbCreateTasks.push({ id: tbMakeId(), gid: null, name: name.trim(), dur: 30, priority: false, source: 'work', done: false });
   renderTBCreateTaskList();
   tbUpdatePreview();
 }
@@ -10958,13 +10972,16 @@ function tbConfirmCreate() {
       blocks[idx].start = start;
       blocks[idx].dur   = _tbCreateDur;
       blocks[idx].tasks = _tbCreateTasks.map(t => ({ ...t, blockColor }));
+      syncBlockTasksToPulse(blocks[idx], date);
     }
     showToast('Block updated.');
   } else {
-    blocks.push({
+    const newBlock = {
       id: tbMakeId(), name, color: col, start, dur: _tbCreateDur,
       tasks: _tbCreateTasks.map(t => ({ ...t, blockColor }))
-    });
+    };
+    blocks.push(newBlock);
+    syncBlockTasksToPulse(newBlock, date);
     showToast(`"${name}" block created.`);
   }
 
