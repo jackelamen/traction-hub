@@ -9250,6 +9250,20 @@ function tbIsPulsePriority(value) {
   return ['high', 'urgent', 'p1'].includes(String(value || '').toLowerCase());
 }
 
+function tbPulseTaskTags(task) {
+  return Array.isArray(task?.tags) ? task.tags.map(tag => String(tag).toLowerCase()) : [];
+}
+
+function tbIsWorkMirroredPulseTask(task) {
+  const tags = tbPulseTaskTags(task);
+  const notes = String(task?.notes || '').toLowerCase();
+  return tags.includes('edgex-work') ||
+    notes.includes('mirrored from a scheduled asana task in work') ||
+    notes.includes('created from work time blocking') ||
+    notes.includes('imported from a work session') ||
+    notes.includes('asana task id:');
+}
+
 function tbPulseTasksForActiveDate() {
   const payload = tbPulseBridgePayload();
   const payloadTasks = payload && payload.date === tbActiveDate() ? (payload.tasks || []) : [];
@@ -9260,6 +9274,7 @@ function tbPulseTasksForActiveDate() {
   });
   return [...byId.values()]
     .filter(t => t && t.id && t.title && !t.completed_at)
+    .filter(t => !tbIsWorkMirroredPulseTask(t))
     .map(t => ({
       gid: `pulse:${t.id}`,
       name: t.title,
@@ -9425,7 +9440,7 @@ async function tbRefreshPulseTasksForActiveDate() {
   try {
     const { startISO, endISO } = tbPulseDateBounds(date);
     const params = new URLSearchParams({
-      select: 'id,title,start_at,duration_minutes,priority,tags,list_id,completed_at',
+      select: 'id,title,notes,start_at,duration_minutes,priority,tags,list_id,completed_at',
       deleted_at: 'is.null',
       parent_task_id: 'is.null',
       start_at: `gte.${startISO}`,
