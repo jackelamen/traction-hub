@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { Search, Hash, AtSign, Slash, Sun, CalendarDays, Inbox, Timer, Repeat } from "lucide-react";
+import { Search, Hash, AtSign, Slash, Sun, CalendarDays, Inbox, Timer, Repeat, Layers, Clock3 } from "lucide-react";
 import { useUi } from "@/lib/ui/store";
 import { createClient } from "@/lib/supabase/client";
 import { useLists } from "@/lib/lists/queries";
@@ -21,6 +21,8 @@ const STATIC_COMMANDS: Array<{ label: string; href: Route; icon: React.Component
   { label: "Go to Today", href: "/today", icon: Sun },
   { label: "Go to Inbox", href: "/inbox", icon: Inbox },
   { label: "Go to Upcoming", href: "/upcoming", icon: CalendarDays },
+  { label: "Go to Timeline View", href: "/timeline", icon: Clock3 },
+  { label: "Go to Projects", href: "/projects", icon: Layers },
   { label: "Go to Calendar", href: "/calendar", icon: CalendarDays },
   { label: "Go to Habits", href: "/habits", icon: Repeat },
   { label: "Go to Focus", href: "/focus", icon: Timer },
@@ -168,7 +170,7 @@ export function CommandPalette() {
         else if (item.href) router.push(item.href);
         return;
       case "list":
-        router.push(`/lists/${item.id}` as Route);
+        router.push(`/projects/${item.id}` as Route);
         return;
       case "task":
         openTask(item.id);
@@ -199,7 +201,7 @@ export function CommandPalette() {
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search tasks · /command · #tag · @list"
+            placeholder="Search tasks · /command · #tag · @project"
             className="flex-1 bg-transparent text-sm outline-none"
             onKeyDown={(e) => {
               if (e.key === "ArrowDown") {
@@ -288,7 +290,7 @@ function ItemLabel({ item }: { item: Item }) {
     return (
       <span className="flex flex-1 items-center gap-2">
         <span className="truncate">{item.name}</span>
-        <span className="ml-auto text-xs text-muted-foreground">List</span>
+        <span className="ml-auto text-xs text-muted-foreground">Project</span>
       </span>
     );
   }

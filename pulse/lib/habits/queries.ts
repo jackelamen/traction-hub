@@ -146,6 +146,24 @@ export function useToggleHabitLog() {
   });
 }
 
+export function useDeleteHabitLog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase()
+        .from("habit_logs")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["habit_logs"] });
+      qc.invalidateQueries({ queryKey: habitKeys.all });
+    },
+  });
+}
+
 export function useLast90HabitLogs() {
   const end = startOfDay(new Date());
   const start = addDays(end, -89);

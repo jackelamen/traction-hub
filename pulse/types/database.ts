@@ -259,6 +259,7 @@ export interface Database {
           user_id: string;
           theme: "light" | "dark" | "auto";
           accent: string;
+          sidebar_theme: string;
           density: "comfortable" | "compact";
           week_starts_on: number;
           work_hours_start: string;

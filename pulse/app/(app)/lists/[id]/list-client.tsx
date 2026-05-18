@@ -39,7 +39,7 @@ export function ListClient({ listId }: { listId: string }) {
   if (list.error || !list.data) {
     return (
       <div className="pulse-pane p-6 text-sm text-muted-foreground">
-        List not found. It may have been deleted.
+        Project not found. It may have been deleted.
       </div>
     );
   }
@@ -100,7 +100,7 @@ export function ListClient({ listId }: { listId: string }) {
             size="sm"
             variant={mode === "list" ? "secondary" : "ghost"}
             onClick={() => setMode("list")}
-            aria-label="List view"
+            aria-label="Project list view"
           >
             <LayoutList className="h-4 w-4" />
           </Button>
@@ -112,14 +112,14 @@ export function ListClient({ listId }: { listId: string }) {
           >
             <KanbanSquare className="h-4 w-4" />
           </Button>
-          <Menu listName={data.name} onDelete={async () => {
+          <Menu projectName={data.name} onDelete={async () => {
             await remove.mutateAsync(listId);
             router.push("/today");
           }} />
         </div>
       </header>
 
-      <QuickAdd defaultListId={listId} placeholder="Add task to this list" />
+      <QuickAdd defaultListId={listId} placeholder="Add task to this project" />
 
       {mode === "list" ? (
         <TaskList
@@ -167,7 +167,7 @@ function ColorDot({ color, onPick }: { color: string; onPick: (c: string) => voi
   );
 }
 
-function Menu({ onDelete, listName }: { onDelete: () => void; listName: string }) {
+function Menu({ onDelete, projectName }: { onDelete: () => void; projectName: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
@@ -182,12 +182,12 @@ function Menu({ onDelete, listName }: { onDelete: () => void; listName: string }
           <button
             onClick={() => {
               setOpen(false);
-              if (confirm(`Delete list "${listName}"? Tasks are kept and moved to inbox.`)) onDelete();
+              if (confirm(`Delete project "${projectName}"? Tasks are kept and moved to inbox.`)) onDelete();
             }}
             className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-destructive hover:bg-destructive/10"
           >
             <Trash2 className="h-4 w-4" />
-            Delete list
+            Delete project
           </button>
         </div>
       )}

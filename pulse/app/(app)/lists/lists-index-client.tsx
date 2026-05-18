@@ -26,7 +26,7 @@ export function ListsIndexClient() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="New list name"
+          placeholder="New project name"
           className="flex-1 border-0 bg-transparent text-sm outline-none"
         />
         <Button type="submit" size="sm" variant={name.trim() ? "default" : "ghost"} disabled={!name.trim()}>
@@ -38,14 +38,14 @@ export function ListsIndexClient() {
         <div className="px-3 py-6 text-sm text-muted-foreground">Loading...</div>
       ) : (data ?? []).length === 0 ? (
         <div className="pulse-pane px-6 py-10 text-center text-sm text-muted-foreground">
-          No lists yet. Create one above.
+          No projects yet. Create one above.
         </div>
       ) : (
         <ul className="space-y-1">
           {data!.map((l) => (
             <li key={l.id}>
               <Link
-                href={`/lists/${l.id}`}
+                href={`/projects/${l.id}`}
                 className="pulse-row group"
               >
                 <span

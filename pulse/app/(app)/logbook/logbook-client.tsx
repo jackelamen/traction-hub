@@ -1,10 +1,11 @@
 "use client";
 
-import { CheckCircle2, Flame, ListChecks, Timer } from "lucide-react";
+import { CheckCircle2, Flame, ListChecks, Timer, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { TaskList } from "@/components/tasks/task-list";
 import { useRecentCompletedTasks } from "@/lib/tasks/queries";
-import { useHabits, useHabitLogsWindow } from "@/lib/habits/queries";
-import { useRecentFocusSessions } from "@/lib/focus/queries";
+import { useDeleteHabitLog, useHabits, useHabitLogsWindow } from "@/lib/habits/queries";
+import { useDeleteFocusSession, useRecentFocusSessions } from "@/lib/focus/queries";
 import { addDays, dayLabel, startOfDay } from "@/lib/date";
 import { localDateKey, parseLocalDateKey } from "@/lib/habits/dates";
 import type { Task } from "@/lib/tasks/types";
@@ -14,6 +15,8 @@ export function LogbookClient() {
   const habits = useHabits();
   const habitLogs = useHabitLogsWindow(addDays(new Date(), -29), new Date());
   const focus = useRecentFocusSessions();
+  const deleteHabitLog = useDeleteHabitLog();
+  const deleteFocusSession = useDeleteFocusSession();
 
   const taskGroups = groupTasksByDay(tasks.data ?? []);
   const habitName = new Map((habits.data ?? []).map((habit) => [habit.id, habit.name]));
@@ -58,7 +61,28 @@ export function LogbookClient() {
 
       <section className="grid gap-5 lg:grid-cols-2">
         <section className="pulse-pane p-4">
-          <h2 className="pulse-section-label">Habit history</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="pulse-section-label">Habit history</h2>
+            {(habitLogs.data ?? []).length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                disabled={deleteHabitLog.isPending}
+                onClick={() => {
+                  const logs = habitLogs.data ?? [];
+                  const ok = window.confirm(
+                    `Remove ${logs.length} visible habit log entr${logs.length === 1 ? "y" : "ies"} from Logbook? This keeps the habits.`
+                  );
+                  if (!ok) return;
+                  void Promise.all(logs.map((log) => deleteHabitLog.mutateAsync(log.id)));
+                }}
+              >
+                Clear visible
+              </Button>
+            )}
+          </div>
           {(habitLogs.data ?? []).length === 0 ? (
             <p className="px-1 py-5 text-sm text-muted-foreground">No habit logs yet.</p>
           ) : (
@@ -75,6 +99,16 @@ export function LogbookClient() {
                   <span className="text-xs text-muted-foreground">
                     {dayLabel(parseLocalDateKey(log.logged_on), new Date())}
                   </span>
+                  <button
+                    type="button"
+                    className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    disabled={deleteHabitLog.isPending}
+                    onClick={() => deleteHabitLog.mutate(log.id)}
+                    aria-label="Remove habit log"
+                    title="Remove habit log"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -82,7 +116,28 @@ export function LogbookClient() {
         </section>
 
         <section className="pulse-pane p-4">
-          <h2 className="pulse-section-label">Focus history</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="pulse-section-label">Focus history</h2>
+            {(focus.data ?? []).length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                disabled={deleteFocusSession.isPending}
+                onClick={() => {
+                  const sessions = focus.data ?? [];
+                  const ok = window.confirm(
+                    `Remove ${sessions.length} visible focus session${sessions.length === 1 ? "" : "s"} from Logbook?`
+                  );
+                  if (!ok) return;
+                  void Promise.all(sessions.map((session) => deleteFocusSession.mutateAsync(session.id)));
+                }}
+              >
+                Clear visible
+              </Button>
+            )}
+          </div>
           {(focus.data ?? []).length === 0 ? (
             <p className="px-1 py-5 text-sm text-muted-foreground">No focus sessions yet.</p>
           ) : (
@@ -106,6 +161,16 @@ export function LogbookClient() {
                   <span className="text-xs text-muted-foreground">
                     {dayLabel(new Date(session.started_at), new Date())}
                   </span>
+                  <button
+                    type="button"
+                    className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    disabled={deleteFocusSession.isPending}
+                    onClick={() => deleteFocusSession.mutate(session.id)}
+                    aria-label="Remove focus session"
+                    title="Remove focus session"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </li>
               ))}
             </ul>

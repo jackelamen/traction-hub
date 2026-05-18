@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Archive,
   BookOpen,
   CalendarCheck,
   Check,
+  ChevronRight,
   Dumbbell,
   Flame,
   HeartPulse,
@@ -20,7 +22,6 @@ import {
   Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HabitTodayRow } from "@/components/habits/habit-today-row";
 import {
   useArchiveHabit,
   useCreateHabit,
@@ -54,26 +55,60 @@ const WEEKDAYS = [
 ];
 
 export function HabitsClient() {
+  const searchParams = useSearchParams();
   const habits = useHabits();
   const logs = useLast90HabitLogs();
   const allLogs = logs.data ?? [];
-  const allHabits = habits.data ?? [];
+  const allHabits = useMemo(() => habits.data ?? [], [habits.data]);
+  const dueToday = useMemo(
+    () => allHabits.filter((habit) => isHabitDueOn(habit, new Date())),
+    [allHabits]
+  );
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const requestedHabitId = searchParams.get("habit");
+
+  useEffect(() => {
+    if (!requestedHabitId) return;
+    if (allHabits.some((habit) => habit.id === requestedHabitId)) {
+      setSelectedId(requestedHabitId);
+    }
+  }, [allHabits, requestedHabitId]);
+
+  const selectedHabit =
+    allHabits.find((habit) => habit.id === selectedId) ?? dueToday[0] ?? allHabits[0] ?? null;
 
   return (
-    <div className="space-y-6">
-      <HabitWeekStrip habits={allHabits} logs={allLogs} />
-      <HabitTodayRow />
-      <NewHabitForm />
-
+    <div className="space-y-5">
       {allHabits.length === 0 ? (
-        <div className="pulse-pane px-6 py-10 text-center text-sm text-muted-foreground">
-          No habits yet.
+        <div className="grid gap-5 xl:grid-cols-[minmax(360px,0.85fr)_minmax(0,1.15fr)]">
+          <div className="space-y-5">
+            <HabitWeekStrip habits={allHabits} logs={allLogs} />
+            <NewHabitForm />
+          </div>
+          <div className="pulse-pane flex min-h-[28rem] items-center justify-center px-6 py-10 text-center text-sm text-muted-foreground">
+            No habits yet.
+          </div>
         </div>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2">
-          {allHabits.map((habit) => (
-            <HabitCard key={habit.id} habit={habit} logs={allLogs.filter((l) => l.habit_id === habit.id)} />
-          ))}
+        <div className="grid items-start gap-5 xl:grid-cols-[minmax(360px,0.9fr)_minmax(0,1.1fr)]">
+          <div className="space-y-5">
+            <HabitWeekStrip habits={allHabits} logs={allLogs} />
+            <HabitListPanel
+              habits={allHabits}
+              dueToday={dueToday}
+              logs={allLogs}
+              selectedId={selectedHabit?.id ?? null}
+              onSelect={setSelectedId}
+            />
+            <NewHabitForm />
+          </div>
+
+          {selectedHabit && (
+            <HabitDetailPanel
+              habit={selectedHabit}
+              logs={allLogs.filter((log) => log.habit_id === selectedHabit.id)}
+            />
+          )}
         </div>
       )}
     </div>
@@ -83,24 +118,25 @@ export function HabitsClient() {
 function HabitWeekStrip({ habits, logs }: { habits: Habit[]; logs: HabitLog[] }) {
   const today = startOfDay(new Date());
   const days = Array.from({ length: 7 }).map((_, i) => addDays(today, i - 3));
-  const logMap = completionMap(logs);
 
   return (
     <section className="pulse-pane px-4 py-4">
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1.5">
         {days.map((day) => {
           const key = localDateKey(day);
           const due = habits.filter((habit) => isHabitDueOn(habit, day)).length;
-          const done = habits.filter((habit) => isHabitDueOn(habit, day) && (logMap.get(key) ?? 0) > 0).length;
+          const done = habits.filter(
+            (habit) => isHabitDueOn(habit, day) && isHabitLoggedOn(habit.id, day, logs)
+          ).length;
           const ratio = due === 0 ? 0 : Math.round((done / due) * 100);
           const isToday = isSameDate(day, today);
           return (
             <div
               key={key}
               className={cn(
-                "flex min-h-28 flex-col items-center justify-center rounded-3xl border px-2 py-3 text-center",
+                "flex min-h-24 flex-col items-center justify-center rounded-2xl border px-2 py-3 text-center",
                 isToday
-                  ? "border-border bg-muted text-foreground"
+                  ? "border-primary/25 bg-primary/10 text-foreground"
                   : "border-transparent bg-transparent text-muted-foreground"
               )}
             >
@@ -180,6 +216,165 @@ function NewHabitForm() {
   );
 }
 
+function HabitListPanel({
+  habits,
+  dueToday,
+  logs,
+  selectedId,
+  onSelect,
+}: {
+  habits: Habit[];
+  dueToday: Habit[];
+  logs: HabitLog[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const otherHabits = habits.filter((habit) => !dueToday.some((due) => due.id === habit.id));
+
+  return (
+    <section className="pulse-pane overflow-hidden">
+      <div className="border-b border-border/70 px-5 py-4">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <h2 className="font-display text-xl font-semibold">Today&apos;s habits</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {dueToday.length} due today · {habits.length} total routines
+            </p>
+          </div>
+          <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            {completionCount(dueToday, logs)}/{dueToday.length}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-5 px-4 py-4">
+        <HabitGroup
+          title="Due today"
+          habits={dueToday}
+          logs={logs}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          empty="No routines due today."
+        />
+        {otherHabits.length > 0 && (
+          <HabitGroup
+            title="Other routines"
+            habits={otherHabits}
+            logs={logs}
+            selectedId={selectedId}
+            onSelect={onSelect}
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function HabitGroup({
+  title,
+  habits,
+  logs,
+  selectedId,
+  onSelect,
+  empty,
+}: {
+  title: string;
+  habits: Habit[];
+  logs: HabitLog[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  empty?: string;
+}) {
+  return (
+    <section>
+      <div className="mb-2 flex items-center gap-2 px-1">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{title}</h3>
+        <span className="text-xs text-muted-foreground">{habits.length}</span>
+      </div>
+      {habits.length === 0 ? (
+        <p className="rounded-2xl bg-muted/40 px-4 py-5 text-sm text-muted-foreground">{empty}</p>
+      ) : (
+        <ul className="space-y-2">
+          {habits.map((habit) => (
+            <HabitListItem
+              key={habit.id}
+              habit={habit}
+              logs={logs.filter((log) => log.habit_id === habit.id)}
+              selected={selectedId === habit.id}
+              onSelect={() => onSelect(habit.id)}
+            />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function HabitListItem({
+  habit,
+  logs,
+  selected,
+  onSelect,
+}: {
+  habit: Habit;
+  logs: HabitLog[];
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const toggle = useToggleHabitLog();
+  const todayDone = completionMap(logs).has(localDateKey(new Date()));
+  const color = habit.color || "#10b981";
+  const Icon = habitIcon(habit);
+  const streak = currentStreak(habit, logs);
+
+  return (
+    <li>
+      <div
+        className={cn(
+          "group flex items-center gap-3 rounded-2xl border bg-card px-3 py-3 transition-all",
+          selected
+            ? "border-primary/45 shadow-[0_14px_34px_rgba(20,24,45,0.08)]"
+            : "border-border/70 hover:border-primary/25 hover:bg-muted/25"
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => toggle.mutate({ habitId: habit.id })}
+          disabled={toggle.isPending}
+          className={cn(
+            "grid h-10 w-10 shrink-0 place-items-center rounded-full border transition-colors",
+            todayDone ? "border-transparent text-white" : "border-transparent text-white"
+          )}
+          style={{
+            background: todayDone
+              ? color
+              : `linear-gradient(135deg, ${color}, ${mixWithWhite(color, 0.28)})`,
+          }}
+          aria-label={todayDone ? `Unlog ${habit.name}` : `Log ${habit.name}`}
+        >
+          {todayDone ? <Check className="h-4 w-4" /> : <Icon className="h-5 w-5" />}
+        </button>
+
+        <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
+          <div className="truncate text-base font-semibold text-foreground">{habit.name}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+            <span className="capitalize">{cadenceLabel(habit)}</span>
+            <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+            <span>{streak} day streak</span>
+          </div>
+        </button>
+
+        <ChevronRight
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform",
+            selected ? "translate-x-0 opacity-100" : "opacity-40 group-hover:translate-x-0.5"
+          )}
+        />
+      </div>
+    </li>
+  );
+}
+
 function Segment({
   value,
   onChange,
@@ -231,7 +426,7 @@ function DayPicker({ days, onChange }: { days: number[]; onChange: (days: number
   );
 }
 
-function HabitCard({ habit, logs }: { habit: Habit; logs: HabitLog[] }) {
+function HabitDetailPanel({ habit, logs }: { habit: Habit; logs: HabitLog[] }) {
   const update = useUpdateHabit();
   const archive = useArchiveHabit();
   const toggle = useToggleHabitLog();
@@ -256,15 +451,15 @@ function HabitCard({ habit, logs }: { habit: Habit; logs: HabitLog[] }) {
   }
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-[0_16px_38px_rgba(20,24,45,0.07)] transition-transform hover:-translate-y-0.5 hover:shadow-[0_22px_48px_rgba(20,24,45,0.1)]">
-      <div className="flex items-center gap-4 border-b border-border/70 px-5 py-4">
+    <article className="pulse-pane sticky top-6 overflow-hidden">
+      <div className="flex items-center gap-4 border-b border-border/70 px-6 py-5">
         <div
-          className="grid h-14 w-14 shrink-0 place-items-center rounded-full text-white shadow-[0_14px_28px_rgba(20,24,45,0.14)]"
+          className="grid h-16 w-16 shrink-0 place-items-center rounded-full text-white shadow-[0_14px_28px_rgba(20,24,45,0.14)]"
           style={{
             background: `linear-gradient(135deg, ${color}, ${mixWithWhite(color, 0.25)})`,
           }}
         >
-          <Icon className="h-7 w-7" />
+          <Icon className="h-8 w-8" />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -281,13 +476,13 @@ function HabitCard({ habit, logs }: { habit: Habit; logs: HabitLog[] }) {
                   setEditing(false);
                 }
               }}
-              className="w-full bg-transparent font-display text-xl font-semibold outline-none"
+              className="w-full bg-transparent font-display text-2xl font-semibold outline-none"
             />
           ) : (
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="block truncate font-display text-xl font-semibold"
+              className="block truncate font-display text-2xl font-semibold"
             >
               {habit.name}
             </button>
@@ -322,19 +517,24 @@ function HabitCard({ habit, logs }: { habit: Habit; logs: HabitLog[] }) {
         </button>
       </div>
 
-      <div className="space-y-5 p-5">
-        <div className="flex items-center gap-4">
+      <div className="space-y-6 p-6">
+        <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)]">
           <ProgressRing value={stats.rate} color={color} />
-          <div>
-            <div className="font-display text-2xl font-semibold">{stats.rate}%</div>
-            <div className="text-xs text-muted-foreground">completion this month</div>
+          <div className="grid grid-cols-3 gap-2">
+            <Stat icon={<Flame className="h-3.5 w-3.5" />} label="Current" value={`${stats.current}`} />
+            <Stat icon={<Target className="h-3.5 w-3.5" />} label="Longest" value={`${stats.longest}`} />
+            <Stat icon={<Repeat className="h-3.5 w-3.5" />} label="Month" value={`${stats.rate}%`} />
           </div>
         </div>
-        <Heatmap habit={habit} logs={logs} />
-        <div className="grid grid-cols-3 gap-2">
-          <Stat icon={<Flame className="h-3.5 w-3.5" />} label="Current" value={`${stats.current}`} />
-          <Stat icon={<Target className="h-3.5 w-3.5" />} label="Longest" value={`${stats.longest}`} />
-          <Stat icon={<Repeat className="h-3.5 w-3.5" />} label="Month" value={`${stats.rate}%`} />
+
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Last 90 days
+            </h3>
+            <span className="text-xs font-medium text-muted-foreground">{stats.rate}% this month</span>
+          </div>
+          <Heatmap habit={habit} logs={logs} />
         </div>
       </div>
     </article>
@@ -407,6 +607,16 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
       <div className="mt-1 font-display text-xl font-semibold">{value}</div>
     </div>
   );
+}
+
+function completionCount(habits: Habit[], logs: HabitLog[]) {
+  const today = new Date();
+  return habits.filter((habit) => isHabitDueOn(habit, today) && isHabitLoggedOn(habit.id, today, logs)).length;
+}
+
+function isHabitLoggedOn(habitId: string, date: Date, logs: HabitLog[]) {
+  const key = localDateKey(date);
+  return logs.some((log) => log.habit_id === habitId && log.logged_on === key && !log.deleted_at);
 }
 
 function habitIcon(habit: Habit) {

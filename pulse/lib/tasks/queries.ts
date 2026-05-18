@@ -175,6 +175,7 @@ export function useAnytimeTasks() {
         .neq("status", "cancelled")
         .is("start_at", null)
         .is("due_at", null)
+        .not("tags", "cs", "{someday}")
         .order("priority", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;

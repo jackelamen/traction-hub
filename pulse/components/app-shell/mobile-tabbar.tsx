@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const TABS: Array<{ href: Route; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   { href: "/today", label: "Today", icon: Sun },
   { href: "/upcoming", label: "Upcoming", icon: CalendarDays },
-  { href: "/lists", label: "Lists", icon: Layers },
+  { href: "/projects", label: "Projects", icon: Layers },
   { href: "/habits", label: "Habits", icon: Repeat },
   { href: "/focus", label: "Focus", icon: Timer },
 ];

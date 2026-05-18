@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useUpdateUserProfile, useUserProfile } from "@/lib/profile/queries";
 import { useUpdateUserSettings, useUserSettings } from "@/lib/settings/queries";
+import { SIDEBAR_THEMES, sidebarThemeValue } from "@/lib/settings/sidebar-themes";
 import { useUi } from "@/lib/ui/store";
 import { cn } from "@/lib/utils";
 
@@ -151,6 +152,38 @@ export function SettingsClient() {
                 )}
               />
             ))}
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <div className="mb-2 text-sm font-medium">Sidebar theme</div>
+          <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Sidebar theme">
+            {Object.entries(SIDEBAR_THEMES).map(([value, theme]) => {
+              const active = sidebarThemeValue(data.sidebar_theme) === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => update.mutate({ sidebar_theme: value })}
+                  className={cn(
+                    "flex items-center gap-2 rounded-xl border px-2 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    active
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "h-8 w-12 shrink-0 rounded-lg shadow-inner",
+                      theme.preview
+                    )}
+                  />
+                  <span className="truncate">{theme.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>

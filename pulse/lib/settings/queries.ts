@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database";
+import { DEFAULT_SIDEBAR_THEME } from "./sidebar-themes";
 
 export type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];
 export type UserSettingsUpdate = Database["public"]["Tables"]["user_settings"]["Update"];
@@ -16,6 +17,7 @@ export const settingsKeys = {
 const DEFAULT_SETTINGS: Omit<UserSettings, "user_id" | "updated_at"> = {
   theme: "auto",
   accent: "coral",
+  sidebar_theme: DEFAULT_SIDEBAR_THEME,
   density: "comfortable",
   week_starts_on: 1,
   work_hours_start: "09:00:00",

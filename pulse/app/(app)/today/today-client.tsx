@@ -4,29 +4,35 @@ import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarClock,
+  Check,
   ChevronDown,
   Flag,
   ListChecks,
-  Sparkles,
+  MoreHorizontal,
+  Repeat,
   Timer,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { QuickAdd } from "@/components/tasks/quick-add";
 import { TaskList } from "@/components/tasks/task-list";
 import { TaskRow } from "@/components/tasks/task-row";
-import { HabitTodayRow } from "@/components/habits/habit-today-row";
 import {
   useTodayTasks,
   useCompletedTodayTasks,
   useLeftoverTasks,
   useRescheduleLeftovers,
+  useToggleComplete,
 } from "@/lib/tasks/queries";
 import { useLast7FocusSessions } from "@/lib/focus/queries";
-import { useHabits, useTodayHabitLogs } from "@/lib/habits/queries";
+import { useHabits, useTodayHabitLogs, useToggleHabitLog } from "@/lib/habits/queries";
+import { useLists } from "@/lib/lists/queries";
 import { isHabitDueOn } from "@/lib/habits/dates";
 import { isSameDay } from "@/lib/date";
+import { useUi } from "@/lib/ui/store";
 import type { Task } from "@/lib/tasks/types";
+import type { Habit } from "@/lib/habits/types";
+import { useRouter } from "next/navigation";
 
 export function TodayClient() {
   const today = useTodayTasks();
@@ -35,8 +41,8 @@ export function TodayClient() {
   const focusSessions = useLast7FocusSessions();
   const habits = useHabits();
   const habitLogs = useTodayHabitLogs();
+  const lists = useLists();
   const reschedule = useRescheduleLeftovers();
-  const [intention, setIntention] = useState("");
   const [showDone, setShowDone] = useState(false);
 
   const { scheduled, anytime } = useMemo(() => groupToday(today.data ?? []), [today.data]);
@@ -53,12 +59,24 @@ export function TodayClient() {
     () => anytime.filter((task) => !priorityIds.has(task.id)),
     [anytime, priorityIds]
   );
-  const done = completedToday.data ?? [];
+  const done = useMemo(() => completedToday.data ?? [], [completedToday.data]);
   const dueHabits = (habits.data ?? []).filter((habit) => isHabitDueOn(habit, new Date()));
+  const loggedHabitIds = useMemo(
+    () => new Set((habitLogs.data ?? []).map((log) => log.habit_id)),
+    [habitLogs.data]
+  );
   const doneHabits = (habitLogs.data ?? []).map((log) => ({
     ...log,
     name: habits.data?.find((habit) => habit.id === log.habit_id)?.name ?? "Habit",
   }));
+  const projectNames = useMemo(
+    () => new Map((lists.data ?? []).map((list) => [list.id, list.name])),
+    [lists.data]
+  );
+  const projectProgress = useMemo(
+    () => buildProjectProgress([...(today.data ?? []), ...done], projectNames),
+    [today.data, done, projectNames]
+  );
 
   return (
     <div className="space-y-6">
@@ -72,126 +90,120 @@ export function TodayClient() {
         />
       )}
 
-      <DashboardSummary
-        scheduledCount={scheduled.length}
-        priorityCount={priorityTasks.length}
-        habitCount={dueHabits.length}
-        doneCount={done.length}
-      />
+      <section className="grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <main className="space-y-7">
+          <DashboardSummary
+            openCount={(today.data ?? []).length}
+            scheduledCount={scheduled.length}
+            priorityCount={priorityTasks.length}
+            habitCount={dueHabits.length}
+            doneCount={done.length}
+            completionPercent={completionPercent(today.data ?? [], done)}
+          />
 
-      <section className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="space-y-5">
-          <section className="pulse-pane p-4">
-            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5" />
-              Morning intention
-            </label>
-            <Input
-              value={intention}
-              onChange={(e) => setIntention(e.target.value)}
-              placeholder="One sentence to anchor the day..."
-              className="mt-2 border-0 px-0 text-base shadow-none focus-visible:ring-0"
-            />
-          </section>
-
-          <PriorityPanel tasks={priorityTasks} />
-          <TodayTimeline tasks={scheduled} />
-          <AnytimePanel tasks={flexibleTasks} doneCount={done.length} />
-        </div>
-
-        <aside className="space-y-5">
-          {dueHabits.length > 0 && (
-            <section className="pulse-pane p-4">
-              <SectionHeader>Habits due today</SectionHeader>
-              <HabitTodayRow compact />
-            </section>
-          )}
-          <FocusStats sessions={focusSessions.data ?? []} />
           <section>
             <SectionHeader>Quick capture</SectionHeader>
             <QuickAdd placeholder="Add task, time, duration, or tag" />
           </section>
-        </aside>
-      </section>
 
-      {(done.length > 0 || doneHabits.length > 0) && (
-        <section>
-          <button
-            type="button"
-            onClick={() => setShowDone((v) => !v)}
-            className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:bg-muted/50"
-          >
-            <span>
-              Done today · {done.length} tasks · {doneHabits.length} habits
-            </span>
-            <ChevronDown
-              className={`h-3.5 w-3.5 transition-transform ${showDone ? "rotate-180" : ""}`}
-            />
-          </button>
-          {showDone && (
-            <div className="mt-1 space-y-3">
-              {done.length > 0 && (
-                <ul className="space-y-0.5">
-                  {done.map((t) => (
-                    <TaskRow key={t.id} task={t} dense />
-                  ))}
-                </ul>
+          <PriorityPanel tasks={priorityTasks} projectNames={projectNames} />
+          <AnytimePanel tasks={flexibleTasks} doneCount={done.length} />
+
+          {(done.length > 0 || doneHabits.length > 0) && (
+            <section>
+              <button
+                type="button"
+                onClick={() => setShowDone((v) => !v)}
+                className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:bg-muted/50"
+              >
+                <span>
+                  Done today · {done.length} tasks · {doneHabits.length} habits
+                </span>
+                <ChevronDown
+                  className={`h-3.5 w-3.5 transition-transform ${showDone ? "rotate-180" : ""}`}
+                />
+              </button>
+              {showDone && (
+                <div className="mt-1 space-y-3">
+                  {done.length > 0 && (
+                    <ul className="space-y-0.5">
+                      {done.map((t) => (
+                        <TaskRow key={t.id} task={t} dense />
+                      ))}
+                    </ul>
+                  )}
+                  {doneHabits.length > 0 && (
+                    <ul className="space-y-1 px-2">
+                      {doneHabits.map((habit) => (
+                        <li
+                          key={habit.id}
+                          className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
+                        >
+                          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                          <span className="flex-1 truncate">{habit.name}</span>
+                          <span className="text-xs text-muted-foreground">Habit</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               )}
-              {doneHabits.length > 0 && (
-                <ul className="space-y-1 px-2">
-                  {doneHabits.map((habit) => (
-                    <li
-                      key={habit.id}
-                      className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
-                    >
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                      <span className="flex-1 truncate">{habit.name}</span>
-                      <span className="text-xs text-muted-foreground">Habit</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            </section>
           )}
-        </section>
-      )}
+        </main>
+
+        <TodayRail
+          tasks={scheduled}
+          habits={dueHabits}
+          loggedHabitIds={loggedHabitIds}
+          sessions={focusSessions.data ?? []}
+          projectProgress={projectProgress}
+        />
+      </section>
     </div>
   );
 }
 
 function DashboardSummary({
+  openCount,
   scheduledCount,
   priorityCount,
   habitCount,
   doneCount,
+  completionPercent,
 }: {
+  openCount: number;
   scheduledCount: number;
   priorityCount: number;
   habitCount: number;
   doneCount: number;
+  completionPercent: number;
 }) {
   const items = [
-    { label: "Timed tasks", value: scheduledCount, icon: CalendarClock },
-    { label: "Priorities", value: priorityCount, icon: Flag },
-    { label: "Habits", value: habitCount, icon: ListChecks },
-    { label: "Done", value: doneCount, icon: Timer },
+    { label: "Open tasks", value: openCount, icon: CalendarClock, meta: `${scheduledCount} timed` },
+    { label: "Priorities", value: priorityCount, icon: Flag, meta: "Needs attention" },
+    { label: "Habits", value: habitCount, icon: Repeat, meta: `${completionPercent}% complete` },
+    { label: "Done", value: doneCount, icon: ListChecks, meta: "Closed loop" },
   ];
 
   return (
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {items.map(({ label, value, icon: Icon }, index) => (
+    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {items.map(({ label, value, icon: Icon, meta }) => (
         <div
           key={label}
-          className={`pulse-pane flex items-center gap-3 px-4 py-3 ${
-            index === 0 ? "border-primary/30 bg-primary/5" : "bg-card"
-          }`}
+          className="pulse-pane min-h-[10rem] bg-card/95 px-6 py-5"
         >
-          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
-            <Icon className="h-4 w-4" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/10">
+              <Icon className="h-5 w-5" />
+            </div>
+            <div className="pt-1 text-right text-xs font-semibold text-muted-foreground">
+              {meta}
+            </div>
           </div>
-          <div>
-            <div className="font-display text-3xl font-semibold leading-none text-foreground">{value}</div>
-            <div className="mt-1 text-xs font-medium text-muted-foreground">{label}</div>
+          <div className="mt-6">
+            <div className="font-display text-5xl font-semibold leading-none text-foreground">{value}</div>
+            <div className="mt-2 text-base font-semibold text-muted-foreground">{label}</div>
           </div>
         </div>
       ))}
@@ -199,73 +211,65 @@ function DashboardSummary({
   );
 }
 
-function PriorityPanel({ tasks }: { tasks: Task[] }) {
+function PriorityPanel({
+  tasks,
+  projectNames,
+}: {
+  tasks: Task[];
+  projectNames: Map<string, string>;
+}) {
+  const toggle = useToggleComplete();
+
   return (
-    <section className="pulse-pane p-4">
-      <SectionHeader>Priority queue</SectionHeader>
+    <section className="pulse-pane overflow-hidden">
+      <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+        <SectionHeader className="mb-0">Priority queue</SectionHeader>
+        <MoreHorizontal className="ml-auto h-4 w-4 text-muted-foreground" />
+      </div>
       {tasks.length === 0 ? (
-        <p className="px-1 py-4 text-sm text-muted-foreground">
-          No high-priority tasks in today’s plan.
+        <p className="m-5 rounded-xl bg-muted/40 px-4 py-5 text-sm font-medium text-muted-foreground">
+          No priority tasks in today’s plan.
         </p>
       ) : (
-        <ul className="space-y-2">
+        <div>
+          <div className="hidden grid-cols-[minmax(0,1.7fr)_0.75fr_0.9fr_0.7fr] gap-4 border-b border-border bg-muted/40 px-7 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground md:grid">
+            <span>Title</span>
+            <span>Severity</span>
+            <span>Project</span>
+            <span>Due</span>
+          </div>
+          <ul className="divide-y divide-border">
           {tasks.map((task) => (
             <li
               key={task.id}
-              className="rounded-2xl border border-border bg-card px-3 py-3 shadow-sm"
+              className="grid gap-3 px-5 py-4 md:grid-cols-[minmax(0,1.7fr)_0.75fr_0.9fr_0.7fr] md:items-center md:gap-4 md:px-7"
             >
-              <div className="flex items-start gap-3">
-                <span
-                  className={`mt-1 h-3 w-3 shrink-0 rounded-full ring-4 ${
-                    task.priority >= 3
-                      ? "bg-rose-500 ring-rose-500/15"
-                      : "bg-amber-400 ring-amber-400/20"
-                  }`}
+              <div className="flex min-w-0 items-start gap-3">
+                <Checkbox
+                  checked={!!task.completed_at}
+                  onCheckedChange={() => toggle.mutate(task)}
+                  priority={task.priority}
+                  aria-label={`Complete ${task.title}`}
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold text-foreground">{task.title}</div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-medium text-muted-foreground">
-                    {task.start_at && <span>{formatTaskTime(task)}</span>}
-                    <span>{task.priority >= 3 ? "High priority" : "Medium priority"}</span>
-                    {task.tags?.slice(0, 2).map((tag) => <span key={tag}>#{tag}</span>)}
-                  </div>
+                  <div className="text-base font-semibold leading-snug text-foreground">{task.title}</div>
+                  {task.tags?.[0] && <div className="mt-1 text-xs text-muted-foreground">#{task.tags[0]}</div>}
                 </div>
+              </div>
+              <div>
+                <span className={priorityBadgeClass(task.priority)}>{priorityWord(task.priority)}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                <span className="truncate">{task.list_id ? projectNames.get(task.list_id) ?? "Project" : "No project"}</span>
+              </div>
+              <div className="text-sm font-medium text-muted-foreground">
+                {task.start_at || task.due_at ? formatCompactDue(task) : "Today"}
               </div>
             </li>
           ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-function TodayTimeline({ tasks }: { tasks: Task[] }) {
-  return (
-    <section className="pulse-pane p-4">
-      <SectionHeader>Today timeline</SectionHeader>
-      {tasks.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-8 text-sm text-muted-foreground">
-          No timed tasks yet. Add a time in quick-add or task details to build the day’s timeline.
+          </ul>
         </div>
-      ) : (
-        <ol className="relative space-y-3 before:absolute before:left-[4.25rem] before:top-2 before:h-[calc(100%-1rem)] before:w-px before:bg-border">
-          {tasks.map((task) => (
-            <li key={task.id} className="grid grid-cols-[4rem_minmax(0,1fr)] gap-4">
-              <div className="pt-3 text-right text-xs font-medium text-muted-foreground">
-                {formatTaskTime(task)}
-              </div>
-              <div className="relative">
-                <span className="absolute -left-[1.15rem] top-4 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-background" />
-                <ul>
-                  <TaskRow task={task} dense />
-                </ul>
-                <div className="mt-1 px-3 text-xs text-muted-foreground">
-                  {task.duration_minutes ? `${task.duration_minutes} minutes` : "No duration set"}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ol>
       )}
     </section>
   );
@@ -273,7 +277,7 @@ function TodayTimeline({ tasks }: { tasks: Task[] }) {
 
 function AnytimePanel({ tasks, doneCount }: { tasks: Task[]; doneCount: number }) {
   return (
-    <section className="pulse-pane p-4">
+    <section className="pulse-pane p-5">
       <SectionHeader>Flexible today</SectionHeader>
       <TaskList
         tasks={tasks}
@@ -292,7 +296,186 @@ function AnytimePanel({ tasks, doneCount }: { tasks: Task[]; doneCount: number }
   );
 }
 
-function FocusStats({
+function TodayRail({
+  tasks,
+  habits,
+  loggedHabitIds,
+  sessions,
+  projectProgress,
+}: {
+  tasks: Task[];
+  habits: Habit[];
+  loggedHabitIds: Set<string>;
+  sessions: Array<{ started_at: string; actual_minutes: number | null; planned_minutes: number }>;
+  projectProgress: Array<{ id: string; name: string; percent: number; color: string }>;
+}) {
+  return (
+    <aside
+      className="overflow-hidden rounded-[1.75rem] text-white shadow-[0_28px_80px_rgba(3,10,25,0.28)] ring-1 ring-white/10 xl:sticky xl:top-6"
+      style={{ background: "var(--pulse-sidebar-rail)" }}
+    >
+      <div className="space-y-8 p-6">
+        <DarkTimeline tasks={tasks} />
+        <DarkHabitPanel habits={habits} loggedHabitIds={loggedHabitIds} />
+        <ProjectProgressPanel projects={projectProgress} />
+      </div>
+      <FocusDock sessions={sessions} />
+    </aside>
+  );
+}
+
+function DarkTimeline({ tasks }: { tasks: Task[] }) {
+  const openTask = useUi((s) => s.openTask);
+  const toggle = useToggleComplete();
+
+  return (
+    <section>
+      <div className="mb-6 flex items-center gap-3">
+        <DarkSectionHeader>Today timeline</DarkSectionHeader>
+        <span className="ml-auto rounded-full bg-white/12 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/80">
+          Live
+        </span>
+      </div>
+      {tasks.length === 0 ? (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-6 text-sm font-medium text-white/75">
+          No timed tasks yet.
+        </div>
+      ) : (
+        <ol className="relative space-y-7 before:absolute before:left-2 before:top-3 before:h-[calc(100%-1.5rem)] before:w-px before:bg-white/20">
+          {tasks.map((task, index) => (
+            <li key={task.id} className="relative pl-9">
+              <span
+                className={`absolute left-0 top-1.5 h-4 w-4 rounded-full ring-4 ring-white/10 ${
+                  index % 2 === 0 ? "bg-white" : "bg-primary"
+                }`}
+              />
+              <div className="mb-2 text-sm font-semibold tracking-wide text-white/75">
+                {formatTaskRange(task)}
+              </div>
+              <button
+                type="button"
+                onClick={() => openTask(task.id)}
+                className="group flex w-full items-start gap-3 rounded-2xl border border-white/12 bg-white/[0.09] px-4 py-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-colors hover:border-white/20 hover:bg-white/[0.13] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                aria-label={`Edit ${task.title}`}
+              >
+                <Checkbox
+                  checked={!!task.completed_at}
+                  onCheckedChange={() => toggle.mutate(task)}
+                  priority={task.priority}
+                  className="mt-0.5 border-white/50 bg-transparent hover:border-white"
+                  aria-label={task.completed_at ? `Mark ${task.title} incomplete` : `Complete ${task.title}`}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-base font-semibold text-white group-hover:text-white">
+                    {task.title}
+                  </div>
+                  <div className="mt-1 text-sm text-white/65">
+                    {task.duration_minutes ? `${task.duration_minutes} minutes` : "No duration set"}
+                  </div>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+function DarkHabitPanel({
+  habits,
+  loggedHabitIds,
+}: {
+  habits: Habit[];
+  loggedHabitIds: Set<string>;
+}) {
+  const toggle = useToggleHabitLog();
+  const router = useRouter();
+
+  return (
+    <section className="border-t border-white/10 pt-7">
+      <div className="mb-4 flex items-center gap-3">
+        <DarkSectionHeader>Habits due today</DarkSectionHeader>
+        <Repeat className="ml-auto h-4 w-4 text-white/55" />
+      </div>
+      {habits.length === 0 ? (
+        <p className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-5 text-sm text-white/75">
+          No habits due today.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {habits.map((habit) => {
+            const done = loggedHabitIds.has(habit.id);
+            const color = habit.color || "#34d399";
+            return (
+              <div
+                key={habit.id}
+                className="flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-4 text-left transition-colors hover:bg-white/[0.09]"
+              >
+                <button
+                  type="button"
+                  onClick={() => toggle.mutate({ habitId: habit.id })}
+                  disabled={toggle.isPending}
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2"
+                  style={{
+                    borderColor: color,
+                    backgroundColor: done ? color : "transparent",
+                  }}
+                  aria-label={done ? `Unlog ${habit.name}` : `Log ${habit.name}`}
+                >
+                  {done && <Check className="h-4 w-4 text-white" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/habits?habit=${encodeURIComponent(habit.id)}`)}
+                  className="min-w-0 flex-1 text-left"
+                  aria-label={`Edit ${habit.name}`}
+                >
+                  <span className="block truncate text-sm font-semibold text-white">{habit.name}</span>
+                  <span className="block text-xs capitalize text-white/55">{habit.cadence}</span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ProjectProgressPanel({
+  projects,
+}: {
+  projects: Array<{ id: string; name: string; percent: number; color: string }>;
+}) {
+  if (projects.length === 0) return null;
+
+  return (
+    <section className="border-t border-white/10 pt-7">
+      <DarkSectionHeader>Project progress</DarkSectionHeader>
+      <div className="mt-5 space-y-5">
+        {projects.map((project) => (
+          <div key={project.id}>
+            <div className="mb-2 flex items-center gap-3 text-sm font-semibold text-white/85">
+              <span className="truncate">{project.name}</span>
+              <span className="ml-auto" style={{ color: project.color }}>
+                {project.percent}%
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-white/18">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${project.percent}%`, backgroundColor: project.color }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FocusDock({
   sessions,
 }: {
   sessions: Array<{ started_at: string; actual_minutes: number | null; planned_minutes: number }>;
@@ -303,23 +486,35 @@ function FocusStats({
     .reduce((sum, s) => sum + (s.actual_minutes ?? s.planned_minutes), 0);
   const weekMinutes = sessions.reduce((sum, s) => sum + (s.actual_minutes ?? s.planned_minutes), 0);
 
-  if (todayMinutes === 0 && weekMinutes === 0) return null;
-
   return (
-    <section className="pulse-pane flex flex-wrap items-center gap-3 px-4 py-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <Timer className="h-4 w-4" />
-      </div>
-      <div>
-        <div className="text-sm font-medium">{todayMinutes} focus minutes today</div>
-        <div className="text-xs text-muted-foreground">{weekMinutes} minutes in the last 7 days</div>
+    <section className="border-t border-white/10 bg-black/15 px-6 py-5">
+      <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3">
+        <Timer className="h-5 w-5" />
+        <div className="text-sm font-semibold text-white/85">
+          {todayMinutes} focus min today
+        </div>
+        <div className="ml-auto text-xs text-white/45">{weekMinutes} week</div>
       </div>
     </section>
   );
 }
 
-function SectionHeader({ children }: { children: React.ReactNode }) {
-  return <h2 className="pulse-section-label">{children}</h2>;
+function SectionHeader({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <h2 className={`pulse-section-label mb-3 text-[12px] text-foreground/70 ${className}`}>{children}</h2>;
+}
+
+function DarkSectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-white/75">
+      {children}
+    </h2>
+  );
 }
 
 function LeftoverSection({
@@ -355,6 +550,80 @@ function LeftoverSection({
   );
 }
 
+function completionPercent(openTasks: Task[], doneTasks: Task[]) {
+  const total = openTasks.length + doneTasks.length;
+  if (total === 0) return 0;
+  return Math.round((doneTasks.length / total) * 100);
+}
+
+function buildProjectProgress(tasks: Task[], projectNames: Map<string, string>) {
+  const colors = ["#34d399", "#60a5fa", "#f59e0b"];
+  const groups = new Map<string, { id: string; name: string; total: number; done: number }>();
+
+  for (const task of tasks) {
+    if (!task.list_id) continue;
+    const current = groups.get(task.list_id) ?? {
+      id: task.list_id,
+      name: projectNames.get(task.list_id) ?? "Project",
+      total: 0,
+      done: 0,
+    };
+    current.total += 1;
+    if (task.completed_at) current.done += 1;
+    groups.set(task.list_id, current);
+  }
+
+  return Array.from(groups.values())
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 3)
+    .map((project, index) => ({
+      id: project.id,
+      name: project.name,
+      percent: project.total === 0 ? 0 : Math.round((project.done / project.total) * 100),
+      color: colors[index % colors.length],
+    }));
+}
+
+function priorityWord(priority: Task["priority"]) {
+  if (priority >= 3) return "High";
+  if (priority === 2) return "Medium";
+  if (priority === 1) return "Low";
+  return "None";
+}
+
+function priorityBadgeClass(priority: Task["priority"]) {
+  const base =
+    "inline-flex rounded-md px-2.5 py-1 text-xs font-semibold uppercase tracking-wider";
+  if (priority >= 3) return `${base} bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-200`;
+  if (priority === 2) return `${base} bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200`;
+  return `${base} bg-muted text-muted-foreground`;
+}
+
+function formatCompactDue(task: Task) {
+  const iso = task.start_at ?? task.due_at;
+  if (!iso) return "Today";
+  const date = new Date(iso);
+  if (task.start_at && task.duration_minutes) {
+    return `${formatShortTime(date)} · ${task.duration_minutes}m`;
+  }
+  return task.all_day ? "Today" : formatShortTime(date);
+}
+
+function formatTaskRange(task: Task) {
+  if (!task.start_at) return "Anytime";
+  const start = new Date(task.start_at);
+  if (!task.duration_minutes) return formatShortTime(start);
+  const end = new Date(start.getTime() + task.duration_minutes * 60000);
+  return `${formatShortTime(start)} - ${formatShortTime(end)}`;
+}
+
+function formatShortTime(date: Date) {
+  return date.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* Grouping                                                            */
 /* ------------------------------------------------------------------ */
@@ -376,12 +645,4 @@ function groupToday(tasks: Task[]) {
 
 function timeValue(task: Task) {
   return task.start_at ? new Date(task.start_at).getTime() : Number.MAX_SAFE_INTEGER;
-}
-
-function formatTaskTime(task: Task) {
-  if (!task.start_at) return "Anytime";
-  return new Date(task.start_at).toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }

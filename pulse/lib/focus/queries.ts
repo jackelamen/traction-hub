@@ -98,3 +98,18 @@ export function useUpdateFocusSession() {
     onSuccess: () => qc.invalidateQueries({ queryKey: focusKeys.all }),
   });
 }
+
+export function useDeleteFocusSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase()
+        .from("focus_sessions")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: focusKeys.all }),
+  });
+}

@@ -2,15 +2,19 @@
 
 import Link from "next/link";
 import type { Route } from "next";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Inbox,
   Sun,
   CalendarDays,
   Calendar,
+  Clock3,
   Repeat,
   Timer,
-  Archive,
+  ArchiveRestore,
+  BookOpenCheck,
   Layers,
   Search,
   Settings,
@@ -23,6 +27,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarLists } from "./sidebar-lists";
+import { SidebarTags } from "./sidebar-tags";
 import { useUi } from "@/lib/ui/store";
 import { initialsForName } from "@/lib/profile/display";
 import { PulseMark } from "./pulse-mark";
@@ -36,18 +41,18 @@ type NavItem = {
 type NavMode = "tasks" | "calendar" | "habits" | "focus" | "settings";
 
 const PINNED: NavItem[] = [
-  { href: "/inbox", label: "Inbox", icon: Inbox, shortcut: "g i" },
   { href: "/today", label: "Today", icon: Sun, shortcut: "g t" },
+  { href: "/inbox", label: "Inbox", icon: Inbox, shortcut: "g i" },
   { href: "/upcoming", label: "Upcoming", icon: CalendarDays, shortcut: "g u" },
   { href: "/anytime", label: "Anytime", icon: Layers },
-  { href: "/someday", label: "Someday", icon: Archive },
-  { href: "/logbook", label: "Logbook", icon: Archive },
+  { href: "/someday", label: "Someday", icon: ArchiveRestore },
+  { href: "/logbook", label: "Logbook", icon: BookOpenCheck },
 ];
 
 const CALENDAR_ITEMS: NavItem[] = [
   { href: "/calendar", label: "Calendar", icon: Calendar, shortcut: "g c" },
   { href: "/upcoming", label: "Upcoming", icon: CalendarDays, shortcut: "g u" },
-  { href: "/today", label: "Today schedule", icon: Sun, shortcut: "g t" },
+  { href: "/timeline", label: "Timeline View", icon: Clock3, shortcut: "g l" },
 ];
 
 const HABIT_ITEMS: NavItem[] = [
@@ -78,13 +83,27 @@ const RAIL: Array<{
 
 export function SidebarNav({ email, name }: { email?: string | null; name?: string | null }) {
   const path = usePathname();
+  const queryClient = useQueryClient();
   const setPaletteOpen = useUi((s) => s.setPaletteOpen);
+  const [refreshing, setRefreshing] = useState(false);
   const mode = modeForPath(path);
   const label = name || email || "Not signed in";
 
+  async function refreshData() {
+    setRefreshing(true);
+    try {
+      await queryClient.invalidateQueries();
+    } finally {
+      window.setTimeout(() => setRefreshing(false), 350);
+    }
+  }
+
   return (
     <nav className="flex h-full overflow-hidden border-r border-white/10 text-white shadow-[12px_0_32px_rgba(15,16,32,0.12)]">
-      <div className="flex w-[74px] shrink-0 flex-col items-center bg-[linear-gradient(180deg,#253568_0%,#303b72_48%,#3c4a80_100%)] px-3 py-4">
+      <div
+        className="flex w-[74px] shrink-0 flex-col items-center px-3 py-4"
+        style={{ background: "var(--pulse-sidebar-rail)" }}
+      >
         <div className="mb-7 grid h-12 w-12 place-items-center rounded-3xl bg-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_12px_26px_rgba(0,0,0,0.16)]">
           <PulseMark className="h-9 w-9" />
         </div>
@@ -119,19 +138,21 @@ export function SidebarNav({ email, name }: { email?: string | null; name?: stri
           <button
             type="button"
             aria-label="Sync"
-            title="Sync"
+            title="Refresh data"
+            onClick={refreshData}
+            disabled={refreshing}
             className="grid h-10 w-10 place-items-center rounded-2xl hover:bg-white/10 hover:text-white"
           >
-            <RefreshCw className="h-5 w-5" />
+            <RefreshCw className={cn("h-5 w-5", refreshing && "animate-spin")} />
           </button>
           <button
             type="button"
             aria-label="Notifications"
-            title="Notifications"
-            className="relative grid h-10 w-10 place-items-center rounded-2xl hover:bg-white/10 hover:text-white"
+            title="Notifications are not connected yet"
+            disabled
+            className="relative grid h-10 w-10 place-items-center rounded-2xl opacity-55"
           >
             <Bell className="h-5 w-5" />
-            <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-[#3c4a80]" />
           </button>
           <button
             type="button"
@@ -185,6 +206,9 @@ export function SidebarNav({ email, name }: { email?: string | null; name?: stri
           <div className="mt-5">
             <SidebarLists />
           </div>
+          <div className="mt-5">
+            <SidebarTags />
+          </div>
         </>
       ) : (
         <div className="mt-4 px-2">
@@ -194,19 +218,6 @@ export function SidebarNav({ email, name }: { email?: string | null; name?: stri
           <div className="space-y-0.5">
             {itemsForMode(mode).map((item) => (
               <NavLink key={item.href} item={item} active={path.startsWith(item.href)} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {mode === "tasks" && (
-        <div className="mt-5 px-2">
-          <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Tools
-          </div>
-          <div className="space-y-0.5">
-            {[CALENDAR_ITEMS[0], HABIT_ITEMS[0], FOCUS_ITEMS[0]].map((item) => (
-            <NavLink key={item.href} item={item} active={path.startsWith(item.href)} />
             ))}
           </div>
         </div>
@@ -236,7 +247,7 @@ export function SidebarNav({ email, name }: { email?: string | null; name?: stri
 }
 
 function modeForPath(path: string): NavMode {
-  if (path.startsWith("/calendar") || path.startsWith("/upcoming")) return "calendar";
+  if (path.startsWith("/calendar") || path.startsWith("/upcoming") || path.startsWith("/timeline")) return "calendar";
   if (path.startsWith("/habits")) return "habits";
   if (path.startsWith("/focus")) return "focus";
   if (path.startsWith("/settings")) return "settings";

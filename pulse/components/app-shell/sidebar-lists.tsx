@@ -39,21 +39,21 @@ export function SidebarLists() {
   return (
     <div className="px-2">
       <div className="flex items-center justify-between px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        <span>Lists</span>
+        <span>Projects</span>
         <div className="flex items-center gap-1">
           <button
             className="rounded p-0.5 text-muted-foreground hover:bg-card hover:text-foreground"
             aria-label="Add folder"
             onClick={() => setCreatingFolder(true)}
-            title="New folder"
+            title="New project group"
           >
             <FolderIcon className="h-3 w-3" />
           </button>
           <button
             className="rounded p-0.5 text-muted-foreground hover:bg-card hover:text-foreground"
-            aria-label="Add list"
+            aria-label="Add project"
             onClick={() => setCreatingList({ folderId: null })}
-            title="New list"
+            title="New project"
           >
             <Plus className="h-3 w-3" />
           </button>
@@ -61,7 +61,7 @@ export function SidebarLists() {
       </div>
 
       {allLists.length === 0 && allFolders.length === 0 && !creatingList && !creatingFolder && (
-        <div className="px-3 py-2 text-xs text-muted-foreground">No lists yet</div>
+        <div className="px-3 py-2 text-xs text-muted-foreground">No projects yet</div>
       )}
 
       {/* Folders */}
@@ -83,7 +83,7 @@ export function SidebarLists() {
                   setCreatingList({ folderId: folder.id });
                 }}
                 className="ml-auto rounded p-0.5 opacity-0 hover:bg-muted group-hover:opacity-100"
-                aria-label="Add list to folder"
+                aria-label="Add project to group"
               >
                 <Plus className="h-3 w-3" />
               </button>
@@ -91,7 +91,11 @@ export function SidebarLists() {
             {!folder.collapsed && (
               <div className="space-y-0.5 pl-3">
                 {children.map((l) => (
-                  <SidebarListLink key={l.id} list={l} active={path === `/lists/${l.id}`} />
+                  <SidebarListLink
+                    key={l.id}
+                    list={l}
+                    active={path === `/projects/${l.id}` || path === `/lists/${l.id}`}
+                  />
                 ))}
                 {creatingList?.folderId === folder.id && (
                   <InlineCreate
@@ -108,10 +112,14 @@ export function SidebarLists() {
         );
       })}
 
-      {/* Root-level lists */}
+      {/* Root-level projects */}
       <div className="space-y-0.5">
         {rootLists.map((l) => (
-          <SidebarListLink key={l.id} list={l} active={path === `/lists/${l.id}`} />
+          <SidebarListLink
+            key={l.id}
+            list={l}
+            active={path === `/projects/${l.id}` || path === `/lists/${l.id}`}
+          />
         ))}
         {creatingList?.folderId === null && (
           <InlineCreate
@@ -142,7 +150,7 @@ function SidebarListLink({ list, active }: { list: List; active: boolean }) {
   const color = list.color || "#6b7280";
   return (
     <Link
-      href={`/lists/${list.id}`}
+      href={`/projects/${list.id}`}
       className={cn(
         "flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm transition-colors",
         active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-card hover:text-foreground"
@@ -158,7 +166,7 @@ function SidebarListLink({ list, active }: { list: List; active: boolean }) {
 }
 
 function InlineCreate({
-  placeholder = "List name",
+  placeholder = "Project name",
   onSubmit,
   onCancel,
 }: {

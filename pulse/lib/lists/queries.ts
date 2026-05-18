@@ -193,3 +193,100 @@ export function useUpsertTag() {
     onSuccess: () => qc.invalidateQueries({ queryKey: tagKeys.all }),
   });
 }
+
+export function useRenameTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ oldName, newName }: { oldName: string; newName: string }) => {
+      const from = normalizeTagName(oldName);
+      const to = normalizeTagName(newName);
+      if (!from || !to) throw new Error("Tag names cannot be blank.");
+      if (from === to) return { oldName: from, newName: to };
+
+      const client = supabase();
+      const { data: taskRows, error: taskReadError } = await client
+        .from("tasks")
+        .select("id,tags")
+        .contains("tags", [from])
+        .is("deleted_at", null);
+      if (taskReadError) throw taskReadError;
+
+      const { data: existingTag } = await client
+        .from("tags")
+        .select("color")
+        .eq("name", from)
+        .maybeSingle();
+
+      const { error: upsertError } = await client
+        .from("tags")
+        .upsert(
+          { name: to, color: existingTag?.color ?? null },
+          { onConflict: "user_id,name" }
+        );
+      if (upsertError) throw upsertError;
+
+      const updates = ((taskRows ?? []) as Array<{ id: string; tags: string[] | null }>).map(
+        (task) => {
+          const nextTags = Array.from(
+            new Set((task.tags ?? []).map((tag) => (tag === from ? to : tag)))
+          );
+          return client.from("tasks").update({ tags: nextTags }).eq("id", task.id);
+        }
+      );
+      const results = await Promise.all(updates);
+      const taskUpdateError = results.find((result) => result.error)?.error;
+      if (taskUpdateError) throw taskUpdateError;
+
+      const { error: deleteOldError } = await client.from("tags").delete().eq("name", from);
+      if (deleteOldError) throw deleteOldError;
+
+      return { oldName: from, newName: to };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: tagKeys.all });
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+}
+
+export function useDeleteTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const tagName = normalizeTagName(name);
+      if (!tagName) throw new Error("Tag name cannot be blank.");
+
+      const client = supabase();
+      const { data: taskRows, error: taskReadError } = await client
+        .from("tasks")
+        .select("id,tags")
+        .contains("tags", [tagName])
+        .is("deleted_at", null);
+      if (taskReadError) throw taskReadError;
+
+      const updates = ((taskRows ?? []) as Array<{ id: string; tags: string[] | null }>).map(
+        (task) =>
+          client
+            .from("tasks")
+            .update({ tags: (task.tags ?? []).filter((tag) => tag !== tagName) })
+            .eq("id", task.id)
+      );
+      const results = await Promise.all(updates);
+      const taskUpdateError = results.find((result) => result.error)?.error;
+      if (taskUpdateError) throw taskUpdateError;
+
+      const { error: deleteError } = await client.from("tags").delete().eq("name", tagName);
+      if (deleteError) throw deleteError;
+
+      return tagName;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: tagKeys.all });
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+}
+
+function normalizeTagName(name: string) {
+  return name.trim().replace(/^#/, "").toLowerCase();
+}

@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarNav } from "@/components/app-shell/sidebar-nav";
 import { MobileTabBar } from "@/components/app-shell/mobile-tabbar";
@@ -16,11 +15,27 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const supabase = createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser().catch((error) => {
+    console.error("[pulse] app auth check failed", formatError(error));
+    return { data: { user: null } };
+  });
 
   if (!user) {
-    redirect("/login");
-    return null;
+    return (
+      <main className="flex min-h-dvh items-center justify-center bg-background p-6">
+        <section className="pulse-pane w-full max-w-sm p-8 text-center">
+          <div className="mx-auto h-10 w-10 rounded-xl bg-primary" />
+          <h1 className="mt-5 font-display text-xl font-semibold text-foreground">Sign in to Pulse</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Your session was not found on this server.</p>
+          <a
+            href="/login"
+            className="mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
+          >
+            Go to login
+          </a>
+        </section>
+      </main>
+    );
   }
 
   return (
@@ -40,4 +55,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <PulseWorkBridge />
     </div>
   );
+}
+
+function formatError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause,
+    };
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
 }

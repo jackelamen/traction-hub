@@ -212,13 +212,13 @@ function Panel({ selectedId, onClose }: { selectedId: string; onClose: () => voi
 
         {/* Metadata rows */}
         <div className="mt-4 space-y-3 text-sm">
-          <Row icon={<ListChecks className="h-4 w-4 text-muted-foreground" />} label="List">
+          <Row icon={<ListChecks className="h-4 w-4 text-muted-foreground" />} label="Project">
             <select
               value={value.list_id ?? ""}
               onChange={(e) => persist({ list_id: e.target.value || null })}
               className="rounded-md border border-border bg-card px-2 py-1 text-sm"
             >
-              <option value="">Inbox</option>
+              <option value="">No project</option>
               {(lists.data ?? []).map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.name}
