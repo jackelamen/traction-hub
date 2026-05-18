@@ -3609,12 +3609,11 @@ async function createPulseTask(input) {
   const token = typeof getSbToken === 'function' ? getSbToken() : null;
   if (!token || token === SB_ANON) throw new Error('Pulse auth token missing.');
   const userId = getPulseUserId();
-  if (!userId) throw new Error('Pulse user missing.');
   const clean = {};
   Object.entries(input || {}).forEach(([key, value]) => {
     if (value !== undefined) clean[key] = value;
   });
-  if (!clean.user_id) clean.user_id = userId;
+  if (userId && !clean.user_id) clean.user_id = userId;
   const res = await fetchWithTimeout(`${SB_URL}/rest/v1/tasks`, {
     method: 'POST',
     headers: {
