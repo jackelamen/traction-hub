@@ -3598,13 +3598,23 @@ function pulseTaskNotes(parts) {
   return parts.filter(Boolean).join('\n\n');
 }
 
+function getPulseUserId() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session') || '{}');
+    return s?.user?.id || null;
+  } catch(e) { return null; }
+}
+
 async function createPulseTask(input) {
   const token = typeof getSbToken === 'function' ? getSbToken() : null;
   if (!token || token === SB_ANON) throw new Error('Pulse auth token missing.');
+  const userId = getPulseUserId();
+  if (!userId) throw new Error('Pulse user missing.');
   const clean = {};
   Object.entries(input || {}).forEach(([key, value]) => {
     if (value !== undefined) clean[key] = value;
   });
+  if (!clean.user_id) clean.user_id = userId;
   const res = await fetchWithTimeout(`${SB_URL}/rest/v1/tasks`, {
     method: 'POST',
     headers: {
@@ -3660,31 +3670,38 @@ function syncWorkSessionTasksToPulse(entry, date, sessionIndex) {
   });
 }
 
-function syncTimeblockCustomTaskToPulse(block, task, date, offsetMinutes) {
-  if (!block || !task || task.gid || !task.name) return;
+function syncTimeblockTaskToPulse(block, task, date, offsetMinutes) {
+  if (!block || !task || task.pulseId || !task.name) return;
+  const existingPulseId = tbPulseIdFromTask(task);
+  if (existingPulseId) {
+    task.pulseId = existingPulseId;
+    return;
+  }
+  const source = task.source || (task.gid ? 'asana' : 'work');
   const startMinutes = tbMinutesFromTime(block.start) + (offsetMinutes || 0);
   createPulseTask({
     title: task.name,
     notes: pulseTaskNotes([
-      'Created from Work time blocking.',
+      source === 'asana' ? 'Mirrored from a scheduled Asana task in Work.' : 'Created from Work time blocking.',
       `Block: ${block.name || 'Work block'}`,
+      task.gid && source === 'asana' ? `Asana task id: ${task.gid}` : '',
     ]),
     priority: task.priority ? 2 : 1,
     status: 'todo',
     start_at: tbIsoFromDateMinutes(date, startMinutes),
     duration_minutes: task.dur || 30,
     all_day: false,
-    tags: ['work', 'edgex-work'],
+    tags: source === 'asana' ? ['work', 'asana', 'edgex-work'] : ['work', 'edgex-work'],
   }).then(created => {
     if (!created?.id) return;
-    task.gid = `pulse:${created.id}`;
-    task.source = 'pulse';
+    task.pulseId = created.id;
+    task.source = source;
     const blocks = tbMutationDate() === date ? tbMutationBlocks() : (tbGetDay(date) || []);
     const savedBlock = blocks.find(b => b.id === block.id);
     const savedTask = savedBlock?.tasks?.find(t => t.id === task.id);
     if (savedTask) {
-      savedTask.gid = task.gid;
-      savedTask.source = 'pulse';
+      savedTask.pulseId = task.pulseId;
+      savedTask.source = source;
       tbSaveDay(date, blocks);
       if (_currentPage === 'timeblocks') renderTBPage();
       else renderTimeBlocks();
@@ -3693,6 +3710,19 @@ function syncTimeblockCustomTaskToPulse(block, task, date, offsetMinutes) {
   }).catch(e => {
     console.warn('[Pulse] time block task sync failed:', e);
     showToast(`"${task.name}" was added here, but could not be sent to Pulse.`);
+  });
+}
+
+function syncActiveTimeblockTasksToPulse() {
+  const date = tbActiveDate();
+  (tbGetDay(date) || []).forEach(block => {
+    let offset = 0;
+    (block.tasks || []).forEach(task => {
+      if (task.source !== 'pulse' && !task.pulseId && !tbPulseIdFromTask(task)) {
+        syncTimeblockTaskToPulse(block, task, date, offset);
+      }
+      offset += Number(task.dur) > 0 ? Number(task.dur) : 30;
+    });
   });
 }
 
@@ -9274,6 +9304,7 @@ function tbPulseTasksForActiveDate() {
 }
 
 function tbPulseIdFromTask(task) {
+  if (task?.pulseId) return task.pulseId;
   return task && typeof task.gid === 'string' && task.gid.startsWith('pulse:')
     ? task.gid.slice(6)
     : null;
@@ -9487,6 +9518,7 @@ function renderTBPulseStatus() {
 async function refreshTBTaskSources() {
   _tbPulseTasksDate = null;
   await tbRefreshPulseTasksForActiveDate();
+  syncActiveTimeblockTasksToPulse();
   if (getAsanaPAT()) refreshAsanaTasks();
   else renderTBAsanaPanel(document.getElementById('tb-asana-search')?.value || '');
 }
@@ -9716,7 +9748,8 @@ function tbDropOnBlock(event, blockId) {
     gid: tbDragTaskGid,
     name,
     dur: sourceTask?.dur || 30,
-    priority: !!sourceTask?.priority
+    priority: !!sourceTask?.priority,
+    source: sourceTask?.source || null,
   });
 }
 
@@ -9845,7 +9878,7 @@ function renderBTTaskList(query) {
       <span class="flex-1 font-medium text-on-surface leading-snug">${t.name}</span>
       ${t.due ? `<span class="text-[10px] text-gray-400 flex-shrink-0">${t.due}</span>` : ''}`;
     btn.onclick = () => {
-      tbSelectedBTTask = { gid: t.gid, name: t.name };
+      tbSelectedBTTask = { gid: t.gid, name: t.name, source: 'asana' };
       list.querySelectorAll('button').forEach(b => b.classList.remove('bg-primary/10'));
       btn.classList.add('bg-primary/10');
       document.getElementById('bt-search').value = t.name;
@@ -9901,12 +9934,13 @@ function tbAddTaskToBlock(blockId, taskData) {
     name: taskData.name,
     dur: taskData.dur || 30,
     priority: !!taskData.priority,
+    source: taskData.source || (taskData.gid ? 'asana' : 'work'),
     done: false,
     blockColor,
   };
   block.tasks.push(nextTask);
   tbSaveDay(date, blocks);
-  if (!taskData.gid) syncTimeblockCustomTaskToPulse(block, nextTask, date, offsetMinutes);
+  if (nextTask.source !== 'pulse') syncTimeblockTaskToPulse(block, nextTask, date, offsetMinutes);
   renderTimeBlocks();
   showToast(`"${taskData.name}" added.`);
 }
@@ -10398,7 +10432,8 @@ function tbBuildBlockEl(block) {
         gid: _tbDropGid,
         name: _tbDropName || 'Task',
         dur: _tbDropDur || 30,
-        priority: !!_tbDropPriority
+        priority: !!_tbDropPriority,
+        source: _tbDropSource,
       });
       tbClearDropTask();
       renderTBPage();
