@@ -3605,14 +3605,69 @@ function getPulseUserId() {
   } catch(e) { return null; }
 }
 
+let _pulseProjectListCache = null;
+
+function normalizePulseProjectName(name) {
+  return String(name || '').trim().replace(/\s+/g, ' ');
+}
+
+async function fetchPulseProjectLists() {
+  const token = typeof getSbToken === 'function' ? getSbToken() : null;
+  if (!token || token === SB_ANON) throw new Error('Pulse auth token missing.');
+  const params = new URLSearchParams({
+    select: 'id,name',
+    deleted_at: 'is.null',
+    order: 'sort_order.asc',
+  });
+  const res = await fetchWithTimeout(`${SB_URL}/rest/v1/lists?${params.toString()}`, {
+    headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const rows = await res.json();
+  _pulseProjectListCache = new Map((rows || []).map(list => [normalizePulseProjectName(list.name).toLowerCase(), list.id]));
+  return _pulseProjectListCache;
+}
+
+async function ensurePulseProjectList(projectName) {
+  const name = normalizePulseProjectName(projectName);
+  if (!name) return null;
+  const cache = _pulseProjectListCache || await fetchPulseProjectLists();
+  const key = name.toLowerCase();
+  if (cache.has(key)) return cache.get(key);
+
+  const token = typeof getSbToken === 'function' ? getSbToken() : null;
+  if (!token || token === SB_ANON) throw new Error('Pulse auth token missing.');
+  const userId = getPulseUserId();
+  const payload = { name, icon: 'briefcase', view_mode: 'list' };
+  if (userId) payload.user_id = userId;
+  const res = await fetchWithTimeout(`${SB_URL}/rest/v1/lists`, {
+    method: 'POST',
+    headers: {
+      'apikey': SB_ANON,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  const created = Array.isArray(data) ? data[0] : data;
+  if (created?.id) cache.set(key, created.id);
+  return created?.id || null;
+}
+
 async function createPulseTask(input) {
   const token = typeof getSbToken === 'function' ? getSbToken() : null;
   if (!token || token === SB_ANON) throw new Error('Pulse auth token missing.');
   const userId = getPulseUserId();
+  const pulseProjectName = input?.pulseProjectName;
   const clean = {};
   Object.entries(input || {}).forEach(([key, value]) => {
     if (value !== undefined) clean[key] = value;
   });
+  delete clean.pulseProjectName;
+  if (pulseProjectName && !clean.list_id) clean.list_id = await ensurePulseProjectList(pulseProjectName);
   if (userId && !clean.user_id) clean.user_id = userId;
   const res = await fetchWithTimeout(`${SB_URL}/rest/v1/tasks`, {
     method: 'POST',
@@ -3683,6 +3738,7 @@ function syncTimeblockTaskToPulse(block, task, date, offsetMinutes) {
     notes: pulseTaskNotes([
       source === 'asana' ? 'Mirrored from a scheduled Asana task in Work.' : 'Created from Work time blocking.',
       `Block: ${block.name || 'Work block'}`,
+      task.project && source === 'asana' ? `Asana project: ${task.project}` : '',
       task.gid && source === 'asana' ? `Asana task id: ${task.gid}` : '',
     ]),
     priority: task.priority ? 2 : 1,
@@ -3691,6 +3747,7 @@ function syncTimeblockTaskToPulse(block, task, date, offsetMinutes) {
     duration_minutes: task.dur || 30,
     all_day: false,
     tags: source === 'asana' ? ['work', 'asana', 'edgex-work'] : ['work', 'edgex-work'],
+    pulseProjectName: source === 'asana' ? task.project : null,
   }).then(created => {
     if (!created?.id) return;
     task.pulseId = created.id;
@@ -3701,6 +3758,7 @@ function syncTimeblockTaskToPulse(block, task, date, offsetMinutes) {
     if (savedTask) {
       savedTask.pulseId = task.pulseId;
       savedTask.source = source;
+      if (task.project) savedTask.project = task.project;
       tbSaveDay(date, blocks);
       if (_currentPage === 'timeblocks') renderTBPage();
       else renderTimeBlocks();
@@ -9636,6 +9694,8 @@ function tbRenderTaskRow(task, block) {
 function tbDragStart(event, gid, name) {
   tbDragTaskGid  = gid;
   tbDragTaskName = name;
+  const sourceTask = tbPaletteTasks().find(t => t.gid === gid);
+  _tbDropProject = sourceTask?.project || null;
   event.dataTransfer.effectAllowed = 'copy';
   event.target.style.opacity = '0.5';
 }
@@ -9661,6 +9721,7 @@ function tbDropOnBlock(event, blockId) {
     dur: sourceTask?.dur || 30,
     priority: !!sourceTask?.priority,
     source: sourceTask?.source || null,
+    project: sourceTask?.project || null,
   });
 }
 
@@ -9790,6 +9851,7 @@ function renderBTTaskList(query) {
       ${t.due ? `<span class="text-[10px] text-gray-400 flex-shrink-0">${t.due}</span>` : ''}`;
     btn.onclick = () => {
       tbSelectedBTTask = { gid: t.gid, name: t.name, source: 'asana' };
+      tbSelectedBTTask.project = t.project || null;
       list.querySelectorAll('button').forEach(b => b.classList.remove('bg-primary/10'));
       btn.classList.add('bg-primary/10');
       document.getElementById('bt-search').value = t.name;
@@ -9846,6 +9908,7 @@ function tbAddTaskToBlock(blockId, taskData) {
     dur: taskData.dur || 30,
     priority: !!taskData.priority,
     source: taskData.source || (taskData.gid ? 'asana' : 'work'),
+    project: taskData.project || null,
     done: false,
     blockColor,
   };
@@ -9985,6 +10048,7 @@ let _tbDropName      = null;
 let _tbDropDur       = null;
 let _tbDropPriority  = false;
 let _tbDropSource    = null;
+let _tbDropProject   = null;
 let _tbInlineAsanaOpen = false;
 let _tbEditBlockId   = null; // null = new
 let _tbSelectedDate  = todayStr();
@@ -9995,6 +10059,7 @@ function tbClearDropTask() {
   _tbDropDur = null;
   _tbDropPriority = false;
   _tbDropSource = null;
+  _tbDropProject = null;
 }
 
 // ── Page render ───────────────────────────────────────────────
@@ -10345,6 +10410,7 @@ function tbBuildBlockEl(block) {
         dur: _tbDropDur || 30,
         priority: !!_tbDropPriority,
         source: _tbDropSource,
+        project: _tbDropProject,
       });
       tbClearDropTask();
       renderTBPage();
@@ -10514,6 +10580,7 @@ function renderTBAsanaPanel(query) {
       _tbDropDur = t.dur || 30;
       _tbDropPriority = !!t.priority;
       _tbDropSource = t.source || null;
+      _tbDropProject = t.project || null;
       e.dataTransfer.effectAllowed = 'copy';
       chip.style.opacity = '0.5';
     });
@@ -10600,6 +10667,7 @@ function tbCreateBlockWithTask(startStr, gid, name) {
       dur: taskDur,
       priority: !!_tbDropPriority,
       source,
+      project: _tbDropProject || null,
       done: false,
       blockColor: cat.color
     });
@@ -10727,7 +10795,7 @@ function renderTBInlineAsana(q) {
     btn.className = 'w-full text-left px-3 py-2 text-sm hover:bg-primary/5 transition-colors flex items-center gap-2';
     btn.innerHTML = `<span class="material-symbols-outlined text-primary/40 text-sm">task_alt</span><span class="flex-1 truncate font-medium">${t.name}</span>${t.due ? `<span class="text-[9px] text-gray-400 flex-shrink-0">${t.due}</span>` : ''}`;
     btn.onclick = () => {
-      _tbCreateTasks.push({ id: tbMakeId(), gid: t.gid, name: t.name, dur: 30, priority: false, source: 'asana', done: false });
+      _tbCreateTasks.push({ id: tbMakeId(), gid: t.gid, name: t.name, dur: 30, priority: false, source: 'asana', project: t.project || null, done: false });
       renderTBCreateTaskList();
       tbUpdatePreview();
       document.getElementById('tb-inline-asana').classList.add('hidden');
