@@ -992,7 +992,8 @@ function localDateStr(date = new Date()) {
 }
 
 function isUpdatedToday(row) {
-  return !!(row?.updatedAt && row.updatedAt.slice(0, 10) === localDateStr());
+  if (!row?.updatedAt) return false;
+  return localDateStr(new Date(row.updatedAt)) === localDateStr();
 }
 
 // ── System status tracker ─────────────────────────────────────────
