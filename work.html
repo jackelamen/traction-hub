@@ -1450,7 +1450,7 @@
             <svg width="14" height="14" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="8" r="7" fill="#F06A4D"/><circle cx="7" cy="23" r="7" fill="#F06A4D"/><circle cx="25" cy="23" r="7" fill="#F06A4D"/></svg>
           </div>
           <span class="text-sm font-bold text-on-surface">Tasks</span>
-          <button onclick="refreshTBTaskSources()" id="tb-asana-refresh-btn" title="Refresh Pulse and Asana tasks"
+          <button onclick="refreshTBTaskSources()" id="tb-asana-refresh-btn" title="Refresh Pulse tasks"
             class="ml-auto flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold transition-colors"
             style="background:#fef2ee;color:#F06A4D;border:1px solid #fcd9ce">
             <span class="material-symbols-outlined" style="font-size:13px" id="tb-asana-refresh-icon">refresh</span>
@@ -1780,8 +1780,8 @@
           <label class="block text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">Add Tasks to Block</label>
           <div class="flex gap-2 mb-3">
             <button onclick="tbImportAsanaTask()" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold text-on-surface hover:bg-surface-container transition-colors">
-              <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="8" r="7" fill="#F06A4D"/><circle cx="7" cy="23" r="7" fill="#F06A4D"/><circle cx="25" cy="23" r="7" fill="#F06A4D"/></svg>
-              Import from Asana
+              <span class="material-symbols-outlined text-primary text-base">task_alt</span>
+              Import from Pulse
             </button>
             <button onclick="tbAddCustomTaskInline()" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold text-on-surface hover:bg-surface-container transition-colors">
               <span class="material-symbols-outlined text-primary text-base">add_circle</span>
@@ -1791,7 +1791,7 @@
           <div id="tb-inline-asana" class="hidden mb-3 rounded-xl border border-outline-variant/15 bg-surface-container-lowest overflow-hidden">
             <div class="relative p-2 border-b border-gray-100">
               <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-sm">search</span>
-              <input id="tb-inline-asana-search" type="text" placeholder="Search Asana tasks…"
+              <input id="tb-inline-asana-search" type="text" placeholder="Search Pulse tasks…"
                 oninput="renderTBInlineAsana(this.value)"
                 class="w-full bg-surface-container border-none rounded-lg pl-8 pr-3 py-2 text-sm focus:ring-1 focus:ring-primary/20"/>
             </div>
@@ -1906,7 +1906,7 @@
         <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Task</label>
         <div class="relative mb-2">
           <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 text-base">search</span>
-          <input id="bt-search" type="text" placeholder="Search Asana tasks or type custom…"
+          <input id="bt-search" type="text" placeholder="Search Pulse tasks or type custom…"
             oninput="renderBTTaskList(this.value)"
             class="w-full bg-surface-container border-none rounded-xl pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20"/>
         </div>
@@ -2243,36 +2243,6 @@
               </div>
               <span class="material-symbols-outlined text-on-surface-variant/40 text-sm">open_in_new</span>
             </a>
-          </div>
-        </div>
-      </section>
-
-      <!-- ── Asana ── -->
-      <section>
-        <div class="flex items-center gap-2 mb-3">
-          <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="8" r="7" fill="#F06A4D"/><circle cx="7" cy="23" r="7" fill="#F06A4D"/><circle cx="25" cy="23" r="7" fill="#F06A4D"/></svg>
-          <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Asana Integration</h3>
-        </div>
-        <div class="rounded-xl overflow-hidden border border-outline-variant/30">
-          <!-- PAT row -->
-          <div class="p-4 bg-surface-container">
-            <label class="block text-xs font-bold text-on-surface-variant mb-2">Personal Access Token</label>
-            <div class="flex gap-2">
-              <input id="settings-asana-pat-input" type="password" placeholder="1/xxxxxxxxxxxxxxxx"
-                class="flex-1 bg-surface-container-lowest rounded-xl px-3 py-2.5 text-sm text-on-surface border border-outline-variant/20 focus:ring-2 focus:ring-accent/30 focus:border-accent/40 transition-all"/>
-              <button onclick="saveAsanaPAT()" class="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90" style="background:#F06A4D">Save</button>
-            </div>
-            <p id="asana-pat-status" class="text-[11px] mt-2 text-on-surface-variant/60"></p>
-          </div>
-          <!-- Refresh row -->
-          <div style="border-top:1px solid rgba(0,0,0,0.06)">
-            <button onclick="refreshAsanaTasks();closeSettings()" class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-container transition-colors text-left">
-              <span class="material-symbols-outlined text-orange-400 text-base">refresh</span>
-              <div class="flex-1">
-                <p class="text-sm font-semibold text-on-surface">Refresh Asana Tasks</p>
-                <p class="text-[11px] text-on-surface-variant/60">Pull your latest incomplete tasks</p>
-              </div>
-            </button>
           </div>
         </div>
       </section>
@@ -2731,7 +2701,7 @@
           <button id="tab-asana" onclick="switchTaskTab('asana')"
             class="task-tab flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all bg-primary text-on-primary shadow-sm">
             <span class="material-symbols-outlined text-sm">task_alt</span>
-            From Asana
+            From Pulse
           </button>
           <button id="tab-custom" onclick="switchTaskTab('custom')"
             class="task-tab flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all text-on-surface-variant hover:text-on-surface">
@@ -2740,16 +2710,16 @@
           </button>
         </div>
 
-        <!-- Asana task picker (multi-checkbox) -->
+        <!-- Pulse task picker (multi-checkbox) -->
         <div id="asana-task-panel">
           <div class="flex items-center gap-2 mb-2">
             <div class="relative flex-1">
               <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none">search</span>
-              <input id="asana-search" type="text" placeholder="Search tasks..."
+              <input id="asana-search" type="text" placeholder="Search Pulse tasks..."
                 oninput="filterAsanaTasks(this.value)"
                 class="w-full bg-surface-container rounded-xl border border-outline-variant/20 pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all"/>
             </div>
-            <button onclick="refreshAsanaTasks()" id="modal-asana-refresh-btn" title="Refresh from Asana"
+            <button onclick="refreshTBTaskSources()" id="modal-asana-refresh-btn" title="Refresh from Pulse"
               class="flex-shrink-0 flex items-center gap-1 px-2.5 py-2.5 rounded-xl text-[11px] font-bold transition-colors bg-surface-container border border-outline-variant/20 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high">
               <span class="material-symbols-outlined text-sm" id="modal-asana-refresh-icon">refresh</span>
             </button>
@@ -3990,25 +3960,8 @@ function preferWorkRows(rows = []) {
   return [...byKey.values()];
 }
 
-// ── Asana Tasks (baked in at generation time) ───────────────────
-const ASANA_TASKS = [
-  { gid:'1213644788594032', name:'Finalize S7 Corporate Deck', project:'S7 Internal Tasks', due:'Mar 31' },
-  { gid:'1209525971104918', name:'Make plan with Jeongwoo', project:'S7 Internal Tasks', due:'Apr 8' },
-  { gid:'1213964036749555', name:'Schedule 3 LinkedIn Posts', project:'S7 Internal Tasks', due:'Apr 8' },
-  { gid:'1213957240084416', name:'Find Beauty Brands that would be interested in OEM or Made in SEA in Indonesia', project:'Magpie', due:'Apr 10' },
-  { gid:'1213998137748614', name:'Comment on LinkedIn Daily for 15 minutes', project:'S7 Internal Tasks', due:'Apr 13' },
-  { gid:'1213957907668793', name:'Order S7 Business Cards', project:'S7 Internal Tasks', due:'Apr 13' },
-  { gid:'1213975267729088', name:'KTO Project Meeting / CrowdCom,S7, FAME', project:'S7 Internal Tasks', due:'Apr 15' },
-  { gid:'1214075670889490', name:'Answer Michael about my monthly fee for Innsbruck', project:'Innsbruck/Brand EE', due:'Apr 16' },
-  { gid:'1214063569524143', name:'Go through LinkedIn Jobs to see who\'s hiring for E-commerce positions in KR', project:'Innsbruck/Brand EE', due:'Apr 16' },
-  { gid:'1213414521833909', name:'Brainstorm an S7 Service around iKala', project:'iKala', due:'Apr 24' },
-  { gid:'1213414521833911', name:'Research overseas Sales Agencies for use of iKala', project:'iKala', due:'Apr 24' },
-  { gid:'1213414521833845', name:'Find reliable MY partner', project:'S7 Internal Tasks', due:'' },
-  { gid:'1213414521833847', name:'Find reliable SG partner', project:'S7 Internal Tasks', due:'' },
-  { gid:'1213414521833851', name:'Find reliable TH partner', project:'S7 Internal Tasks', due:'' },
-  { gid:'1213414521833849', name:'Find reliable VN partner', project:'S7 Internal Tasks', due:'' },
-  { gid:'1213414521833919', name:'Get JGL to do a trial of ELink Pro', project:'Inspien', due:'' },
-];
+// ── Asana Tasks (removed — now using Pulse only) ─────────────────
+const ASANA_TASKS = [];
 
 // ── Asana Live Refresh ───────────────────────────────────────────
 const ASANA_PAT_KEY = '30day-asana-pat-v1';
@@ -9602,14 +9555,11 @@ async function refreshTBTaskSources() {
   _tbPulseTasksDate = null;
   await tbRefreshPulseTasksForActiveDate();
   syncActiveTimeblockTasksToPulse();
-  if (getAsanaPAT()) refreshAsanaTasks();
-  else renderTBAsanaPanel(document.getElementById('tb-asana-search')?.value || '');
+  renderTBAsanaPanel(document.getElementById('tb-asana-search')?.value || '');
 }
 
 function tbPaletteTasks() {
-  const pulse = tbPulseTasksForActiveDate();
-  const asana = ASANA_TASKS.map(t => ({ ...t, source: 'asana', dur: 30, priority: false, tags: [] }));
-  return [...pulse, ...asana];
+  return tbPulseTasksForActiveDate();
 }
 
 function tbActiveBlocks() {
