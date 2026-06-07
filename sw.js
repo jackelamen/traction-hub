@@ -1,9 +1,11 @@
 /* EDGEx PWA service worker — app-shell caching */
-const CACHE = 'edgex-shell-v4';
+const CACHE = 'edgex-shell-v5';
 const SHELL = [
   '/index.html','/goals.html','/health.html','/wellness.html',
   '/relationships.html','/learning.html','/weekly-review.html','/work.html'
 ];
+
+self.addEventListener('message', function(e){ if(e.data==='skip'){ self.skipWaiting(); } });
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

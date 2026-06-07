@@ -674,7 +674,7 @@ body::after {
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <link rel="apple-touch-icon" href="/icons/edgex-192.png?v=4"/>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').then(function(reg){reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw){nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller){reg.waiting&&reg.waiting.postMessage('skip');}});}});}).catch(function(){});var refreshed=false;navigator.serviceWorker.addEventListener('controllerchange',function(){if(refreshed)return;refreshed=true;window.location.reload();});});}</script>
 </head>
 <body>
 
