@@ -1,5 +1,5 @@
 /* EDGEx PWA service worker — app-shell caching */
-const CACHE = 'edgex-shell-v1';
+const CACHE = 'edgex-shell-v2';
 const SHELL = [
   '/index.html','/goals.html','/health.html','/wellness.html',
   '/relationships.html','/learning.html','/weekly-review.html','/work.html'
