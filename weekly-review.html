@@ -163,9 +163,30 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 #cmd-hint kbd{background:rgba(255,255,255,0.08);border-radius:4px;padding:1px 5px;font-family:inherit}
 </style>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').then(function(reg){reg.addEventListener('updatefound',function(){var nw=reg.installing;if(nw){nw.addEventListener('statechange',function(){if(nw.state==='installed'&&navigator.serviceWorker.controller){reg.waiting&&reg.waiting.postMessage('skip');}});}});}).catch(function(){});var refreshed=false;navigator.serviceWorker.addEventListener('controllerchange',function(){if(refreshed)return;refreshed=true;window.location.reload();});});}</script>
+<style id="edgex-mobile-nav-css">
+#edgex-mtop{display:none}
+@media (max-width:768px){
+ #edgex-mtop{display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:60;
+  padding:12px 16px;background:var(--sidebar-bg,#15162b);border-bottom:1px solid rgba(255,255,255,.08)}
+ #edgex-mtop button{background:transparent;border:none;color:#fff;font-size:24px;line-height:1;cursor:pointer;padding:4px;display:flex}
+ #edgex-mtop .mtitle{color:#fff;font:600 16px/1 'Inter',system-ui,sans-serif}
+ #app{flex-direction:column}
+ #sidebar{position:fixed!important;top:0;left:0;height:100vh;width:80vw;max-width:300px;
+  transform:translateX(-100%);transition:transform .25s ease;z-index:80;box-shadow:2px 0 24px rgba(0,0,0,.4)}
+ body.edgex-drawer-open #sidebar{transform:translateX(0)}
+ #edgex-scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:70;opacity:0;visibility:hidden;transition:opacity .25s}
+ body.edgex-drawer-open #edgex-scrim{opacity:1;visibility:visible}
+ #app > *:not(#sidebar):not(#edgex-mtop):not(#edgex-scrim){margin-left:0!important;width:100%!important}
+}
+</style>
 </head>
 <body>
 <div id="app">
+<div id="edgex-mtop">
+ <button aria-label="Menu" onclick="document.body.classList.add('edgex-drawer-open')">&#9776;</button>
+ <span class="mtitle">Weekly Review</span>
+</div>
+<div id="edgex-scrim" onclick="document.body.classList.remove('edgex-drawer-open')"></div>
 <nav id="sidebar">
   <div class="sidebar-brand">
     <div style="display:flex;align-items:baseline;gap:0;line-height:1;margin-bottom:2px">
@@ -1677,6 +1698,15 @@ async function init() {
 }
 
 init();
+</script>
+<script>
+(function(){
+ document.addEventListener('click',function(e){
+   var a=e.target.closest('#sidebar .nav-item, #sidebar a');
+   if(a){document.body.classList.remove('edgex-drawer-open');}
+ });
+ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.body.classList.remove('edgex-drawer-open');});
+})();
 </script>
 </body>
 </html>
