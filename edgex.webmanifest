@@ -8,19 +8,19 @@
   "theme_color": "#0b0c1e",
   "icons": [
     {
-      "src": "/icons/edgex-192.png",
+      "src": "/icons/edgex-192-v5.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/edgex-512.png",
+      "src": "/icons/edgex-512-v5.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/edgex-maskable-512.png",
+      "src": "/icons/edgex-maskable-512-v5.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
