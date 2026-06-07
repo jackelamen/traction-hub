@@ -360,6 +360,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 #cmd-hint{padding:10px 18px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:16px;font-size:11px;color:rgba(255,255,255,0.28);font-family:'Inter',sans-serif}
 #cmd-hint kbd{background:rgba(255,255,255,0.08);border-radius:4px;padding:1px 5px;font-family:inherit}
 </style>
+<link rel="manifest" href="/health.webmanifest"/>
+<meta name="theme-color" content="#dc2626"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="apple-touch-icon" href="/icons/health-192.png"/>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}</script>
 </head>
 <body>
 <div id="app">

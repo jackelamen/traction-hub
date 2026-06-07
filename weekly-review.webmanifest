@@ -1,0 +1,23 @@
+{
+  "name": "EDGE Weekly Review",
+  "short_name": "Review",
+  "start_url": "/weekly-review.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b0c1e",
+  "theme_color": "#d97706",
+  "icons": [
+    {
+      "src": "/icons/weekly-review-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/weekly-review-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -669,6 +669,12 @@ body::after {
 }
 .btn-logout:hover { border-color: rgba(239,68,68,0.4); color: #f87171; }
 </style>
+<link rel="manifest" href="/edgex.webmanifest"/>
+<meta name="theme-color" content="#0b0c1e"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="apple-touch-icon" href="/icons/edgex-192.png"/>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}</script>
 </head>
 <body>
 

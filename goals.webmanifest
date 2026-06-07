@@ -1,0 +1,23 @@
+{
+  "name": "The EDGE Goals",
+  "short_name": "Goals",
+  "start_url": "/goals.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b0c1e",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "/icons/goals-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/goals-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
